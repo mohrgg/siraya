@@ -79,84 +79,92 @@ export default function Sidebar({ user }: { user: any }) {
 
   return (
     <>
-      <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
+      <aside className={`bg-[#065f32] text-white h-screen border-r border-[#0a753d] flex flex-col transition-all duration-300 relative z-40 ${isCollapsed ? "w-20" : "w-[265px]"}`}>
         {/* Floating Toggle Button (Right Edge) */}
         <button 
-          className="sidebar-toggle"
+          className="absolute -right-3 top-8 w-7 h-7 rounded-full bg-surface border border-border text-primary flex items-center justify-center hover:bg-surface-hover z-50 shadow-md transition-transform"
           onClick={() => setIsCollapsed(!isCollapsed)}
           title={isCollapsed ? "Buka Sidebar" : "Tutup Sidebar"}
         >
-          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
 
-        <div className="sidebar-brand">
-          <div className="brand-logo-container">
-            <img src="/logo.png" alt="Logo Al Basyariah" className="brand-logo" onError={(e) => {
+        <div className="flex items-center p-5 gap-3 border-b border-white/10 shrink-0">
+          <div className="w-10 h-10 shrink-0 bg-white rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
+            <img src="/logo.png" alt="Logo Al Basyariah" className="w-full h-full object-contain" onError={(e) => {
               e.currentTarget.style.display = 'none';
               e.currentTarget.nextElementSibling?.classList.remove('hidden');
             }} />
-            <div className="brand-logo-fallback hidden">AB</div>
+            <div className="hidden font-bold text-primary text-xl">AB</div>
           </div>
           
           {!isCollapsed && (
-            <div className="brand-titles">
-              <span className="brand-text">SIRAYA</span>
-              <span className="brand-subtext">Sistem Informasi Yayasan Al Basyariah</span>
+            <div className="flex flex-col whitespace-nowrap overflow-hidden">
+              <span className="font-bold text-lg leading-tight tracking-tight text-white">SIRAYA</span>
+              <span className="text-[10px] text-white/70 truncate">Sistem Informasi Yayasan Al Basyariah</span>
             </div>
           )}
         </div>
 
-        <nav className="sidebar-nav">
+        <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1 overflow-x-hidden custom-scrollbar">
           {filteredGroups.map((group, groupIndex) => (
-            <div key={group.title} className="nav-group">
-              {group.title !== "UTAMA" && (
-                <div className="nav-section-title">
+            <div key={group.title} className={`${isCollapsed ? "mb-0" : "mb-2"}`}>
+              {group.title !== "UTAMA" && !isCollapsed && (
+                <div className="text-[10px] font-bold text-white/50 tracking-wider mb-2 mt-4 px-3 uppercase">
                   {group.title}
                 </div>
               )}
+              {group.title !== "UTAMA" && isCollapsed && (
+                 <div className="h-px bg-white/10 my-4 mx-3" />
+              )}
               
-              {group.items.map((item) => {
-                const Icon = item.icon
-                const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
-                
-                return (
-                  <Link 
-                    key={item.href} 
-                    href={item.href}
-                    className={`nav-item ${isActive ? "active" : ""}`}
-                    title={isCollapsed ? item.label : ""}
-                  >
-                    <Icon size={22} className="nav-icon" />
-                    {!isCollapsed && <span>{item.label}</span>}
-                  </Link>
-                )
-              })}
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const Icon = item.icon
+                  const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
+                  
+                  return (
+                    <Link 
+                      key={item.href} 
+                      href={item.href}
+                      className={`flex items-center gap-3 px-3 py-2.5 mx-1 rounded-lg text-sm font-medium transition-all ${
+                        isActive 
+                          ? "bg-white/20 text-white shadow-sm border border-white/10" 
+                          : "text-white/80 hover:bg-white/10 hover:text-white"
+                      } ${isCollapsed ? "justify-center" : "justify-start"}`}
+                      title={isCollapsed ? item.label : ""}
+                    >
+                      <Icon size={20} className={isActive ? "text-white" : "text-white/80"} />
+                      {!isCollapsed && <span className="truncate">{item.label}</span>}
+                    </Link>
+                  )
+                })}
+              </div>
             </div>
           ))}
         </nav>
 
         {/* Footer User Info */}
-        <div className="sidebar-footer">
-          <div className="sidebar-user">
-            <div className="sidebar-user-avatar">
+        <div className="p-4 border-t border-white/10 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-white/20 text-white font-bold flex items-center justify-center shrink-0 overflow-hidden border border-white/20">
               {user?.avatar ? (
-                <img src={user.avatar} alt="Profile" />
+                <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <span>{getInitials(user?.name || "")}</span>
               )}
             </div>
             {!isCollapsed && (
-              <div className="sidebar-user-info" style={{ flex: 1, overflow: 'hidden' }}>
-                <span className="sidebar-user-name" style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{user?.name || "User"}</span>
-                <span className="sidebar-user-role">{user?.role}</span>
+              <div className="flex flex-col flex-1 overflow-hidden">
+                <span className="text-sm font-semibold text-white truncate">{user?.name || "User"}</span>
+                <span className="text-xs text-white/60 truncate">{user?.role}</span>
               </div>
             )}
             {!isCollapsed && (
               <button 
                 onClick={() => setShowLogoutModal(true)}
-                className="icon-btn text-error" 
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-red-300 hover:bg-red-500/20 hover:text-red-200 transition-colors shrink-0" 
                 title="Keluar" 
-                style={{ width: '36px', height: '36px', border: 'none', background: 'none', boxShadow: 'none' }}
               >
                 <LogOut size={18} />
               </button>

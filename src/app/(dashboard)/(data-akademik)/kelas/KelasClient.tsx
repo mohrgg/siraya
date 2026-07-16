@@ -151,15 +151,7 @@ export default function KelasClient({
     return (
       <button 
         onClick={() => setActiveTab(id)}
-        style={{
-          padding: "0.75rem 1.5rem", 
-          borderBottom: isActive ? "2px solid var(--albas-green)" : "2px solid transparent",
-          backgroundColor: "transparent",
-          color: isActive ? "var(--albas-green)" : "var(--text-muted)",
-          fontWeight: isActive ? 700 : 600, 
-          borderTop: "none", borderLeft: "none", borderRight: "none", 
-          cursor: "pointer", transition: "all 0.2s"
-        }}
+        className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${isActive ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text-main hover:border-border"}`}
       >
         {label}
       </button>
@@ -177,41 +169,40 @@ export default function KelasClient({
         isLoading={isDeleting}
       />
 
-      <div className="card" style={{ padding: "1.5rem" }}>
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
         {/* Tab Navigation */}
-        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
+        <div className="flex gap-2 mb-6 border-b border-border">
           <TabButton id="kelas" label="Daftar Kelas (Tingkat)" />
           <TabButton id="sub-kelas" label="Daftar Sub Kelas (Rombel)" />
           <TabButton id="murid" label="Daftar Murid" />
         </div>
 
         {/* Toolbar */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           
-          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          <div className="flex flex-wrap gap-4 items-center">
             {(activeTab === "murid" || activeTab === "sub-kelas") && (
-              <div style={{ width: "250px", position: "relative" }}>
-                <Search size={16} style={{ position: "absolute", left: "10px", top: "12px", color: "var(--text-muted)" }} />
+              <div className="relative w-full md:w-64">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input 
                   type="text" 
                   placeholder="Cari..." 
-                  className="form-input" 
-                  style={{ paddingLeft: "35px" }}
+                  className="w-full pl-10 pr-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
             )}
-            <div style={{ display: "flex", gap: "0.5rem" }} title="Fitur ekspor akan tersedia di Fase 3 / Reporting">
-              <Button variant="outline" size="sm" style={{ display: "flex", gap: "0.5rem", alignItems: "center", opacity: 0.5, cursor: 'not-allowed' }} disabled>
-                <FileSpreadsheet size={16}/> Excel
+            <div className="flex gap-2" title="Fitur ekspor akan tersedia di Fase 3 / Reporting">
+              <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled>
+                <FileSpreadsheet size={16} className="mr-2" /> Excel
               </Button>
-              <Button variant="outline" size="sm" style={{ display: "flex", gap: "0.5rem", alignItems: "center", opacity: 0.5, cursor: 'not-allowed' }} disabled>
-                <FilePdf size={16}/> PDF
+              <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled>
+                <FilePdf size={16} className="mr-2" /> PDF
               </Button>
               {activeTab === "murid" && (
-                <Button variant="outline" size="sm" style={{ display: "flex", gap: "0.5rem", alignItems: "center", opacity: 0.5, cursor: 'not-allowed' }} disabled>
-                  <Upload size={16}/> Import Excel
+                <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled>
+                  <Upload size={16} className="mr-2" /> Import Excel
                 </Button>
               )}
             </div>
@@ -222,13 +213,17 @@ export default function KelasClient({
               <Button onClick={() => {
                 setFormKelas({ id: "", name: "", order: 1, unitSekolahId: schoolUnits[0]?.id || "" })
                 setShowModalKelas(true)
-              }}><Plus size={16} style={{ marginRight: "0.5rem" }}/> Tambah Tingkat</Button>
+              }}>
+                <Plus size={16} className="mr-2" /> Tambah Tingkat
+              </Button>
             )}
             {activeTab === "sub-kelas" && (
               <Button onClick={() => {
                 setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: academicYears[0]?.id || "", unitSekolahId: schoolUnits[0]?.id || "" })
                 setShowModalSubKelas(true)
-              }}><Plus size={16} style={{ marginRight: "0.5rem" }}/> Tambah Sub Kelas</Button>
+              }}>
+                <Plus size={16} className="mr-2" /> Tambah Sub Kelas
+              </Button>
             )}
             {activeTab === "murid" && (
               <Button onClick={() => {
@@ -239,92 +234,100 @@ export default function KelasClient({
                   address: "", formNo: "", username: ""
                 })
                 setShowModalMurid(true)
-              }}><Plus size={16} style={{ marginRight: "0.5rem" }}/> Tambah Murid</Button>
+              }}>
+                <Plus size={16} className="mr-2" /> Tambah Murid
+              </Button>
             )}
           </div>
         </div>
 
         {/* Data Table */}
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left">
             <thead>
-              <tr style={{ borderBottom: "2px solid var(--border-color)", color: "var(--text-muted)" }}>
-                <th style={{ padding: "1rem" }}>No</th>
+              <tr className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider">
+                <th className="p-4 font-semibold">No</th>
                 {activeTab === "kelas" && (
                   <>
-                    <th style={{ padding: "1rem" }}>Nama Sekolah</th>
-                    <th style={{ padding: "1rem" }}>Tingkat</th>
-                    <th style={{ padding: "1rem", textAlign: "right" }}>Aksi</th>
+                    <th className="p-4 font-semibold">Nama Sekolah</th>
+                    <th className="p-4 font-semibold">Tingkat</th>
+                    <th className="p-4 font-semibold text-right">Aksi</th>
                   </>
                 )}
                 {activeTab === "sub-kelas" && (
                   <>
-                    <th style={{ padding: "1rem" }}>Nama Sekolah</th>
-                    <th style={{ padding: "1rem" }}>Tingkat</th>
-                    <th style={{ padding: "1rem" }}>Sub Kelas (Rombel)</th>
-                    <th style={{ padding: "1rem" }}>Jumlah Siswa</th>
-                    <th style={{ padding: "1rem", textAlign: "right" }}>Aksi</th>
+                    <th className="p-4 font-semibold">Nama Sekolah</th>
+                    <th className="p-4 font-semibold">Tingkat</th>
+                    <th className="p-4 font-semibold">Sub Kelas (Rombel)</th>
+                    <th className="p-4 font-semibold">Jumlah Siswa</th>
+                    <th className="p-4 font-semibold text-right">Aksi</th>
                   </>
                 )}
                 {activeTab === "murid" && (
                   <>
-                    <th style={{ padding: "1rem" }}>Sekolah</th>
-                    <th style={{ padding: "1rem" }}>Asal Sekolah</th>
-                    <th style={{ padding: "1rem" }}>Nama Murid</th>
-                    <th style={{ padding: "1rem" }}>NISN / NIS</th>
-                    <th style={{ padding: "1rem" }}>Nama Orang Tua</th>
-                    <th style={{ padding: "1rem" }}>No Formulir</th>
-                    <th style={{ padding: "1rem", textAlign: "right" }}>Aksi</th>
+                    <th className="p-4 font-semibold">Sekolah</th>
+                    <th className="p-4 font-semibold">Asal Sekolah</th>
+                    <th className="p-4 font-semibold">Nama Murid</th>
+                    <th className="p-4 font-semibold">NISN / NIS</th>
+                    <th className="p-4 font-semibold">Nama Orang Tua</th>
+                    <th className="p-4 font-semibold">No Formulir</th>
+                    <th className="p-4 font-semibold text-right">Aksi</th>
                   </>
                 )}
               </tr>
             </thead>
             <tbody>
               {activeTab === "kelas" && grades.map((g: any, i: number) => (
-                <tr key={g.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
-                  <td style={{ padding: "1rem" }}>{i + 1}</td>
-                  <td style={{ padding: "1rem" }}>{g.unitSekolah?.name}</td>
-                  <td style={{ padding: "1rem", fontWeight: 700 }}>{g.name}</td>
-                  <td style={{ padding: "1rem", textAlign: "right" }}>
-                    <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: g.id, type: "tingkat" })}><Trash2 size={14} /></Button>
+                <tr key={g.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
+                  <td className="p-4">{i + 1}</td>
+                  <td className="p-4 text-text-main font-medium">{g.unitSekolah?.name}</td>
+                  <td className="p-4 font-bold text-text-main">{g.name}</td>
+                  <td className="p-4">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: g.id, type: "tingkat" })}><Trash2 size={16} /></Button>
+                    </div>
                   </td>
                 </tr>
               ))}
               
               {activeTab === "sub-kelas" && classrooms.map((c: any, i: number) => (
-                <tr key={c.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
-                  <td style={{ padding: "1rem" }}>{i + 1}</td>
-                  <td style={{ padding: "1rem" }}>{c.unitSekolah?.name}</td>
-                  <td style={{ padding: "1rem" }}>{c.tingkat?.name}</td>
-                  <td style={{ padding: "1rem", fontWeight: 700 }}>{c.name}</td>
-                  <td style={{ padding: "1rem" }}>{c._count?.murid || 0}</td>
-                  <td style={{ padding: "1rem", textAlign: "right" }}>
-                    <Button variant="outline" size="sm" style={{ marginRight: "0.5rem" }} onClick={() => {
-                      setFormSubKelas({
-                        id: c.id, name: c.name, tingkatId: c.tingkatId, jurusanId: c.jurusanId || "", 
-                        tahunAkademikId: c.tahunAkademikId, unitSekolahId: c.unitSekolahId
-                      })
-                      setShowModalSubKelas(true)
-                    }}><Edit2 size={14} /></Button>
-                    <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: c.id, type: "subkelas" })}><Trash2 size={14} /></Button>
+                <tr key={c.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
+                  <td className="p-4">{i + 1}</td>
+                  <td className="p-4 text-text-main font-medium">{c.unitSekolah?.name}</td>
+                  <td className="p-4 text-text-main">{c.tingkat?.name}</td>
+                  <td className="p-4 font-bold text-text-main">{c.name}</td>
+                  <td className="p-4 text-text-muted">{c._count?.murid || 0}</td>
+                  <td className="p-4">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => {
+                        setFormSubKelas({
+                          id: c.id, name: c.name, tingkatId: c.tingkatId, jurusanId: c.jurusanId || "", 
+                          tahunAkademikId: c.tahunAkademikId, unitSekolahId: c.unitSekolahId
+                        })
+                        setShowModalSubKelas(true)
+                      }}><Edit2 size={16} /></Button>
+                      <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: c.id, type: "subkelas" })}><Trash2 size={16} /></Button>
+                    </div>
                   </td>
                 </tr>
               ))}
 
               {activeTab === "murid" && filteredStudents.map((s: any, i: number) => (
-                <tr key={s.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
-                  <td style={{ padding: "1rem" }}>{i + 1}</td>
-                  <td style={{ padding: "1rem" }}>{s.unitSekolah?.name}</td>
-                  <td style={{ padding: "1rem" }}>{s.previousSchool || "-"}</td>
-                  <td style={{ padding: "1rem", fontWeight: 700 }}>{s.name}</td>
-                  <td style={{ padding: "1rem" }}>{s.nisn || s.nis}</td>
-                  <td style={{ padding: "1rem" }}>{s.parentName || "-"}</td>
-                  <td style={{ padding: "1rem" }}>{s.formNo || "-"}</td>
-                  <td style={{ padding: "1rem", textAlign: "right", whiteSpace: "nowrap" }}>
-                    <Button variant="outline" size="sm" onClick={() => { setFormMurid(s); setShowModalMurid(true); }} style={{ marginRight: "0.5rem" }}>
-                      <Edit2 size={14} />
-                    </Button>
-                    <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: s.id, type: "murid" })}><Trash2 size={14} /></Button>
+                <tr key={s.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
+                  <td className="p-4">{i + 1}</td>
+                  <td className="p-4 text-text-main font-medium">{s.unitSekolah?.name}</td>
+                  <td className="p-4 text-text-muted">{s.previousSchool || "-"}</td>
+                  <td className="p-4 font-bold text-text-main">{s.name}</td>
+                  <td className="p-4 font-mono text-sm">{s.nisn || s.nis}</td>
+                  <td className="p-4 text-text-muted">{s.parentName || "-"}</td>
+                  <td className="p-4 text-text-muted">{s.formNo || "-"}</td>
+                  <td className="p-4">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => { setFormMurid(s); setShowModalMurid(true); }}>
+                        <Edit2 size={16} />
+                      </Button>
+                      <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: s.id, type: "murid" })}><Trash2 size={16} /></Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -335,40 +338,35 @@ export default function KelasClient({
 
       {/* Modal Tambah Murid */}
       {showModalMurid && (
-        <div style={{ 
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0, 
-          backgroundColor: "rgba(0,0,0,0.6)", zIndex: 1000, 
-          display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem",
-          backdropFilter: "blur(4px)"
-        }}>
-          <div className="card" style={{ width: "100%", maxWidth: "800px", maxHeight: "90vh", display: "flex", flexDirection: "column", padding: 0 }}>
-            <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontSize: "1.25rem", color: "var(--albas-green)" }}>
+        <div className="fixed inset-0 bg-black/60 z-[1000] flex items-center justify-center p-4 md:p-8 backdrop-blur-sm">
+          <div className="w-full max-w-4xl bg-surface rounded-2xl shadow-xl border border-border flex flex-col max-h-full">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-bg rounded-t-2xl">
+              <h3 className="text-xl font-bold text-albas-green m-0">
                 {formMurid.id ? "Edit Data Murid" : "Tambah Murid Baru"}
               </h3>
-              <button onClick={() => setShowModalMurid(false)} style={{ background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer", color: "var(--text-muted)" }}>&times;</button>
+              <button onClick={() => setShowModalMurid(false)} className="text-2xl text-text-muted hover:text-text-main transition-colors">&times;</button>
             </div>
             
-            <div style={{ padding: "1.5rem", overflowY: "auto", flex: 1 }}>
-              <form id="muridForm" onSubmit={handleSaveMurid} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
-                <div style={{ gridColumn: "span 2", fontWeight: 700, color: "var(--text-main)", borderBottom: "1px solid var(--border-color)", paddingBottom: "0.5rem" }}>Data Utama Siswa</div>
-                <div>
-                  <label className="form-label">Nama Lengkap <span style={{color: "var(--text-error)"}}>*</span></label>
+            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+              <form id="muridForm" onSubmit={handleSaveMurid} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="col-span-1 md:col-span-2 font-bold text-text-main border-b border-border pb-2">Data Utama Siswa</div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Nama Lengkap <span className="text-red-500">*</span></label>
                   <Input placeholder="Nama Siswa" value={formMurid.name} onChange={e => setFormMurid({ ...formMurid, name: e.target.value })} required />
                 </div>
-                <div>
-                  <label className="form-label">NISN (10 Digit) <span style={{color: "var(--text-error)"}}>*</span></label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">NISN (10 Digit) <span className="text-red-500">*</span></label>
                   <Input placeholder="0012345678" value={formMurid.nisn} onChange={e => setFormMurid({ ...formMurid, nisn: e.target.value })} minLength={10} maxLength={10} required />
                 </div>
-                <div>
-                  <label className="form-label">Unit Sekolah <span style={{color: "var(--text-error)"}}>*</span></label>
-                  <select className="form-input" value={formMurid.unitSekolahId} onChange={e => setFormMurid({ ...formMurid, unitSekolahId: e.target.value })} required>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Unit Sekolah <span className="text-red-500">*</span></label>
+                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formMurid.unitSekolahId} onChange={e => setFormMurid({ ...formMurid, unitSekolahId: e.target.value })} required>
                     {schoolUnits.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="form-label">Sub Kelas / Rombel</label>
-                  <select className="form-input" value={formMurid.subKelasId} onChange={e => setFormMurid({ ...formMurid, subKelasId: e.target.value })}>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Sub Kelas / Rombel</label>
+                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formMurid.subKelasId} onChange={e => setFormMurid({ ...formMurid, subKelasId: e.target.value })}>
                     <option value="">-- Pilih Kelas --</option>
                     {classrooms.filter((c: any) => c.unitSekolahId === formMurid.unitSekolahId).map((c: any) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
@@ -376,26 +374,26 @@ export default function KelasClient({
                   </select>
                 </div>
 
-                <div style={{ gridColumn: "span 2", fontWeight: 700, color: "var(--text-main)", borderBottom: "1px solid var(--border-color)", paddingBottom: "0.5rem", marginTop: "1rem" }}>Data Pribadi & Orang Tua</div>
-                <div>
-                  <label className="form-label">Asal Sekolah (Opsional)</label>
+                <div className="col-span-1 md:col-span-2 font-bold text-text-main border-b border-border pb-2 mt-4">Data Pribadi & Orang Tua</div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Asal Sekolah (Opsional)</label>
                   <Input placeholder="Asal Sekolah" value={formMurid.previousSchool} onChange={e => setFormMurid({ ...formMurid, previousSchool: e.target.value })} />
                 </div>
-                <div>
-                  <label className="form-label">Nama Orang Tua</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Nama Orang Tua</label>
                   <Input placeholder="Nama Orang Tua" value={formMurid.parentName} onChange={e => setFormMurid({ ...formMurid, parentName: e.target.value })} />
                 </div>
-                <div>
-                  <label className="form-label">No. Telepon / WA Siswa</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">No. Telepon / WA Siswa</label>
                   <Input placeholder="08..." value={formMurid.phone} onChange={e => setFormMurid({ ...formMurid, phone: e.target.value })} />
                 </div>
-                <div>
-                  <label className="form-label">No. Telepon Orang Tua</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">No. Telepon Orang Tua</label>
                   <Input placeholder="08..." value={formMurid.parentPhone} onChange={e => setFormMurid({ ...formMurid, parentPhone: e.target.value })} />
                 </div>
-                <div>
-                  <label className="form-label">Agama</label>
-                  <select className="form-input" value={formMurid.religion} onChange={e => setFormMurid({ ...formMurid, religion: e.target.value })}>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Agama</label>
+                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formMurid.religion} onChange={e => setFormMurid({ ...formMurid, religion: e.target.value })}>
                     <option value="Islam">Islam</option>
                     <option value="Kristen">Kristen</option>
                     <option value="Katolik">Katolik</option>
@@ -403,29 +401,29 @@ export default function KelasClient({
                     <option value="Buddha">Buddha</option>
                   </select>
                 </div>
-                <div>
-                  <label className="form-label">Jenis Kelamin</label>
-                  <select className="form-input" value={formMurid.gender} onChange={e => setFormMurid({ ...formMurid, gender: e.target.value })}>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Jenis Kelamin</label>
+                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formMurid.gender} onChange={e => setFormMurid({ ...formMurid, gender: e.target.value })}>
                     <option value="Laki-laki">Laki-laki</option>
                     <option value="Perempuan">Perempuan</option>
                   </select>
                 </div>
-                <div style={{ gridColumn: "span 2" }}>
-                  <label className="form-label">Alamat Lengkap</label>
-                  <textarea className="form-input" rows={3} placeholder="Masukkan alamat lengkap" value={formMurid.address} onChange={e => setFormMurid({ ...formMurid, address: e.target.value })} style={{ resize: "vertical" }} />
+                <div className="col-span-1 md:col-span-2 flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Alamat Lengkap</label>
+                  <textarea className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium resize-y" rows={3} placeholder="Masukkan alamat lengkap" value={formMurid.address} onChange={e => setFormMurid({ ...formMurid, address: e.target.value })} />
                 </div>
-                <div>
-                  <label className="form-label">No. Formulir Pendaftaran</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">No. Formulir Pendaftaran</label>
                   <Input placeholder="No. Formulir" value={formMurid.formNo} onChange={e => setFormMurid({ ...formMurid, formNo: e.target.value })} />
                 </div>
-                <div>
-                  <label className="form-label">Username (Opsional untuk Login Siswa)</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Username (Opsional untuk Login Siswa)</label>
                   <Input placeholder="Username" value={formMurid.username} onChange={e => setFormMurid({ ...formMurid, username: e.target.value })} />
                 </div>
               </form>
             </div>
 
-            <div style={{ padding: "1.5rem", borderTop: "1px solid var(--border-color)", display: "flex", gap: "1rem", backgroundColor: "white", borderBottomLeftRadius: "12px", borderBottomRightRadius: "12px" }}>
+            <div className="p-6 border-t border-border flex gap-4 bg-bg rounded-b-2xl shrink-0">
               <Button type="submit" form="muridForm" isLoading={isSubmitting}>Simpan Data Murid</Button>
               <Button type="button" variant="outline" onClick={() => setShowModalMurid(false)}>Batal</Button>
             </div>
@@ -435,36 +433,31 @@ export default function KelasClient({
 
       {/* Modal Tambah Kelas (Tingkat) */}
       {showModalKelas && (
-        <div style={{ 
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0, 
-          backgroundColor: "rgba(0,0,0,0.6)", zIndex: 1000, 
-          display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem",
-          backdropFilter: "blur(4px)"
-        }}>
-          <div className="card" style={{ width: "100%", maxWidth: "500px", padding: 0 }}>
-            <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontSize: "1.25rem", color: "var(--albas-green)" }}>Tambah Tingkat Kelas</h3>
-              <button onClick={() => setShowModalKelas(false)} style={{ background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer", color: "var(--text-muted)" }}>&times;</button>
+        <div className="fixed inset-0 bg-black/60 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-surface rounded-2xl shadow-xl border border-border flex flex-col">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-bg rounded-t-2xl">
+              <h3 className="text-xl font-bold text-albas-green m-0">Tambah Tingkat Kelas</h3>
+              <button onClick={() => setShowModalKelas(false)} className="text-2xl text-text-muted hover:text-text-main transition-colors">&times;</button>
             </div>
-            <div style={{ padding: "1.5rem" }}>
-              <form id="kelasForm" onSubmit={handleSaveKelas} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <div>
-                  <label className="form-label">Sekolah</label>
-                  <select className="form-input" value={formKelas.unitSekolahId} onChange={e => setFormKelas({ ...formKelas, unitSekolahId: e.target.value })} required>
+            <div className="p-6">
+              <form id="kelasForm" onSubmit={handleSaveKelas} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Sekolah</label>
+                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formKelas.unitSekolahId} onChange={e => setFormKelas({ ...formKelas, unitSekolahId: e.target.value })} required>
                     {schoolUnits.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="form-label">Nama Tingkat (Contoh: Kelas 7)</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Nama Tingkat (Contoh: Kelas 7)</label>
                   <Input value={formKelas.name} onChange={e => setFormKelas({...formKelas, name: e.target.value})} required />
                 </div>
-                <div>
-                  <label className="form-label">Tingkat / Urutan <Info size={14} style={{display:'inline', color:'var(--text-muted)'}} title="Angka yang menunjukkan jenjang kelas, misal 10 untuk Kelas X SMA"/></label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main flex items-center gap-1.5">Tingkat / Urutan <Info size={14} className="text-text-muted" title="Angka yang menunjukkan jenjang kelas, misal 10 untuk Kelas X SMA"/></label>
                   <Input type="number" value={formKelas.order} onChange={e => setFormKelas({...formKelas, order: Number(e.target.value)})} required placeholder="10" />
                 </div>
               </form>
             </div>
-            <div style={{ padding: "1.5rem", borderTop: "1px solid var(--border-color)", display: "flex", gap: "1rem", backgroundColor: "var(--bg-color)", borderBottomLeftRadius: "12px", borderBottomRightRadius: "12px" }}>
+            <div className="p-6 border-t border-border flex gap-4 bg-bg rounded-b-2xl">
               <Button type="submit" form="kelasForm" isLoading={isSubmitting}>Simpan Tingkat</Button>
               <Button type="button" variant="outline" onClick={() => setShowModalKelas(false)}>Batal</Button>
             </div>
@@ -474,40 +467,35 @@ export default function KelasClient({
 
       {/* Modal Tambah Sub Kelas */}
       {showModalSubKelas && (
-        <div style={{ 
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0, 
-          backgroundColor: "rgba(0,0,0,0.6)", zIndex: 1000, 
-          display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem",
-          backdropFilter: "blur(4px)"
-        }}>
-          <div className="card" style={{ width: "100%", maxWidth: "500px", padding: 0 }}>
-            <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontSize: "1.25rem", color: "var(--albas-green)" }}>{formSubKelas.id ? "Edit Sub Kelas" : "Tambah Sub Kelas (Rombel)"}</h3>
-              <button onClick={() => setShowModalSubKelas(false)} style={{ background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer", color: "var(--text-muted)" }}>&times;</button>
+        <div className="fixed inset-0 bg-black/60 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-surface rounded-2xl shadow-xl border border-border flex flex-col">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-bg rounded-t-2xl">
+              <h3 className="text-xl font-bold text-albas-green m-0">{formSubKelas.id ? "Edit Sub Kelas" : "Tambah Sub Kelas (Rombel)"}</h3>
+              <button onClick={() => setShowModalSubKelas(false)} className="text-2xl text-text-muted hover:text-text-main transition-colors">&times;</button>
             </div>
-            <div style={{ padding: "1.5rem" }}>
-              <form id="subKelasForm" onSubmit={handleSaveSubKelas} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <div>
-                  <label className="form-label">Sekolah</label>
-                  <select className="form-input" value={formSubKelas.unitSekolahId} onChange={e => setFormSubKelas({ ...formSubKelas, unitSekolahId: e.target.value })} required>
+            <div className="p-6">
+              <form id="subKelasForm" onSubmit={handleSaveSubKelas} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Sekolah</label>
+                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formSubKelas.unitSekolahId} onChange={e => setFormSubKelas({ ...formSubKelas, unitSekolahId: e.target.value })} required>
                     {schoolUnits.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="form-label">Tingkat</label>
-                  <select className="form-input" value={formSubKelas.tingkatId} onChange={e => setFormSubKelas({...formSubKelas, tingkatId: e.target.value})} required>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Tingkat</label>
+                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formSubKelas.tingkatId} onChange={e => setFormSubKelas({...formSubKelas, tingkatId: e.target.value})} required>
                     <option value="">-- Pilih Tingkat --</option>
                     {grades.filter((g: any) => g.unitSekolahId === formSubKelas.unitSekolahId).map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="form-label">Nama Sub Kelas (Rombel) <Info size={14} style={{display:'inline', color:'var(--text-muted)'}} title="Contoh: X-RPL 1 atau Kelas 7A"/></label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main flex items-center gap-1.5">Nama Sub Kelas (Rombel) <Info size={14} className="text-text-muted" title="Contoh: X-RPL 1 atau Kelas 7A"/></label>
                   <Input value={formSubKelas.name} onChange={e => setFormSubKelas({...formSubKelas, name: e.target.value})} required placeholder="Contoh: X-RPL 1" />
                 </div>
                 {initialMajors.length > 0 && (
-                  <div>
-                    <label className="form-label">Jurusan</label>
-                    <select className="form-input" value={formSubKelas.jurusanId} onChange={e => setFormSubKelas({...formSubKelas, jurusanId: e.target.value})}>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-text-main">Jurusan</label>
+                    <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formSubKelas.jurusanId} onChange={e => setFormSubKelas({...formSubKelas, jurusanId: e.target.value})}>
                       <option value="">-- Tidak Ada / Umum --</option>
                       {initialMajors.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}
                     </select>
@@ -515,7 +503,7 @@ export default function KelasClient({
                 )}
               </form>
             </div>
-            <div style={{ padding: "1.5rem", borderTop: "1px solid var(--border-color)", display: "flex", gap: "1rem", backgroundColor: "var(--bg-color)", borderBottomLeftRadius: "12px", borderBottomRightRadius: "12px" }}>
+            <div className="p-6 border-t border-border flex gap-4 bg-bg rounded-b-2xl">
               <Button type="submit" form="subKelasForm" isLoading={isSubmitting}>Simpan Sub Kelas</Button>
               <Button type="button" variant="outline" onClick={() => setShowModalSubKelas(false)}>Batal</Button>
             </div>

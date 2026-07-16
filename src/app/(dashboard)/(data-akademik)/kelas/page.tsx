@@ -18,10 +18,10 @@ export default async function KelasPage() {
   const academicYears = await getTahunAkademik(activeUnitId)
 
   return (
-    <div className="page-container">
-      <div className="page-header" style={{ marginBottom: "1.5rem" }}>
-        <h1 className="page-title">Kelas & Murid</h1>
-        <p className="page-subtitle">Kelola data rombongan belajar dan data siswa</p>
+    <div className="max-w-7xl mx-auto w-full">
+      <div className="mb-6">
+        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Kelas & Murid</h1>
+        <p className="text-text-muted">Kelola data rombongan belajar dan data siswa</p>
       </div>
 
       <KelasClient 

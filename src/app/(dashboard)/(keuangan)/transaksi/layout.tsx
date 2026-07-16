@@ -12,17 +12,17 @@ export default function TransaksiLayout({
   ]
 
   return (
-    <div className="page-container">
-      <div className="page-header" style={{ marginBottom: "1rem" }}>
+    <div className="max-w-7xl mx-auto w-full">
+      <div className="mb-4">
         <div>
-          <h1 className="page-title">Transaksi Kas</h1>
-          <p className="page-subtitle">Kelola penerimaan dan pengeluaran kas yayasan</p>
+          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Transaksi Kas</h1>
+          <p className="text-text-muted">Kelola penerimaan dan pengeluaran kas yayasan</p>
         </div>
       </div>
 
       <TransaksiNav />
 
-      <div className="transaksi-content" style={{ marginTop: "1.5rem" }}>
+      <div className="mt-6">
         {children}
       </div>
     </div>

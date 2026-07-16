@@ -33,14 +33,14 @@ export default async function DashboardLayout({
   const activeYearId = cookieStore.get("activeYearId")?.value || academicYears[0]?.id
 
   return (
-    <div className="dashboard-container">
+    <div className="flex min-h-screen bg-bg overflow-hidden">
       <Sidebar user={{
         name: session.user.name,
         email: session.user.email,
         role: session.user.role,
         avatar: session.user.avatar
       }} />
-      <div className="dashboard-main">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Header 
           user={{
             name: session.user.name,
@@ -52,7 +52,7 @@ export default async function DashboardLayout({
           activeUnitId={activeUnitId}
           activeYearId={activeYearId}
         />
-        <main className="dashboard-content">
+        <main className="flex-1 p-6 md:p-8 overflow-y-auto overflow-x-hidden">
           {children}
         </main>
       </div>

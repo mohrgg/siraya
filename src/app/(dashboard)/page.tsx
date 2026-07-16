@@ -51,95 +51,93 @@ export default async function DashboardPage() {
   const totalPemasukan = "Rp 32.500.000"
 
   return (
-    <div className="page-container">
-      <div className="page-header" style={{ marginBottom: '2rem' }}>
-        <h1 className="page-title">Selamat Pagi, Admin!</h1>
-        <p className="page-subtitle">Berikut ringkasan aktivitas akademik dan master data unit ini.</p>
+    <div className="max-w-7xl mx-auto w-full">
+      <div className="mb-8">
+        <h1 className="text-3xl font-extrabold text-text-main mb-2 tracking-tight">Selamat Pagi, Admin!</h1>
+        <p className="text-text-muted">Berikut ringkasan aktivitas akademik dan master data unit ini.</p>
       </div>
 
       {/* Top Level Metrics (Master Data) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         
         {/* Metrik Master Data 1 */}
-        <div className="card stat-card main-stat" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderLeft: '4px solid var(--albas-green)' }}>
-          <div>
-            <p className="stat-label" style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.875rem' }}>Total Murid Aktif</p>
-            <h3 className="stat-value" style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{totalMurid} <span style={{fontSize: '1rem', color: 'rgba(255,255,255,0.7)', fontWeight: 'normal'}}>Siswa</span></h3>
-            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>Di unit ini</span>
+        <div className="bg-primary rounded-2xl shadow-sm border border-primary p-6 flex items-center justify-between text-white relative overflow-hidden group">
+          <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="relative z-10">
+            <p className="text-white/90 text-sm font-medium mb-1">Total Murid Aktif</p>
+            <h3 className="text-3xl font-bold mb-1">{totalMurid} <span className="text-base font-normal text-white/70">Siswa</span></h3>
+            <span className="text-xs text-white/70 font-medium">Di unit ini</span>
           </div>
-          <div className="stat-icon" style={{ backgroundColor: 'rgba(255,255,255,0.2)', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Users size={24} color="#fff" />
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center relative z-10">
+            <Users size={24} className="text-white" />
           </div>
         </div>
 
         {/* Metrik Master Data 2 */}
-        <div className="card stat-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 flex items-center justify-between hover:shadow-md transition-shadow">
           <div>
-            <p className="stat-label" style={{ fontSize: '0.875rem' }}>Rombongan Belajar (Kelas)</p>
-            <h3 className="stat-value" style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{totalSubKelas} <span style={{fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 'normal'}}>Kelas</span></h3>
-            <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 600 }}>Tahun Ajaran Aktif</span>
+            <p className="text-text-muted text-sm font-medium mb-1">Rombongan Belajar</p>
+            <h3 className="text-3xl font-bold text-text-main mb-1">{totalSubKelas} <span className="text-base font-normal text-text-muted">Kelas</span></h3>
+            <span className="text-xs font-semibold text-emerald-600">Tahun Ajaran Aktif</span>
           </div>
-          <div className="stat-icon bg-emerald-100 text-emerald-600" style={{ width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
             <GraduationCap size={24} />
           </div>
         </div>
 
         {/* Metrik Master Data 3 */}
-        <div className="card stat-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 flex items-center justify-between hover:shadow-md transition-shadow">
           <div>
-            <p className="stat-label" style={{ fontSize: '0.875rem' }}>Tingkat Kelas</p>
-            <h3 className="stat-value" style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{totalTingkat} <span style={{fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 'normal'}}>Tingkat</span></h3>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Di unit ini</span>
+            <p className="text-text-muted text-sm font-medium mb-1">Tingkat Kelas</p>
+            <h3 className="text-3xl font-bold text-text-main mb-1">{totalTingkat} <span className="text-base font-normal text-text-muted">Tingkat</span></h3>
+            <span className="text-xs font-medium text-text-muted">Di unit ini</span>
           </div>
-          <div className="stat-icon bg-blue-100 text-blue-600" style={{ width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
             <FileText size={24} />
           </div>
         </div>
 
         {/* Metrik Master Data 4 */}
-        <div className="card stat-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 flex items-center justify-between hover:shadow-md transition-shadow">
           <div>
-            <p className="stat-label" style={{ fontSize: '0.875rem' }}>Tahun Akademik</p>
-            <h3 className="stat-value" style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{totalTahunAkademik} <span style={{fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 'normal'}}>Terdata</span></h3>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Yayasan</span>
+            <p className="text-text-muted text-sm font-medium mb-1">Tahun Akademik</p>
+            <h3 className="text-3xl font-bold text-text-main mb-1">{totalTahunAkademik} <span className="text-base font-normal text-text-muted">Terdata</span></h3>
+            <span className="text-xs font-medium text-text-muted">Total Yayasan</span>
           </div>
-          <div className="stat-icon bg-purple-100 text-purple-600" style={{ width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center">
             <Building size={24} />
           </div>
         </div>
 
       </div>
 
-      <div className="dashboard-grid">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Kolom Kiri (Utama) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="lg:col-span-2 flex flex-col gap-6">
           
           <CashFlowChart />
           
           {/* Tabel Transaksi Terakhir */}
-          <div className="card">
-            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 className="card-title">Transaksi Kas Terakhir</h3>
-              <button className="btn btn-outline btn-sm">Lihat Semua</button>
+          <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
+            <div className="p-5 border-b border-border flex justify-between items-center bg-gray-50/50">
+              <h3 className="text-lg font-bold text-text-main">Transaksi Kas Terakhir</h3>
+              <button className="px-3 py-1.5 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors">Lihat Semua</button>
             </div>
-            <div className="card-body" style={{ padding: 0 }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
                 <tbody>
                   {[
                     { id: 1, name: 'Pembayaran SPP Budi (X-RPL)', date: '15 Jul 2026', amount: '+ Rp 350.000', type: 'in' },
                     { id: 2, name: 'Bayar Listrik Sekolah', date: '14 Jul 2026', amount: '- Rp 1.200.000', type: 'out' },
                     { id: 3, name: 'Pembayaran Seragam (SD)', date: '14 Jul 2026', amount: '+ Rp 850.000', type: 'in' },
                   ].map((trx) => (
-                    <tr key={trx.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '1.25rem 1.5rem' }}>
-                        <p style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.25rem' }}>{trx.name}</p>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{trx.date}</p>
+                    <tr key={trx.id} className="border-b border-border last:border-0 hover:bg-gray-50/50 transition-colors">
+                      <td className="p-4 md:p-5">
+                        <p className="font-semibold text-text-main mb-1">{trx.name}</p>
+                        <p className="text-sm text-text-muted">{trx.date}</p>
                       </td>
-                      <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
-                        <span style={{ 
-                          fontWeight: 700, 
-                          color: trx.type === 'in' ? '#059669' : '#e11d48'
-                        }}>
+                      <td className="p-4 md:p-5 text-right">
+                        <span className={`font-bold ${trx.type === 'in' ? 'text-emerald-600' : 'text-rose-600'}`}>
                           {trx.amount}
                         </span>
                       </td>
@@ -152,48 +150,48 @@ export default async function DashboardPage() {
         </div>
 
         {/* Kolom Kanan (Side widgets) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="flex flex-col gap-6">
           
           <StudentDemographicChart data={chartData} />
 
           {/* Quick Actions */}
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">Aksi Cepat</h3>
+          <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
+            <div className="p-5 border-b border-border bg-gray-50/50">
+              <h3 className="text-lg font-bold text-text-main">Aksi Cepat</h3>
             </div>
-            <div className="card-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <button className="btn btn-primary" style={{ flexDirection: 'column', padding: '1.5rem 1rem', height: 'auto', gap: '0.75rem' }}>
+            <div className="p-5 grid grid-cols-2 gap-4">
+              <button className="flex flex-col items-center justify-center p-4 bg-primary text-white rounded-xl hover:bg-primary-hover transition-colors shadow-sm gap-3">
                 <Wallet size={24} />
-                <span>Terima Kas</span>
+                <span className="text-sm font-semibold">Terima Kas</span>
               </button>
-              <button className="btn btn-secondary" style={{ flexDirection: 'column', padding: '1.5rem 1rem', height: 'auto', gap: '0.75rem' }}>
-                <ArrowUpRight size={24} />
-                <span>Keluarkan Kas</span>
+              <button className="flex flex-col items-center justify-center p-4 bg-surface text-text-main border border-border rounded-xl hover:bg-surface-hover transition-colors shadow-sm gap-3">
+                <ArrowUpRight size={24} className="text-text-muted" />
+                <span className="text-sm font-semibold">Keluarkan Kas</span>
               </button>
-              <button className="btn btn-secondary" style={{ flexDirection: 'column', padding: '1.5rem 1rem', height: 'auto', gap: '0.75rem' }}>
-                <Users size={24} />
-                <span>Tambah Murid</span>
+              <button className="flex flex-col items-center justify-center p-4 bg-surface text-text-main border border-border rounded-xl hover:bg-surface-hover transition-colors shadow-sm gap-3">
+                <Users size={24} className="text-text-muted" />
+                <span className="text-sm font-semibold">Tambah Murid</span>
               </button>
-              <button className="btn btn-secondary" style={{ flexDirection: 'column', padding: '1.5rem 1rem', height: 'auto', gap: '0.75rem' }}>
-                <FileText size={24} />
-                <span>Cek Tagihan</span>
+              <button className="flex flex-col items-center justify-center p-4 bg-surface text-text-main border border-border rounded-xl hover:bg-surface-hover transition-colors shadow-sm gap-3">
+                <FileText size={24} className="text-text-muted" />
+                <span className="text-sm font-semibold">Cek Tagihan</span>
               </button>
             </div>
           </div>
 
           {/* Pending tasks / Alerts */}
-          <div className="card" style={{ borderLeft: '4px solid var(--albas-yellow)' }}>
-            <div className="card-body">
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                <div style={{ backgroundColor: 'var(--albas-yellow)', padding: '0.5rem', borderRadius: '12px', color: '#fff' }}>
+          <div className="bg-surface rounded-2xl shadow-sm border-l-4 border-l-albas-yellow border-y border-r border-border overflow-hidden">
+            <div className="p-5">
+              <div className="flex gap-4 items-start">
+                <div className="p-2.5 bg-albas-yellow text-white rounded-xl shrink-0">
                   <Activity size={20} />
                 </div>
                 <div>
-                  <h4 style={{ fontWeight: 700, marginBottom: '0.25rem' }}>Tunggakan SPP</h4>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                  <h4 className="font-bold text-text-main mb-1">Tunggakan SPP</h4>
+                  <p className="text-sm text-text-muted mb-4 leading-relaxed">
                     Ada 34 Siswa yang belum membayar SPP bulan ini (Total: Rp 12.450.000)
                   </p>
-                  <button className="btn btn-sm btn-outline" style={{ borderColor: 'var(--albas-yellow)', color: '#854d0e' }}>
+                  <button className="px-3 py-1.5 text-sm font-medium text-yellow-800 border border-albas-yellow rounded-lg hover:bg-yellow-50 transition-colors">
                     Lihat Rincian
                   </button>
                 </div>

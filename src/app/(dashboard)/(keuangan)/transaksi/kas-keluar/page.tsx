@@ -16,9 +16,9 @@ export default async function KasKeluarPage() {
   })
 
   return (
-    <div className="card" style={{ padding: "1.5rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-        <h2 style={{ fontSize: "1.25rem", color: "var(--text-error)" }}>Kas Keluar</h2>
+    <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-red-600">Kas Keluar</h2>
       </div>
 
       <KasKeluarClient 

@@ -15,80 +15,81 @@ export default function LoginPage() {
   }, [state, router])
 
   return (
-    <div className="login-wrapper">
-      <div className="login-left">
-        <div className="login-left-content">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-            <img src="/logo.png" alt="Logo" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
+    <div className="flex h-screen w-full bg-surface overflow-hidden">
+      <div className="hidden lg:flex flex-col justify-center flex-1 bg-gradient-to-br from-[#0d8046] to-[#0b6b3a] text-white relative overflow-hidden p-12 xl:p-20">
+        <div className="relative z-10">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center p-2 shadow-lg">
+              <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+            </div>
             <div>
-              <h1 style={{ fontSize: '2rem', fontWeight: '800', margin: 0, letterSpacing: '-0.02em' }}>SIRAYA</h1>
-              <span style={{ fontSize: '1rem', opacity: 0.9 }}>Sistem Informasi Yayasan Al Basyariah</span>
+              <h1 className="text-4xl font-extrabold m-0 tracking-tight text-white drop-shadow-md">SIRAYA</h1>
+              <span className="text-lg text-white/90 font-medium">Sistem Informasi Yayasan Al Basyariah</span>
             </div>
           </div>
           
-          <h2 style={{ fontSize: '2.5rem', fontWeight: '700', lineHeight: 1.2, marginBottom: '1.5rem', maxWidth: '480px' }}>
+          <h2 className="text-4xl xl:text-5xl font-bold leading-tight mb-6 max-w-xl text-white">
             Kelola Manajemen Sekolah dengan Lebih Cerdas & Terintegrasi
           </h2>
           
-          <p style={{ fontSize: '1.125rem', opacity: 0.8, lineHeight: 1.6, maxWidth: '480px', marginBottom: '3rem' }}>
+          <p className="text-lg text-white/80 leading-relaxed max-w-xl mb-12">
             Platform digital terpadu untuk administrasi, akademik, dan keuangan seluruh unit pendidikan di bawah naungan Yayasan Al Basyariah.
           </p>
 
-          <div style={{ display: 'flex', gap: '2rem', opacity: 0.8 }}>
+          <div className="flex gap-10 text-white/90">
             <div>
-              <h4 style={{ fontSize: '1.5rem', fontWeight: '700', margin: '0 0 0.5rem 0' }}>3+</h4>
-              <span style={{ fontSize: '0.875rem' }}>Unit Sekolah</span>
+              <h4 className="text-3xl font-bold mb-1 drop-shadow-sm">3+</h4>
+              <span className="text-sm font-medium">Unit Sekolah</span>
             </div>
             <div>
-              <h4 style={{ fontSize: '1.5rem', fontWeight: '700', margin: '0 0 0.5rem 0' }}>Terpadu</h4>
-              <span style={{ fontSize: '0.875rem' }}>Sistem Keuangan</span>
+              <h4 className="text-3xl font-bold mb-1 drop-shadow-sm">Terpadu</h4>
+              <span className="text-sm font-medium">Sistem Keuangan</span>
             </div>
             <div>
-              <h4 style={{ fontSize: '1.5rem', fontWeight: '700', margin: '0 0 0.5rem 0' }}>Otomatis</h4>
-              <span style={{ fontSize: '0.875rem' }}>Rekap Laporan</span>
+              <h4 className="text-3xl font-bold mb-1 drop-shadow-sm">Otomatis</h4>
+              <span className="text-sm font-medium">Rekap Laporan</span>
             </div>
           </div>
         </div>
         
         {/* Decorative elements */}
-        <div className="login-deco-1"></div>
-        <div className="login-deco-2"></div>
+        <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl mix-blend-overlay"></div>
+        <div className="absolute -bottom-48 -right-48 w-[800px] h-[800px] bg-albas-yellow/10 rounded-full blur-3xl mix-blend-overlay"></div>
       </div>
 
-      <div className="login-right">
-        <div className="login-form-container">
-          <div className="login-header" style={{ textAlign: 'left', marginBottom: '2.5rem' }}>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 0.5rem 0' }}>Selamat Datang Kembali</h2>
-            <p style={{ color: 'var(--text-muted)', margin: 0 }}>Silakan masuk ke akun administrator Anda.</p>
+      <div className="flex-1 flex flex-col items-center justify-center bg-surface relative z-10 px-6 sm:px-12 w-full">
+        <div className="w-full max-w-md mx-auto">
+          <div className="mb-10 text-left">
+            <h2 className="text-3xl font-bold text-text-main mb-2">Selamat Datang Kembali</h2>
+            <p className="text-text-muted text-lg">Silakan masuk ke akun administrator Anda.</p>
           </div>
 
-          <form action={formAction}>
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label className="form-label">Email Administrator</label>
+          <form action={formAction} className="space-y-6">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-main">Email Administrator</label>
               <input
                 type="email"
                 name="email"
                 required
-                className="form-input"
+                className="w-full px-4 py-3.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium placeholder-text-muted/50"
                 placeholder="admin@albasyariah.com"
-                style={{ padding: '0.875rem 1rem' }}
               />
             </div>
 
-            <div className="form-group" style={{ marginBottom: '2rem' }}>
-              <label className="form-label">Kata Sandi</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-main">Kata Sandi</label>
               <input
                 type="password"
                 name="password"
                 required
-                className="form-input"
+                className="w-full px-4 py-3.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium placeholder-text-muted/50 tracking-wider"
                 placeholder="••••••••"
-                style={{ padding: '0.875rem 1rem' }}
               />
             </div>
 
             {state?.error && (
-              <div className="alert-error" style={{ marginBottom: '1.5rem' }}>
+              <div className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-medium flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
                 {state.error}
               </div>
             )}
@@ -96,15 +97,19 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isPending}
-              className="btn-primary"
-              style={{ width: '100%', padding: '0.875rem', fontSize: '1rem', borderRadius: '12px' }}
+              className="w-full py-3.5 px-4 bg-primary text-white font-semibold rounded-xl hover:bg-primary-hover focus:ring-4 focus:ring-primary/30 transition-all shadow-md shadow-primary/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              {isPending ? "Sedang memverifikasi..." : "Masuk ke SIRAYA"}
+              {isPending ? (
+                <>
+                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                  Sedang memverifikasi...
+                </>
+              ) : "Masuk ke SIRAYA"}
             </button>
           </form>
           
-          <div style={{ marginTop: '3rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-            &copy; {new Date().getFullYear()} SIRAYA - Yayasan Al Basyariah.<br/>Dikembangkan dengan <span style={{color: 'red'}}>♥</span> untuk pendidikan.
+          <div className="mt-12 text-center text-sm font-medium text-text-muted">
+            &copy; {new Date().getFullYear()} SIRAYA - Yayasan Al Basyariah.<br/>Dikembangkan dengan <span className="text-red-500 animate-pulse inline-block mx-1">♥</span> untuk pendidikan.
           </div>
         </div>
       </div>

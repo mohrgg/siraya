@@ -26,12 +26,12 @@ export default function CashFlowChart() {
   }
 
   return (
-    <div className="card" style={{ height: "400px", display: "flex", flexDirection: "column" }}>
-      <div className="card-header" style={{ paddingBottom: "0.5rem" }}>
-        <h3 className="card-title">Arus Kas Semester Ini</h3>
-        <p style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>Perbandingan Pemasukan & Pengeluaran Total Yayasan</p>
+    <div className="bg-surface rounded-2xl shadow-sm border border-border h-[400px] flex flex-col">
+      <div className="p-6 pb-2 border-b border-border bg-bg/50">
+        <h3 className="text-lg font-bold text-text-main">Arus Kas Semester Ini</h3>
+        <p className="text-sm text-text-muted mt-1">Perbandingan Pemasukan & Pengeluaran Total Yayasan</p>
       </div>
-      <div className="card-body" style={{ flex: 1, paddingLeft: 0, paddingRight: "1.5rem" }}>
+      <div className="flex-1 pl-0 pr-6 pt-6">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
@@ -48,7 +48,7 @@ export default function CashFlowChart() {
             />
             <Legend wrapperStyle={{ paddingTop: "20px" }} />
             <Bar dataKey="Pemasukan" fill="var(--albas-green)" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Pengeluaran" fill="var(--text-error)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="Pengeluaran" fill="#ef4444" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

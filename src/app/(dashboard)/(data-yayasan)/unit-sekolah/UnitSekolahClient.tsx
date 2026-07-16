@@ -76,27 +76,21 @@ export default function UnitSekolahClient({ initialData }: { initialData: any[] 
         isLoading={isDeleting}
       />
 
-
-
       {isAdding && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1000,
-          display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem"
-        }}>
-          <div className="card" style={{ width: "100%", maxWidth: "500px", backgroundColor: "var(--bg-color)" }}>
-            <div className="card-header">
-              <h3 className="card-title">{formData.id ? "Edit Unit Sekolah" : "Tambah Unit Sekolah Baru"}</h3>
+        <div className="fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-surface rounded-2xl shadow-xl border border-border flex flex-col">
+            <div className="p-6 border-b border-border">
+              <h3 className="text-xl font-bold text-text-main">{formData.id ? "Edit Unit Sekolah" : "Tambah Unit Sekolah Baru"}</h3>
             </div>
-            <div className="card-body">
-              <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <div>
-                  <label className="form-label">Nama Unit</label>
+            <div className="p-6">
+              <form onSubmit={handleSave} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Nama Unit</label>
                   <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required placeholder="ex: SMK Al Basyariah" />
                 </div>
-                <div>
-                  <label className="form-label">Level</label>
-                  <select className="form-input" value={formData.level} onChange={e => setFormData({ ...formData, level: e.target.value })} required>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Level</label>
+                  <select className="w-full px-3 py-2 bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main" value={formData.level} onChange={e => setFormData({ ...formData, level: e.target.value })} required>
                     <option value="SD">SD</option>
                     <option value="SMP">SMP</option>
                     <option value="SMA">SMA</option>
@@ -106,20 +100,20 @@ export default function UnitSekolahClient({ initialData }: { initialData: any[] 
                     <option value="MA">MA</option>
                   </select>
                 </div>
-                <div>
-                  <label className="form-label">Telepon (Opsional)</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Telepon (Opsional)</label>
                   <Input value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="ex: 021-123456" />
                 </div>
                 {formData.id && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <input type="checkbox" id="isActive" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} style={{ width: "16px", height: "16px", accentColor: "var(--albas-green)" }} />
-                    <label htmlFor="isActive" style={{ fontWeight: 600, cursor: "pointer" }}>Unit Aktif</label>
+                  <div className="flex items-center gap-2 mt-2">
+                    <input type="checkbox" id="isActive" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} className="w-4 h-4 accent-albas-green" />
+                    <label htmlFor="isActive" className="font-semibold cursor-pointer text-text-main text-sm">Unit Aktif</label>
                   </div>
                 )}
                 
-                <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
-                  <Button type="submit" isLoading={isSubmitting}>Simpan</Button>
+                <div className="flex gap-3 mt-4 justify-end">
                   <Button type="button" variant="outline" onClick={() => { setIsAdding(false); setFormData({ id: "", name: "", level: "SD", address: "", phone: "", isActive: true }) }}>Batal</Button>
+                  <Button type="submit" isLoading={isSubmitting}>Simpan</Button>
                 </div>
               </form>
             </div>
@@ -127,57 +121,65 @@ export default function UnitSekolahClient({ initialData }: { initialData: any[] 
         </div>
       )}
 
-      <div className="card" style={{ padding: "1.5rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-          <h2 style={{ fontSize: "1.25rem", color: "var(--albas-green)" }}>Manajemen Unit Sekolah</h2>
+      <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-albas-green">Manajemen Unit Sekolah</h2>
         </div>
 
-      <Button onClick={() => setIsAdding(true)} style={{ marginBottom: "1.5rem" }}>
-        <Plus size={16} style={{ marginRight: "0.5rem" }}/> Tambah Unit Sekolah
-      </Button>
+        <Button onClick={() => setIsAdding(true)} className="mb-6">
+          <Plus size={16} className="mr-2"/> Tambah Unit Sekolah
+        </Button>
 
-      <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-        <thead>
-          <tr style={{ borderBottom: "2px solid var(--border-color)", color: "var(--text-muted)", fontSize: "0.875rem" }}>
-            <th style={{ padding: "1rem" }}>NAMA UNIT</th>
-            <th style={{ padding: "1rem" }}>LEVEL</th>
-            <th style={{ padding: "1rem" }}>TELEPON</th>
-            <th style={{ padding: "1rem" }}>STATUS</th>
-            <th style={{ padding: "1rem", textAlign: "right" }}>AKSI</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item) => (
-            <tr key={item.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
-              <td style={{ padding: "1rem", display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '0.5rem', borderRadius: '8px', color: 'var(--albas-green)' }}>
-                  <Building size={20} />
-                </div>
-                <span style={{ fontWeight: 600 }}>{item.name}</span>
-              </td>
-              <td style={{ padding: "1rem" }}>{item.level}</td>
-              <td style={{ padding: "1rem" }}>{item.phone || "-"}</td>
-              <td style={{ padding: "1rem" }}>
-                <span className={`badge ${item.isActive ? 'badge-success' : 'badge-error'}`}>
-                  {item.isActive ? "Aktif" : "Nonaktif"}
-                </span>
-              </td>
-              <td style={{ padding: "1rem", textAlign: "right" }}>
-                <Button variant="outline" size="sm" onClick={() => handleEdit(item)} style={{ marginRight: "0.5rem" }}>
-                  <Edit2 size={14} />
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => setDeleteId(item.id)}>
-                  <Trash2 size={14} />
-                </Button>
-              </td>
-            </tr>
-          ))}
-          {data.length === 0 && (
-            <tr><td colSpan={5} style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>Belum ada data Unit Sekolah.</td></tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider">
+                <th className="p-4 font-semibold">NAMA UNIT</th>
+                <th className="p-4 font-semibold">LEVEL</th>
+                <th className="p-4 font-semibold">TELEPON</th>
+                <th className="p-4 font-semibold">STATUS</th>
+                <th className="p-4 font-semibold text-right">AKSI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item) => (
+                <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
+                  <td className="p-4 flex items-center gap-3">
+                    <div className="bg-primary/10 p-2 rounded-lg text-primary">
+                      <Building size={20} />
+                    </div>
+                    <span className="font-semibold text-text-main">{item.name}</span>
+                  </td>
+                  <td className="p-4 text-text-main font-medium">{item.level}</td>
+                  <td className="p-4 text-text-muted">{item.phone || "-"}</td>
+                  <td className="p-4">
+                    <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                      {item.isActive ? "Aktif" : "Nonaktif"}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
+                        <Edit2 size={16} />
+                      </Button>
+                      <Button variant="danger" size="sm" onClick={() => setDeleteId(item.id)}>
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {data.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-text-muted">
+                    Belum ada data Unit Sekolah.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 }

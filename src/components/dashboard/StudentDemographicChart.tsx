@@ -8,12 +8,12 @@ export default function StudentDemographicChart({ data = [] }: { data?: { name: 
   const chartData = data.length > 0 ? data : [{ name: 'Belum Ada Data', value: 1 }];
 
   return (
-    <div className="card" style={{ height: "400px", display: "flex", flexDirection: "column" }}>
-      <div className="card-header" style={{ paddingBottom: "0.5rem" }}>
-        <h3 className="card-title">Sebaran Gender Murid Aktif</h3>
-        <p style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>Persentase siswa laki-laki & perempuan</p>
+    <div className="bg-surface rounded-2xl shadow-sm border border-border h-[400px] flex flex-col">
+      <div className="p-6 pb-2 border-b border-border bg-bg/50">
+        <h3 className="text-lg font-bold text-text-main">Sebaran Gender Murid Aktif</h3>
+        <p className="text-sm text-text-muted mt-1">Persentase siswa laki-laki & perempuan</p>
       </div>
-      <div className="card-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="flex-1 flex items-center justify-center p-6">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

@@ -7,10 +7,10 @@ export default async function TahunAkademikPage() {
   const data = await getTahunAkademik()
 
   return (
-    <div className="page-container">
-      <div className="page-header" style={{ marginBottom: "1.5rem" }}>
-        <h1 className="page-title">Tahun Akademik</h1>
-        <p className="page-subtitle">Kelola tahun ajaran akademik Yayasan</p>
+    <div className="max-w-7xl mx-auto w-full">
+      <div className="mb-6">
+        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Tahun Akademik</h1>
+        <p className="text-text-muted">Kelola tahun ajaran akademik Yayasan</p>
       </div>
       <TahunAkademikClient initialData={data} />
     </div>

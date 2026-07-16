@@ -68,107 +68,107 @@ export default function KasMasukClient({
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1.5rem" }}>
-        <div style={{ width: "300px", position: "relative" }}>
-          <Search size={16} style={{ position: "absolute", left: "10px", top: "12px", color: "var(--text-muted)" }} />
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <div className="relative w-full max-w-xs">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
           <input 
             type="text" 
             placeholder="Cari referensi atau keterangan..." 
-            className="form-input" 
-            style={{ paddingLeft: "35px" }}
+            className="w-full pl-10 pr-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm text-text-main" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <Button onClick={() => setIsAdding(true)}>
-          <Plus size={16} style={{ marginRight: "0.5rem" }} /> Input Kas Masuk
+          <Plus size={16} className="mr-2" /> Input Kas Masuk
         </Button>
       </div>
 
       {isAdding && (
-        <form onSubmit={handleSubmit} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem", padding: "1.5rem", backgroundColor: "var(--bg-color)", borderRadius: "12px" }}>
-          <div style={{ gridColumn: "span 2", fontWeight: 700, marginBottom: "0.5rem" }}>Input Transaksi Kas Masuk (Penerimaan)</div>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-6 bg-bg border border-border rounded-2xl shadow-sm">
+          <div className="md:col-span-2 font-bold text-lg text-text-main mb-2">Input Transaksi Kas Masuk (Penerimaan)</div>
           
-          <div>
-            <label className="form-label">Tanggal Transaksi</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-main">Tanggal Transaksi</label>
             <Input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} required />
           </div>
-          <div>
-            <label className="form-label">Unit Sekolah</label>
-            <select className="form-input" value={formData.unitSekolahId} onChange={e => setFormData({ ...formData, unitSekolahId: e.target.value })} required>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-main">Unit Sekolah</label>
+            <select className="w-full px-4 py-2 bg-surface border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium h-[42px]" value={formData.unitSekolahId} onChange={e => setFormData({ ...formData, unitSekolahId: e.target.value })} required>
               {schoolUnits.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
             </select>
           </div>
-          <div style={{ gridColumn: "span 2" }}>
-            <label className="form-label">Akun Keuangan (Penerimaan)</label>
-            <select className="form-input" value={formData.akunDetailId} onChange={e => setFormData({ ...formData, akunDetailId: e.target.value })} required>
+          <div className="md:col-span-2 flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-main">Akun Keuangan (Penerimaan)</label>
+            <select className="w-full px-4 py-2 bg-surface border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium h-[42px]" value={formData.akunDetailId} onChange={e => setFormData({ ...formData, akunDetailId: e.target.value })} required>
               <option value="">-- Pilih Akun --</option>
               {accounts.map(a => <option key={a.id} value={a.id}>[{a.code}] {a.name} ({a.subKlasifikasiAkun.name})</option>)}
             </select>
           </div>
-          <div>
-            <label className="form-label">Jumlah (Rp)</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-main">Jumlah (Rp)</label>
             <Input type="number" min="0" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} required />
           </div>
-          <div>
-            <label className="form-label">Nomor Formulir (Opsional)</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-main">Nomor Formulir (Opsional)</label>
             <Input value={formData.formNo} onChange={e => setFormData({ ...formData, formNo: e.target.value })} />
           </div>
-          <div>
-            <label className="form-label">Nama Siswa / Penyetor (Opsional)</label>
-            <input list="students" className="form-input" value={formData.studentName} onChange={e => setFormData({ ...formData, studentName: e.target.value })} />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-main">Nama Siswa / Penyetor (Opsional)</label>
+            <input list="students" className="w-full px-4 py-2 bg-surface border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium h-[42px]" value={formData.studentName} onChange={e => setFormData({ ...formData, studentName: e.target.value })} />
             <datalist id="students">
               {students.filter(s => s.unitSekolahId === formData.unitSekolahId).map(s => <option key={s.id} value={s.name} />)}
             </datalist>
           </div>
-          <div style={{ gridColumn: "span 2" }}>
-            <label className="form-label">Keterangan Tambahan</label>
+          <div className="md:col-span-2 flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-main">Keterangan Tambahan</label>
             <textarea 
-              className="form-input" 
+              className="w-full px-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main" 
               rows={3} 
               value={formData.description} 
               onChange={e => setFormData({ ...formData, description: e.target.value })} 
-              style={{ resize: "vertical" }}
             />
           </div>
           
-          <div style={{ gridColumn: "span 2", display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
-            <Button type="submit" isLoading={isSubmitting}>Simpan Transaksi</Button>
+          <div className="md:col-span-2 flex gap-3 mt-2 justify-end">
             <Button type="button" variant="outline" onClick={() => setIsAdding(false)}>Batal</Button>
+            <Button type="submit" isLoading={isSubmitting}>Simpan Transaksi</Button>
           </div>
         </form>
       )}
 
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+      <div className="overflow-x-auto -mx-6 px-6">
+        <table className="w-full border-collapse text-left min-w-[800px]">
           <thead>
-            <tr style={{ borderBottom: "2px solid var(--border-color)", color: "var(--text-muted)" }}>
-              <th style={{ padding: "1rem" }}>Tanggal</th>
-              <th style={{ padding: "1rem" }}>No Referensi</th>
-              <th style={{ padding: "1rem" }}>Penyetor/Keterangan</th>
-              <th style={{ padding: "1rem" }}>Akun</th>
-              <th style={{ padding: "1rem", textAlign: "right" }}>Nominal</th>
+            <tr className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider">
+              <th className="p-4 font-semibold">Tanggal</th>
+              <th className="p-4 font-semibold">No Referensi</th>
+              <th className="p-4 font-semibold">Penyetor/Keterangan</th>
+              <th className="p-4 font-semibold">Akun</th>
+              <th className="p-4 font-semibold text-right">Nominal</th>
             </tr>
           </thead>
           <tbody>
             {filteredData.map(item => (
-              <tr key={item.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
-                <td style={{ padding: "1rem" }}>{new Date(item.date).toLocaleDateString('id-ID')}</td>
-                <td style={{ padding: "1rem", fontWeight: 600 }}>{item.referenceNo}</td>
-                <td style={{ padding: "1rem" }}>
-                  <div style={{ fontWeight: 600 }}>{item.studentName || item.recipientName || "-"}</div>
-                  <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{item.description}</div>
+              <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
+                <td className="p-4 text-text-main">{new Date(item.date).toLocaleDateString('id-ID')}</td>
+                <td className="p-4 font-semibold text-text-main">{item.referenceNo}</td>
+                <td className="p-4">
+                  <div className="font-semibold text-text-main">{item.studentName || item.recipientName || "-"}</div>
+                  <div className="text-sm text-text-muted mt-0.5">{item.description}</div>
                 </td>
-                <td style={{ padding: "1rem" }}>
+                <td className="p-4 text-text-main">
                   {item.akunDetail ? `[${item.akunDetail.code}] ${item.akunDetail.name}` : "-"}
                 </td>
-                <td style={{ padding: "1rem", textAlign: "right", fontWeight: 700, color: "var(--albas-green)" }}>
+                <td className="p-4 text-right font-bold text-albas-green">
                   {formatRp(Number(item.amount))}
                 </td>
               </tr>
             ))}
             {filteredData.length === 0 && (
-              <tr><td colSpan={5} style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>Belum ada data Kas Masuk.</td></tr>
+              <tr>
+                <td colSpan={5} className="p-8 text-center text-text-muted">Belum ada data Kas Masuk.</td>
+              </tr>
             )}
           </tbody>
         </table>

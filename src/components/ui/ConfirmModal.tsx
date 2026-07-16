@@ -21,30 +21,22 @@ export function ConfirmModal({
   if (!isOpen) return null
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '1rem'
-    }}>
-      <div className="card" style={{ 
-        width: '100%', maxWidth: '400px', backgroundColor: 'var(--bg-color)',
-        padding: '1.5rem', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-          <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: '50%', color: confirmVariant === 'danger' ? 'var(--text-error)' : 'var(--text-main)' }}>
+    <div className="fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4">
+      <div className="w-full max-w-sm bg-surface p-6 rounded-xl shadow-2xl border border-border">
+        <div className="flex items-center gap-4 mb-4">
+          <div className={`p-3 rounded-full ${confirmVariant === 'danger' ? 'bg-red-50 text-red-600' : 'bg-primary/10 text-primary'}`}>
             <AlertTriangle size={24} />
           </div>
-          <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-main)' }}>{title}</h3>
+          <h3 className="m-0 text-xl font-bold text-text-main">{title}</h3>
         </div>
         
-        <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+        <p className="text-text-muted mb-6 leading-relaxed">
           {message}
         </p>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+        <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={onCancel} disabled={isLoading}>{cancelText}</Button>
-          <Button variant={confirmVariant} onClick={onConfirm} isLoading={isLoading}>{confirmText}</Button>
+          <Button variant={confirmVariant as any} onClick={onConfirm} isLoading={isLoading}>{confirmText}</Button>
         </div>
       </div>
     </div>

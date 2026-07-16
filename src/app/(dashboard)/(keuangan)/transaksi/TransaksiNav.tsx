@@ -13,7 +13,7 @@ export default function TransaksiNav() {
   ]
 
   return (
-    <div className="tabs-container" style={{ borderBottom: "1px solid var(--border-color)", display: "flex", gap: "2rem" }}>
+    <div className="flex gap-8 border-b border-border">
       {tabs.map(tab => {
         const Icon = tab.icon
         const isActive = pathname.startsWith(tab.href)
@@ -21,24 +21,17 @@ export default function TransaksiNav() {
           <Link 
             key={tab.href} 
             href={tab.href}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              padding: "1rem 0",
-              color: isActive ? "var(--text-color)" : "var(--text-muted)",
-              fontWeight: isActive ? 700 : 600,
-              borderBottom: isActive ? `3px solid ${tab.color}` : "3px solid transparent",
-              textDecoration: "none",
-              transition: "all 0.2s"
-            }}
+            className={`flex items-center gap-2 py-4 font-semibold transition-all border-b-2 decoration-transparent
+              ${isActive ? "text-text-main" : "text-text-muted hover:text-text-main border-transparent"}`}
+            style={{ borderBottomColor: isActive ? tab.color : 'transparent' }}
           >
-            <div style={{ 
-              display: "flex", alignItems: "center", justifyContent: "center", 
-              width: "28px", height: "28px", borderRadius: "50%", 
-              backgroundColor: isActive ? `${tab.color}20` : "transparent",
-              color: isActive ? tab.color : "inherit"
-            }}>
+            <div 
+              className="flex items-center justify-center w-7 h-7 rounded-full"
+              style={{ 
+                backgroundColor: isActive ? `${tab.color}20` : "transparent",
+                color: isActive ? tab.color : "inherit"
+              }}
+            >
               <Icon size={16} />
             </div>
             {tab.name}
