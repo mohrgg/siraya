@@ -42,34 +42,48 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
   }
   
   return (
-    <header className="h-16 px-6 bg-surface border-b border-border flex items-center justify-between shadow-sm shrink-0">
+    <header className="h-[80px] px-6 bg-surface border-b border-border flex items-center justify-between shadow-sm shrink-0">
       <div className="flex items-center gap-6">
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Unit Sekolah</label>
-          <select 
-            className="bg-bg border-none text-sm font-semibold text-text-main py-1.5 px-3 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-[150px]" 
-            value={unit} 
-            onChange={(e) => handleChange("unit", e.target.value)}
-            disabled={isPending}
-          >
-            {schoolUnits.map(u => (
-              <option key={u.id} value={u.id}>{u.name}</option>
-            ))}
-          </select>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-1">Unit Sekolah</label>
+          <div className="relative">
+            <select 
+              className="appearance-none bg-surface border border-border shadow-sm hover:shadow-md transition-shadow text-sm font-semibold text-text-main py-2 pl-4 pr-10 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-[180px]" 
+              value={unit} 
+              onChange={(e) => handleChange("unit", e.target.value)}
+              disabled={isPending}
+            >
+              {schoolUnits.map(u => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
         </div>
         
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tahun Akademik</label>
-          <select 
-            className="bg-bg border-none text-sm font-semibold text-text-main py-1.5 px-3 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-[150px]" 
-            value={year} 
-            onChange={(e) => handleChange("year", e.target.value)}
-            disabled={isPending}
-          >
-            {academicYears.map(y => (
-              <option key={y.id} value={y.id}>{y.name}</option>
-            ))}
-          </select>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-1">Tahun Akademik</label>
+          <div className="relative">
+            <select 
+              className="appearance-none bg-surface border border-border shadow-sm hover:shadow-md transition-shadow text-sm font-semibold text-text-main py-2 pl-4 pr-10 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-[180px]" 
+              value={year} 
+              onChange={(e) => handleChange("year", e.target.value)}
+              disabled={isPending}
+            >
+              {academicYears.map(y => (
+                <option key={y.id} value={y.id}>{y.name}</option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 

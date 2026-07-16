@@ -79,7 +79,7 @@ export default function Sidebar({ user }: { user: any }) {
 
   return (
     <>
-      <aside className={`bg-[#065f32] text-white h-screen border-r border-[#0a753d] flex flex-col transition-all duration-300 relative z-40 ${isCollapsed ? "w-20" : "w-[265px]"}`}>
+      <aside className={`bg-[#065f32] text-white h-full border-r border-[#0a753d] flex flex-col transition-all duration-300 relative z-40 ${isCollapsed ? "w-20" : "w-[265px]"}`}>
         {/* Floating Toggle Button (Right Edge) */}
         <button 
           className="absolute -right-3 top-8 w-7 h-7 rounded-full bg-surface border border-border text-primary flex items-center justify-center hover:bg-surface-hover z-50 shadow-md transition-transform"

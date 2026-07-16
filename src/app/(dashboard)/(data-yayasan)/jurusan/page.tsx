@@ -4,6 +4,7 @@ import JurusanClient from "./JurusanClient"
 export default async function JurusanPage() {
   const data = await getJurusan()
 
+  return (
     <div className="max-w-7xl mx-auto w-full">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Program & Jurusan</h1>
@@ -11,4 +12,5 @@ export default async function JurusanPage() {
       </div>
       <JurusanClient initialData={data} />
     </div>
+  )
 }
