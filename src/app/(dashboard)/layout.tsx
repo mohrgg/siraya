@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 import Sidebar from "@/components/layout/Sidebar"
@@ -16,17 +17,20 @@ export default async function DashboardLayout({
   }
 
   // Fetch school units and academic years for the global header
-  const schoolUnits = await prisma.schoolUnit.findMany({
+  const schoolUnits = await prisma.unitSekolah.findMany({
     where: { isActive: true },
     select: { id: true, name: true }
   })
 
-  // For the active academic year, we might just fetch all and let the client filter or select
-  // We'll pass all active academic years.
-  const academicYears = await prisma.academicYear.findMany({
-    where: { isActive: true },
-    select: { id: true, name: true, schoolUnitId: true }
+  // For the header dropdown, we load ALL academic years so users can switch context.
+  const academicYears = await prisma.tahunAkademik.findMany({
+    select: { id: true, name: true },
+    orderBy: { createdAt: "desc" }
   })
+
+  const cookieStore = await cookies()
+  const activeUnitId = cookieStore.get("activeUnitId")?.value || schoolUnits[0]?.id
+  const activeYearId = cookieStore.get("activeYearId")?.value || academicYears[0]?.id
 
   return (
     <div className="dashboard-container">
@@ -45,6 +49,8 @@ export default async function DashboardLayout({
           }}
           schoolUnits={schoolUnits}
           academicYears={academicYears}
+          activeUnitId={activeUnitId}
+          activeYearId={activeYearId}
         />
         <main className="dashboard-content">
           {children}

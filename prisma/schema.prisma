@@ -3,275 +3,292 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// ========== UNIT SEKOLAH ==========
-model SchoolUnit {
-  id        String   @id @default(cuid())
-  name      String   // "SD Al Basyariah", "SMP Al Basyariah", "SMK Al Basyariah"
-  level     String   // "SD", "SMP", "SMK", "MA", dll
-  address   String?
-  phone     String?
-  logo      String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  academicYears        AcademicYear[]
-  grades               Grade[]
-  classrooms           Classroom[]
-  students             Student[]
-  accountClassifications AccountClassification[]
-  cashTransactions     CashTransaction[]
-  billingTypes         BillingType[]
-  budgets              Budget[]
-  formSales            FormSale[]
-  approvalOrders       ApprovalOrder[]
-  importantAccounts    ImportantAccount[]
-}
-
-// ========== AUTH & USER ==========
-model User {
+// ========== PENGGUNA ==========
+model Pengguna {
   id            String   @id @default(cuid())
-  name          String
-  email         String   @unique
-  password      String
-  role          String   @default("TATA_USAHA") // ADMIN, TATA_USAHA
-  avatar        String?
+  name          String   @db.VarChar(100)
+  email         String   @unique @db.VarChar(100)
+  password      String   @db.VarChar(255)
+  role          String   @default("TATA_USAHA") @db.VarChar(50)
+  avatar        String?  @db.VarChar(255)
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  cashTransactions  CashTransaction[]
-  payments          Payment[]
-  approvalOrders    ApprovalOrder[]
+  transaksiKas      TransaksiKas[]
+  pembayaran        Pembayaran[]
+  urutanPengesahan  UrutanPengesahan[]
+}
+
+// ========== UNIT SEKOLAH ==========
+model UnitSekolah {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(100) // "SD Al Basyariah", "SMP Al Basyariah", "SMK Al Basyariah"
+  level     String   @db.VarChar(50)  // "SD", "SMP", "SMK", "MA", dll
+  address   String?  @db.Text
+  phone     String?  @db.VarChar(20)
+  logo      String?  @db.VarChar(255)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tingkat         Tingkat[]
+  subKelas        SubKelas[]
+  murid           Murid[]
+  klasifikasiAkun KlasifikasiAkun[]
+  akunPenting     AkunPenting[]
+  urutanPengesahan UrutanPengesahan[]
+  transaksiKas    TransaksiKas[]
+  jenisTagihan    JenisTagihan[]
+  anggaran        Anggaran[]
+  penjualanFormulir PenjualanFormulir[]
 }
 
 // ========== TAHUN AKADEMIK ==========
-model AcademicYear {
+model TahunAkademik {
   id           String   @id @default(cuid())
-  name         String   // "2025/2026"
-  schoolUnitId String
+  name         String   @db.VarChar(50) // "2025/2026"
   isActive     Boolean  @default(false)
   createdAt    DateTime @default(now())
 
-  schoolUnit     SchoolUnit  @relation(fields: [schoolUnitId], references: [id])
-  classrooms     Classroom[]
-  billingTypes   BillingType[]
-  budgets        Budget[]
-  formSales      FormSale[]
+  subKelas       SubKelas[]
+  jenisTagihan   JenisTagihan[]
+  anggaran       Anggaran[]
+  penjualanFormulir PenjualanFormulir[]
 }
 
-// ========== KELAS & SISWA ==========
-model Grade {
+// ========== KELAS & MURID ==========
+model Tingkat {
   id           String @id @default(cuid())
-  name         String // "X", "XI", "XII"
+  name         String @db.VarChar(50) // "X", "XI", "XII"
   order        Int    // untuk sorting
-  schoolUnitId String
+  unitSekolahId String
 
-  schoolUnit SchoolUnit  @relation(fields: [schoolUnitId], references: [id])
-  classrooms Classroom[]
+  unitSekolah UnitSekolah  @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  subKelas    SubKelas[]
 }
 
-model Major {
+model Jurusan {
   id   String @id @default(cuid())
-  name String // "TKJ", "RPL", "OTKP"
-  code String
+  name String @db.VarChar(100) // "TKJ", "RPL", "OTKP"
+  code String @unique @db.VarChar(20)
 
-  classrooms Classroom[]
+  subKelas SubKelas[]
 }
 
-model Classroom {
+model SubKelas {
   id             String       @id @default(cuid())
-  name           String       // "X TKJ 1"
-  gradeId        String
-  majorId        String
-  academicYearId String
-  schoolUnitId   String
+  name           String       @db.VarChar(100) // "X TKJ 1"
+  tingkatId      String
+  jurusanId      String?
+  tahunAkademikId String
+  unitSekolahId  String
 
-  schoolUnit   SchoolUnit   @relation(fields: [schoolUnitId], references: [id])
-  grade        Grade        @relation(fields: [gradeId], references: [id])
-  major        Major        @relation(fields: [majorId], references: [id])
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
-  students     Student[]
+  unitSekolah   UnitSekolah   @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  tingkat       Tingkat       @relation(fields: [tingkatId], references: [id], onDelete: Cascade)
+  jurusan       Jurusan?      @relation(fields: [jurusanId], references: [id])
+  tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
+  murid         Murid[]
 }
 
-model Student {
-  id           String  @id @default(cuid())
-  nis          String  @unique
-  name         String
-  classroomId  String?
-  schoolUnitId String
-  isActive     Boolean @default(true)
-  isScholarship Boolean @default(false)
+model Murid {
+  id             String  @id @default(cuid())
+  nis            String  @unique @db.VarChar(50)
+  name           String  @db.VarChar(150)
+  subKelasId     String?
+  unitSekolahId  String
+  isActive       Boolean @default(true)
+  isScholarship  Boolean @default(false)
 
-  schoolUnit  SchoolUnit @relation(fields: [schoolUnitId], references: [id])
-  classroom   Classroom? @relation(fields: [classroomId], references: [id])
-  billings    Billing[]
+  // Field pendaftaran
+  nisn           String? @db.VarChar(50)
+  previousSchool String? @db.VarChar(150)
+  phone          String? @db.VarChar(20)
+  birthDate      DateTime?
+  email          String? @db.VarChar(100)
+  studentStatus  String? @db.VarChar(50)
+  parentName     String? @db.VarChar(150)
+  parentPhone    String? @db.VarChar(20)
+  religion       String? @db.VarChar(50)
+  gender         String? @db.VarChar(20)
+  password       String? @db.VarChar(255)
+  address        String? @db.Text
+  photoUrl       String? @db.VarChar(255)
+  formNo         String? @db.VarChar(50)
+  username       String? @db.VarChar(100)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  subKelas    SubKelas?   @relation(fields: [subKelasId], references: [id])
+  tagihan     Tagihan[]
 }
 
 // ========== AKUN KEUANGAN ==========
-model AccountClassification {
+model KlasifikasiAkun {
   id           String @id @default(cuid())
-  name         String // "HARTA", "PENDAPATAN", "BIAYA BEBAN"
-  schoolUnitId String
+  name         String @db.VarChar(100) // "HARTA", "PENDAPATAN"
+  unitSekolahId String
 
-  schoolUnit          SchoolUnit                 @relation(fields: [schoolUnitId], references: [id])
-  subClassifications  AccountSubClassification[]
+  unitSekolah        UnitSekolah          @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  subKlasifikasiAkun SubKlasifikasiAkun[]
 }
 
-model AccountSubClassification {
+model SubKlasifikasiAkun {
   id               String @id @default(cuid())
-  code             String @unique // "10000001"
-  name             String // "BANK", "PENDAPATAN", "PENGELUARAN"
-  classificationId String
+  code             String @unique @db.VarChar(50) // "10000001"
+  name             String @db.VarChar(100) // "KAS & BANK"
+  klasifikasiAkunId String
 
-  classification AccountClassification @relation(fields: [classificationId], references: [id])
-  accounts       FinanceAccount[]
+  klasifikasiAkun KlasifikasiAkun @relation(fields: [klasifikasiAkunId], references: [id], onDelete: Cascade)
+  akunDetail      AkunDetail[]
 }
 
-model FinanceAccount {
+model AkunDetail {
   id                    String  @id @default(cuid())
-  code                  String  @unique
-  name                  String
-  subClassificationId   String
+  code                  String  @unique @db.VarChar(50)
+  name                  String  @db.VarChar(150)
+  subKlasifikasiAkunId  String
   isActive              Boolean @default(true)
-  bankAccountNumber     String? // untuk hubungkan bank
+  bankAccountNumber     String? @db.VarChar(100)
 
-  subClassification AccountSubClassification @relation(fields: [subClassificationId], references: [id])
-  cashTransactions  CashTransaction[]
-  budgetItems       BudgetItem[]
+  subKlasifikasiAkun SubKlasifikasiAkun @relation(fields: [subKlasifikasiAkunId], references: [id], onDelete: Cascade)
+  transaksiKas       TransaksiKas[]
+  itemAnggaran       ItemAnggaran[]
 }
 
-model ImportantAccount {
+model AkunPenting {
   id           String  @id @default(cuid())
-  name         String  // "Laba Ditahan", "Laba Tahun Berjalan", dll
-  description  String
-  accountId    String? // akun yang dipilih
-  schoolUnitId String
+  name         String  @db.VarChar(100) // "Laba Ditahan"
+  description  String  @db.Text
+  akunDetailId String? // akun yang dipilih
+  unitSekolahId String
 
-  schoolUnit SchoolUnit @relation(fields: [schoolUnitId], references: [id])
+  unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
 }
 
 // ========== URUTAN PENGESAHAN ==========
-model ApprovalOrder {
+model UrutanPengesahan {
   id           String  @id @default(cuid())
-  userId       String
-  schoolUnitId String
-  name         String
+  penggunaId   String
+  unitSekolahId String
+  name         String  @db.VarChar(100)
   order        Int
   status       Boolean @default(true)
 
-  user       User       @relation(fields: [userId], references: [id])
-  schoolUnit SchoolUnit @relation(fields: [schoolUnitId], references: [id])
+  pengguna    Pengguna    @relation(fields: [penggunaId], references: [id], onDelete: Cascade)
+  unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
 }
 
 // ========== TRANSAKSI KAS ==========
-model CashTransaction {
+model TransaksiKas {
   id            String   @id @default(cuid())
-  type          String   // IN, OUT
-  referenceNo   String   @unique // auto-generate
-  formNo        String?  // no formulir
-  accountId     String
-  schoolUnitId  String
-  studentName   String?
-  classroomName String?
-  description   String?
-  amount        Decimal
+  type          String   @db.VarChar(20) // IN, OUT
+  referenceNo   String   @unique @db.VarChar(100) // auto-generate
+  formNo        String?  @db.VarChar(50)
+  akunDetailId  String
+  unitSekolahId String
+  studentName   String?  @db.VarChar(150)
+  classroomName String?  @db.VarChar(100)
+  description   String?  @db.Text
+  amount        Decimal  @db.Decimal(15, 2)
   date          DateTime
-  status        String   @default("DRAFT") // DRAFT, APPROVED, REJECTED
-  bookkeeping   String?  // pembukuan
-  recipientName String?  // penerima
-  isDeleted     Boolean  @default(false) // soft delete (sampah)
+  status        String   @default("DRAFT") @db.VarChar(30) // DRAFT, APPROVED, REJECTED
+  bookkeeping   String?  @db.VarChar(100)
+  recipientName String?  @db.VarChar(150)
+  isDeleted     Boolean  @default(false)
   createdById   String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  schoolUnit  SchoolUnit     @relation(fields: [schoolUnitId], references: [id])
-  account     FinanceAccount @relation(fields: [accountId], references: [id])
-  createdBy   User           @relation(fields: [createdById], references: [id])
+  unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  akunDetail  AkunDetail  @relation(fields: [akunDetailId], references: [id], onDelete: Cascade)
+  createdBy   Pengguna    @relation(fields: [createdById], references: [id])
 }
 
 // ========== TAGIHAN & PEMBAYARAN ==========
-model BillingType {
+model JenisTagihan {
   id             String  @id @default(cuid())
-  name           String  // "SPP", "Ujian", "Kegiatan"
-  amount         Decimal
-  academicYearId String
-  schoolUnitId   String
+  name           String  @db.VarChar(150) // "SPP", "Ujian"
+  amount         Decimal @db.Decimal(15, 2)
+  tahunAkademikId String
+  unitSekolahId  String
 
-  schoolUnit   SchoolUnit   @relation(fields: [schoolUnitId], references: [id])
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
-  billings     Billing[]
+  unitSekolah   UnitSekolah   @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
+  tagihan       Tagihan[]
 }
 
-model Billing {
+model Tagihan {
   id            String    @id @default(cuid())
-  billingTypeId String
-  studentId     String
-  amount        Decimal
+  jenisTagihanId String
+  muridId       String
+  amount        Decimal   @db.Decimal(15, 2)
   dueDate       DateTime?
-  status        String    @default("UNPAID") // UNPAID, PARTIAL, PAID
+  status        String    @default("UNPAID") @db.VarChar(30) // UNPAID, PARTIAL, PAID
   createdAt     DateTime  @default(now())
 
-  billingType BillingType @relation(fields: [billingTypeId], references: [id])
-  student     Student     @relation(fields: [studentId], references: [id])
-  payments    Payment[]
+  jenisTagihan JenisTagihan @relation(fields: [jenisTagihanId], references: [id], onDelete: Cascade)
+  murid        Murid        @relation(fields: [muridId], references: [id], onDelete: Cascade)
+  pembayaran   Pembayaran[]
 }
 
-model Payment {
+model Pembayaran {
   id          String   @id @default(cuid())
-  billingId   String
-  amount      Decimal
+  tagihanId   String
+  amount      Decimal  @db.Decimal(15, 2)
   paymentDate DateTime
-  method      String   // TUNAI, TRANSFER_BANK, LAINNYA
-  methodOther String?  // jika pilih "Lainnya"
-  vaNumber    String?  // nomor VA manual
-  receiptNo   String?
+  method      String   @db.VarChar(50) // TUNAI, TRANSFER
+  methodOther String?  @db.VarChar(100)
+  vaNumber    String?  @db.VarChar(50)
+  receiptNo   String?  @db.VarChar(100)
   createdById String
   createdAt   DateTime @default(now())
 
-  billing   Billing @relation(fields: [billingId], references: [id])
-  createdBy User    @relation(fields: [createdById], references: [id])
+  tagihan   Tagihan  @relation(fields: [tagihanId], references: [id], onDelete: Cascade)
+  createdBy Pengguna @relation(fields: [createdById], references: [id])
 }
 
 // ========== ANGGARAN ==========
-model Budget {
+model Anggaran {
   id             String   @id @default(cuid())
-  name           String
-  academicYearId String
-  schoolUnitId   String
-  totalAmount    Decimal
+  name           String   @db.VarChar(150)
+  tahunAkademikId String
+  unitSekolahId  String
+  totalAmount    Decimal  @db.Decimal(15, 2)
   createdAt      DateTime @default(now())
 
-  schoolUnit   SchoolUnit   @relation(fields: [schoolUnitId], references: [id])
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
-  items        BudgetItem[]
+  unitSekolah   UnitSekolah   @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
+  itemAnggaran  ItemAnggaran[]
 }
 
-model BudgetItem {
-  id        String  @id @default(cuid())
-  budgetId  String
-  accountId String
-  amount    Decimal
-  realized  Decimal @default(0)
+model ItemAnggaran {
+  id           String  @id @default(cuid())
+  anggaranId   String
+  akunDetailId String
+  amount       Decimal @db.Decimal(15, 2)
+  realized     Decimal @default(0) @db.Decimal(15, 2)
 
-  budget  Budget         @relation(fields: [budgetId], references: [id])
-  account FinanceAccount @relation(fields: [accountId], references: [id])
+  anggaran   Anggaran   @relation(fields: [anggaranId], references: [id], onDelete: Cascade)
+  akunDetail AkunDetail @relation(fields: [akunDetailId], references: [id], onDelete: Cascade)
 }
 
 // ========== FORMULIR PSB ==========
-model FormSale {
+model PenjualanFormulir {
   id             String   @id @default(cuid())
-  buyerName      String
-  amount         Decimal
+  buyerName      String   @db.VarChar(150)
+  amount         Decimal  @db.Decimal(15, 2)
   saleDate       DateTime
-  academicYearId String
-  schoolUnitId   String
+  tahunAkademikId String
+  unitSekolahId  String
   createdAt      DateTime @default(now())
 
-  schoolUnit   SchoolUnit   @relation(fields: [schoolUnitId], references: [id])
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+  unitSekolah   UnitSekolah   @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
 }

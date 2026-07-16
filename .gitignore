@@ -41,3 +41,11 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# scripts & tests
+/scripts
+/tests
+
+# AI tools & agents
+AGENTS.md
+CLAUDE.md

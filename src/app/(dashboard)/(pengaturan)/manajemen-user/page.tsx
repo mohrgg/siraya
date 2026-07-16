@@ -3,7 +3,7 @@ import { Plus, Edit2, Trash2, CheckCircle2, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 
 export default async function UsersPage() {
-  const users = await prisma.user.findMany({
+  const users = await prisma.pengguna.findMany({
     orderBy: { createdAt: "desc" }
   })
 

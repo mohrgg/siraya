@@ -1,66 +1,125 @@
-import { Wallet, ArrowUpRight, ArrowDownRight, Activity, Users, FileText, ArrowRight } from "lucide-react"
+import { Wallet, ArrowUpRight, ArrowDownRight, Activity, Users, FileText, GraduationCap, Building } from "lucide-react"
+import prisma from "@/lib/prisma"
+import CashFlowChart from "@/components/dashboard/CashFlowChart"
+import StudentDemographicChart from "@/components/dashboard/StudentDemographicChart"
 
-export default function DashboardPage() {
+import { cookies } from "next/headers"
+
+export default async function DashboardPage() {
+  const schoolUnits = await prisma.unitSekolah.findMany()
+  const cookieStore = await cookies()
+  const activeUnitId = cookieStore.get("activeUnitId")?.value || schoolUnits[0]?.id
+
+  // Fetch Live Master Data
+  const totalMurid = await prisma.murid.count({
+    where: { 
+      isActive: true,
+      ...(activeUnitId ? { unitSekolahId: activeUnitId } : {})
+    }
+  })
+  
+  const totalSubKelas = await prisma.subKelas.count({
+    where: activeUnitId ? { unitSekolahId: activeUnitId } : {}
+  })
+  
+  const totalTingkat = await prisma.tingkat.count({
+    where: activeUnitId ? { unitSekolahId: activeUnitId } : {}
+  })
+
+  const totalTahunAkademik = await prisma.tahunAkademik.count()
+
+  // Data Sebaran Murid (Gender)
+  const genderDistribution = await prisma.murid.groupBy({
+    by: ['gender'],
+    where: { 
+      isActive: true,
+      ...(activeUnitId ? { unitSekolahId: activeUnitId } : {})
+    },
+    _count: {
+      _all: true
+    }
+  })
+
+  // Format data untuk Recharts
+  const chartData = genderDistribution.map(g => ({
+    name: g.gender === 'L' ? 'Laki-laki' : g.gender === 'P' ? 'Perempuan' : 'Tidak Diketahui',
+    value: g._count._all
+  }))
+
+  // Data Keuangan (Dummy Statis sementara menunggu Fase 3)
+  const totalSaldoKas = "Rp 145.280.500"
+  const totalPemasukan = "Rp 32.500.000"
+
   return (
     <div className="page-container">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <div>
-          <h1 className="page-title">Selamat Pagi, Admin!</h1>
-          <p className="page-subtitle">Berikut ringkasan aktivitas keuangan Yayasan Al Basyariah hari ini.</p>
+      <div className="page-header" style={{ marginBottom: '2rem' }}>
+        <h1 className="page-title">Selamat Pagi, Admin!</h1>
+        <p className="page-subtitle">Berikut ringkasan aktivitas akademik dan master data unit ini.</p>
+      </div>
+
+      {/* Top Level Metrics (Master Data) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+        
+        {/* Metrik Master Data 1 */}
+        <div className="card stat-card main-stat" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderLeft: '4px solid var(--albas-green)' }}>
+          <div>
+            <p className="stat-label" style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.875rem' }}>Total Murid Aktif</p>
+            <h3 className="stat-value" style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{totalMurid} <span style={{fontSize: '1rem', color: 'rgba(255,255,255,0.7)', fontWeight: 'normal'}}>Siswa</span></h3>
+            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>Di unit ini</span>
+          </div>
+          <div className="stat-icon" style={{ backgroundColor: 'rgba(255,255,255,0.2)', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Users size={24} color="#fff" />
+          </div>
         </div>
+
+        {/* Metrik Master Data 2 */}
+        <div className="card stat-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <p className="stat-label" style={{ fontSize: '0.875rem' }}>Rombongan Belajar (Kelas)</p>
+            <h3 className="stat-value" style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{totalSubKelas} <span style={{fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 'normal'}}>Kelas</span></h3>
+            <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 600 }}>Tahun Ajaran Aktif</span>
+          </div>
+          <div className="stat-icon bg-emerald-100 text-emerald-600" style={{ width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <GraduationCap size={24} />
+          </div>
+        </div>
+
+        {/* Metrik Master Data 3 */}
+        <div className="card stat-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <p className="stat-label" style={{ fontSize: '0.875rem' }}>Tingkat Kelas</p>
+            <h3 className="stat-value" style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{totalTingkat} <span style={{fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 'normal'}}>Tingkat</span></h3>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Di unit ini</span>
+          </div>
+          <div className="stat-icon bg-blue-100 text-blue-600" style={{ width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <FileText size={24} />
+          </div>
+        </div>
+
+        {/* Metrik Master Data 4 */}
+        <div className="card stat-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <p className="stat-label" style={{ fontSize: '0.875rem' }}>Tahun Akademik</p>
+            <h3 className="stat-value" style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{totalTahunAkademik} <span style={{fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 'normal'}}>Terdata</span></h3>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Yayasan</span>
+          </div>
+          <div className="stat-icon bg-purple-100 text-purple-600" style={{ width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Building size={24} />
+          </div>
+        </div>
+
       </div>
 
       <div className="dashboard-grid">
         {/* Kolom Kiri (Utama) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
-          {/* Main Stat Card */}
-          <div className="card stat-card main-stat" style={{ padding: '2rem' }}>
-            <div className="stat-info" style={{ flex: 1 }}>
-              <p className="stat-label" style={{ color: 'rgba(255,255,255,0.9)' }}>Total Saldo Kas Aktif</p>
-              <h3 className="stat-value" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Rp 145.280.500</h3>
-              <div style={{ display: 'flex', gap: '1rem', fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)' }}>
-                <span>Kas SD: Rp 45jt</span>
-                <span>•</span>
-                <span>Kas SMP: Rp 55jt</span>
-                <span>•</span>
-                <span>Kas SMK: Rp 45jt</span>
-              </div>
-            </div>
-            <div className="stat-icon" style={{ width: '80px', height: '80px', borderRadius: '24px' }}>
-              <Wallet size={40} />
-            </div>
-          </div>
-
-          {/* Sub Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-            <div className="card stat-card" style={{ padding: '1.5rem' }}>
-              <div className="stat-icon bg-emerald-100 text-emerald-600">
-                <ArrowDownRight size={24} />
-              </div>
-              <div className="stat-info">
-                <p className="stat-label">Pemasukan Bulan Ini</p>
-                <h3 className="stat-value" style={{ fontSize: '1.5rem' }}>Rp 32.500.000</h3>
-                <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 600, marginTop: '0.25rem' }}>+12% dari bulan lalu</span>
-              </div>
-            </div>
-            
-            <div className="card stat-card" style={{ padding: '1.5rem' }}>
-              <div className="stat-icon bg-rose-100 text-rose-600">
-                <ArrowUpRight size={24} />
-              </div>
-              <div className="stat-info">
-                <p className="stat-label">Pengeluaran Bulan Ini</p>
-                <h3 className="stat-value" style={{ fontSize: '1.5rem' }}>Rp 12.450.000</h3>
-                <span style={{ fontSize: '0.8rem', color: '#e11d48', fontWeight: 600, marginTop: '0.25rem' }}>Operasional & Gaji</span>
-              </div>
-            </div>
-          </div>
-
+          <CashFlowChart />
+          
           {/* Tabel Transaksi Terakhir */}
           <div className="card">
             <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 className="card-title">Transaksi Terakhir</h3>
+              <h3 className="card-title">Transaksi Kas Terakhir</h3>
               <button className="btn btn-outline btn-sm">Lihat Semua</button>
             </div>
             <div className="card-body" style={{ padding: 0 }}>
@@ -95,6 +154,8 @@ export default function DashboardPage() {
         {/* Kolom Kanan (Side widgets) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
+          <StudentDemographicChart data={chartData} />
+
           {/* Quick Actions */}
           <div className="card">
             <div className="card-header">
@@ -106,12 +167,16 @@ export default function DashboardPage() {
                 <span>Terima Kas</span>
               </button>
               <button className="btn btn-secondary" style={{ flexDirection: 'column', padding: '1.5rem 1rem', height: 'auto', gap: '0.75rem' }}>
-                <FileText size={24} />
+                <ArrowUpRight size={24} />
                 <span>Keluarkan Kas</span>
               </button>
-              <button className="btn btn-secondary" style={{ flexDirection: 'column', padding: '1.5rem 1rem', height: 'auto', gap: '0.75rem', gridColumn: 'span 2' }}>
+              <button className="btn btn-secondary" style={{ flexDirection: 'column', padding: '1.5rem 1rem', height: 'auto', gap: '0.75rem' }}>
                 <Users size={24} />
-                <span>Cek Tagihan Siswa</span>
+                <span>Tambah Murid</span>
+              </button>
+              <button className="btn btn-secondary" style={{ flexDirection: 'column', padding: '1.5rem 1rem', height: 'auto', gap: '0.75rem' }}>
+                <FileText size={24} />
+                <span>Cek Tagihan</span>
               </button>
             </div>
           </div>
