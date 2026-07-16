@@ -1,0 +1,277 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ========== UNIT SEKOLAH ==========
+model SchoolUnit {
+  id        String   @id @default(cuid())
+  name      String   // "SD Al Basyariah", "SMP Al Basyariah", "SMK Al Basyariah"
+  level     String   // "SD", "SMP", "SMK", "MA", dll
+  address   String?
+  phone     String?
+  logo      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  academicYears        AcademicYear[]
+  grades               Grade[]
+  classrooms           Classroom[]
+  students             Student[]
+  accountClassifications AccountClassification[]
+  cashTransactions     CashTransaction[]
+  billingTypes         BillingType[]
+  budgets              Budget[]
+  formSales            FormSale[]
+  approvalOrders       ApprovalOrder[]
+  importantAccounts    ImportantAccount[]
+}
+
+// ========== AUTH & USER ==========
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password      String
+  role          String   @default("TATA_USAHA") // ADMIN, TATA_USAHA
+  avatar        String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  cashTransactions  CashTransaction[]
+  payments          Payment[]
+  approvalOrders    ApprovalOrder[]
+}
+
+// ========== TAHUN AKADEMIK ==========
+model AcademicYear {
+  id           String   @id @default(cuid())
+  name         String   // "2025/2026"
+  schoolUnitId String
+  isActive     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  schoolUnit     SchoolUnit  @relation(fields: [schoolUnitId], references: [id])
+  classrooms     Classroom[]
+  billingTypes   BillingType[]
+  budgets        Budget[]
+  formSales      FormSale[]
+}
+
+// ========== KELAS & SISWA ==========
+model Grade {
+  id           String @id @default(cuid())
+  name         String // "X", "XI", "XII"
+  order        Int    // untuk sorting
+  schoolUnitId String
+
+  schoolUnit SchoolUnit  @relation(fields: [schoolUnitId], references: [id])
+  classrooms Classroom[]
+}
+
+model Major {
+  id   String @id @default(cuid())
+  name String // "TKJ", "RPL", "OTKP"
+  code String
+
+  classrooms Classroom[]
+}
+
+model Classroom {
+  id             String       @id @default(cuid())
+  name           String       // "X TKJ 1"
+  gradeId        String
+  majorId        String
+  academicYearId String
+  schoolUnitId   String
+
+  schoolUnit   SchoolUnit   @relation(fields: [schoolUnitId], references: [id])
+  grade        Grade        @relation(fields: [gradeId], references: [id])
+  major        Major        @relation(fields: [majorId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+  students     Student[]
+}
+
+model Student {
+  id           String  @id @default(cuid())
+  nis          String  @unique
+  name         String
+  classroomId  String?
+  schoolUnitId String
+  isActive     Boolean @default(true)
+  isScholarship Boolean @default(false)
+
+  schoolUnit  SchoolUnit @relation(fields: [schoolUnitId], references: [id])
+  classroom   Classroom? @relation(fields: [classroomId], references: [id])
+  billings    Billing[]
+}
+
+// ========== AKUN KEUANGAN ==========
+model AccountClassification {
+  id           String @id @default(cuid())
+  name         String // "HARTA", "PENDAPATAN", "BIAYA BEBAN"
+  schoolUnitId String
+
+  schoolUnit          SchoolUnit                 @relation(fields: [schoolUnitId], references: [id])
+  subClassifications  AccountSubClassification[]
+}
+
+model AccountSubClassification {
+  id               String @id @default(cuid())
+  code             String @unique // "10000001"
+  name             String // "BANK", "PENDAPATAN", "PENGELUARAN"
+  classificationId String
+
+  classification AccountClassification @relation(fields: [classificationId], references: [id])
+  accounts       FinanceAccount[]
+}
+
+model FinanceAccount {
+  id                    String  @id @default(cuid())
+  code                  String  @unique
+  name                  String
+  subClassificationId   String
+  isActive              Boolean @default(true)
+  bankAccountNumber     String? // untuk hubungkan bank
+
+  subClassification AccountSubClassification @relation(fields: [subClassificationId], references: [id])
+  cashTransactions  CashTransaction[]
+  budgetItems       BudgetItem[]
+}
+
+model ImportantAccount {
+  id           String  @id @default(cuid())
+  name         String  // "Laba Ditahan", "Laba Tahun Berjalan", dll
+  description  String
+  accountId    String? // akun yang dipilih
+  schoolUnitId String
+
+  schoolUnit SchoolUnit @relation(fields: [schoolUnitId], references: [id])
+}
+
+// ========== URUTAN PENGESAHAN ==========
+model ApprovalOrder {
+  id           String  @id @default(cuid())
+  userId       String
+  schoolUnitId String
+  name         String
+  order        Int
+  status       Boolean @default(true)
+
+  user       User       @relation(fields: [userId], references: [id])
+  schoolUnit SchoolUnit @relation(fields: [schoolUnitId], references: [id])
+}
+
+// ========== TRANSAKSI KAS ==========
+model CashTransaction {
+  id            String   @id @default(cuid())
+  type          String   // IN, OUT
+  referenceNo   String   @unique // auto-generate
+  formNo        String?  // no formulir
+  accountId     String
+  schoolUnitId  String
+  studentName   String?
+  classroomName String?
+  description   String?
+  amount        Decimal
+  date          DateTime
+  status        String   @default("DRAFT") // DRAFT, APPROVED, REJECTED
+  bookkeeping   String?  // pembukuan
+  recipientName String?  // penerima
+  isDeleted     Boolean  @default(false) // soft delete (sampah)
+  createdById   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  schoolUnit  SchoolUnit     @relation(fields: [schoolUnitId], references: [id])
+  account     FinanceAccount @relation(fields: [accountId], references: [id])
+  createdBy   User           @relation(fields: [createdById], references: [id])
+}
+
+// ========== TAGIHAN & PEMBAYARAN ==========
+model BillingType {
+  id             String  @id @default(cuid())
+  name           String  // "SPP", "Ujian", "Kegiatan"
+  amount         Decimal
+  academicYearId String
+  schoolUnitId   String
+
+  schoolUnit   SchoolUnit   @relation(fields: [schoolUnitId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+  billings     Billing[]
+}
+
+model Billing {
+  id            String    @id @default(cuid())
+  billingTypeId String
+  studentId     String
+  amount        Decimal
+  dueDate       DateTime?
+  status        String    @default("UNPAID") // UNPAID, PARTIAL, PAID
+  createdAt     DateTime  @default(now())
+
+  billingType BillingType @relation(fields: [billingTypeId], references: [id])
+  student     Student     @relation(fields: [studentId], references: [id])
+  payments    Payment[]
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  billingId   String
+  amount      Decimal
+  paymentDate DateTime
+  method      String   // TUNAI, TRANSFER_BANK, LAINNYA
+  methodOther String?  // jika pilih "Lainnya"
+  vaNumber    String?  // nomor VA manual
+  receiptNo   String?
+  createdById String
+  createdAt   DateTime @default(now())
+
+  billing   Billing @relation(fields: [billingId], references: [id])
+  createdBy User    @relation(fields: [createdById], references: [id])
+}
+
+// ========== ANGGARAN ==========
+model Budget {
+  id             String   @id @default(cuid())
+  name           String
+  academicYearId String
+  schoolUnitId   String
+  totalAmount    Decimal
+  createdAt      DateTime @default(now())
+
+  schoolUnit   SchoolUnit   @relation(fields: [schoolUnitId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+  items        BudgetItem[]
+}
+
+model BudgetItem {
+  id        String  @id @default(cuid())
+  budgetId  String
+  accountId String
+  amount    Decimal
+  realized  Decimal @default(0)
+
+  budget  Budget         @relation(fields: [budgetId], references: [id])
+  account FinanceAccount @relation(fields: [accountId], references: [id])
+}
+
+// ========== FORMULIR PSB ==========
+model FormSale {
+  id             String   @id @default(cuid())
+  buyerName      String
+  amount         Decimal
+  saleDate       DateTime
+  academicYearId String
+  schoolUnitId   String
+  createdAt      DateTime @default(now())
+
+  schoolUnit   SchoolUnit   @relation(fields: [schoolUnitId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+}
