@@ -182,6 +182,7 @@ export default function KelasClient({
         const res = await tambahTingkatan({ ...formKelas, order: Number(formKelas.order) })
         setGrades([...grades, { ...res, unitSekolah: schoolUnits.find((u: any) => u.id === formKelas.unitSekolahId) }].sort((a, b) => a.order - b.order))
       }
+      setShowModalKelas(false)
       // Handle empty options nicely
       setFormKelas({ id: "", name: "", order: formKelas.order + 1, unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
     } catch (err: any) { alert(err.message) }
