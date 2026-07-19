@@ -11,18 +11,106 @@ export async function getSiswa(unitSekolahId?: string, subKelasId?: string) {
   return prisma.murid.findMany({
     where: {
       ...(unitSekolahId ? { unitSekolahId } : {}),
-      ...(subKelasId ? { subKelasId } : {}),
+      ...(subKelasId ? { riwayatKelas: { some: { subKelasId } } } : {}),
     },
     include: {
-      subKelas: {
+      riwayatKelas: {
         include: {
-          tingkat: true,
-          jurusan: true
+          subKelas: {
+            include: {
+              tingkat: true,
+              jurusan: true
+            }
+          }
         }
-      }
+      },
+      unitSekolah: true
     },
     orderBy: { name: "asc" }
   })
+}
+
+export async function getSiswaPaginated(params: {
+  unitSekolahId?: string;
+  tahunAkademikId?: string; // TAMBAHAN
+  subKelasId?: string;
+  tingkatId?: string;
+  jurusanId?: string;
+  search?: string;
+  page: number;
+  limit: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}) {
+  const session = await auth()
+  if (!session) throw new Error("Unauthorized")
+
+  const where = {
+    ...(params.unitSekolahId ? { unitSekolahId: params.unitSekolahId } : {}),
+    // Filter by RiwayatKelas if there's any academic filter
+    ...(params.tahunAkademikId || params.subKelasId || params.tingkatId || params.jurusanId ? {
+      riwayatKelas: {
+        some: {
+          ...(params.tahunAkademikId ? { tahunAkademikId: params.tahunAkademikId } : {}),
+          ...(params.subKelasId ? { subKelasId: params.subKelasId } : {}),
+          ...(params.tingkatId || params.jurusanId ? {
+            subKelas: {
+              ...(params.tingkatId ? { tingkatId: params.tingkatId } : {}),
+              ...(params.jurusanId ? { jurusanId: params.jurusanId } : {})
+            }
+          } : {})
+        }
+      }
+    } : {}),
+    ...(params.search ? {
+      OR: [
+        { name: { contains: params.search, mode: "insensitive" as any } },
+        { nisn: { contains: params.search, mode: "insensitive" as any } },
+        { nis: { contains: params.search, mode: "insensitive" as any } },
+      ]
+    } : {})
+  }
+  
+  const orderBy: any = {};
+  if (params.sortBy) {
+    if (params.sortBy === 'unitSekolah.name') {
+      orderBy.unitSekolah = { name: params.sortOrder || 'asc' };
+    } else {
+      orderBy[params.sortBy] = params.sortOrder || 'asc';
+    }
+  } else {
+    orderBy.name = 'asc';
+  }
+
+  const [data, total] = await Promise.all([
+    prisma.murid.findMany({
+      where,
+      include: {
+        riwayatKelas: {
+          where: params.tahunAkademikId ? { tahunAkademikId: params.tahunAkademikId } : undefined,
+          include: {
+            subKelas: {
+              include: {
+                tingkat: true,
+                jurusan: true
+              }
+            }
+          }
+        },
+        unitSekolah: true
+      },
+      orderBy,
+      skip: (params.page - 1) * params.limit,
+      take: params.limit
+    }),
+    prisma.murid.count({ where })
+  ])
+
+  return {
+    data,
+    total,
+    totalPages: Math.ceil(total / params.limit)
+  }
 }
 
 export async function tambahSiswa(data: { 
@@ -34,31 +122,48 @@ export async function tambahSiswa(data: {
   const session = await auth()
   if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
 
-  const result = await prisma.murid.create({
-    data: {
-      nis: data.nis,
-      name: data.name,
-      subKelasId: data.subKelasId || null,
-      unitSekolahId: data.unitSekolahId,
-      isActive: data.isActive ?? true,
-      isScholarship: data.isScholarship ?? false,
-      nisn: data.nisn,
-      previousSchool: data.previousSchool,
-      phone: data.phone,
-      birthDate: data.birthDate ? new Date(data.birthDate) : null,
-      email: data.email,
-      studentStatus: data.studentStatus,
-      parentName: data.parentName,
-      parentPhone: data.parentPhone,
-      religion: data.religion,
-      gender: data.gender,
-      password: data.password,
-      address: data.address,
-      photoUrl: data.photoUrl,
-      formNo: data.formNo,
-      username: data.username,
+  const result = await prisma.$transaction(async (tx) => {
+    const murid = await tx.murid.create({
+      data: {
+        nis: data.nis,
+        name: data.name,
+        unitSekolahId: data.unitSekolahId,
+        isActive: data.isActive ?? true,
+        isScholarship: data.isScholarship ?? false,
+        nisn: data.nisn,
+        previousSchool: data.previousSchool,
+        phone: data.phone,
+        birthDate: data.birthDate ? new Date(data.birthDate) : null,
+        email: data.email,
+        status: data.studentStatus || "AKTIF",
+        parentName: data.parentName,
+        parentPhone: data.parentPhone,
+        religion: data.religion,
+        gender: data.gender,
+        password: data.password,
+        address: data.address,
+        photoUrl: data.photoUrl,
+        formNo: data.formNo,
+        username: data.username,
+      }
+    })
+
+    if (data.subKelasId) {
+      const subKelas = await tx.subKelas.findUnique({ where: { id: data.subKelasId } })
+      if (subKelas) {
+        await tx.riwayatKelas.create({
+          data: {
+            muridId: murid.id,
+            subKelasId: subKelas.id,
+            tahunAkademikId: subKelas.tahunAkademikId
+          }
+        })
+      }
     }
+    
+    return murid
   })
+
   revalidatePath("/data-master")
   return result
 }
@@ -72,13 +177,53 @@ export async function editSiswa(id: string, data: {
   const session = await auth()
   if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
 
-  const result = await prisma.murid.update({
-    where: { id },
-    data: {
-      ...data,
-      birthDate: data.birthDate ? new Date(data.birthDate) : undefined
+  const result = await prisma.$transaction(async (tx) => {
+    // Exclude subKelasId and rename studentStatus -> status
+    const { subKelasId, studentStatus, birthDate, ...muridData } = data;
+    
+    const murid = await tx.murid.update({
+      where: { id },
+      data: {
+        ...muridData,
+        ...(studentStatus ? { status: studentStatus } : {}),
+        ...(birthDate ? { birthDate: new Date(birthDate) } : {})
+      }
+    })
+
+    // Update class assignment if subKelasId is provided
+    if (subKelasId) {
+      const subKelas = await tx.subKelas.findUnique({ where: { id: subKelasId } })
+      if (subKelas) {
+        // Upsert RiwayatKelas for this student in this academic year
+        const existingRiwayat = await tx.riwayatKelas.findUnique({
+          where: {
+            muridId_tahunAkademikId: {
+              muridId: id,
+              tahunAkademikId: subKelas.tahunAkademikId
+            }
+          }
+        })
+
+        if (existingRiwayat) {
+          await tx.riwayatKelas.update({
+            where: { id: existingRiwayat.id },
+            data: { subKelasId: subKelas.id }
+          })
+        } else {
+          await tx.riwayatKelas.create({
+            data: {
+              muridId: id,
+              subKelasId: subKelas.id,
+              tahunAkademikId: subKelas.tahunAkademikId
+            }
+          })
+        }
+      }
     }
+
+    return murid;
   })
+
   revalidatePath("/data-master")
   return result
 }

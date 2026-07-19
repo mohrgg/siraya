@@ -9,7 +9,7 @@ export async function getUnitSekolah() {
   if (!session) throw new Error("Unauthorized")
 
   return prisma.unitSekolah.findMany({
-    orderBy: { createdAt: "asc" }
+    orderBy: { name: "asc" }
   })
 }
 

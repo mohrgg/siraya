@@ -6,9 +6,14 @@ import StudentDemographicChart from "@/components/dashboard/StudentDemographicCh
 import { cookies } from "next/headers"
 
 export default async function DashboardPage() {
-  const schoolUnits = await prisma.unitSekolah.findMany()
+  const schoolUnits = await prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } })
+  const allAcademicYears = await prisma.tahunAkademik.findMany({ orderBy: { createdAt: 'desc' } })
   const cookieStore = await cookies()
   const activeUnitId = cookieStore.get("activeUnitId")?.value || schoolUnits[0]?.id
+  const activeYearId = cookieStore.get("activeYearId")?.value || allAcademicYears.find(y => y.isActive)?.id || allAcademicYears[0]?.id
+
+  const activeUnit = schoolUnits.find(u => u.id === activeUnitId)
+  const activeYear = allAcademicYears.find(y => y.id === activeYearId)
 
   // Fetch Live Master Data
   const totalMurid = await prisma.murid.count({
@@ -18,8 +23,12 @@ export default async function DashboardPage() {
     }
   })
   
+  // SubKelas HARUS difilter per unit DAN per tahun
   const totalSubKelas = await prisma.subKelas.count({
-    where: activeUnitId ? { unitSekolahId: activeUnitId } : {}
+    where: {
+      ...(activeUnitId ? { unitSekolahId: activeUnitId } : {}),
+      ...(activeYearId ? { tahunAkademikId: activeYearId } : {})
+    }
   })
   
   const totalTingkat = await prisma.tingkat.count({
@@ -28,7 +37,7 @@ export default async function DashboardPage() {
 
   const totalTahunAkademik = await prisma.tahunAkademik.count()
 
-  // Data Sebaran Murid (Gender)
+  // Data Sebaran Murid (Gender) - per unit
   const genderDistribution = await prisma.murid.groupBy({
     by: ['gender'],
     where: { 
@@ -42,7 +51,7 @@ export default async function DashboardPage() {
 
   // Format data untuk Recharts
   const chartData = genderDistribution.map(g => ({
-    name: g.gender === 'L' ? 'Laki-laki' : g.gender === 'P' ? 'Perempuan' : 'Tidak Diketahui',
+    name: g.gender === 'Laki-laki' ? 'Laki-laki' : g.gender === 'Perempuan' ? 'Perempuan' : 'Tidak Diketahui',
     value: g._count._all
   }))
 
@@ -57,6 +66,13 @@ export default async function DashboardPage() {
         <p className="text-text-muted">Berikut ringkasan aktivitas akademik dan master data unit ini.</p>
       </div>
 
+      {/* Konteks Aktif */}
+      <div className="mb-6 flex items-center gap-3 text-sm">
+        <span className="px-3 py-1.5 bg-primary/10 text-primary font-semibold rounded-lg">{activeUnit?.name || 'Semua Unit'}</span>
+        <span className="text-text-muted">•</span>
+        <span className="px-3 py-1.5 bg-surface border border-border font-semibold rounded-lg text-text-main">{activeYear?.name || 'Tahun Akademik'}</span>
+      </div>
+
       {/* Top Level Metrics (Master Data) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         
@@ -66,7 +82,7 @@ export default async function DashboardPage() {
           <div className="relative z-10">
             <p className="text-white/90 text-sm font-medium mb-1">Total Murid Aktif</p>
             <h3 className="text-3xl font-bold mb-1">{totalMurid} <span className="text-base font-normal text-white/70">Siswa</span></h3>
-            <span className="text-xs text-white/70 font-medium">Di unit ini</span>
+            <span className="text-xs text-white/70 font-medium">{activeUnit?.name || 'Semua Unit'}</span>
           </div>
           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center relative z-10">
             <Users size={24} className="text-white" />
@@ -78,7 +94,7 @@ export default async function DashboardPage() {
           <div>
             <p className="text-text-muted text-sm font-medium mb-1">Rombongan Belajar</p>
             <h3 className="text-3xl font-bold text-text-main mb-1">{totalSubKelas} <span className="text-base font-normal text-text-muted">Kelas</span></h3>
-            <span className="text-xs font-semibold text-emerald-600">Tahun Ajaran Aktif</span>
+            <span className="text-xs font-semibold text-emerald-600">{activeYear?.name || 'Tahun Aktif'}</span>
           </div>
           <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
             <GraduationCap size={24} />

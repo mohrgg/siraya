@@ -4,6 +4,8 @@ import { useState } from "react"
 import { Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
+import { SortableHeader } from "@/components/ui/SortableHeader"
+import { useSortableData } from "@/hooks/useSortableData"
 import { tambahTransaksiKas } from "@/actions/transaksi-kas"
 
 export default function KasKeluarClient({ 
@@ -30,6 +32,8 @@ export default function KasKeluarClient({
     d.referenceNo.toLowerCase().includes(searchTerm.toLowerCase()) || 
     (d.description && d.description.toLowerCase().includes(searchTerm.toLowerCase()))
   )
+
+  const { items: sortedData, requestSort, sortConfig } = useSortableData(filteredData);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -92,7 +96,7 @@ export default function KasKeluarClient({
             <label className="text-sm font-semibold text-text-main">Tanggal Transaksi</label>
             <Input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} required />
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="hidden">
             <label className="text-sm font-semibold text-text-main">Unit Sekolah</label>
             <select className="w-full px-4 py-2 bg-surface border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium h-[42px]" value={formData.unitSekolahId} onChange={e => setFormData({ ...formData, unitSekolahId: e.target.value })} required>
               {schoolUnits.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
@@ -138,16 +142,16 @@ export default function KasKeluarClient({
       <div className="overflow-x-auto -mx-6 px-6">
         <table className="w-full border-collapse text-left min-w-[800px]">
           <thead>
-            <tr className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider">
-              <th className="p-4 font-semibold">Tanggal</th>
-              <th className="p-4 font-semibold">No Referensi</th>
-              <th className="p-4 font-semibold">Penerima Dana/Keterangan</th>
-              <th className="p-4 font-semibold">Akun</th>
-              <th className="p-4 font-semibold text-right">Nominal</th>
+            <tr className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
+              <SortableHeader label="Tanggal" sortKey="date" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
+              <SortableHeader label="No Referensi" sortKey="referenceNo" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
+              <SortableHeader label="Penerima/Keterangan" sortKey="recipientName" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
+              <SortableHeader label="Akun" sortKey="akunDetail.name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
+              <SortableHeader label="Nominal" sortKey="amount" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-right" />
             </tr>
           </thead>
           <tbody>
-            {filteredData.map(item => (
+            {sortedData.map(item => (
               <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
                 <td className="p-4 text-text-main">{new Date(item.date).toLocaleDateString('id-ID')}</td>
                 <td className="p-4 font-semibold text-text-main">{item.referenceNo}</td>
@@ -158,12 +162,12 @@ export default function KasKeluarClient({
                 <td className="p-4 text-text-main">
                   {item.akunDetail ? `[${item.akunDetail.code}] ${item.akunDetail.name}` : "-"}
                 </td>
-                <td className="p-4 text-right font-bold text-red-600">
+                <td className="p-4 text-right font-bold text-red-500">
                   {formatRp(Number(item.amount))}
                 </td>
               </tr>
             ))}
-            {filteredData.length === 0 && (
+            {sortedData.length === 0 && (
               <tr>
                 <td colSpan={5} className="p-8 text-center text-text-muted">Belum ada data Kas Keluar.</td>
               </tr>

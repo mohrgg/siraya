@@ -3,7 +3,7 @@ import KasKeluarClient from "./KasKeluarClient"
 import prisma from "@/lib/prisma"
 
 export default async function KasKeluarPage() {
-  const schoolUnits = await prisma.unitSekolah.findMany()
+  const schoolUnits = await prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } })
   const initialUnitId = schoolUnits[0]?.id
   
   const transactions = initialUnitId ? await getTransaksiKas(initialUnitId, "OUT") : []

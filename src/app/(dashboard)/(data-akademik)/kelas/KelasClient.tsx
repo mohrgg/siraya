@@ -5,13 +5,15 @@ import { Search, FileSpreadsheet, FileIcon as FilePdf, Plus, Upload, Trash2, Edi
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import { SortableHeader } from "@/components/ui/SortableHeader"
+import { useSortableData } from "@/hooks/useSortableData"
 import { tambahKelas, tambahTingkatan, editKelas, hapusKelas, hapusTingkatan } from "@/actions/kelas"
-import { tambahSiswa, editSiswa, hapusSiswa } from "@/actions/siswa"
+import { tambahSiswa, editSiswa, hapusSiswa, getSiswaPaginated } from "@/actions/siswa"
 
 export default function KelasClient({ 
-  activeUnitId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits 
+  activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits 
 }: { 
-  activeUnitId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[] 
+  activeUnitId?: string, activeYearId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[] 
 }) {
   const [activeTab, setActiveTab] = useState<"kelas" | "sub-kelas" | "murid">("kelas")
 
@@ -36,6 +38,9 @@ export default function KelasClient({
   const [showModalKelas, setShowModalKelas] = useState(false)
   const [showModalSubKelas, setShowModalSubKelas] = useState(false)
   
+  const [viewDetailMurid, setViewDetailMurid] = useState<any>(null)
+  const [viewDetailSubKelas, setViewDetailSubKelas] = useState<any>(null)
+  
   // Confirm Delete Modal
   const [deleteData, setDeleteData] = useState<{ id: string, type: "tingkat" | "subkelas" | "murid" } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -48,15 +53,79 @@ export default function KelasClient({
     address: "", formNo: "", username: ""
   })
   const [formKelas, setFormKelas] = useState({ id: "", name: "", order: 1, unitSekolahId: schoolUnits[0]?.id || "" })
-  const [formSubKelas, setFormSubKelas] = useState({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: academicYears[0]?.id || "", unitSekolahId: schoolUnits[0]?.id || "" })
+  const [formSubKelas, setFormSubKelas] = useState({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: schoolUnits[0]?.id || "" })
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  const [filterJurusanId, setFilterJurusanId] = useState("")
+  
+  const [filterMuridTingkat, setFilterMuridTingkat] = useState("")
+  const [filterMuridJurusan, setFilterMuridJurusan] = useState("")
+  const [filterMuridSubKelas, setFilterMuridSubKelas] = useState("")
 
-  const filteredStudents = students.filter((s: any) => 
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (s.nisn || s.nis).toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Client-side Sorting for Kelas & Sub Kelas
+  const filteredGrades = grades.filter((g: any) => {
+    if (!searchTerm) return true
+    const term = searchTerm.toLowerCase()
+    return g.name?.toLowerCase().includes(term) || g.unitSekolah?.name?.toLowerCase().includes(term)
+  })
+  const { items: sortedGrades, requestSort: requestSortGrades, sortConfig: sortGrades } = useSortableData(filteredGrades);
+  const filteredClassrooms = classrooms.filter((c: any) => {
+    const matchJurusan = filterJurusanId ? c.jurusanId === filterJurusanId : true
+    if (!searchTerm) return matchJurusan
+    const term = searchTerm.toLowerCase()
+    return matchJurusan && (c.name?.toLowerCase().includes(term) || c.tingkat?.name?.toLowerCase().includes(term) || c.unitSekolah?.name?.toLowerCase().includes(term))
+  });
+  const { items: sortedClassrooms, requestSort: requestSortClassrooms, sortConfig: sortClassrooms } = useSortableData(filteredClassrooms);
+
+  // Pagination & Server-side Sorting for Murid
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [isLoadingStudents, setIsLoadingStudents] = useState(false)
+  const [muridSort, setMuridSort] = useState<{ key: string, direction: 'asc' | 'desc' | null }>({ key: 'name', direction: 'asc' })
+
+  const handleMuridSort = (key: string) => {
+    let direction: 'asc' | 'desc' | null = 'asc';
+    if (muridSort.key === key && muridSort.direction === 'asc') direction = 'desc';
+    else if (muridSort.key === key && muridSort.direction === 'desc') direction = null;
+    setMuridSort({ key, direction });
+  }
+
+  // Fetch Students Paginated
+  useEffect(() => {
+    if (activeTab !== "murid") return; // only fetch when in murid tab
+    
+    const fetchStudents = async () => {
+      setIsLoadingStudents(true)
+      try {
+        const res = await getSiswaPaginated({
+          unitSekolahId: activeUnitId || schoolUnits[0]?.id || "",
+          tingkatId: filterMuridTingkat,
+          jurusanId: filterMuridJurusan,
+          subKelasId: filterMuridSubKelas,
+          search: searchTerm,
+          page: currentPage,
+          limit: 10,
+          sortBy: muridSort.direction ? muridSort.key : undefined,
+          sortOrder: muridSort.direction || undefined
+        })
+        setStudents(res.data)
+        setTotalPages(res.totalPages)
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setIsLoadingStudents(false)
+      }
+    }
+    
+    const timeout = setTimeout(fetchStudents, 300)
+    return () => clearTimeout(timeout)
+  }, [activeUnitId, searchTerm, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, currentPage, schoolUnits, activeTab, muridSort])
+
+  // Reset page on search or unit change or filters
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, activeUnitId])
 
   // Handlers Delete
   const handleDeleteConfirm = async () => {
@@ -92,10 +161,10 @@ export default function KelasClient({
     try {
       if (formMurid.id) {
         await editSiswa(formMurid.id, { ...formMurid, nis: formMurid.nisn || `NIS-${Date.now()}` })
-        setStudents(students.map((s: any) => s.id === formMurid.id ? { ...s, ...formMurid, subKelas: classrooms.find((c: any) => c.id === formMurid.subKelasId) } : s))
+        setStudents(students.map((s: any) => s.id === formMurid.id ? { ...s, ...formMurid, riwayatKelas: [{ subKelasId: formMurid.subKelasId, subKelas: classrooms.find((c: any) => c.id === formMurid.subKelasId) }] } : s))
       } else {
         const res = await tambahSiswa({ ...formMurid, nis: formMurid.nisn || `NIS-${Date.now()}` })
-        setStudents([{ ...res, subKelas: classrooms.find((c: any) => c.id === formMurid.subKelasId) }, ...students])
+        setStudents([{ ...res, riwayatKelas: [{ subKelasId: formMurid.subKelasId, subKelas: classrooms.find((c: any) => c.id === formMurid.subKelasId) }] }, ...students])
       }
       setShowModalMurid(false)
     } catch (err: any) { alert(err.message) }
@@ -140,7 +209,7 @@ export default function KelasClient({
         }])
       }
       setShowModalSubKelas(false)
-      setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: academicYears[0]?.id || "", unitSekolahId: schoolUnits[0]?.id || "" })
+      setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: schoolUnits[0]?.id || "" })
     } catch (err: any) { alert(err.message) }
     setIsSubmitting(false)
   }
@@ -181,18 +250,16 @@ export default function KelasClient({
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           
           <div className="flex flex-wrap gap-4 items-center">
-            {(activeTab === "murid" || activeTab === "sub-kelas") && (
-              <div className="relative w-full md:w-64">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-                <input 
-                  type="text" 
-                  placeholder="Cari..." 
-                  className="w-full pl-10 pr-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50" 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            )}
+            <div className="relative w-full md:w-64">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+              <input 
+                type="text" 
+                placeholder="Cari..." 
+                className="w-full pl-10 pr-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <div className="flex gap-2" title="Fitur ekspor akan tersedia di Fase 3 / Reporting">
               <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled>
                 <FileSpreadsheet size={16} className="mr-2" /> Excel
@@ -206,6 +273,57 @@ export default function KelasClient({
                 </Button>
               )}
             </div>
+            {activeTab === "sub-kelas" && initialMajors.length > 0 && (
+              <select 
+                className="px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
+                value={filterJurusanId}
+                onChange={(e) => setFilterJurusanId(e.target.value)}
+              >
+                <option value="">Semua Jurusan</option>
+                {initialMajors.map((m: any) => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
+            )}
+            
+            {activeTab === "murid" && (
+              <>
+                <select 
+                  className="px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
+                  value={filterMuridTingkat}
+                  onChange={(e) => { setFilterMuridTingkat(e.target.value); setFilterMuridSubKelas("") }}
+                >
+                  <option value="">Semua Tingkat</option>
+                  {grades.filter((g: any) => g.unitSekolahId === (activeUnitId || schoolUnits[0]?.id)).map((g: any) => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
+                </select>
+                
+                {initialMajors.length > 0 && (
+                  <select 
+                    className="px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
+                    value={filterMuridJurusan}
+                    onChange={(e) => { setFilterMuridJurusan(e.target.value); setFilterMuridSubKelas("") }}
+                  >
+                    <option value="">Semua Jurusan</option>
+                    {initialMajors.map((m: any) => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
+                )}
+                
+                <select 
+                  className="px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
+                  value={filterMuridSubKelas}
+                  onChange={(e) => setFilterMuridSubKelas(e.target.value)}
+                >
+                  <option value="">Semua Rombel</option>
+                  {classrooms.filter((c: any) => c.unitSekolahId === (activeUnitId || schoolUnits[0]?.id) && (!filterMuridTingkat || c.tingkatId === filterMuridTingkat) && (!filterMuridJurusan || c.jurusanId === filterMuridJurusan)).map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </>
+            )}
           </div>
 
           <div>
@@ -219,7 +337,7 @@ export default function KelasClient({
             )}
             {activeTab === "sub-kelas" && (
               <Button onClick={() => {
-                setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: academicYears[0]?.id || "", unitSekolahId: schoolUnits[0]?.id || "" })
+                setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: schoolUnits[0]?.id || "" })
                 setShowModalSubKelas(true)
               }}>
                 <Plus size={16} className="mr-2" /> Tambah Sub Kelas
@@ -245,39 +363,39 @@ export default function KelasClient({
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider">
+              <tr className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
                 <th className="p-4 font-semibold">No</th>
                 {activeTab === "kelas" && (
                   <>
-                    <th className="p-4 font-semibold">Nama Sekolah</th>
-                    <th className="p-4 font-semibold">Tingkat</th>
+                    <SortableHeader label="Nama Sekolah" sortKey="unitSekolah.name" currentSortKey={sortGrades?.key as string} currentDirection={sortGrades?.direction} onSort={requestSortGrades as any} />
+                    <SortableHeader label="Tingkat" sortKey="name" currentSortKey={sortGrades?.key as string} currentDirection={sortGrades?.direction} onSort={requestSortGrades as any} />
                     <th className="p-4 font-semibold text-right">Aksi</th>
                   </>
                 )}
                 {activeTab === "sub-kelas" && (
                   <>
-                    <th className="p-4 font-semibold">Nama Sekolah</th>
-                    <th className="p-4 font-semibold">Tingkat</th>
-                    <th className="p-4 font-semibold">Sub Kelas (Rombel)</th>
+                    <SortableHeader label="Nama Sekolah" sortKey="unitSekolah.name" currentSortKey={sortClassrooms?.key as string} currentDirection={sortClassrooms?.direction} onSort={requestSortClassrooms as any} />
+                    <SortableHeader label="Tingkat" sortKey="tingkat.name" currentSortKey={sortClassrooms?.key as string} currentDirection={sortClassrooms?.direction} onSort={requestSortClassrooms as any} />
+                    <SortableHeader label="Sub Kelas (Rombel)" sortKey="name" currentSortKey={sortClassrooms?.key as string} currentDirection={sortClassrooms?.direction} onSort={requestSortClassrooms as any} />
                     <th className="p-4 font-semibold">Jumlah Siswa</th>
                     <th className="p-4 font-semibold text-right">Aksi</th>
                   </>
                 )}
                 {activeTab === "murid" && (
                   <>
-                    <th className="p-4 font-semibold">Sekolah</th>
-                    <th className="p-4 font-semibold">Asal Sekolah</th>
-                    <th className="p-4 font-semibold">Nama Murid</th>
-                    <th className="p-4 font-semibold">NISN / NIS</th>
-                    <th className="p-4 font-semibold">Nama Orang Tua</th>
-                    <th className="p-4 font-semibold">No Formulir</th>
+                    <SortableHeader label="Sekolah" sortKey="unitSekolah.name" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
+                    <SortableHeader label="Asal Sekolah" sortKey="previousSchool" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
+                    <SortableHeader label="Nama Murid" sortKey="name" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
+                    <SortableHeader label="NISN / NIS" sortKey="nisn" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
+                    <SortableHeader label="Nama Orang Tua" sortKey="parentName" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
+                    <SortableHeader label="No Formulir" sortKey="formNo" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
                     <th className="p-4 font-semibold text-right">Aksi</th>
                   </>
                 )}
               </tr>
             </thead>
             <tbody>
-              {activeTab === "kelas" && grades.map((g: any, i: number) => (
+              {activeTab === "kelas" && sortedGrades.map((g: any, i: number) => (
                 <tr key={g.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
                   <td className="p-4">{i + 1}</td>
                   <td className="p-4 text-text-main font-medium">{g.unitSekolah?.name}</td>
@@ -290,15 +408,16 @@ export default function KelasClient({
                 </tr>
               ))}
               
-              {activeTab === "sub-kelas" && classrooms.map((c: any, i: number) => (
+              {activeTab === "sub-kelas" && sortedClassrooms.map((c: any, i: number) => (
                 <tr key={c.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
                   <td className="p-4">{i + 1}</td>
                   <td className="p-4 text-text-main font-medium">{c.unitSekolah?.name}</td>
                   <td className="p-4 text-text-main">{c.tingkat?.name}</td>
                   <td className="p-4 font-bold text-text-main">{c.name}</td>
-                  <td className="p-4 text-text-muted">{c._count?.murid || 0}</td>
+                  <td className="p-4 text-text-muted">{c._count?.riwayatKelas || 0}</td>
                   <td className="p-4">
                     <div className="flex items-center justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setViewDetailSubKelas(c)}><Info size={16} /></Button>
                       <Button variant="outline" size="sm" onClick={() => {
                         setFormSubKelas({
                           id: c.id, name: c.name, tingkatId: c.tingkatId, jurusanId: c.jurusanId || "", 
@@ -312,7 +431,21 @@ export default function KelasClient({
                 </tr>
               ))}
 
-              {activeTab === "murid" && filteredStudents.map((s: any, i: number) => (
+              {activeTab === "murid" && students.length === 0 && !isLoadingStudents && (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-text-muted">
+                    {searchTerm ? "Tidak ada siswa yang cocok dengan pencarian" : "Belum ada data siswa"}
+                  </td>
+                </tr>
+              )}
+              {activeTab === "murid" && isLoadingStudents && (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-text-muted">
+                    Memuat data siswa...
+                  </td>
+                </tr>
+              )}
+              {activeTab === "murid" && !isLoadingStudents && students.map((s: any, i: number) => (
                 <tr key={s.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
                   <td className="p-4">{i + 1}</td>
                   <td className="p-4 text-text-main font-medium">{s.unitSekolah?.name}</td>
@@ -323,7 +456,11 @@ export default function KelasClient({
                   <td className="p-4 text-text-muted">{s.formNo || "-"}</td>
                   <td className="p-4">
                     <div className="flex items-center justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => { setFormMurid(s); setShowModalMurid(true); }}>
+                      <Button variant="outline" size="sm" onClick={() => setViewDetailMurid(s)}><Info size={16} /></Button>
+                      <Button variant="outline" size="sm" onClick={() => { 
+                        setFormMurid({ ...s, subKelasId: s.riwayatKelas?.[0]?.subKelasId || "" }); 
+                        setShowModalMurid(true); 
+                      }}>
                         <Edit2 size={16} />
                       </Button>
                       <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: s.id, type: "murid" })}><Trash2 size={16} /></Button>
@@ -334,6 +471,17 @@ export default function KelasClient({
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {activeTab === "murid" && totalPages > 1 && (
+          <div className="p-4 mt-4 border-t border-border flex items-center justify-between bg-surface rounded-b-2xl">
+            <span className="text-sm font-medium text-text-muted">Halaman {currentPage} dari {totalPages}</span>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1 || isLoadingStudents}>Sebelumnya</Button>
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || isLoadingStudents}>Selanjutnya</Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal Tambah Murid */}
@@ -358,7 +506,7 @@ export default function KelasClient({
                   <label className="text-sm font-semibold text-text-main">NISN (10 Digit) <span className="text-red-500">*</span></label>
                   <Input placeholder="0012345678" value={formMurid.nisn} onChange={e => setFormMurid({ ...formMurid, nisn: e.target.value })} minLength={10} maxLength={10} required />
                 </div>
-                <div className="flex flex-col gap-1.5">
+                <div className="hidden">
                   <label className="text-sm font-semibold text-text-main">Unit Sekolah <span className="text-red-500">*</span></label>
                   <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formMurid.unitSekolahId} onChange={e => setFormMurid({ ...formMurid, unitSekolahId: e.target.value })} required>
                     {schoolUnits.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
@@ -441,19 +589,42 @@ export default function KelasClient({
             </div>
             <div className="p-6">
               <form id="kelasForm" onSubmit={handleSaveKelas} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
+                <div className="hidden">
                   <label className="text-sm font-semibold text-text-main">Sekolah</label>
                   <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formKelas.unitSekolahId} onChange={e => setFormKelas({ ...formKelas, unitSekolahId: e.target.value })} required>
                     {schoolUnits.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Nama Tingkat (Contoh: Kelas 7)</label>
-                  <Input value={formKelas.name} onChange={e => setFormKelas({...formKelas, name: e.target.value})} required />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main flex items-center gap-1.5">Tingkat / Urutan <Info size={14} className="text-text-muted" title="Angka yang menunjukkan jenjang kelas, misal 10 untuk Kelas X SMA"/></label>
-                  <Input type="number" value={formKelas.order} onChange={e => setFormKelas({...formKelas, order: Number(e.target.value)})} required placeholder="10" />
+                  <label className="text-sm font-semibold text-text-main">Tingkat Kelas</label>
+                  <select 
+                    className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium"
+                    value={formKelas.order}
+                    onChange={e => {
+                      const order = Number(e.target.value)
+                      let name = `Kelas ${order}`
+                      if (order === 10) name = "Kelas X"
+                      else if (order === 11) name = "Kelas XI"
+                      else if (order === 12) name = "Kelas XII"
+                      else if (order === 7) name = "Kelas VII"
+                      else if (order === 8) name = "Kelas VIII"
+                      else if (order === 9) name = "Kelas IX"
+                      setFormKelas({...formKelas, order, name})
+                    }}
+                    required
+                  >
+                    <option value="">-- Pilih Tingkat --</option>
+                    {(() => {
+                      const activeUnit = schoolUnits.find((u: any) => u.id === formKelas.unitSekolahId)
+                      const level = activeUnit?.level?.toUpperCase() || ""
+                      let options: number[] = []
+                      if (level.includes("SD") || level.includes("MI")) options = [1, 2, 3, 4, 5, 6]
+                      else if (level.includes("SMP") || level.includes("MTS")) options = [7, 8, 9]
+                      else if (level.includes("SMK") || level.includes("SMA") || level.includes("MA")) options = [10, 11, 12]
+                      
+                      return options.map(opt => <option key={opt} value={opt}>Kelas {opt}</option>)
+                    })()}
+                  </select>
                 </div>
               </form>
             </div>
@@ -475,7 +646,7 @@ export default function KelasClient({
             </div>
             <div className="p-6">
               <form id="subKelasForm" onSubmit={handleSaveSubKelas} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
+                <div className="hidden">
                   <label className="text-sm font-semibold text-text-main">Sekolah</label>
                   <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formSubKelas.unitSekolahId} onChange={e => setFormSubKelas({ ...formSubKelas, unitSekolahId: e.target.value })} required>
                     {schoolUnits.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
@@ -489,7 +660,7 @@ export default function KelasClient({
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main flex items-center gap-1.5">Nama Sub Kelas (Rombel) <Info size={14} className="text-text-muted" title="Contoh: X-RPL 1 atau Kelas 7A"/></label>
+                  <label className="text-sm font-semibold text-text-main flex items-center gap-1.5">Nama Sub Kelas (Rombel) <Info size={14} className="text-text-muted" /></label>
                   <Input value={formSubKelas.name} onChange={e => setFormSubKelas({...formSubKelas, name: e.target.value})} required placeholder="Contoh: X-RPL 1" />
                 </div>
                 {initialMajors.length > 0 && (
@@ -506,6 +677,123 @@ export default function KelasClient({
             <div className="p-6 border-t border-border flex gap-4 bg-bg rounded-b-2xl">
               <Button type="submit" form="subKelasForm" isLoading={isSubmitting}>Simpan Sub Kelas</Button>
               <Button type="button" variant="outline" onClick={() => setShowModalSubKelas(false)}>Batal</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Detail Sub Kelas */}
+      {viewDetailSubKelas && (
+        <div className="fixed inset-0 bg-black/60 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-surface rounded-2xl shadow-xl border border-border flex flex-col">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-bg rounded-t-2xl">
+              <h3 className="text-xl font-bold text-albas-green m-0">Detail Rombel</h3>
+              <button onClick={() => setViewDetailSubKelas(null)} className="text-2xl text-text-muted hover:text-text-main transition-colors">&times;</button>
+            </div>
+            <div className="p-6 flex flex-col gap-4 text-text-main">
+              <div className="grid grid-cols-3 gap-2 border-b border-border pb-2">
+                <span className="text-text-muted font-medium">Nama Rombel</span>
+                <span className="col-span-2 font-bold">{viewDetailSubKelas.name}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 border-b border-border pb-2">
+                <span className="text-text-muted font-medium">Unit Sekolah</span>
+                <span className="col-span-2">{viewDetailSubKelas.unitSekolah?.name}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 border-b border-border pb-2">
+                <span className="text-text-muted font-medium">Tingkat</span>
+                <span className="col-span-2">{viewDetailSubKelas.tingkat?.name}</span>
+              </div>
+              {viewDetailSubKelas.jurusan && (
+                <div className="grid grid-cols-3 gap-2 border-b border-border pb-2">
+                  <span className="text-text-muted font-medium">Jurusan</span>
+                  <span className="col-span-2">{viewDetailSubKelas.jurusan.name}</span>
+                </div>
+              )}
+              <div className="grid grid-cols-3 gap-2 border-b border-border pb-2">
+                <span className="text-text-muted font-medium">Jumlah Siswa</span>
+                <span className="col-span-2">{viewDetailSubKelas._count?.murid || 0} Siswa Aktif</span>
+              </div>
+            </div>
+            <div className="p-6 border-t border-border flex justify-end bg-bg rounded-b-2xl">
+              <Button type="button" onClick={() => setViewDetailSubKelas(null)}>Tutup</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Detail Murid */}
+      {viewDetailMurid && (
+        <div className="fixed inset-0 bg-black/60 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl bg-surface rounded-2xl shadow-xl border border-border flex flex-col max-h-full">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-bg rounded-t-2xl">
+              <h3 className="text-xl font-bold text-albas-green m-0">Detail Murid</h3>
+              <button onClick={() => setViewDetailMurid(null)} className="text-2xl text-text-muted hover:text-text-main transition-colors">&times;</button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+              <div className="flex flex-col gap-6 text-text-main">
+                
+                {/* Header Profil */}
+                <div className="flex items-center gap-4 border-b border-border pb-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl uppercase">
+                    {viewDetailMurid.name.substring(0, 2)}
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">{viewDetailMurid.name}</h2>
+                    <p className="text-text-muted">{viewDetailMurid.nisn || viewDetailMurid.nis}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Unit Sekolah</span>
+                    <span className="font-medium">{viewDetailMurid.unitSekolah?.name || "-"}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Kelas / Rombel</span>
+                    <span className="font-medium">{viewDetailMurid.riwayatKelas?.[0]?.subKelas?.name || "Belum masuk kelas"}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Status Siswa</span>
+                    <span className="font-medium">
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${viewDetailMurid.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                        {viewDetailMurid.isActive ? 'Aktif' : 'Non-Aktif'}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Jenis Kelamin</span>
+                    <span className="font-medium">{viewDetailMurid.gender || "-"}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Agama</span>
+                    <span className="font-medium">{viewDetailMurid.religion || "-"}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">No. Telepon Siswa</span>
+                    <span className="font-medium">{viewDetailMurid.phone || "-"}</span>
+                  </div>
+                  
+                  <div className="col-span-1 md:col-span-2 mt-4 pt-4 border-t border-border">
+                    <h4 className="font-bold text-text-main mb-4">Informasi Orang Tua / Wali</h4>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Nama Orang Tua</span>
+                    <span className="font-medium">{viewDetailMurid.parentName || "-"}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">No. Telepon Orang Tua</span>
+                    <span className="font-medium">{viewDetailMurid.parentPhone || "-"}</span>
+                  </div>
+                  <div className="col-span-1 md:col-span-2 flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Alamat Lengkap</span>
+                    <span className="font-medium">{viewDetailMurid.address || "-"}</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+            <div className="p-6 border-t border-border flex justify-end bg-bg rounded-b-2xl shrink-0">
+              <Button type="button" onClick={() => setViewDetailMurid(null)}>Tutup</Button>
             </div>
           </div>
         </div>

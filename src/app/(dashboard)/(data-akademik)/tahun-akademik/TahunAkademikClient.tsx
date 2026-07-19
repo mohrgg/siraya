@@ -1,19 +1,25 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Edit2, Trash2, CheckCircle2 } from "lucide-react"
+import { Plus, Edit2, Trash2, CheckCircle2, Search } from "lucide-react"
 import { Button } from "@/components/ui/Button"
-import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import { SortableHeader } from "@/components/ui/SortableHeader"
+import { useSortableData } from "@/hooks/useSortableData"
 import { tambahTahunAkademik, editTahunAkademik, hapusTahunAkademik } from "@/actions/tahun-akademik"
 
 type AcademicYear = any
-type SchoolUnit = any
 
 export default function TahunAkademikClient({ initialData }: { initialData: AcademicYear[] }) {
   const [data, setData] = useState<AcademicYear[]>(initialData)
+  const [searchTerm, setSearchTerm] = useState("")
   
-  // Sync state when initialData changes due to global unit filter
+  const filteredData = data.filter((d: any) => 
+    d.name.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const { items: sortedData, requestSort, sortConfig } = useSortableData(filteredData)
+
   useEffect(() => {
     setData(initialData)
   }, [initialData])
@@ -21,18 +27,19 @@ export default function TahunAkademikClient({ initialData }: { initialData: Acad
   const [isAdding, setIsAdding] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   
-  const [formData, setFormData] = useState({ id: "", name: "", isActive: false })
+  const [formData, setFormData] = useState({ id: "", startYear: new Date().getFullYear(), isActive: false })
 
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleAddClick = () => {
-    setFormData({ id: "", name: "", isActive: false })
+    setFormData({ id: "", startYear: new Date().getFullYear(), isActive: false })
     setIsAdding(true)
   }
 
   const handleEditClick = (item: AcademicYear) => {
-    setFormData({ id: item.id, name: item.name, isActive: item.isActive })
+    const startYear = item.name.split("/")[0] ? parseInt(item.name.split("/")[0]) : new Date().getFullYear()
+    setFormData({ id: item.id, startYear, isActive: item.isActive })
     setIsAdding(true)
   }
 
@@ -53,23 +60,21 @@ export default function TahunAkademikClient({ initialData }: { initialData: Acad
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    
+    const academicName = `${formData.startYear}/${formData.startYear + 1}`
+
     try {
       if (formData.id) {
-        // Edit
-        await editTahunAkademik(formData.id, { name: formData.name, isActive: formData.isActive })
-        // Optimistic update
+        await editTahunAkademik(formData.id, { name: academicName, isActive: formData.isActive })
         setData(data.map(d => {
-          if (d.id === formData.id) return { ...d, name: formData.name, isActive: formData.isActive }
-          // if this is set to active, deactivate all others globally
+          if (d.id === formData.id) return { ...d, name: academicName, isActive: formData.isActive }
           if (formData.isActive && d.id !== formData.id) {
             return { ...d, isActive: false }
           }
           return d
         }))
       } else {
-        // Create
-        const res = await tambahTahunAkademik({ name: formData.name, isActive: formData.isActive })
-        
+        const res = await tambahTahunAkademik({ name: academicName, isActive: formData.isActive })
         let newData = [...data]
         if (formData.isActive) {
           newData = newData.map(d => ({ ...d, isActive: false }))
@@ -96,10 +101,11 @@ export default function TahunAkademikClient({ initialData }: { initialData: Acad
       />
 
       {isAdding && (
-        <div className="fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="w-full max-w-lg bg-surface rounded-2xl shadow-xl border border-border flex flex-col">
-            <div className="p-6 border-b border-border">
-              <h3 className="text-xl font-bold text-text-main">{formData.id ? "Edit Tahun Akademik" : "Tambah Tahun Akademik Baru"}</h3>
+            <div className="p-6 border-b border-border flex justify-between items-center bg-bg rounded-t-2xl">
+              <h3 className="text-xl font-bold text-albas-green m-0">{formData.id ? "Edit Tahun Akademik" : "Tambah Tahun Akademik Baru"}</h3>
+              <button onClick={() => setIsAdding(false)} className="text-2xl text-text-muted hover:text-text-main transition-colors">&times;</button>
             </div>
             <div className="p-6">
               <div className="mb-6 p-4 bg-yellow-50 border border-yellow-100 rounded-xl text-sm text-yellow-800 flex gap-3">
@@ -108,8 +114,21 @@ export default function TahunAkademikClient({ initialData }: { initialData: Acad
               </div>
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Nama Tahun Akademik (Cth: 2025/2026)</label>
-                  <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+                  <label className="text-sm font-semibold text-text-main">Tahun Akademik <span className="text-red-500">*</span></label>
+                  <select 
+                    className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
+                    value={formData.startYear}
+                    onChange={e => setFormData({ ...formData, startYear: parseInt(e.target.value) })}
+                    required
+                  >
+                    <option value="">-- Pilih Tahun Akademik --</option>
+                    {Array.from({ length: 6 }).map((_, i) => {
+                      const year = new Date().getFullYear() - 2 + i;
+                      return (
+                        <option key={year} value={year}>{year}/{year + 1}</option>
+                      )
+                    })}
+                  </select>
                 </div>
                 <div className="flex items-center gap-2 mt-2">
                   <input type="checkbox" id="isActive" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} className="w-4 h-4 accent-albas-green" />
@@ -126,61 +145,70 @@ export default function TahunAkademikClient({ initialData }: { initialData: Acad
         </div>
       )}
 
-      <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-albas-green">Manajemen Tahun Akademik</h2>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <div className="relative w-full max-w-xs">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+          <input 
+            type="text" 
+            placeholder="Cari tahun akademik..." 
+            className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm text-text-main" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-
-        <Button onClick={handleAddClick} className="mb-6">
-          <Plus size={16} className="mr-2"/> Tambah Tahun Akademik
+        <Button onClick={handleAddClick}>
+          <Plus size={16} className="mr-2" /> Tambah Tahun Akademik
         </Button>
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider">
-                <th className="p-4 font-semibold">TAHUN AKADEMIK</th>
-                <th className="p-4 font-semibold">STATUS</th>
-                <th className="p-4 font-semibold text-right">AKSI</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map(item => (
-                <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
-                  <td className="p-4 font-semibold text-text-main">{item.name}</td>
-                  <td className="p-4">
-                    {item.isActive ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">
-                        <CheckCircle2 size={14} /> Aktif
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-text-muted rounded-full text-xs font-bold">
-                        Tidak Aktif
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEditClick(item)}>
-                        <Edit2 size={16} />
-                      </Button>
-                      <Button variant="danger" size="sm" onClick={() => setDeleteId(item.id)}>
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </td>
+      <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
+        {sortedData.length === 0 ? (
+          <div className="p-8 text-center text-text-muted">
+            {searchTerm ? "Tidak ada tahun akademik yang cocok dengan pencarian" : "Belum ada data Tahun Akademik."}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left">
+              <thead>
+                <tr className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
+                  <th className="p-4 font-semibold">No</th>
+                  <SortableHeader label="Tahun Akademik" sortKey="name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
+                  <SortableHeader label="Status" sortKey="isActive" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
+                  <th className="p-4 font-semibold text-right">Aksi</th>
                 </tr>
-              ))}
-              {data.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="p-8 text-center text-text-muted">
-                    Belum ada data Tahun Akademik.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {sortedData.map((item, index) => (
+                  <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
+                    <td className="p-4">{index + 1}</td>
+                    <td className="p-4 font-semibold text-text-main">{item.name}</td>
+                    <td className="p-4">
+                      {item.isActive ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">
+                          <CheckCircle2 size={14} /> Aktif
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-text-muted rounded-full text-xs font-bold">
+                          Tidak Aktif
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleEditClick(item)}>
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button variant="danger" size="sm" onClick={() => setDeleteId(item.id)}>
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -43,7 +43,6 @@ async function main() {
     data: {
       name: '2025/2026',
       isActive: true,
-      unitSekolahId: school.id,
     }
   })
 

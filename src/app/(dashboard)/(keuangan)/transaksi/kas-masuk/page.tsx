@@ -3,7 +3,7 @@ import KasMasukClient from "./KasMasukClient"
 import prisma from "@/lib/prisma"
 
 export default async function KasMasukPage() {
-  const schoolUnits = await prisma.unitSekolah.findMany()
+  const schoolUnits = await prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } })
   const initialUnitId = schoolUnits[0]?.id
   
   const transactions = initialUnitId ? await getTransaksiKas(initialUnitId, "IN") : []

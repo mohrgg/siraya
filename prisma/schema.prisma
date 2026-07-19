@@ -59,6 +59,7 @@ model TahunAkademik {
   jenisTagihan   JenisTagihan[]
   anggaran       Anggaran[]
   penjualanFormulir PenjualanFormulir[]
+  riwayatKelas   RiwayatKelas[]
 }
 
 // ========== KELAS & MURID ==========
@@ -92,14 +93,13 @@ model SubKelas {
   tingkat       Tingkat       @relation(fields: [tingkatId], references: [id], onDelete: Cascade)
   jurusan       Jurusan?      @relation(fields: [jurusanId], references: [id])
   tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
-  murid         Murid[]
+  riwayatKelas  RiwayatKelas[]
 }
 
 model Murid {
   id             String  @id @default(cuid())
   nis            String  @unique @db.VarChar(50)
   name           String  @db.VarChar(150)
-  subKelasId     String?
   unitSekolahId  String
   isActive       Boolean @default(true)
   isScholarship  Boolean @default(false)
@@ -110,7 +110,7 @@ model Murid {
   phone          String? @db.VarChar(20)
   birthDate      DateTime?
   email          String? @db.VarChar(100)
-  studentStatus  String? @db.VarChar(50)
+  status         String  @default("AKTIF") @db.VarChar(50) // AKTIF, LULUS, PINDAH, DO
   parentName     String? @db.VarChar(150)
   parentPhone    String? @db.VarChar(20)
   religion       String? @db.VarChar(50)
@@ -125,8 +125,22 @@ model Murid {
   updatedAt      DateTime @updatedAt
 
   unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
-  subKelas    SubKelas?   @relation(fields: [subKelasId], references: [id])
+  riwayatKelas RiwayatKelas[]
   tagihan     Tagihan[]
+}
+
+model RiwayatKelas {
+  id              String   @id @default(cuid())
+  muridId         String
+  subKelasId      String
+  tahunAkademikId String
+  createdAt       DateTime @default(now())
+
+  murid           Murid         @relation(fields: [muridId], references: [id], onDelete: Cascade)
+  subKelas        SubKelas      @relation(fields: [subKelasId], references: [id], onDelete: Cascade)
+  tahunAkademik   TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
+
+  @@unique([muridId, tahunAkademikId])
 }
 
 // ========== AKUN KEUANGAN ==========

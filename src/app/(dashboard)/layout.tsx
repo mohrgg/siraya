@@ -19,18 +19,19 @@ export default async function DashboardLayout({
   // Fetch school units and academic years for the global header
   const schoolUnits = await prisma.unitSekolah.findMany({
     where: { isActive: true },
+    orderBy: { name: 'asc' },
     select: { id: true, name: true }
   })
 
   // For the header dropdown, we load ALL academic years so users can switch context.
   const academicYears = await prisma.tahunAkademik.findMany({
-    select: { id: true, name: true },
-    orderBy: { createdAt: "desc" }
+    select: { id: true, name: true, isActive: true },
+    orderBy: { name: "desc" }
   })
 
   const cookieStore = await cookies()
   const activeUnitId = cookieStore.get("activeUnitId")?.value || schoolUnits[0]?.id
-  const activeYearId = cookieStore.get("activeYearId")?.value || academicYears[0]?.id
+  const activeYearId = cookieStore.get("activeYearId")?.value || academicYears.find((y: any) => y.isActive)?.id || academicYears[0]?.id
 
   return (
     <div className="flex h-screen w-full bg-bg overflow-hidden">

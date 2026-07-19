@@ -10,7 +10,7 @@ export async function getTahunAkademik() {
 
   return prisma.tahunAkademik.findMany({
     orderBy: {
-      createdAt: "desc"
+      name: "desc"
     }
   })
 }
@@ -48,6 +48,11 @@ export async function editTahunAkademik(id: string, data: { name: string, isActi
       where: { isActive: true },
       data: { isActive: false }
     })
+    
+    // Also update the current user's session cookie to reflect the newly activated year
+    const { cookies } = await import("next/headers")
+    const cookieStore = await cookies()
+    cookieStore.set("activeYearId", id, { path: "/", maxAge: 60 * 60 * 24 * 30 }) // 30 days
   }
 
   const result = await prisma.tahunAkademik.update({

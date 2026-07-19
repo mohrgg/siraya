@@ -49,3 +49,5 @@ next-env.d.ts
 # AI tools & agents
 AGENTS.md
 CLAUDE.md
+# Dev Tools & Scripts
+.dev-tools/

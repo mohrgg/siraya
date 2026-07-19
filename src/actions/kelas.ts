@@ -47,19 +47,22 @@ export async function tambahJurusan(data: { name: string, code: string }) {
 }
 
 // --- CLASSROOMS ---
-export async function getKelas(unitSekolahId?: string) {
+export async function getKelas(unitSekolahId?: string, tahunAkademikId?: string) {
   const session = await auth()
   if (!session) throw new Error("Unauthorized")
 
   return prisma.subKelas.findMany({
-    where: unitSekolahId ? { unitSekolahId } : undefined,
+    where: {
+      ...(unitSekolahId ? { unitSekolahId } : {}),
+      ...(tahunAkademikId ? { tahunAkademikId } : {})
+    },
     include: {
       unitSekolah: true,
       tingkat: true,
       jurusan: true,
       tahunAkademik: true,
       _count: {
-        select: { murid: true }
+        select: { riwayatKelas: true }
       }
     },
     orderBy: [

@@ -7,15 +7,16 @@ import prisma from "@/lib/prisma"
 import { cookies } from "next/headers"
 
 export default async function KelasPage() {
-  const schoolUnits = await prisma.unitSekolah.findMany()
+  const schoolUnits = await prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } })
   const cookieStore = await cookies()
   const activeUnitId = cookieStore.get("activeUnitId")?.value || schoolUnits[0]?.id
+  const academicYears = await getTahunAkademik()
+  const activeYearId = cookieStore.get("activeYearId")?.value || academicYears.find((y: any) => y.isActive)?.id
 
   const grades = await getTingkatan(activeUnitId)
   const majors = await getJurusan()
-  const classrooms = await getKelas(activeUnitId)
-  const students = activeUnitId ? await getSiswa(activeUnitId) : []
-  const academicYears = await getTahunAkademik(activeUnitId)
+  const classrooms = await getKelas(activeUnitId, activeYearId)
+  const students: any[] = [] // Now fetched asynchronously in KelasClient via pagination
 
   return (
     <div className="max-w-7xl mx-auto w-full">
@@ -26,6 +27,7 @@ export default async function KelasPage() {
 
       <KelasClient 
         activeUnitId={activeUnitId}
+        activeYearId={activeYearId}
         initialGrades={grades}
         initialMajors={majors}
         initialClassrooms={classrooms}

@@ -59,7 +59,7 @@ const menuGroups = [
       { href: "/pengaturan", label: "Pengaturan", icon: Settings, adminOnly: true },
     ]
   }
-]
+] as { title: string, items: { href: string, label: string, icon: any, adminOnly?: boolean }[] }[]
 
 export default function Sidebar({ user }: { user: any }) {
   const pathname = usePathname()
