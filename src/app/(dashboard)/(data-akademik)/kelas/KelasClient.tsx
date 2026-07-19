@@ -52,8 +52,8 @@ export default function KelasClient({
     parentName: "", parentPhone: "", religion: "Islam", gender: "Laki-laki",
     address: "", formNo: "", username: ""
   })
-  const [formKelas, setFormKelas] = useState({ id: "", name: "", order: 1, unitSekolahId: schoolUnits[0]?.id || "" })
-  const [formSubKelas, setFormSubKelas] = useState({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: schoolUnits[0]?.id || "" })
+  const [formKelas, setFormKelas] = useState({ id: "", name: "", order: 1, unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
+  const [formSubKelas, setFormSubKelas] = useState({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
@@ -182,8 +182,8 @@ export default function KelasClient({
         const res = await tambahTingkatan({ ...formKelas, order: Number(formKelas.order) })
         setGrades([...grades, { ...res, unitSekolah: schoolUnits.find((u: any) => u.id === formKelas.unitSekolahId) }].sort((a, b) => a.order - b.order))
       }
-      setShowModalKelas(false)
-      setFormKelas({ id: "", name: "", order: formKelas.order + 1, unitSekolahId: schoolUnits[0]?.id || "" })
+      // Handle empty options nicely
+      setFormKelas({ id: "", name: "", order: formKelas.order + 1, unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
     } catch (err: any) { alert(err.message) }
     setIsSubmitting(false)
   }
@@ -209,7 +209,7 @@ export default function KelasClient({
         }])
       }
       setShowModalSubKelas(false)
-      setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: schoolUnits[0]?.id || "" })
+      setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
     } catch (err: any) { alert(err.message) }
     setIsSubmitting(false)
   }
@@ -329,15 +329,13 @@ export default function KelasClient({
           <div>
             {activeTab === "kelas" && (
               <Button onClick={() => {
-                setFormKelas({ id: "", name: "", order: 1, unitSekolahId: schoolUnits[0]?.id || "" })
+                setFormKelas({ id: "", name: "", order: 1, unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
                 setShowModalKelas(true)
-              }}>
-                <Plus size={16} className="mr-2" /> Tambah Tingkat
-              </Button>
+              }}><Plus size={16} className="mr-1.5" /> Tambah Tingkat</Button>
             )}
             {activeTab === "sub-kelas" && (
               <Button onClick={() => {
-                setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: schoolUnits[0]?.id || "" })
+                setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
                 setShowModalSubKelas(true)
               }}>
                 <Plus size={16} className="mr-2" /> Tambah Sub Kelas
@@ -346,7 +344,7 @@ export default function KelasClient({
             {activeTab === "murid" && (
               <Button onClick={() => {
                 setFormMurid({
-                  id: "", nisn: "", name: "", unitSekolahId: schoolUnits[0]?.id || "", subKelasId: "",
+                  id: "", nisn: "", name: "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "", subKelasId: "",
                   previousSchool: "", phone: "", birthDate: "", email: "", studentStatus: "Aktif",
                   parentName: "", parentPhone: "", religion: "Islam", gender: "Laki-laki",
                   address: "", formNo: "", username: ""
@@ -383,12 +381,10 @@ export default function KelasClient({
                 )}
                 {activeTab === "murid" && (
                   <>
-                    <SortableHeader label="Sekolah" sortKey="unitSekolah.name" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
-                    <SortableHeader label="Asal Sekolah" sortKey="previousSchool" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
                     <SortableHeader label="Nama Murid" sortKey="name" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
                     <SortableHeader label="NISN / NIS" sortKey="nisn" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
-                    <SortableHeader label="Nama Orang Tua" sortKey="parentName" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
-                    <SortableHeader label="No Formulir" sortKey="formNo" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
+                    <th className="p-4 font-semibold text-left">Kelas / Rombel</th>
+                    <SortableHeader label="Status" sortKey="status" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
                     <th className="p-4 font-semibold text-right">Aksi</th>
                   </>
                 )}
@@ -448,12 +444,23 @@ export default function KelasClient({
               {activeTab === "murid" && !isLoadingStudents && students.map((s: any, i: number) => (
                 <tr key={s.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
                   <td className="p-4">{i + 1}</td>
-                  <td className="p-4 text-text-main font-medium">{s.unitSekolah?.name}</td>
-                  <td className="p-4 text-text-muted">{s.previousSchool || "-"}</td>
-                  <td className="p-4 font-bold text-text-main">{s.name}</td>
+                  <td className="p-4">
+                    <div className="font-bold text-text-main">{s.name}</div>
+                    <div className="text-xs text-text-muted mt-0.5">{s.unitSekolah?.name}</div>
+                  </td>
                   <td className="p-4 font-mono text-sm">{s.nisn || s.nis}</td>
-                  <td className="p-4 text-text-muted">{s.parentName || "-"}</td>
-                  <td className="p-4 text-text-muted">{s.formNo || "-"}</td>
+                  <td className="p-4 font-medium text-text-main">
+                    {s.riwayatKelas?.[0]?.subKelas?.name ? (
+                      <span className="px-2.5 py-1 bg-primary/10 text-primary rounded-lg text-sm font-semibold">{s.riwayatKelas[0].subKelas.name}</span>
+                    ) : (
+                      <span className="text-xs italic text-text-muted">Belum ada kelas</span>
+                    )}
+                  </td>
+                  <td className="p-4">
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${s.status === 'AKTIF' ? 'bg-emerald-100 text-emerald-700' : s.status === 'LULUS' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>
+                      {s.status}
+                    </span>
+                  </td>
                   <td className="p-4">
                     <div className="flex items-center justify-end gap-2">
                       <Button variant="outline" size="sm" onClick={() => setViewDetailMurid(s)}><Info size={16} /></Button>
@@ -711,11 +718,18 @@ export default function KelasClient({
               )}
               <div className="grid grid-cols-3 gap-2 border-b border-border pb-2">
                 <span className="text-text-muted font-medium">Jumlah Siswa</span>
-                <span className="col-span-2">{viewDetailSubKelas._count?.murid || 0} Siswa Aktif</span>
+                <span className="col-span-2">{viewDetailSubKelas._count?.riwayatKelas || 0} Siswa Aktif</span>
               </div>
             </div>
-            <div className="p-6 border-t border-border flex justify-end bg-bg rounded-b-2xl">
-              <Button type="button" onClick={() => setViewDetailSubKelas(null)}>Tutup</Button>
+            <div className="p-6 border-t border-border flex justify-end gap-3 bg-bg rounded-b-2xl">
+              <Button type="button" variant="outline" onClick={() => setViewDetailSubKelas(null)}>Tutup</Button>
+              <Button type="button" variant="primary" onClick={() => {
+                setActiveTab("murid");
+                setFilterMuridTingkat(viewDetailSubKelas.tingkatId || "");
+                setFilterMuridJurusan(viewDetailSubKelas.jurusanId || "");
+                setFilterMuridSubKelas(viewDetailSubKelas.id);
+                setViewDetailSubKelas(null);
+              }}>Lihat Daftar Siswa</Button>
             </div>
           </div>
         </div>
@@ -755,8 +769,8 @@ export default function KelasClient({
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Status Siswa</span>
                     <span className="font-medium">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${viewDetailMurid.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                        {viewDetailMurid.isActive ? 'Aktif' : 'Non-Aktif'}
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${viewDetailMurid.status === 'AKTIF' ? 'bg-emerald-100 text-emerald-700' : viewDetailMurid.status === 'LULUS' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>
+                        {viewDetailMurid.status}
                       </span>
                     </span>
                   </div>

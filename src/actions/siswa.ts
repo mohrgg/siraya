@@ -123,6 +123,11 @@ export async function tambahSiswa(data: {
   if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
 
   const result = await prisma.$transaction(async (tx) => {
+    const existingMurid = await tx.murid.findUnique({ where: { nis: data.nis } })
+    if (existingMurid) {
+      throw new Error(`Siswa dengan NIS / NISN (${data.nis}) sudah terdaftar di sistem.`)
+    }
+
     const murid = await tx.murid.create({
       data: {
         nis: data.nis,
@@ -179,7 +184,16 @@ export async function editSiswa(id: string, data: {
 
   const result = await prisma.$transaction(async (tx) => {
     // Exclude subKelasId and rename studentStatus -> status
-    const { subKelasId, studentStatus, birthDate, ...muridData } = data;
+    // Also exclude relation and metadata objects that might be passed from frontend
+    const { subKelasId, studentStatus, birthDate, riwayatKelas, unitSekolah, subKelas, createdAt, updatedAt, ...muridData } = data as any;
+    
+    // Check NIS uniqueness if it's being updated
+    if (muridData.nis) {
+      const existingMurid = await tx.murid.findUnique({ where: { nis: muridData.nis } })
+      if (existingMurid && existingMurid.id !== id) {
+        throw new Error(`Siswa dengan NIS / NISN (${muridData.nis}) sudah terdaftar di sistem.`)
+      }
+    }
     
     const murid = await tx.murid.update({
       where: { id },

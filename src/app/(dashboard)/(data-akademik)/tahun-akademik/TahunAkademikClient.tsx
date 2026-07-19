@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Plus, Edit2, Trash2, CheckCircle2, Search } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
@@ -11,6 +12,7 @@ import { tambahTahunAkademik, editTahunAkademik, hapusTahunAkademik } from "@/ac
 type AcademicYear = any
 
 export default function TahunAkademikClient({ initialData }: { initialData: AcademicYear[] }) {
+  const router = useRouter()
   const [data, setData] = useState<AcademicYear[]>(initialData)
   const [searchTerm, setSearchTerm] = useState("")
   
@@ -82,6 +84,9 @@ export default function TahunAkademikClient({ initialData }: { initialData: Acad
         setData([res, ...newData])
       }
       setIsAdding(false)
+      if (formData.isActive) {
+        router.refresh()
+      }
     } catch (e: any) {
       alert(e.message)
     } finally {
