@@ -65,3 +65,63 @@
     background: rgba(255, 255, 255, 0.3);
   }
 }
+
+/* ========== PRINT STYLES ========== */
+@media print {
+  /* Hide everything except the print content */
+  body * {
+    visibility: hidden;
+  }
+
+  .print-content,
+  .print-content * {
+    visibility: visible !important;
+  }
+
+  .print-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20mm;
+  }
+
+  /* Force show elements with print: prefix (Tailwind) */
+  .print\:block {
+    display: block !important;
+  }
+
+  .print\:grid {
+    display: grid !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Clean background */
+  .print-content .bg-emerald-50,
+  .print-content .bg-red-50,
+  .print-content .bg-bg {
+    background-color: #f9fafb !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Remove shadows and rounds for print */
+  .print-content .rounded-xl,
+  .print-content .rounded-2xl {
+    border-radius: 4px !important;
+  }
+
+  .print-content .shadow-sm,
+  .print-content .shadow-xl {
+    box-shadow: none !important;
+  }
+
+  /* Page settings */
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+}

@@ -146,6 +146,7 @@ model RiwayatKelas {
 // ========== AKUN KEUANGAN ==========
 model KlasifikasiAkun {
   id           String @id @default(cuid())
+  code         String @default("0") @db.VarChar(10) // "1"=HARTA, "2"=KEWAJIBAN, "3"=MODAL, "4"=PENDAPATAN, "5"=BEBAN
   name         String @db.VarChar(100) // "HARTA", "PENDAPATAN"
   unitSekolahId String
 

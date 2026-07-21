@@ -57,3 +57,4 @@ CLAUDE.md
 /playwright-report
 /tests
 /test-results
+playwright.config.ts

@@ -1,14 +1,16 @@
 import { getTransaksiKas } from "@/actions/transaksi-kas"
 import KasMasukClient from "./KasMasukClient"
 import prisma from "@/lib/prisma"
+import { cookies } from "next/headers"
 
 export default async function KasMasukPage() {
   const schoolUnits = await prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } })
-  const initialUnitId = schoolUnits[0]?.id
+  const cookieStore = await cookies()
+  const initialUnitId = cookieStore.get("activeUnitId")?.value || schoolUnits[0]?.id
   
   const transactions = initialUnitId ? await getTransaksiKas(initialUnitId, "IN") : []
 
-  // Ambil akun untuk dropdown (hanya tipe PENDAPATAN atau HARTA yang relevan, atau semuanya dulu)
+  // Ambil akun untuk dropdown (filter per unit jika ada relasi, untuk saat ini ambil semua aktif)
   const accounts = await prisma.akunDetail.findMany({
     where: { isActive: true },
     include: { subKlasifikasiAkun: true },

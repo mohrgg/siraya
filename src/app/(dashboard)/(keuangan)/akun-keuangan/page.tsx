@@ -1,11 +1,12 @@
 import { getKlasifikasiAkun } from "@/actions/akun-keuangan"
 import AkunKeuanganClient from "./AkunKeuanganClient"
 import prisma from "@/lib/prisma"
+import { cookies } from "next/headers"
 
 export default async function AkunKeuanganPage() {
   const schoolUnits = await prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } })
-  // Untuk awal kita ambil dari unit pertama
-  const initialUnitId = schoolUnits[0]?.id
+  const cookieStore = await cookies()
+  const initialUnitId = cookieStore.get("activeUnitId")?.value || schoolUnits[0]?.id
   const data = initialUnitId ? await getKlasifikasiAkun(initialUnitId) : []
 
   return (

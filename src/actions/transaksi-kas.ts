@@ -16,7 +16,11 @@ export async function getTransaksiKas(unitSekolahId: string, type?: "IN" | "OUT"
       ...(type ? { type } : {})
     },
     include: {
-      akunDetail: true,
+      akunDetail: {
+        include: {
+          subKlasifikasiAkun: true
+        }
+      },
       createdBy: {
         select: { name: true }
       }
@@ -67,6 +71,12 @@ export async function tambahTransaksiKas(data: {
       amount: new Prisma.Decimal(data.amount),
       referenceNo,
       createdById: session.user.id
+    },
+    include: {
+      akunDetail: {
+        include: { subKlasifikasiAkun: true }
+      },
+      createdBy: { select: { name: true } }
     }
   })
   
@@ -76,4 +86,54 @@ export async function tambahTransaksiKas(data: {
     ...result,
     amount: Number(result.amount)
   }
+}
+
+export async function editTransaksiKas(id: string, data: {
+  akunDetailId?: string,
+  amount?: number,
+  date?: Date,
+  description?: string,
+  studentName?: string,
+  classroomName?: string,
+  recipientName?: string,
+  formNo?: string,
+}) {
+  const session = await auth()
+  if (!session) throw new Error("Unauthorized")
+
+  const updateData: any = { ...data }
+  if (data.amount !== undefined) {
+    updateData.amount = new Prisma.Decimal(data.amount)
+  }
+
+  const result = await prisma.transaksiKas.update({
+    where: { id },
+    data: updateData,
+    include: {
+      akunDetail: {
+        include: { subKlasifikasiAkun: true }
+      },
+      createdBy: { select: { name: true } }
+    }
+  })
+
+  revalidatePath("/transaksi")
+  revalidatePath("/")
+  return {
+    ...result,
+    amount: Number(result.amount)
+  }
+}
+
+export async function hapusTransaksiKas(id: string) {
+  const session = await auth()
+  if (!session) throw new Error("Unauthorized")
+
+  await prisma.transaksiKas.update({
+    where: { id },
+    data: { isDeleted: true }
+  })
+
+  revalidatePath("/transaksi")
+  revalidatePath("/")
 }
