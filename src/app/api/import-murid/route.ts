@@ -100,7 +100,7 @@ export async function POST(req: Request) {
               birthDate: birthDate,
               email: email || null,
               previousSchool: asalSekolah || null,
-              parentName: namaOrtu || null,
+              fatherName: namaOrtu || null,
               parentPhone: noTelpOrtu || null,
               address: alamat || null,
               formNo: formNo || null,

@@ -113,12 +113,7 @@ export async function getSiswaPaginated(params: {
   }
 }
 
-export async function tambahSiswa(data: { 
-  nis: string, name: string, subKelasId?: string, unitSekolahId: string, isActive?: boolean, isScholarship?: boolean,
-  nisn?: string, previousSchool?: string, phone?: string, birthDate?: string, email?: string, studentStatus?: string,
-  parentName?: string, parentPhone?: string, religion?: string, gender?: string, password?: string, address?: string,
-  photoUrl?: string, formNo?: string, username?: string
-}) {
+export async function tambahSiswa(data: any) {
   const session = await auth()
   if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
 
@@ -128,28 +123,15 @@ export async function tambahSiswa(data: {
       throw new Error(`Siswa dengan NIS / NISN (${data.nis}) sudah terdaftar di sistem.`)
     }
 
+    const { subKelasId, studentStatus, birthDate, riwayatKelas, unitSekolah, subKelas, createdAt, updatedAt, id, ...muridData } = data as any;
+
     const murid = await tx.murid.create({
       data: {
-        nis: data.nis,
-        name: data.name,
-        unitSekolahId: data.unitSekolahId,
+        ...muridData,
+        status: studentStatus || data.status || "AKTIF",
         isActive: data.isActive ?? true,
         isScholarship: data.isScholarship ?? false,
-        nisn: data.nisn,
-        previousSchool: data.previousSchool,
-        phone: data.phone,
-        birthDate: data.birthDate ? new Date(data.birthDate) : null,
-        email: data.email,
-        status: data.studentStatus || "AKTIF",
-        parentName: data.parentName,
-        parentPhone: data.parentPhone,
-        religion: data.religion,
-        gender: data.gender,
-        password: data.password,
-        address: data.address,
-        photoUrl: data.photoUrl,
-        formNo: data.formNo,
-        username: data.username,
+        ...(birthDate ? { birthDate: new Date(birthDate) } : {})
       }
     })
 

@@ -131,18 +131,68 @@ model Murid {
   isScholarship Boolean @default(false)
 
   // Field pendaftaran
+  // Identitas Pribadi
   nisn           String?   @db.VarChar(50)
-  previousSchool String?   @db.VarChar(150)
-  phone          String?   @db.VarChar(20)
+  nickname       String?   @db.VarChar(50)
+  nik            String?   @db.VarChar(16)
+  birthPlace     String?   @db.VarChar(100)
   birthDate      DateTime?
-  email          String?   @db.VarChar(100)
-  status         String    @default("AKTIF") @db.VarChar(50) // AKTIF, LULUS, PINDAH, DO
-  parentName     String?   @db.VarChar(150)
-  parentPhone    String?   @db.VarChar(20)
-  religion       String?   @db.VarChar(50)
   gender         String?   @db.VarChar(20)
-  password       String?   @db.VarChar(255)
+  religion       String?   @db.VarChar(50)
+  childOrder     Int?
+  siblingCount   Int?
+
+  // Pendidikan & Periodik
+  previousSchool   String?   @db.VarChar(150)
+  height           Float?
+  weight           Float?
+  headSize         Float?
+  distanceToSchool String?   @db.VarChar(50)
+  travelTime       String?   @db.VarChar(50)
+
+  // Data Ayah
+  fatherName       String?   @db.VarChar(150)
+  fatherBirthYear  String?   @db.VarChar(4)
+  fatherNik        String?   @db.VarChar(16)
+  fatherEducation  String?   @db.VarChar(50)
+  fatherOccupation String?   @db.VarChar(100)
+  fatherIncome     String?   @db.VarChar(50)
+
+  // Data Ibu
+  motherName       String?   @db.VarChar(150)
+  motherBirthYear  String?   @db.VarChar(4)
+  motherNik        String?   @db.VarChar(16)
+  motherEducation  String?   @db.VarChar(50)
+  motherOccupation String?   @db.VarChar(100)
+  motherIncome     String?   @db.VarChar(50)
+
+  // Data Wali
+  guardianName       String?   @db.VarChar(150)
+  guardianBirthYear  String?   @db.VarChar(4)
+  guardianNik        String?   @db.VarChar(16)
+  guardianEducation  String?   @db.VarChar(50)
+  guardianOccupation String?   @db.VarChar(100)
+  guardianIncome     String?   @db.VarChar(50)
+  guardianPhone      String?   @db.VarChar(20)
+
+  // Kontak & Alamat
+  phone          String?   @db.VarChar(20)
+  parentPhone    String?   @db.VarChar(20)
+  email          String?   @db.VarChar(100)
   address        String?   @db.Text
+  rt             String?   @db.VarChar(5)
+  rw             String?   @db.VarChar(5)
+  village        String?   @db.VarChar(100) // Kelurahan
+  district       String?   @db.VarChar(100) // Kecamatan
+  postalCode     String?   @db.VarChar(10)
+
+  // Kesehatan
+  bloodType      String?   @db.VarChar(5)
+  medicalHistory String?   @db.Text
+
+  // Lain-lain
+  status         String    @default("AKTIF") @db.VarChar(50)
+  password       String?   @db.VarChar(255)
   photoUrl       String?   @db.VarChar(255)
   formNo         String?   @db.VarChar(50)
   username       String?   @db.VarChar(100)

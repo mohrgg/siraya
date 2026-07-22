@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, FileSpreadsheet, FileIcon as FilePdf, Plus, Upload, Trash2, Edit2, Info } from "lucide-react"
+import { Search, FileSpreadsheet, FileIcon as FilePdf, Plus, Upload, Trash2, Edit2, Info, User } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
@@ -9,7 +9,10 @@ import { SortableHeader } from "@/components/ui/SortableHeader"
 import { useSortableData } from "@/hooks/useSortableData"
 import { tambahKelas, tambahTingkatan, editKelas, hapusKelas, hapusTingkatan } from "@/actions/kelas"
 import { tambahSiswa, editSiswa, hapusSiswa, getSiswaPaginated } from "@/actions/siswa"
+import { toast } from "sonner"
 import ImportMuridModal from "@/components/modals/ImportMuridModal"
+import MuridFormModal from "@/components/modals/MuridFormModal"
+
 export default function KelasClient({ 
   activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits 
 }: { 
@@ -465,8 +468,19 @@ export default function KelasClient({
                 <tr key={s.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
                   <td className="p-4">{i + 1}</td>
                   <td className="p-4">
-                    <div className="font-bold text-text-main">{s.name}</div>
-                    <div className="text-xs text-text-muted mt-0.5">{s.unitSekolah?.name}</div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex-shrink-0 border border-border overflow-hidden flex items-center justify-center">
+                        {s.photoUrl ? (
+                          <img src={s.photoUrl} alt={s.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <User size={20} className="text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-bold text-text-main">{s.name}</div>
+                        <div className="text-xs text-text-muted mt-0.5">{s.unitSekolah?.name}</div>
+                      </div>
+                    </div>
                   </td>
                   <td className="p-4">
                     <div className="font-mono text-sm text-text-main font-semibold">{s.nisn || "-"}</div>
@@ -515,104 +529,15 @@ export default function KelasClient({
         )}
       </div>
 
-      {/* Modal Tambah Murid */}
-      {showModalMurid && (
-        <div className="fixed inset-0 bg-black/60 z-[1000] flex items-center justify-center p-4 md:p-8 backdrop-blur-sm">
-          <div className="w-full max-w-4xl bg-surface rounded-2xl shadow-xl border border-border flex flex-col max-h-full">
-            <div className="p-6 border-b border-border flex justify-between items-center bg-bg rounded-t-2xl">
-              <h3 className="text-xl font-bold text-albas-green m-0">
-                {formMurid.id ? "Edit Data Murid" : "Tambah Murid Baru"}
-              </h3>
-              <button onClick={() => setShowModalMurid(false)} className="text-2xl text-text-muted hover:text-text-main transition-colors">&times;</button>
-            </div>
-            
-            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
-              <form id="muridForm" onSubmit={handleSaveMurid} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="col-span-1 md:col-span-2 font-bold text-text-main border-b border-border pb-2">Data Utama Siswa</div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Nama Lengkap <span className="text-red-500">*</span></label>
-                  <Input placeholder="Nama Siswa" value={formMurid.name} onChange={e => setFormMurid({ ...formMurid, name: e.target.value })} required />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">NISN (10 Digit) <span className="text-red-500">*</span></label>
-                  <Input placeholder="0012345678" value={formMurid.nisn} onChange={e => setFormMurid({ ...formMurid, nisn: e.target.value })} minLength={10} maxLength={10} required />
-                </div>
-                <div className="hidden">
-                  <label className="text-sm font-semibold text-text-main">Unit Sekolah <span className="text-red-500">*</span></label>
-                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formMurid.unitSekolahId} onChange={e => setFormMurid({ ...formMurid, unitSekolahId: e.target.value })} required>
-                    {schoolUnits.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Sub Kelas / Rombel</label>
-                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formMurid.subKelasId} onChange={e => setFormMurid({ ...formMurid, subKelasId: e.target.value })}>
-                    <option value="">-- Pilih Kelas --</option>
-                    {classrooms.filter((c: any) => c.unitSekolahId === formMurid.unitSekolahId).map((c: any) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-span-1 md:col-span-2 font-bold text-text-main border-b border-border pb-2 mt-4">Data Pribadi & Orang Tua</div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Asal Sekolah (Opsional)</label>
-                  <Input placeholder="Asal Sekolah" value={formMurid.previousSchool} onChange={e => setFormMurid({ ...formMurid, previousSchool: e.target.value })} />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">No. Telepon / WA Siswa</label>
-                  <Input placeholder="08..." value={formMurid.phone} onChange={e => setFormMurid({ ...formMurid, phone: e.target.value })} />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Tanggal Lahir</label>
-                  <Input type="date" value={formMurid.birthDate} onChange={e => setFormMurid({ ...formMurid, birthDate: e.target.value })} />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Nama Orang Tua</label>
-                  <Input placeholder="Nama Orang Tua" value={formMurid.parentName} onChange={e => setFormMurid({ ...formMurid, parentName: e.target.value })} />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">No. Telepon Orang Tua</label>
-                  <Input placeholder="08..." value={formMurid.parentPhone} onChange={e => setFormMurid({ ...formMurid, parentPhone: e.target.value })} />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Agama</label>
-                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formMurid.religion} onChange={e => setFormMurid({ ...formMurid, religion: e.target.value })}>
-                    <option value="Islam">Islam</option>
-                    <option value="Kristen">Kristen</option>
-                    <option value="Katolik">Katolik</option>
-                    <option value="Hindu">Hindu</option>
-                    <option value="Buddha">Buddha</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Jenis Kelamin</label>
-                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formMurid.gender} onChange={e => setFormMurid({ ...formMurid, gender: e.target.value })}>
-                    <option value="Laki-laki">Laki-laki</option>
-                    <option value="Perempuan">Perempuan</option>
-                  </select>
-                </div>
-                <div className="col-span-1 md:col-span-2 flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Alamat Lengkap</label>
-                  <textarea className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium resize-y" rows={3} placeholder="Masukkan alamat lengkap" value={formMurid.address} onChange={e => setFormMurid({ ...formMurid, address: e.target.value })} />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">No. Formulir Pendaftaran</label>
-                  <Input placeholder="No. Formulir" value={formMurid.formNo} onChange={e => setFormMurid({ ...formMurid, formNo: e.target.value })} />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Username (Opsional untuk Login Siswa)</label>
-                  <Input placeholder="Username" value={formMurid.username} onChange={e => setFormMurid({ ...formMurid, username: e.target.value })} />
-                </div>
-              </form>
-            </div>
-
-            <div className="p-6 border-t border-border flex gap-4 bg-bg rounded-b-2xl shrink-0">
-              <Button type="submit" form="muridForm" isLoading={isSubmitting}>Simpan Data Murid</Button>
-              <Button type="button" variant="outline" onClick={() => setShowModalMurid(false)}>Batal</Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal Tambah Murid (Moved to Separate Component) */}
+      <MuridFormModal 
+        isOpen={showModalMurid}
+        onClose={() => setShowModalMurid(false)}
+        onSave={handleSaveMurid}
+        initialData={formMurid}
+        schoolUnits={schoolUnits}
+        classrooms={classrooms}
+      />
 
       {/* Modal Tambah Kelas (Tingkat) */}
       {showModalKelas && (
@@ -782,8 +707,12 @@ export default function KelasClient({
                 
                 {/* Header Profil */}
                 <div className="flex items-center gap-4 border-b border-border pb-4">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl uppercase">
-                    {viewDetailMurid.name.substring(0, 2)}
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl uppercase overflow-hidden border-2 border-primary/20 shrink-0">
+                    {viewDetailMurid.photoUrl ? (
+                      <img src={viewDetailMurid.photoUrl} alt={viewDetailMurid.name} className="w-full h-full object-cover" />
+                    ) : (
+                      viewDetailMurid.name.substring(0, 2)
+                    )}
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">{viewDetailMurid.name}</h2>
@@ -825,8 +754,8 @@ export default function KelasClient({
                     <h4 className="font-bold text-text-main mb-4">Informasi Orang Tua / Wali</h4>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Nama Orang Tua</span>
-                    <span className="font-medium">{viewDetailMurid.parentName || "-"}</span>
+                    <span className="text-xs text-text-muted">Nama Ayah</span>
+                    <span className="font-medium">{viewDetailMurid.fatherName || "-"}</span>
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">No. Telepon Orang Tua</span>
