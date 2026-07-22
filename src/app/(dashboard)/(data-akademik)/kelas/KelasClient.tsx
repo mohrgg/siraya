@@ -9,7 +9,7 @@ import { SortableHeader } from "@/components/ui/SortableHeader"
 import { useSortableData } from "@/hooks/useSortableData"
 import { tambahKelas, tambahTingkatan, editKelas, hapusKelas, hapusTingkatan } from "@/actions/kelas"
 import { tambahSiswa, editSiswa, hapusSiswa, getSiswaPaginated } from "@/actions/siswa"
-
+import ImportMuridModal from "@/components/modals/ImportMuridModal"
 export default function KelasClient({ 
   activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits 
 }: { 
@@ -37,7 +37,7 @@ export default function KelasClient({
   const [showModalMurid, setShowModalMurid] = useState(false)
   const [showModalKelas, setShowModalKelas] = useState(false)
   const [showModalSubKelas, setShowModalSubKelas] = useState(false)
-  
+  const [showModalImportMurid, setShowModalImportMurid] = useState(false)  
   const [viewDetailMurid, setViewDetailMurid] = useState<any>(null)
   const [viewDetailSubKelas, setViewDetailSubKelas] = useState<any>(null)
   
@@ -333,8 +333,13 @@ export default function KelasClient({
                 <FilePdf size={16} className="mr-1.5" /> PDF
               </Button>
               {activeTab === "murid" && (
-                <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled>
-                  <Upload size={16} className="mr-1.5" /> Import
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800"
+                  onClick={() => setShowModalImportMurid(true)}
+                >
+                  <Upload size={16} className="mr-1.5" /> Impor Excel
                 </Button>
               )}
             </div>
@@ -476,8 +481,8 @@ export default function KelasClient({
                     )}
                   </td>
                   <td className="p-4">
-                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${s.status === 'AKTIF' ? 'bg-emerald-100 text-emerald-700' : s.status === 'LULUS' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>
-                      {s.status}
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${s.status?.toUpperCase() === 'AKTIF' ? 'bg-emerald-100 text-emerald-700' : s.status?.toUpperCase() === 'LULUS' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>
+                      {s.status?.toUpperCase()}
                     </span>
                   </td>
                   <td className="p-4">
@@ -554,12 +559,16 @@ export default function KelasClient({
                   <Input placeholder="Asal Sekolah" value={formMurid.previousSchool} onChange={e => setFormMurid({ ...formMurid, previousSchool: e.target.value })} />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Nama Orang Tua</label>
-                  <Input placeholder="Nama Orang Tua" value={formMurid.parentName} onChange={e => setFormMurid({ ...formMurid, parentName: e.target.value })} />
-                </div>
-                <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-text-main">No. Telepon / WA Siswa</label>
                   <Input placeholder="08..." value={formMurid.phone} onChange={e => setFormMurid({ ...formMurid, phone: e.target.value })} />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Tanggal Lahir</label>
+                  <Input type="date" value={formMurid.birthDate} onChange={e => setFormMurid({ ...formMurid, birthDate: e.target.value })} />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-text-main">Nama Orang Tua</label>
+                  <Input placeholder="Nama Orang Tua" value={formMurid.parentName} onChange={e => setFormMurid({ ...formMurid, parentName: e.target.value })} />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-text-main">No. Telepon Orang Tua</label>
@@ -838,6 +847,17 @@ export default function KelasClient({
         </div>
       )}
 
+      <ImportMuridModal 
+        isOpen={showModalImportMurid}
+        onClose={() => setShowModalImportMurid(false)}
+        onSuccess={() => {
+          setShowModalImportMurid(false)
+          // We can force a refresh by reloading or calling a router.refresh() 
+          window.location.reload()
+        }}
+        schoolUnits={schoolUnits}
+        classrooms={classrooms}
+      />
     </div>
   )
 }
