@@ -31,11 +31,29 @@ export default async function DashboardPage() {
       _sum: { totalAmount: true }
     })
     
-    // Distribusi Murid per Unit
-    const units = await prisma.unitSekolah.findMany({ select: { id: true, name: true, _count: { select: { murid: { where: { isActive: true } } } } } })
+    // Distribusi Murid per Unit beserta Rombel (Sub Kelas)
+    const units = await prisma.unitSekolah.findMany({ 
+      select: { 
+        id: true, 
+        name: true, 
+        _count: { select: { murid: { where: { isActive: true } } } },
+        subKelas: {
+          select: {
+            id: true,
+            name: true,
+            _count: { select: { riwayatKelas: { where: { murid: { isActive: true } } } } }
+          }
+        }
+      } 
+    })
+    
     const unitDistribution = units.map(u => ({
       name: u.name,
-      total: u._count.murid
+      total: u._count.murid,
+      rombel: u.subKelas.map(sk => ({
+        name: sk.name,
+        total: sk._count.riwayatKelas
+      }))
     }))
 
     // Aktivitas Harian (7 Hari Terakhir)
@@ -72,11 +90,32 @@ export default async function DashboardPage() {
       ...activityMap[date]
     }))
 
+    // For System Tab
+    const userRoles = await prisma.pengguna.groupBy({
+      by: ['role'],
+      _count: true
+    })
+    const userRolesCount = {
+      ADMIN: userRoles.find(r => r.role === 'ADMIN')?._count || 0,
+      TATA_USAHA: userRoles.find(r => r.role === 'TATA_USAHA')?._count || 0,
+      KEPALA_SEKOLAH: userRoles.find(r => r.role === 'KEPALA_SEKOLAH')?._count || 0,
+    }
+
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const activeUsersToday = await prisma.logAktivitas.groupBy({
+      by: ['penggunaId'],
+      where: { 
+        aksi: 'LOGIN',
+        createdAt: { gte: todayStart }
+      }
+    }).then(res => res.length)
+
     // Ambil log aktivitas riil
     const logs = await prisma.logAktivitas.findMany({
       take: 20,
       orderBy: { createdAt: "desc" },
-      include: { pengguna: { select: { email: true, name: true } } }
+      include: { pengguna: { select: { email: true, name: true, role: true } } }
     })
 
     return (
@@ -91,7 +130,9 @@ export default async function DashboardPage() {
           kasOut={Number(kasOut._sum.totalAmount || 0)}
           unitDistribution={unitDistribution}
           activityData={activityData}
-          logs={logs} 
+          logs={logs}
+          userRolesCount={userRolesCount}
+          activeUsersToday={activeUsersToday}
         />
       </div>
     )

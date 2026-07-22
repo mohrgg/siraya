@@ -132,14 +132,25 @@ export async function getDivisi() {
 
 export async function tambahDivisi(data: { name: string, description?: string }) {
   await requireAdmin()
-  await prisma.divisi.create({ data })
+  await prisma.divisi.create({ 
+    data: {
+      name: data.name,
+      description: data.description || null
+    }
+  })
   await logAktivitas("TAMBAH_DIVISI", "MANAJEMEN_USER", `Menambahkan divisi baru: ${data.name}`)
   revalidatePath("/manajemen-user")
 }
 
 export async function editDivisi(id: string, data: { name: string, description?: string }) {
   await requireAdmin()
-  await prisma.divisi.update({ where: { id }, data })
+  await prisma.divisi.update({ 
+    where: { id }, 
+    data: {
+      name: data.name,
+      description: data.description || null
+    }
+  })
   await logAktivitas("EDIT_DIVISI", "MANAJEMEN_USER", `Mengubah divisi: ${data.name}`)
   revalidatePath("/manajemen-user")
 }
