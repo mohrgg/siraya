@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from "react"
 import { X, User, Users, HeartPulse, GraduationCap, MapPin, Loader2, Save, Upload, Camera } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
-import { toast } from "sonner"
 
 interface MuridFormModalProps {
   isOpen: boolean
@@ -60,12 +59,12 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
     if (!file) return
 
     if (!file.type.startsWith("image/")) {
-      toast.error("File harus berupa gambar")
+      alert("File harus berupa gambar")
       return
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("Ukuran maksimal file adalah 2MB")
+      alert("Ukuran maksimal file adalah 2MB")
       return
     }
 
@@ -86,9 +85,9 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
 
       const { url } = await res.json()
       handleChange("photoUrl", url)
-      toast.success("Foto berhasil diunggah")
+      alert("Foto berhasil diunggah")
     } catch (error: any) {
-      toast.error(error.message || "Gagal mengunggah foto")
+      alert(error.message || "Gagal mengunggah foto")
     } finally {
       setIsUploading(false)
       // Reset input so the same file can be uploaded again if needed
