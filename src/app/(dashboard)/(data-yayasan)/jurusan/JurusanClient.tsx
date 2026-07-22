@@ -11,31 +11,74 @@ import { tambahJurusan, editJurusan, hapusJurusan } from "@/actions/kelas"
 
 type Major = any
 
-export default function JurusanClient({ initialData }: { initialData: Major[] }) {
+export default function JurusanClient({ initialData, schoolUnits }: { initialData: Major[], schoolUnits: any[] }) {
+  const [activeUnitId, setActiveUnitId] = useState<string>(schoolUnits[0]?.id || "")
   const [data, setData] = useState<Major[]>(initialData)
   const [searchTerm, setSearchTerm] = useState("")
   
   const filteredData = data.filter((d: any) => 
-    d.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    d.code.toLowerCase().includes(searchTerm.toLowerCase())
+    d.unitSekolahId === activeUnitId &&
+    (d.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+     d.code.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
   const { items: sortedData, requestSort, sortConfig } = useSortableData(filteredData)
   const [isAdding, setIsAdding] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState({ id: "", name: "", code: "" })
+  
+  // Custom Preset Logic
+  const PRESETS = [
+    { code: "UMUM", name: "Umum / Reguler" },
+    { code: "MIPA", name: "Matematika dan Ilmu Pengetahuan Alam (SMA)" },
+    { code: "IPS", name: "Ilmu Pengetahuan Sosial (SMA)" },
+    { code: "BAHASA", name: "Ilmu Bahasa dan Budaya (SMA)" },
+    { code: "MPLB", name: "Manajemen Perkantoran dan Layanan Bisnis (SMK)" },
+    { code: "AKL", name: "Akuntansi dan Keuangan Lembaga (SMK)" },
+    { code: "PM", name: "Bisnis Daring Dan Pemasaran / Pemasaran (SMK)" },
+    { code: "TKJ", name: "Teknik Jaringan Komputer dan Telekomunikasi (SMK)" },
+    { code: "RPL", name: "Pengembangan Perangkat Lunak dan Gim (SMK)" },
+    { code: "DKV", name: "Desain Komunikasi Visual (SMK)" },
+    { code: "PH", name: "Perhotelan (SMK)" },
+  ]
+  const [selectedPreset, setSelectedPreset] = useState("UMUM")
+  const [isCustom, setIsCustom] = useState(false)
+
+  const [formData, setFormData] = useState({ id: "", name: "", code: "", unitSekolahId: activeUnitId })
 
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleAddClick = () => {
-    setFormData({ id: "", name: "", code: "" })
+    setFormData({ id: "", name: PRESETS[0].name, code: PRESETS[0].code, unitSekolahId: activeUnitId })
+    setSelectedPreset(PRESETS[0].code)
+    setIsCustom(false)
     setIsAdding(true)
   }
 
   const handleEditClick = (item: Major) => {
-    setFormData({ id: item.id, name: item.name, code: item.code })
+    setFormData({ id: item.id, name: item.name, code: item.code, unitSekolahId: item.unitSekolahId })
+    const matchedPreset = PRESETS.find(p => p.code === item.code && p.name === item.name)
+    if (matchedPreset) {
+      setSelectedPreset(matchedPreset.code)
+      setIsCustom(false)
+    } else {
+      setSelectedPreset("CUSTOM")
+      setIsCustom(true)
+    }
     setIsAdding(true)
+  }
+
+  const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value
+    setSelectedPreset(val)
+    if (val === "CUSTOM") {
+      setIsCustom(true)
+      setFormData({ ...formData, code: "", name: "" })
+    } else {
+      setIsCustom(false)
+      const p = PRESETS.find(x => x.code === val)
+      if (p) setFormData({ ...formData, code: p.code, name: p.name })
+    }
   }
 
   const handleDeleteConfirm = async () => {
@@ -58,12 +101,14 @@ export default function JurusanClient({ initialData }: { initialData: Major[] })
     try {
       if (formData.id) {
         // Edit
-        const res = await editJurusan(formData.id, { name: formData.name, code: formData.code })
-        setData(data.map(d => d.id === formData.id ? res : d))
+        const res = await editJurusan(formData.id, { name: formData.name, code: formData.code, unitSekolahId: formData.unitSekolahId })
+        const updatedUnit = schoolUnits.find(u => u.id === formData.unitSekolahId)
+        setData(data.map(d => d.id === formData.id ? { ...res, unitSekolah: updatedUnit } : d))
       } else {
         // Create
-        const res = await tambahJurusan({ name: formData.name, code: formData.code })
-        setData([...data, res])
+        const res = await tambahJurusan({ name: formData.name, code: formData.code, unitSekolahId: formData.unitSekolahId })
+        const newUnit = schoolUnits.find(u => u.id === formData.unitSekolahId)
+        setData([...data, { ...res, unitSekolah: newUnit }])
       }
       setIsAdding(false)
     } catch (e: any) {
@@ -91,19 +136,51 @@ export default function JurusanClient({ initialData }: { initialData: Major[] })
               <h3 className="text-xl font-bold text-text-main">{formData.id ? "Edit Jurusan" : "Tambah Jurusan Baru"}</h3>
             </div>
             <div className="p-6">
-              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-100 rounded-xl text-sm text-yellow-800 flex gap-3">
-                <div className="font-bold shrink-0">Tips:</div>
-                <div>Untuk level unit sekolah yang tidak memiliki penjurusan (misal: SD, SMP), Anda bisa membuat satu jurusan dengan kode "UMUM" dan nama "Umum".</div>
+              <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-800 flex gap-3">
+                <div className="font-bold shrink-0">Catatan:</div>
+                <div>Jurusan ini hanya akan muncul sebagai pilihan saat Anda membuat kelas pada <b>Unit Sekolah</b> yang bersangkutan.</div>
               </div>
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Kode Jurusan (Cth: TKJ)</label>
-                  <Input value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} maxLength={20} required />
+                <div className="flex flex-col gap-1.5 hidden">
+                  <label className="text-sm font-semibold text-text-main">Unit Sekolah <span className="text-red-500">*</span></label>
+                  <select 
+                    className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
+                    value={formData.unitSekolahId}
+                    onChange={e => setFormData({ ...formData, unitSekolahId: e.target.value })}
+                    required
+                  >
+                    {schoolUnits.map(unit => (
+                      <option key={unit.id} value={unit.id}>{unit.name}</option>
+                    ))}
+                  </select>
                 </div>
+                
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Nama Lengkap Jurusan (Cth: Teknik Komputer Jaringan)</label>
-                  <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} maxLength={100} required />
+                  <label className="text-sm font-semibold text-text-main">Pilih Preset Jurusan / Program</label>
+                  <select 
+                    className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
+                    value={selectedPreset}
+                    onChange={handlePresetChange}
+                  >
+                    {PRESETS.map(p => (
+                      <option key={p.code} value={p.code}>{p.code} - {p.name}</option>
+                    ))}
+                    <option value="CUSTOM">-- Ketik Manual (Lainnya) --</option>
+                  </select>
                 </div>
+
+                {isCustom && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 p-4 bg-gray-50 rounded-xl border border-border">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-text-main">Kode Jurusan (Cth: TKJ)</label>
+                      <Input value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} maxLength={20} required />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-text-main">Nama Lengkap Jurusan</label>
+                      <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} maxLength={100} required />
+                    </div>
+                  </div>
+                )}
                 
                 <div className="flex gap-3 mt-4 justify-end">
                   <Button type="button" variant="outline" onClick={() => setIsAdding(false)}>Batal</Button>
@@ -115,20 +192,34 @@ export default function JurusanClient({ initialData }: { initialData: Major[] })
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div className="relative w-full max-w-xs">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-          <input 
-            type="text" 
-            placeholder="Cari jurusan..." 
-            className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm text-text-main" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex overflow-x-auto no-scrollbar gap-2 pb-2">
+          {schoolUnits.map((unit: any) => (
+            <button
+              key={unit.id}
+              onClick={() => setActiveUnitId(unit.id)}
+              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${activeUnitId === unit.id ? 'bg-albas-green text-white shadow-md' : 'bg-surface text-text-muted hover:bg-gray-100 hover:text-text-main border border-border'}`}
+            >
+              {unit.name}
+            </button>
+          ))}
         </div>
-        <Button onClick={handleAddClick}>
-          <Plus size={16} className="mr-2" /> Tambah Program/Jurusan
-        </Button>
+        
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div className="relative w-full max-w-xs">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <input 
+              type="text" 
+              placeholder="Cari jurusan..." 
+              className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm text-text-main" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button onClick={handleAddClick}>
+            <Plus size={16} className="mr-2" /> Tambah Program/Jurusan
+          </Button>
+        </div>
       </div>
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">

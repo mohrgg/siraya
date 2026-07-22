@@ -34,11 +34,11 @@ model Pengguna {
 
 // ========== DIVISI ==========
 model Divisi {
-  id          String   @id @default(cuid())
-  name        String   @db.VarChar(100)
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(100)
   description String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   pengguna     Pengguna[]
   transaksiKas TransaksiKas[]
@@ -57,6 +57,7 @@ model UnitSekolah {
   updatedAt DateTime @updatedAt
 
   tingkat           Tingkat[]
+  jurusan           Jurusan[]
   subKelas          SubKelas[]
   murid             Murid[]
   klasifikasiAkun   KlasifikasiAkun[]
@@ -95,11 +96,15 @@ model Tingkat {
 }
 
 model Jurusan {
-  id   String @id @default(cuid())
-  name String @db.VarChar(100) // "TKJ", "RPL", "OTKP"
-  code String @unique @db.VarChar(20)
+  id            String @id @default(cuid())
+  name          String @db.VarChar(100) // "TKJ", "RPL", "OTKP"
+  code          String @db.VarChar(20)
+  unitSekolahId String
 
-  subKelas SubKelas[]
+  unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  subKelas    SubKelas[]
+
+  @@unique([code, unitSekolahId]) // Kode jurusan harus unik dalam satu unit sekolah
 }
 
 model SubKelas {

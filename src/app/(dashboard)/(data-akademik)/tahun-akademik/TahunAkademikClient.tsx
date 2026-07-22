@@ -29,20 +29,48 @@ export default function TahunAkademikClient({ initialData }: { initialData: Acad
   const [isAdding, setIsAdding] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   
-  const [formData, setFormData] = useState({ id: "", startYear: new Date().getFullYear(), isActive: false })
+  const currentYear = new Date().getFullYear()
+  const PRESETS = Array.from({ length: 6 }).map((_, i) => {
+    const year = currentYear - 2 + i
+    return `${year}/${year + 1}`
+  })
+
+  const [formData, setFormData] = useState({ id: "", name: "", isActive: false })
+  const [selectedPreset, setSelectedPreset] = useState(PRESETS[2])
+  const [isCustom, setIsCustom] = useState(false)
 
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleAddClick = () => {
-    setFormData({ id: "", startYear: new Date().getFullYear(), isActive: false })
+    setFormData({ id: "", name: PRESETS[2], isActive: false })
+    setSelectedPreset(PRESETS[2])
+    setIsCustom(false)
     setIsAdding(true)
   }
 
   const handleEditClick = (item: AcademicYear) => {
-    const startYear = item.name.split("/")[0] ? parseInt(item.name.split("/")[0]) : new Date().getFullYear()
-    setFormData({ id: item.id, startYear, isActive: item.isActive })
+    setFormData({ id: item.id, name: item.name, isActive: item.isActive })
+    if (PRESETS.includes(item.name)) {
+      setSelectedPreset(item.name)
+      setIsCustom(false)
+    } else {
+      setSelectedPreset("CUSTOM")
+      setIsCustom(true)
+    }
     setIsAdding(true)
+  }
+
+  const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value
+    setSelectedPreset(val)
+    if (val === "CUSTOM") {
+      setIsCustom(true)
+      setFormData({ ...formData, name: "" })
+    } else {
+      setIsCustom(false)
+      setFormData({ ...formData, name: val })
+    }
   }
 
   const handleDeleteConfirm = async () => {
@@ -63,7 +91,16 @@ export default function TahunAkademikClient({ initialData }: { initialData: Acad
     e.preventDefault()
     setIsSubmitting(true)
     
-    const academicName = `${formData.startYear}/${formData.startYear + 1}`
+    if (isCustom) {
+      const pattern = /^\d{4}\/\d{4}$/
+      if (!pattern.test(formData.name)) {
+        alert("Format tahun akademik manual salah. Gunakan format YYYY/YYYY (contoh: 2024/2025).")
+        setIsSubmitting(false)
+        return
+      }
+    }
+
+    const academicName = formData.name
 
     try {
       if (formData.id) {
@@ -119,22 +156,33 @@ export default function TahunAkademikClient({ initialData }: { initialData: Acad
               </div>
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Tahun Akademik <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-semibold text-text-main">Pilih Tahun Akademik <span className="text-red-500">*</span></label>
                   <select 
                     className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
-                    value={formData.startYear}
-                    onChange={e => setFormData({ ...formData, startYear: parseInt(e.target.value) })}
-                    required
+                    value={selectedPreset}
+                    onChange={handlePresetChange}
                   >
-                    <option value="">-- Pilih Tahun Akademik --</option>
-                    {Array.from({ length: 6 }).map((_, i) => {
-                      const year = new Date().getFullYear() - 2 + i;
-                      return (
-                        <option key={year} value={year}>{year}/{year + 1}</option>
-                      )
-                    })}
+                    {PRESETS.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                    <option value="CUSTOM">-- Ketik Manual (Lainnya) --</option>
                   </select>
                 </div>
+
+                {isCustom && (
+                  <div className="flex flex-col gap-1.5 p-4 bg-gray-50 rounded-xl border border-border mt-1">
+                    <label className="text-sm font-semibold text-text-main">Input Tahun Manual <span className="text-red-500">*</span></label>
+                    <input 
+                      type="text"
+                      placeholder="Contoh: 2024/2025"
+                      className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
+                      value={formData.name}
+                      onChange={e => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                    <span className="text-xs text-text-muted">Gunakan format YYYY/YYYY</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 mt-2">
                   <input type="checkbox" id="isActive" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} className="w-4 h-4 accent-albas-green" />
                   <label htmlFor="isActive" className="font-semibold cursor-pointer text-text-main text-sm">Jadikan Aktif (Tahun Berjalan)</label>

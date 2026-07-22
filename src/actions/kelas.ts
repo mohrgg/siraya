@@ -33,11 +33,15 @@ export async function getJurusan() {
   if (!session) throw new Error("Unauthorized")
 
   return prisma.jurusan.findMany({
-    orderBy: { name: "asc" }
+    include: { unitSekolah: true },
+    orderBy: [
+      { unitSekolah: { name: "asc" } },
+      { name: "asc" }
+    ]
   })
 }
 
-export async function tambahJurusan(data: { name: string, code: string }) {
+export async function tambahJurusan(data: { name: string, code: string, unitSekolahId: string }) {
   const session = await auth()
   if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
 
@@ -98,7 +102,7 @@ export async function hapusTingkatan(id: string) {
   return result
 }
 
-export async function editJurusan(id: string, data: { name: string, code: string }) {
+export async function editJurusan(id: string, data: { name: string, code: string, unitSekolahId: string }) {
   const session = await auth()
   if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
   const result = await prisma.jurusan.update({ where: { id }, data })

@@ -53,7 +53,7 @@ export default function KelasClient({
     address: "", formNo: "", username: ""
   })
   const [formKelas, setFormKelas] = useState({ id: "", name: "", order: 1, unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
-  const [formSubKelas, setFormSubKelas] = useState({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
+  const [formSubKelas, setFormSubKelas] = useState({ id: "", name: "", tingkatId: "", jurusanId: "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
@@ -210,7 +210,7 @@ export default function KelasClient({
         }])
       }
       setShowModalSubKelas(false)
-      setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
+      setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
     } catch (err: any) { alert(err.message) }
     setIsSubmitting(false)
   }
@@ -248,35 +248,23 @@ export default function KelasClient({
         </div>
 
         {/* Toolbar */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
           
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="relative w-full md:w-64">
+          <div className="flex flex-wrap gap-3 items-center flex-1">
+            <div className="relative w-full md:w-64 flex-shrink-0">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
               <input 
                 type="text" 
                 placeholder="Cari..." 
-                className="w-full pl-10 pr-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50" 
+                className="w-full pl-10 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="flex gap-2" title="Fitur ekspor akan tersedia di Fase 3 / Reporting">
-              <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled>
-                <FileSpreadsheet size={16} className="mr-2" /> Excel
-              </Button>
-              <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled>
-                <FilePdf size={16} className="mr-2" /> PDF
-              </Button>
-              {activeTab === "murid" && (
-                <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled>
-                  <Upload size={16} className="mr-2" /> Import Excel
-                </Button>
-              )}
-            </div>
+            
             {activeTab === "sub-kelas" && initialMajors.length > 0 && (
               <select 
-                className="px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
+                className="px-3 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
                 value={filterJurusanId}
                 onChange={(e) => setFilterJurusanId(e.target.value)}
               >
@@ -290,7 +278,7 @@ export default function KelasClient({
             {activeTab === "murid" && (
               <>
                 <select 
-                  className="px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
+                  className="px-3 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
                   value={filterMuridTingkat}
                   onChange={(e) => { setFilterMuridTingkat(e.target.value); setFilterMuridSubKelas("") }}
                 >
@@ -300,21 +288,21 @@ export default function KelasClient({
                   ))}
                 </select>
                 
-                {initialMajors.length > 0 && (
+                {initialMajors.filter((m: any) => m.unitSekolahId === activeUnitId).length > 0 && (
                   <select 
-                    className="px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
+                    className="px-3 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
                     value={filterMuridJurusan}
                     onChange={(e) => { setFilterMuridJurusan(e.target.value); setFilterMuridSubKelas("") }}
                   >
                     <option value="">Semua Jurusan</option>
-                    {initialMajors.map((m: any) => (
+                    {initialMajors.filter((m: any) => m.unitSekolahId === activeUnitId).map((m: any) => (
                       <option key={m.id} value={m.id}>{m.name}</option>
                     ))}
                   </select>
                 )}
                 
                 <select 
-                  className="px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
+                  className="px-3 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium max-w-[150px] truncate"
                   value={filterMuridSubKelas}
                   onChange={(e) => setFilterMuridSubKelas(e.target.value)}
                 >
@@ -323,11 +311,36 @@ export default function KelasClient({
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
+
+                {(searchTerm || filterMuridTingkat || filterMuridJurusan || filterMuridSubKelas) && (
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setSearchTerm("")
+                    setFilterMuridTingkat("")
+                    setFilterMuridJurusan("")
+                    setFilterMuridSubKelas("")
+                  }}>
+                    Reset Filter
+                  </Button>
+                )}
               </>
             )}
+
+            <div className="flex gap-2 border-l border-border pl-3" title="Fitur ekspor akan tersedia di Fase 3 / Reporting">
+              <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled>
+                <FileSpreadsheet size={16} className="mr-1.5" /> Excel
+              </Button>
+              <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled>
+                <FilePdf size={16} className="mr-1.5" /> PDF
+              </Button>
+              {activeTab === "murid" && (
+                <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled>
+                  <Upload size={16} className="mr-1.5" /> Import
+                </Button>
+              )}
+            </div>
           </div>
 
-          <div>
+          <div className="flex-shrink-0">
             {activeTab === "kelas" && (
               <Button onClick={() => {
                 setFormKelas({ id: "", name: "", order: 1, unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
@@ -336,7 +349,7 @@ export default function KelasClient({
             )}
             {activeTab === "sub-kelas" && (
               <Button onClick={() => {
-                setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: initialMajors[0]?.id || "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
+                setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
                 setShowModalSubKelas(true)
               }}>
                 <Plus size={16} className="mr-2" /> Tambah Sub Kelas
@@ -384,6 +397,7 @@ export default function KelasClient({
                   <>
                     <SortableHeader label="Nama Murid" sortKey="name" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
                     <SortableHeader label="NISN / NIS" sortKey="nisn" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
+                    <th className="p-4 font-semibold text-left">Jenis Kelamin</th>
                     <th className="p-4 font-semibold text-left">Kelas / Rombel</th>
                     <SortableHeader label="Status" sortKey="status" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
                     <th className="p-4 font-semibold text-right">Aksi</th>
@@ -449,7 +463,11 @@ export default function KelasClient({
                     <div className="font-bold text-text-main">{s.name}</div>
                     <div className="text-xs text-text-muted mt-0.5">{s.unitSekolah?.name}</div>
                   </td>
-                  <td className="p-4 font-mono text-sm">{s.nisn || s.nis}</td>
+                  <td className="p-4">
+                    <div className="font-mono text-sm text-text-main font-semibold">{s.nisn || "-"}</div>
+                    <div className="text-xs text-text-muted mt-0.5">{s.nis}</div>
+                  </td>
+                  <td className="p-4 text-text-main">{s.gender}</td>
                   <td className="p-4 font-medium text-text-main">
                     {s.riwayatKelas?.[0]?.subKelas?.name ? (
                       <span className="px-2.5 py-1 bg-primary/10 text-primary rounded-lg text-sm font-semibold">{s.riwayatKelas[0].subKelas.name}</span>
@@ -656,7 +674,7 @@ export default function KelasClient({
               <form id="subKelasForm" onSubmit={handleSaveSubKelas} className="flex flex-col gap-4">
                 <div className="hidden">
                   <label className="text-sm font-semibold text-text-main">Sekolah</label>
-                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formSubKelas.unitSekolahId} onChange={e => setFormSubKelas({ ...formSubKelas, unitSekolahId: e.target.value })} required>
+                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formSubKelas.unitSekolahId} onChange={e => setFormSubKelas({ ...formSubKelas, unitSekolahId: e.target.value, jurusanId: "" })} required>
                     {schoolUnits.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
                   </select>
                 </div>
@@ -671,19 +689,25 @@ export default function KelasClient({
                   <label className="text-sm font-semibold text-text-main flex items-center gap-1.5">Nama Sub Kelas (Rombel) <Info size={14} className="text-text-muted" /></label>
                   <Input value={formSubKelas.name} onChange={e => setFormSubKelas({...formSubKelas, name: e.target.value})} required placeholder="Contoh: X-RPL 1" />
                 </div>
-                {initialMajors.length > 0 && (
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-text-main">Jurusan</label>
-                    <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formSubKelas.jurusanId} onChange={e => setFormSubKelas({...formSubKelas, jurusanId: e.target.value})}>
-                      <option value="">-- Tidak Ada / Umum --</option>
-                      {initialMajors.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                    </select>
+                    <label className="text-sm font-semibold text-text-main flex justify-between">
+                      Jurusan / Program <span className="text-red-500">*</span>
+                    </label>
+                    {initialMajors.filter((m: any) => m.unitSekolahId === formSubKelas.unitSekolahId).length === 0 ? (
+                      <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 font-medium">
+                        Belum ada Jurusan untuk unit sekolah ini. Harap tambahkan jurusan (misal: "Umum") di menu Program & Jurusan terlebih dahulu.
+                      </div>
+                    ) : (
+                      <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formSubKelas.jurusanId} onChange={e => setFormSubKelas({...formSubKelas, jurusanId: e.target.value})} required>
+                        <option value="">-- Pilih Jurusan --</option>
+                        {initialMajors.filter((m: any) => m.unitSekolahId === formSubKelas.unitSekolahId).map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      </select>
+                    )}
                   </div>
-                )}
               </form>
             </div>
             <div className="p-6 border-t border-border flex gap-4 bg-bg rounded-b-2xl">
-              <Button type="submit" form="subKelasForm" isLoading={isSubmitting}>Simpan Sub Kelas</Button>
+              <Button type="submit" form="subKelasForm" isLoading={isSubmitting} disabled={initialMajors.filter((m: any) => m.unitSekolahId === formSubKelas.unitSekolahId).length === 0}>Simpan Sub Kelas</Button>
               <Button type="button" variant="outline" onClick={() => setShowModalSubKelas(false)}>Batal</Button>
             </div>
           </div>
