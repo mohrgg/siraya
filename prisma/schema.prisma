@@ -9,26 +9,46 @@ datasource db {
 
 // ========== PENGGUNA ==========
 model Pengguna {
-  id            String   @id @default(cuid())
-  name          String   @db.VarChar(100)
-  email         String   @unique @db.VarChar(100)
-  password      String   @db.VarChar(255)
-  role          String   @default("TATA_USAHA") @db.VarChar(50)
-  avatar        String?  @db.VarChar(255)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id       String @id @default(cuid())
+  name     String @db.VarChar(100)
+  email    String @unique @db.VarChar(100)
+  password String @db.VarChar(255)
+  role     String @default("TATA_USAHA") @db.VarChar(50) // ADMIN, TATA_USAHA, KEPALA_SEKOLAH
 
-  transaksiKas      TransaksiKas[]
-  pembayaran        Pembayaran[]
-  urutanPengesahan  UrutanPengesahan[]
+  unitSekolahId String? // Null berarti akses global ke semua unit
+  divisiId      String? // Relasi ke tabel Divisi
+
+  avatar    String?  @db.VarChar(255)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  unitSekolah UnitSekolah? @relation(fields: [unitSekolahId], references: [id])
+  divisi      Divisi?      @relation(fields: [divisiId], references: [id])
+
+  transaksiKas     TransaksiKas[]
+  pembayaran       Pembayaran[]
+  urutanPengesahan UrutanPengesahan[]
+  logAktivitas     LogAktivitas[]
+}
+
+// ========== DIVISI ==========
+model Divisi {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  pengguna     Pengguna[]
+  transaksiKas TransaksiKas[]
 }
 
 // ========== UNIT SEKOLAH ==========
 model UnitSekolah {
   id        String   @id @default(cuid())
   name      String   @db.VarChar(100) // "SD Al Basyariah", "SMP Al Basyariah", "SMK Al Basyariah"
-  level     String   @db.VarChar(50)  // "SD", "SMP", "SMK", "MA", dll
+  level     String   @db.VarChar(50) // "SD", "SMP", "SMK", "MA", dll
   address   String?  @db.Text
   phone     String?  @db.VarChar(20)
   logo      String?  @db.VarChar(255)
@@ -36,40 +56,41 @@ model UnitSekolah {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tingkat         Tingkat[]
-  subKelas        SubKelas[]
-  murid           Murid[]
-  klasifikasiAkun KlasifikasiAkun[]
-  akunPenting     AkunPenting[]
-  urutanPengesahan UrutanPengesahan[]
-  transaksiKas    TransaksiKas[]
-  jenisTagihan    JenisTagihan[]
-  anggaran        Anggaran[]
+  tingkat           Tingkat[]
+  subKelas          SubKelas[]
+  murid             Murid[]
+  klasifikasiAkun   KlasifikasiAkun[]
+  akunPenting       AkunPenting[]
+  urutanPengesahan  UrutanPengesahan[]
+  transaksiKas      TransaksiKas[]
+  pengguna          Pengguna[]
+  jenisTagihan      JenisTagihan[]
+  anggaran          Anggaran[]
   penjualanFormulir PenjualanFormulir[]
 }
 
 // ========== TAHUN AKADEMIK ==========
 model TahunAkademik {
-  id           String   @id @default(cuid())
-  name         String   @db.VarChar(50) // "2025/2026"
-  isActive     Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(50) // "2025/2026"
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
 
-  subKelas       SubKelas[]
-  jenisTagihan   JenisTagihan[]
-  anggaran       Anggaran[]
+  subKelas          SubKelas[]
+  jenisTagihan      JenisTagihan[]
+  anggaran          Anggaran[]
   penjualanFormulir PenjualanFormulir[]
-  riwayatKelas   RiwayatKelas[]
+  riwayatKelas      RiwayatKelas[]
 }
 
 // ========== KELAS & MURID ==========
 model Tingkat {
-  id           String @id @default(cuid())
-  name         String @db.VarChar(50) // "X", "XI", "XII"
-  order        Int    // untuk sorting
+  id            String @id @default(cuid())
+  name          String @db.VarChar(50) // "X", "XI", "XII"
+  order         Int // untuk sorting
   unitSekolahId String
 
-  unitSekolah UnitSekolah  @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
   subKelas    SubKelas[]
 }
 
@@ -82,51 +103,51 @@ model Jurusan {
 }
 
 model SubKelas {
-  id             String       @id @default(cuid())
-  name           String       @db.VarChar(100) // "X TKJ 1"
-  tingkatId      String
-  jurusanId      String?
+  id              String  @id @default(cuid())
+  name            String  @db.VarChar(100) // "X TKJ 1"
+  tingkatId       String
+  jurusanId       String?
   tahunAkademikId String
-  unitSekolahId  String
+  unitSekolahId   String
 
-  unitSekolah   UnitSekolah   @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
-  tingkat       Tingkat       @relation(fields: [tingkatId], references: [id], onDelete: Cascade)
-  jurusan       Jurusan?      @relation(fields: [jurusanId], references: [id])
-  tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
+  unitSekolah   UnitSekolah    @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  tingkat       Tingkat        @relation(fields: [tingkatId], references: [id], onDelete: Cascade)
+  jurusan       Jurusan?       @relation(fields: [jurusanId], references: [id])
+  tahunAkademik TahunAkademik  @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
   riwayatKelas  RiwayatKelas[]
 }
 
 model Murid {
-  id             String  @id @default(cuid())
-  nis            String  @unique @db.VarChar(50)
-  name           String  @db.VarChar(150)
-  unitSekolahId  String
-  isActive       Boolean @default(true)
-  isScholarship  Boolean @default(false)
+  id            String  @id @default(cuid())
+  nis           String  @unique @db.VarChar(50)
+  name          String  @db.VarChar(150)
+  unitSekolahId String
+  isActive      Boolean @default(true)
+  isScholarship Boolean @default(false)
 
   // Field pendaftaran
-  nisn           String? @db.VarChar(50)
-  previousSchool String? @db.VarChar(150)
-  phone          String? @db.VarChar(20)
+  nisn           String?   @db.VarChar(50)
+  previousSchool String?   @db.VarChar(150)
+  phone          String?   @db.VarChar(20)
   birthDate      DateTime?
-  email          String? @db.VarChar(100)
-  status         String  @default("AKTIF") @db.VarChar(50) // AKTIF, LULUS, PINDAH, DO
-  parentName     String? @db.VarChar(150)
-  parentPhone    String? @db.VarChar(20)
-  religion       String? @db.VarChar(50)
-  gender         String? @db.VarChar(20)
-  password       String? @db.VarChar(255)
-  address        String? @db.Text
-  photoUrl       String? @db.VarChar(255)
-  formNo         String? @db.VarChar(50)
-  username       String? @db.VarChar(100)
+  email          String?   @db.VarChar(100)
+  status         String    @default("AKTIF") @db.VarChar(50) // AKTIF, LULUS, PINDAH, DO
+  parentName     String?   @db.VarChar(150)
+  parentPhone    String?   @db.VarChar(20)
+  religion       String?   @db.VarChar(50)
+  gender         String?   @db.VarChar(20)
+  password       String?   @db.VarChar(255)
+  address        String?   @db.Text
+  photoUrl       String?   @db.VarChar(255)
+  formNo         String?   @db.VarChar(50)
+  username       String?   @db.VarChar(100)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  unitSekolah  UnitSekolah    @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
   riwayatKelas RiwayatKelas[]
-  tagihan     Tagihan[]
+  tagihan      Tagihan[]
 }
 
 model RiwayatKelas {
@@ -136,18 +157,18 @@ model RiwayatKelas {
   tahunAkademikId String
   createdAt       DateTime @default(now())
 
-  murid           Murid         @relation(fields: [muridId], references: [id], onDelete: Cascade)
-  subKelas        SubKelas      @relation(fields: [subKelasId], references: [id], onDelete: Cascade)
-  tahunAkademik   TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
+  murid         Murid         @relation(fields: [muridId], references: [id], onDelete: Cascade)
+  subKelas      SubKelas      @relation(fields: [subKelasId], references: [id], onDelete: Cascade)
+  tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
 
   @@unique([muridId, tahunAkademikId])
 }
 
 // ========== AKUN KEUANGAN ==========
 model KlasifikasiAkun {
-  id           String @id @default(cuid())
-  code         String @default("0") @db.VarChar(10) // "1"=HARTA, "2"=KEWAJIBAN, "3"=MODAL, "4"=PENDAPATAN, "5"=BEBAN
-  name         String @db.VarChar(100) // "HARTA", "PENDAPATAN"
+  id            String @id @default(cuid())
+  code          String @default("0") @db.VarChar(10) // "1"=HARTA, "2"=KEWAJIBAN, "3"=MODAL, "4"=PENDAPATAN, "5"=BEBAN
+  name          String @db.VarChar(100) // "HARTA", "PENDAPATAN"
   unitSekolahId String
 
   unitSekolah        UnitSekolah          @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
@@ -155,9 +176,9 @@ model KlasifikasiAkun {
 }
 
 model SubKlasifikasiAkun {
-  id               String @id @default(cuid())
-  code             String @unique @db.VarChar(50) // "10000001"
-  name             String @db.VarChar(100) // "KAS & BANK"
+  id                String @id @default(cuid())
+  code              String @unique @db.VarChar(50) // "10000001"
+  name              String @db.VarChar(100) // "KAS & BANK"
   klasifikasiAkunId String
 
   klasifikasiAkun KlasifikasiAkun @relation(fields: [klasifikasiAkunId], references: [id], onDelete: Cascade)
@@ -165,23 +186,24 @@ model SubKlasifikasiAkun {
 }
 
 model AkunDetail {
-  id                    String  @id @default(cuid())
-  code                  String  @unique @db.VarChar(50)
-  name                  String  @db.VarChar(150)
-  subKlasifikasiAkunId  String
-  isActive              Boolean @default(true)
-  bankAccountNumber     String? @db.VarChar(100)
+  id                   String  @id @default(cuid())
+  code                 String  @unique @db.VarChar(50)
+  name                 String  @db.VarChar(150)
+  subKlasifikasiAkunId String
+  isActive             Boolean @default(true)
+  bankAccountNumber    String? @db.VarChar(100)
 
   subKlasifikasiAkun SubKlasifikasiAkun @relation(fields: [subKlasifikasiAkunId], references: [id], onDelete: Cascade)
   transaksiKas       TransaksiKas[]
-  itemAnggaran       ItemAnggaran[]
+  itemTransaksiKas   ItemTransaksiKas[]
+  anggaranDetails    ItemAnggaran[]
 }
 
 model AkunPenting {
-  id           String  @id @default(cuid())
-  name         String  @db.VarChar(100) // "Laba Ditahan"
-  description  String  @db.Text
-  akunDetailId String? // akun yang dipilih
+  id            String  @id @default(cuid())
+  name          String  @db.VarChar(100) // "Laba Ditahan"
+  description   String  @db.Text
+  akunDetailId  String? // akun yang dipilih
   unitSekolahId String
 
   unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
@@ -189,12 +211,12 @@ model AkunPenting {
 
 // ========== URUTAN PENGESAHAN ==========
 model UrutanPengesahan {
-  id           String  @id @default(cuid())
-  penggunaId   String
+  id            String  @id @default(cuid())
+  penggunaId    String
   unitSekolahId String
-  name         String  @db.VarChar(100)
-  order        Int
-  status       Boolean @default(true)
+  name          String  @db.VarChar(100)
+  order         Int
+  status        Boolean @default(true)
 
   pengguna    Pengguna    @relation(fields: [penggunaId], references: [id], onDelete: Cascade)
   unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
@@ -211,28 +233,46 @@ model TransaksiKas {
   studentName   String?  @db.VarChar(150)
   classroomName String?  @db.VarChar(100)
   description   String?  @db.Text
-  amount        Decimal  @db.Decimal(15, 2)
+  totalAmount   Decimal  @db.Decimal(15, 2)
   date          DateTime
   status        String   @default("DRAFT") @db.VarChar(30) // DRAFT, APPROVED, REJECTED
   bookkeeping   String?  @db.VarChar(100)
   recipientName String?  @db.VarChar(150)
   isDeleted     Boolean  @default(false)
+  isEdited      Boolean  @default(false)
+  editReason    String?  @db.Text
   createdById   String
+  divisiId      String? // Relasi opsional ke divisi untuk cost center
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
   akunDetail  AkunDetail  @relation(fields: [akunDetailId], references: [id], onDelete: Cascade)
   createdBy   Pengguna    @relation(fields: [createdById], references: [id])
+  divisi      Divisi?     @relation(fields: [divisiId], references: [id])
+
+  items ItemTransaksiKas[]
+}
+
+// ========== ITEM TRANSAKSI KAS (MULTI-BARIS) ==========
+model ItemTransaksiKas {
+  id             String  @id @default(cuid())
+  transaksiKasId String
+  akunDetailId   String
+  amount         Decimal @db.Decimal(15, 2)
+  description    String? @db.Text
+
+  transaksiKas TransaksiKas @relation(fields: [transaksiKasId], references: [id], onDelete: Cascade)
+  akunDetail   AkunDetail   @relation(fields: [akunDetailId], references: [id], onDelete: Cascade)
 }
 
 // ========== TAGIHAN & PEMBAYARAN ==========
 model JenisTagihan {
-  id             String  @id @default(cuid())
-  name           String  @db.VarChar(150) // "SPP", "Ujian"
-  amount         Decimal @db.Decimal(15, 2)
+  id              String  @id @default(cuid())
+  name            String  @db.VarChar(150) // "SPP", "Ujian"
+  amount          Decimal @db.Decimal(15, 2)
   tahunAkademikId String
-  unitSekolahId  String
+  unitSekolahId   String
 
   unitSekolah   UnitSekolah   @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
   tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
@@ -240,13 +280,13 @@ model JenisTagihan {
 }
 
 model Tagihan {
-  id            String    @id @default(cuid())
+  id             String    @id @default(cuid())
   jenisTagihanId String
-  muridId       String
-  amount        Decimal   @db.Decimal(15, 2)
-  dueDate       DateTime?
-  status        String    @default("UNPAID") @db.VarChar(30) // UNPAID, PARTIAL, PAID
-  createdAt     DateTime  @default(now())
+  muridId        String
+  amount         Decimal   @db.Decimal(15, 2)
+  dueDate        DateTime?
+  status         String    @default("UNPAID") @db.VarChar(30) // UNPAID, PARTIAL, PAID
+  createdAt      DateTime  @default(now())
 
   jenisTagihan JenisTagihan @relation(fields: [jenisTagihanId], references: [id], onDelete: Cascade)
   murid        Murid        @relation(fields: [muridId], references: [id], onDelete: Cascade)
@@ -271,15 +311,15 @@ model Pembayaran {
 
 // ========== ANGGARAN ==========
 model Anggaran {
-  id             String   @id @default(cuid())
-  name           String   @db.VarChar(150)
+  id              String   @id @default(cuid())
+  name            String   @db.VarChar(150)
   tahunAkademikId String
-  unitSekolahId  String
-  totalAmount    Decimal  @db.Decimal(15, 2)
-  createdAt      DateTime @default(now())
+  unitSekolahId   String
+  totalAmount     Decimal  @db.Decimal(15, 2)
+  createdAt       DateTime @default(now())
 
-  unitSekolah   UnitSekolah   @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
-  tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
+  unitSekolah   UnitSekolah    @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  tahunAkademik TahunAkademik  @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
   itemAnggaran  ItemAnggaran[]
 }
 
@@ -296,14 +336,26 @@ model ItemAnggaran {
 
 // ========== FORMULIR PSB ==========
 model PenjualanFormulir {
-  id             String   @id @default(cuid())
-  buyerName      String   @db.VarChar(150)
-  amount         Decimal  @db.Decimal(15, 2)
-  saleDate       DateTime
+  id              String   @id @default(cuid())
+  buyerName       String   @db.VarChar(150)
+  amount          Decimal  @db.Decimal(15, 2)
+  saleDate        DateTime
   tahunAkademikId String
-  unitSekolahId  String
-  createdAt      DateTime @default(now())
+  unitSekolahId   String
+  createdAt       DateTime @default(now())
 
   unitSekolah   UnitSekolah   @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
   tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
+}
+
+// ========== LOG AKTIVITAS (AUDIT TRAIL) ==========
+model LogAktivitas {
+  id         String   @id @default(cuid())
+  penggunaId String
+  aksi       String   @db.VarChar(100) // contoh: "TAMBAH_USER", "HAPUS_DIVISI"
+  modul      String   @db.VarChar(50) // contoh: "PENGATURAN", "KAS"
+  keterangan String   @db.Text
+  createdAt  DateTime @default(now())
+
+  pengguna Pengguna @relation(fields: [penggunaId], references: [id], onDelete: Cascade)
 }

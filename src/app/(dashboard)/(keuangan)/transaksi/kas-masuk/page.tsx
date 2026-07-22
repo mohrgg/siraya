@@ -18,6 +18,7 @@ export default async function KasMasukPage() {
   })
 
   const students = await prisma.murid.findMany({ where: { isActive: true } })
+  const divisis = await prisma.divisi.findMany({ orderBy: { name: 'asc' } })
 
   return (
     <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
@@ -31,6 +32,7 @@ export default async function KasMasukPage() {
         initialUnitId={initialUnitId}
         accounts={accounts}
         students={students}
+        divisis={divisis}
       />
     </div>
   )

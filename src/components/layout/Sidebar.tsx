@@ -18,7 +18,8 @@ import {
   BookOpen,
   Calendar,
   Users2,
-  Landmark
+  Landmark,
+  Receipt
 } from "lucide-react"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 
@@ -26,40 +27,41 @@ const menuGroups = [
   {
     title: "UTAMA",
     items: [
-      { href: "/", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/", label: "Dashboard", icon: LayoutDashboard, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
     ]
   },
   {
     title: "DATA YAYASAN",
     items: [
-      { href: "/unit-sekolah", label: "Unit Sekolah", icon: Building },
-      { href: "/jurusan", label: "Program & Jurusan", icon: BookOpen },
+      { href: "/unit-sekolah", label: "Unit Sekolah", icon: Building, allowedRoles: ["ADMIN"] },
+      { href: "/jurusan", label: "Program & Jurusan", icon: BookOpen, allowedRoles: ["ADMIN"] },
     ]
   },
   {
     title: "DATA AKADEMIK",
     items: [
-      { href: "/tahun-akademik", label: "Tahun Akademik", icon: Calendar },
-      { href: "/kelas", label: "Kelas & Murid", icon: Users2 },
+      { href: "/tahun-akademik", label: "Tahun Akademik", icon: Calendar, allowedRoles: ["ADMIN", "TATA_USAHA"] },
+      { href: "/kelas", label: "Kelas & Murid", icon: Users2, allowedRoles: ["ADMIN", "TATA_USAHA"] },
     ]
   },
   {
     title: "KEUANGAN",
     items: [
-      { href: "/akun-keuangan", label: "Akun Keuangan", icon: Landmark },
-      { href: "/transaksi", label: "Transaksi", icon: Wallet },
-      { href: "/laporan", label: "Laporan", icon: FileText },
-      { href: "/anggaran", label: "Anggaran", icon: PieChart },
+      { href: "/akun-keuangan", label: "Akun Keuangan", icon: Landmark, allowedRoles: ["ADMIN", "TATA_USAHA"] },
+      // { href: "/tagihan", label: "Tagihan", icon: Receipt, allowedRoles: ["ADMIN", "TATA_USAHA"] },
+      { href: "/transaksi", label: "Transaksi", icon: Wallet, allowedRoles: ["ADMIN", "TATA_USAHA"] },
+      // { href: "/laporan", label: "Laporan", icon: FileText, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      // { href: "/anggaran", label: "Anggaran", icon: PieChart, allowedRoles: ["ADMIN", "TATA_USAHA"] },
     ]
   },
   {
     title: "PENGATURAN",
     items: [
-      { href: "/manajemen-user", label: "Manajemen User", icon: Users, adminOnly: true },
-      { href: "/pengaturan", label: "Pengaturan", icon: Settings, adminOnly: true },
+      { href: "/manajemen-user", label: "Manajemen User", icon: Users, allowedRoles: ["ADMIN"] },
+      { href: "/pengaturan", label: "Pengaturan", icon: Settings, allowedRoles: ["ADMIN"] },
     ]
   }
-] as { title: string, items: { href: string, label: string, icon: any, adminOnly?: boolean }[] }[]
+] as { title: string, items: { href: string, label: string, icon: any, allowedRoles: string[] }[] }[]
 
 export default function Sidebar({ user }: { user: any }) {
   const pathname = usePathname()
@@ -69,7 +71,7 @@ export default function Sidebar({ user }: { user: any }) {
 
   const filteredGroups = menuGroups.map(group => ({
     ...group,
-    items: group.items.filter(item => !item.adminOnly || (item.adminOnly && user?.role === "ADMIN"))
+    items: group.items.filter(item => item.allowedRoles.includes(user?.role || "TATA_USAHA"))
   })).filter(group => group.items.length > 0)
 
   const getInitials = (name: string) => {

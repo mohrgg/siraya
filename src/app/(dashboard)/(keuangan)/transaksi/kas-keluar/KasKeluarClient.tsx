@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { Plus, Search, Edit2, Trash2, Printer, Eye, X } from "lucide-react"
+import { useState, useRef, useMemo } from "react"
+import { Plus, Search, Edit2, Trash2, Printer, Eye, X, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
@@ -10,36 +10,49 @@ import { useSortableData } from "@/hooks/useSortableData"
 import { tambahTransaksiKas, editTransaksiKas, hapusTransaksiKas } from "@/actions/transaksi-kas"
 
 export default function KasKeluarClient({ 
-  initialData, schoolUnits, initialUnitId, accounts 
+  initialData, schoolUnits, initialUnitId, accounts, divisis
 }: { 
-  initialData: any[], schoolUnits: any[], initialUnitId: string, accounts: any[]
+  initialData: any[], schoolUnits: any[], initialUnitId: string, accounts: any[], divisis?: any[]
 }) {
   const [data, setData] = useState<any[]>(initialData)
   const [isAdding, setIsAdding] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [detailItem, setDetailItem] = useState<any | null>(null)
   const printRef = useRef<HTMLDivElement>(null)
 
+  const emptyItem = { id: "", akunDetailId: "", amount: "", description: "" }
   const emptyForm = {
     id: "",
-    akunDetailId: "",
+    akunDetailId: "", // Akun Utama (Kas/Bank)
     unitSekolahId: initialUnitId,
-    amount: "",
+    divisiId: "",
     date: new Date().toISOString().slice(0, 10),
     description: "",
     recipientName: "",
     formNo: "",
+    editReason: "",
+    items: [{ ...emptyItem }]
   }
   const [formData, setFormData] = useState(emptyForm)
 
-  const filteredData = data.filter(d => 
-    d.referenceNo.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (d.description && d.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (d.recipientName && d.recipientName.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
+  const filteredData = useMemo(() => {
+    return data.filter(d => {
+      const matchSearch = d.referenceNo.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (d.description && d.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (d.recipientName && d.recipientName.toLowerCase().includes(searchTerm.toLowerCase()))
+      
+      const txDate = new Date(d.date).getTime()
+      const matchStart = startDate ? txDate >= new Date(startDate).getTime() : true
+      const matchEnd = endDate ? txDate <= new Date(endDate).getTime() : true
+      
+      return matchSearch && matchStart && matchEnd
+    })
+  }, [data, searchTerm, startDate, endDate])
 
   const { items: sortedData, requestSort, sortConfig } = useSortableData(filteredData);
 
@@ -53,27 +66,49 @@ export default function KasKeluarClient({
       id: item.id,
       akunDetailId: item.akunDetailId,
       unitSekolahId: item.unitSekolahId,
-      amount: String(item.amount),
+      divisiId: item.divisiId || "",
       date: new Date(item.date).toISOString().slice(0, 10),
       description: item.description || "",
       recipientName: item.recipientName || "",
       formNo: item.formNo || "",
+      editReason: "",
+      items: item.items && item.items.length > 0 
+        ? item.items.map((i: any) => ({ ...i, amount: String(i.amount) }))
+        : [{ ...emptyItem }]
     })
     setIsAdding(true)
   }
 
+  const calculateTotal = () => {
+    return formData.items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (formData.items.length === 0) return alert("Minimal harus ada 1 baris rincian akun!")
+    if (formData.items.some(i => !i.akunDetailId || !i.amount)) return alert("Harap isi semua baris rincian (Akun & Nominal)")
+    if (formData.id && !formData.editReason) return alert("Harap isi Alasan Perubahan!")
+
     setIsSubmitting(true)
     try {
+      const totalAmount = calculateTotal()
+
       if (formData.id) {
         const res = await editTransaksiKas(formData.id, {
           akunDetailId: formData.akunDetailId,
-          amount: Number(formData.amount),
+          totalAmount: totalAmount,
           date: new Date(formData.date),
           description: formData.description,
           recipientName: formData.recipientName,
           formNo: formData.formNo,
+          divisiId: formData.divisiId || undefined,
+          editReason: formData.editReason,
+          items: formData.items.map(i => ({
+            id: i.id || undefined,
+            akunDetailId: i.akunDetailId,
+            amount: Number(i.amount),
+            description: i.description
+          }))
         })
         setData(data.map(d => d.id === formData.id ? { ...d, ...res } : d))
       } else {
@@ -81,11 +116,17 @@ export default function KasKeluarClient({
           type: "OUT",
           akunDetailId: formData.akunDetailId,
           unitSekolahId: formData.unitSekolahId,
-          amount: Number(formData.amount),
+          totalAmount: totalAmount,
           date: new Date(formData.date),
           description: formData.description,
           recipientName: formData.recipientName,
-          formNo: formData.formNo
+          formNo: formData.formNo,
+          divisiId: formData.divisiId || undefined,
+          items: formData.items.map(i => ({
+            akunDetailId: i.akunDetailId,
+            amount: Number(i.amount),
+            description: i.description
+          }))
         })
         setData([res, ...data])
       }
@@ -114,9 +155,7 @@ export default function KasKeluarClient({
 
   const handlePrint = (item: any) => {
     setDetailItem(item)
-    setTimeout(() => {
-      window.print()
-    }, 300)
+    setTimeout(() => { window.print() }, 300)
   }
 
   const formatRp = (num: number) => {
@@ -124,13 +163,15 @@ export default function KasKeluarClient({
   }
 
   const activeUnit = schoolUnits.find((u: any) => u.id === initialUnitId)
+  const kasAccounts = accounts.filter(a => a.subKlasifikasiAkun?.name?.toLowerCase().includes('kas') || a.subKlasifikasiAkun?.name?.toLowerCase().includes('bank'))
+  const otherAccounts = accounts.filter(a => !kasAccounts.includes(a))
 
   return (
     <div>
       <ConfirmModal 
         isOpen={!!deleteId}
         title="Hapus Transaksi Kas Keluar"
-        message="Apakah Anda yakin ingin menghapus transaksi pengeluaran ini? Data akan ditandai sebagai dihapus dan tidak tampil di laporan."
+        message="Apakah Anda yakin ingin menghapus transaksi pengeluaran ini?"
         onCancel={() => setDeleteId(null)}
         onConfirm={handleDeleteConfirm}
         isLoading={isDeleting}
@@ -139,9 +180,9 @@ export default function KasKeluarClient({
       {/* Detail / Print Modal */}
       {detailItem && (
         <div className="fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-surface rounded-2xl shadow-xl border border-border flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-3xl bg-surface rounded-2xl shadow-xl border border-border flex flex-col max-h-[90vh]">
             <div className="p-6 border-b border-border flex justify-between items-center">
-              <h3 className="text-xl font-bold text-text-main">Detail Transaksi Kas Keluar</h3>
+              <h3 className="text-xl font-bold text-text-main">Bukti Transaksi Kas Keluar</h3>
               <button onClick={() => setDetailItem(null)} className="p-2 rounded-lg hover:bg-bg transition-colors">
                 <X size={20} className="text-text-muted" />
               </button>
@@ -166,16 +207,16 @@ export default function KasKeluarClient({
                 </div>
 
                 <div className="mt-6 bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-                  <p className="text-sm text-red-700 font-medium mb-1">Nominal Pengeluaran</p>
-                  <p className="text-3xl font-extrabold text-red-700">{formatRp(Number(detailItem.amount))}</p>
+                  <p className="text-sm text-red-700 font-medium mb-1">Total Pengeluaran</p>
+                  <p className="text-3xl font-extrabold text-red-700">{formatRp(Number(detailItem.totalAmount))}</p>
                 </div>
 
                 <div className="mt-6 grid grid-cols-1 gap-4">
                   <div className="bg-bg rounded-xl p-4">
-                    <p className="text-xs text-text-muted font-semibold uppercase tracking-wider mb-2">Informasi Transaksi</p>
+                    <p className="text-xs text-text-muted font-semibold uppercase tracking-wider mb-2">Informasi Header</p>
                     <div className="grid grid-cols-2 gap-y-3 text-sm">
                       <div>
-                        <p className="text-text-muted">Akun Keuangan</p>
+                        <p className="text-text-muted">Akun Sumber (Kas/Bank)</p>
                         <p className="font-semibold text-text-main">{detailItem.akunDetail ? `[${detailItem.akunDetail.code}] ${detailItem.akunDetail.name}` : "-"}</p>
                       </div>
                       <div>
@@ -183,8 +224,8 @@ export default function KasKeluarClient({
                         <p className="font-semibold text-text-main">{detailItem.recipientName || "-"}</p>
                       </div>
                       <div>
-                        <p className="text-text-muted">No. Formulir / Kwitansi</p>
-                        <p className="font-semibold text-text-main">{detailItem.formNo || "-"}</p>
+                        <p className="text-text-muted">Divisi / Cost Center</p>
+                        <p className="font-semibold text-text-main">{detailItem.divisi?.name || "Semua Divisi"}</p>
                       </div>
                       <div>
                         <p className="text-text-muted">Dicatat Oleh</p>
@@ -193,10 +234,36 @@ export default function KasKeluarClient({
                     </div>
                   </div>
 
-                  {detailItem.description && (
-                    <div className="bg-bg rounded-xl p-4">
-                      <p className="text-xs text-text-muted font-semibold uppercase tracking-wider mb-2">Keterangan / Keperluan</p>
-                      <p className="text-sm text-text-main">{detailItem.description}</p>
+                  {/* Rincian Items */}
+                  <div className="bg-bg rounded-xl p-4">
+                    <p className="text-xs text-text-muted font-semibold uppercase tracking-wider mb-3">Rincian Pengeluaran</p>
+                    <table className="w-full text-left text-sm border-collapse">
+                      <thead>
+                        <tr className="border-b border-border text-text-muted">
+                          <th className="py-2 font-medium">Akun Lawan (Beban/Biaya)</th>
+                          <th className="py-2 font-medium">Keterangan</th>
+                          <th className="py-2 font-medium text-right">Nominal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detailItem.items?.map((item: any, i: number) => (
+                          <tr key={item.id || i} className="border-b border-border/50">
+                            <td className="py-2 font-semibold text-text-main">[{item.akunDetail?.code}] {item.akunDetail?.name}</td>
+                            <td className="py-2 text-text-muted">{item.description || "-"}</td>
+                            <td className="py-2 text-right font-bold text-text-main">{formatRp(Number(item.amount))}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {detailItem.isEdited && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+                      <AlertTriangle className="text-amber-500 shrink-0" size={18} />
+                      <div>
+                        <p className="text-sm font-bold text-amber-700">Telah Dirubah (Di-edit)</p>
+                        <p className="text-xs text-amber-600 mt-1">Alasan: {detailItem.editReason}</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -223,70 +290,137 @@ export default function KasKeluarClient({
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div className="relative w-full max-w-xs">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-          <input 
-            type="text" 
-            placeholder="Cari referensi, keterangan, penerima..." 
-            className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm text-text-main" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      {/* FILTER BAR */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6 p-4 bg-surface rounded-2xl shadow-sm border border-border">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <input 
+              type="text" 
+              placeholder="Cari referensi, keterangan..." 
+              className="w-full pl-10 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="date" className="px-3 py-2 bg-bg border border-border rounded-xl text-sm" value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <span className="text-text-muted">-</span>
+            <input type="date" className="px-3 py-2 bg-bg border border-border rounded-xl text-sm" value={endDate} onChange={e => setEndDate(e.target.value)} />
+          </div>
         </div>
-        <Button onClick={handleAddClick} className="bg-red-600 hover:bg-red-700 text-white border-transparent">
+        <Button onClick={handleAddClick} className="bg-red-600 hover:bg-red-700 text-white border-transparent w-full md:w-auto">
           <Plus size={16} className="mr-2" /> Input Kas Keluar
         </Button>
       </div>
 
       {isAdding && (
         <div className="fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-surface rounded-2xl shadow-xl border border-border flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-4xl bg-surface rounded-2xl shadow-xl border border-border flex flex-col max-h-[95vh]">
             <div className="p-6 border-b border-border">
               <h3 className="text-xl font-bold text-red-600 m-0">{formData.id ? "Edit Transaksi Kas Keluar" : "Input Transaksi Kas Keluar (Pengeluaran)"}</h3>
             </div>
             <div className="p-6 overflow-y-auto">
-              <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Tanggal Transaksi <span className="text-red-500">*</span></label>
-                  <Input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} required />
-                </div>
-                <div className="hidden">
-                  <select value={formData.unitSekolahId} onChange={e => setFormData({ ...formData, unitSekolahId: e.target.value })} required>
-                    {schoolUnits.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                  </select>
-                </div>
-                <div className="md:col-span-2 flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Akun Keuangan (Pengeluaran) <span className="text-red-500">*</span></label>
-                  <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium" value={formData.akunDetailId} onChange={e => setFormData({ ...formData, akunDetailId: e.target.value })} required>
-                    <option value="">-- Pilih Akun --</option>
-                    {accounts.map((a: any) => <option key={a.id} value={a.id}>[{a.code}] {a.name} ({a.subKlasifikasiAkun?.name})</option>)}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Jumlah (Rp) <span className="text-red-500">*</span></label>
-                  <Input type="number" min="0" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} required />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Nomor Formulir / Kwitansi (Opsional)</label>
-                  <Input value={formData.formNo} onChange={e => setFormData({ ...formData, formNo: e.target.value })} />
-                </div>
-                <div className="md:col-span-2 flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Nama Penerima Dana (Opsional)</label>
-                  <Input value={formData.recipientName} onChange={e => setFormData({ ...formData, recipientName: e.target.value })} />
-                </div>
-                <div className="md:col-span-2 flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Keterangan / Keperluan <span className="text-red-500">*</span></label>
-                  <textarea 
-                    className="w-full px-4 py-3 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium resize-y" 
-                    rows={3} 
-                    value={formData.description} 
-                    onChange={e => setFormData({ ...formData, description: e.target.value })} 
-                    required
-                  />
-                </div>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                 
-                <div className="md:col-span-2 flex gap-3 mt-2 justify-end">
+                {/* Bagian Header */}
+                <div className="bg-bg/50 p-5 rounded-xl border border-border grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-text-main">Akun Sumber Dana <span className="text-red-500">*</span></label>
+                    <select className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm" value={formData.akunDetailId} onChange={e => setFormData({ ...formData, akunDetailId: e.target.value })} required>
+                      <option value="">-- Kas / Bank --</option>
+                      {kasAccounts.map((a: any) => <option key={a.id} value={a.id}>[{a.code}] {a.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-text-main">Divisi Pembebanan</label>
+                    <select className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm" value={formData.divisiId} onChange={e => setFormData({ ...formData, divisiId: e.target.value })}>
+                      <option value="">Semua Divisi</option>
+                      {divisis?.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-text-main">Tanggal Transaksi <span className="text-red-500">*</span></label>
+                    <Input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} required />
+                  </div>
+                  
+                  <div className="flex flex-col gap-1.5 md:col-span-1">
+                    <label className="text-sm font-semibold text-text-main">Nama Penerima</label>
+                    <Input value={formData.recipientName} onChange={e => setFormData({ ...formData, recipientName: e.target.value })} />
+                  </div>
+                  <div className="flex flex-col gap-1.5 md:col-span-2">
+                    <label className="text-sm font-semibold text-text-main">Keterangan Umum</label>
+                    <Input value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                  </div>
+                </div>
+
+                {/* Bagian Detail / Multi-baris */}
+                <div className="border border-border rounded-xl overflow-hidden">
+                  <div className="bg-surface p-3 border-b border-border flex justify-between items-center">
+                    <h4 className="font-bold text-sm text-text-main">Rincian Pengeluaran</h4>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setFormData({ ...formData, items: [...formData.items, { ...emptyItem }] })}>
+                      <Plus size={14} className="mr-1" /> Tambah Baris
+                    </Button>
+                  </div>
+                  <div className="bg-bg p-4 overflow-x-auto">
+                    <table className="w-full min-w-[700px] text-left text-sm border-collapse">
+                      <thead>
+                        <tr className="text-text-muted border-b border-border">
+                          <th className="pb-2 font-semibold w-1/3">Akun Lawan (Biaya/Beban) *</th>
+                          <th className="pb-2 font-semibold w-1/3">Deskripsi *</th>
+                          <th className="pb-2 font-semibold w-1/4">Nominal (Rp) *</th>
+                          <th className="pb-2 font-semibold text-center">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {formData.items.map((item, index) => (
+                          <tr key={index} className="border-b border-border/30 last:border-0">
+                            <td className="py-2 pr-2">
+                              <select className="w-full px-2 py-1.5 bg-surface border border-border rounded focus:outline-none focus:border-primary" value={item.akunDetailId} onChange={e => {
+                                const newItems = [...formData.items]; newItems[index].akunDetailId = e.target.value; setFormData({ ...formData, items: newItems });
+                              }} required>
+                                <option value="">-- Pilih Akun --</option>
+                                {otherAccounts.map((a: any) => <option key={a.id} value={a.id}>[{a.code}] {a.name}</option>)}
+                              </select>
+                            </td>
+                            <td className="py-2 pr-2">
+                              <Input className="py-1.5 px-2 text-sm" placeholder="Contoh: Beli Kertas" value={item.description} onChange={e => {
+                                const newItems = [...formData.items]; newItems[index].description = e.target.value; setFormData({ ...formData, items: newItems });
+                              }} required />
+                            </td>
+                            <td className="py-2 pr-2">
+                              <Input type="number" min="0" className="py-1.5 px-2 text-sm text-right" placeholder="0" value={item.amount} onChange={e => {
+                                const newItems = [...formData.items]; newItems[index].amount = e.target.value; setFormData({ ...formData, items: newItems });
+                              }} required />
+                            </td>
+                            <td className="py-2 text-center">
+                              <button type="button" onClick={() => {
+                                const newItems = [...formData.items]; newItems.splice(index, 1); setFormData({ ...formData, items: newItems });
+                              }} className="p-1.5 text-red-500 hover:bg-red-50 rounded" disabled={formData.items.length === 1}>
+                                <Trash2 size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="bg-red-50 p-4 border-t border-red-200 flex justify-between items-center">
+                    <span className="font-bold text-red-700">Total Pengeluaran:</span>
+                    <span className="text-xl font-extrabold text-red-700">{formatRp(calculateTotal())}</span>
+                  </div>
+                </div>
+
+                {formData.id && (
+                  <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                    <label className="text-sm font-bold text-amber-800 flex items-center gap-2 mb-2">
+                      <AlertTriangle size={16} /> Alasan Perubahan Data <span className="text-red-500">*</span>
+                    </label>
+                    <Input placeholder="Tuliskan mengapa data ini diubah..." value={formData.editReason} onChange={e => setFormData({ ...formData, editReason: e.target.value })} required />
+                  </div>
+                )}
+                
+                <div className="flex gap-3 justify-end pt-2">
                   <Button type="button" variant="outline" onClick={() => setIsAdding(false)}>Batal</Button>
                   <Button type="submit" isLoading={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white border-transparent">{formData.id ? "Simpan Perubahan" : "Simpan Pengeluaran"}</Button>
                 </div>
@@ -300,15 +434,15 @@ export default function KasKeluarClient({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <p className="text-sm text-red-700 font-medium mb-1">Total Kas Keluar</p>
-          <p className="text-2xl font-bold text-red-700">{formatRp(data.reduce((sum, d) => sum + Number(d.amount), 0))}</p>
+          <p className="text-2xl font-bold text-red-700">{formatRp(filteredData.reduce((sum, d) => sum + Number(d.totalAmount), 0))}</p>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
           <p className="text-sm text-blue-700 font-medium mb-1">Jumlah Transaksi</p>
-          <p className="text-2xl font-bold text-blue-700">{data.length} <span className="text-base font-normal">transaksi</span></p>
+          <p className="text-2xl font-bold text-blue-700">{filteredData.length} <span className="text-base font-normal">transaksi</span></p>
         </div>
         <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
           <p className="text-sm text-orange-700 font-medium mb-1">Rata-rata per Transaksi</p>
-          <p className="text-2xl font-bold text-orange-700">{data.length > 0 ? formatRp(data.reduce((sum, d) => sum + Number(d.amount), 0) / data.length) : "Rp 0"}</p>
+          <p className="text-2xl font-bold text-orange-700">{filteredData.length > 0 ? formatRp(filteredData.reduce((sum, d) => sum + Number(d.totalAmount), 0) / filteredData.length) : "Rp 0"}</p>
         </div>
       </div>
 
@@ -320,15 +454,22 @@ export default function KasKeluarClient({
                 <SortableHeader label="Tanggal" sortKey="date" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
                 <SortableHeader label="No Referensi" sortKey="referenceNo" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
                 <SortableHeader label="Penerima/Keterangan" sortKey="recipientName" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
-                <SortableHeader label="Akun" sortKey="akunDetail.name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
-                <SortableHeader label="Nominal" sortKey="amount" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-right" />
+                <SortableHeader label="Akun Sumber" sortKey="akunDetail.name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
+                <SortableHeader label="Total Nominal" sortKey="totalAmount" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-right" />
                 <th className="p-4 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {sortedData.map(item => (
                 <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
-                  <td className="p-4 text-text-main">{new Date(item.date).toLocaleDateString('id-ID')}</td>
+                  <td className="p-4 text-text-main">
+                    {new Date(item.date).toLocaleDateString('id-ID')}
+                    {item.isEdited && (
+                      <span className="block mt-1 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded w-max border border-amber-200 font-bold" title={item.editReason}>
+                        Di-edit
+                      </span>
+                    )}
+                  </td>
                   <td className="p-4 font-semibold text-text-main">{item.referenceNo}</td>
                   <td className="p-4">
                     <div className="font-semibold text-text-main">{item.recipientName || "-"}</div>
@@ -336,9 +477,11 @@ export default function KasKeluarClient({
                   </td>
                   <td className="p-4 text-text-main text-sm">
                     {item.akunDetail ? `[${item.akunDetail.code}] ${item.akunDetail.name}` : "-"}
+                    {item.divisi && <div className="text-xs text-purple-600 font-semibold mt-0.5">{item.divisi.name}</div>}
                   </td>
                   <td className="p-4 text-right font-bold text-red-500">
-                    {formatRp(Number(item.amount))}
+                    {formatRp(Number(item.totalAmount))}
+                    <div className="text-xs text-text-muted font-normal mt-0.5">{item.items?.length || 0} rincian</div>
                   </td>
                   <td className="p-4">
                     <div className="flex items-center justify-center gap-1">

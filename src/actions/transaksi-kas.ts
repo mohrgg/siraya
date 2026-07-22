@@ -16,23 +16,23 @@ export async function getTransaksiKas(unitSekolahId: string, type?: "IN" | "OUT"
       ...(type ? { type } : {})
     },
     include: {
-      akunDetail: {
-        include: {
-          subKlasifikasiAkun: true
-        }
-      },
-      createdBy: {
-        select: { name: true }
+      akunDetail: { include: { subKlasifikasiAkun: true } },
+      createdBy: { select: { name: true } },
+      divisi: { select: { name: true } },
+      items: {
+        include: { akunDetail: { include: { subKlasifikasiAkun: true } } }
       }
     },
-    orderBy: {
-      date: "desc"
-    }
+    orderBy: { date: "desc" }
   })
 
   return rawData.map(d => ({
     ...d,
-    amount: Number(d.amount)
+    totalAmount: Number(d.totalAmount),
+    items: d.items.map(item => ({
+      ...item,
+      amount: Number(item.amount)
+    }))
   }))
 }
 
@@ -40,18 +40,19 @@ export async function tambahTransaksiKas(data: {
   type: "IN" | "OUT",
   akunDetailId: string,
   unitSekolahId: string,
-  amount: number,
+  totalAmount: number,
   date: Date,
   description?: string,
   studentName?: string,
   classroomName?: string,
   recipientName?: string,
   formNo?: string,
+  divisiId?: string,
+  items: { akunDetailId: string, amount: number, description?: string }[]
 }) {
   const session = await auth()
   if (!session) throw new Error("Unauthorized")
 
-  // Generate Reference No (e.g. KM-20250716-0001 for Kas Masuk, KK for Kas Keluar)
   const prefix = data.type === "IN" ? "KM" : "KK"
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "")
   const count = await prisma.transaksiKas.count({
@@ -67,62 +68,101 @@ export async function tambahTransaksiKas(data: {
 
   const result = await prisma.transaksiKas.create({
     data: {
-      ...data,
-      amount: new Prisma.Decimal(data.amount),
+      type: data.type,
+      akunDetailId: data.akunDetailId,
+      unitSekolahId: data.unitSekolahId,
+      totalAmount: new Prisma.Decimal(data.totalAmount),
+      date: data.date,
+      description: data.description,
+      studentName: data.studentName,
+      classroomName: data.classroomName,
+      recipientName: data.recipientName,
+      formNo: data.formNo,
+      divisiId: data.divisiId || null,
       referenceNo,
-      createdById: session.user.id
+      createdById: session.user.id,
+      items: {
+        create: data.items.map(item => ({
+          akunDetailId: item.akunDetailId,
+          amount: new Prisma.Decimal(item.amount),
+          description: item.description
+        }))
+      }
     },
     include: {
-      akunDetail: {
-        include: { subKlasifikasiAkun: true }
-      },
-      createdBy: { select: { name: true } }
+      akunDetail: { include: { subKlasifikasiAkun: true } },
+      createdBy: { select: { name: true } },
+      items: true
     }
   })
   
   revalidatePath("/transaksi")
-  revalidatePath("/") // update dashboard
-  return {
-    ...result,
-    amount: Number(result.amount)
-  }
+  revalidatePath("/")
+  return { ...result, totalAmount: Number(result.totalAmount) }
 }
 
 export async function editTransaksiKas(id: string, data: {
   akunDetailId?: string,
-  amount?: number,
+  totalAmount?: number,
   date?: Date,
   description?: string,
   studentName?: string,
   classroomName?: string,
   recipientName?: string,
   formNo?: string,
+  divisiId?: string,
+  editReason: string,
+  items?: { id?: string, akunDetailId: string, amount: number, description?: string }[]
 }) {
   const session = await auth()
   if (!session) throw new Error("Unauthorized")
 
-  const updateData: any = { ...data }
-  if (data.amount !== undefined) {
-    updateData.amount = new Prisma.Decimal(data.amount)
+  const updateData: any = { 
+    akunDetailId: data.akunDetailId,
+    date: data.date,
+    description: data.description,
+    studentName: data.studentName,
+    classroomName: data.classroomName,
+    recipientName: data.recipientName,
+    formNo: data.formNo,
+    divisiId: data.divisiId,
+    isEdited: true,
+    editReason: data.editReason
   }
+  
+  if (data.totalAmount !== undefined) updateData.totalAmount = new Prisma.Decimal(data.totalAmount)
 
-  const result = await prisma.transaksiKas.update({
-    where: { id },
-    data: updateData,
-    include: {
-      akunDetail: {
-        include: { subKlasifikasiAkun: true }
-      },
-      createdBy: { select: { name: true } }
+  // Clean up undefined properties
+  Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key])
+
+  // Use interactive transaction to handle item replacement
+  const result = await prisma.$transaction(async (tx) => {
+    // If items are provided, delete old ones and insert new ones (safest way to sync)
+    if (data.items) {
+      await tx.itemTransaksiKas.deleteMany({ where: { transaksiKasId: id } })
+      updateData.items = {
+        create: data.items.map(item => ({
+          akunDetailId: item.akunDetailId,
+          amount: new Prisma.Decimal(item.amount),
+          description: item.description
+        }))
+      }
     }
+    
+    return await tx.transaksiKas.update({
+      where: { id },
+      data: updateData,
+      include: {
+        akunDetail: { include: { subKlasifikasiAkun: true } },
+        createdBy: { select: { name: true } },
+        items: true
+      }
+    })
   })
 
   revalidatePath("/transaksi")
   revalidatePath("/")
-  return {
-    ...result,
-    amount: Number(result.amount)
-  }
+  return { ...result, totalAmount: Number(result.totalAmount) }
 }
 
 export async function hapusTransaksiKas(id: string) {

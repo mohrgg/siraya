@@ -16,6 +16,8 @@ export default async function KasKeluarPage() {
     include: { subKlasifikasiAkun: true },
     orderBy: { code: "asc" }
   })
+  
+  const divisis = await prisma.divisi.findMany({ orderBy: { name: 'asc' } })
 
   return (
     <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
@@ -28,6 +30,7 @@ export default async function KasKeluarPage() {
         schoolUnits={schoolUnits}
         initialUnitId={initialUnitId}
         accounts={accounts}
+        divisis={divisis}
       />
     </div>
   )
