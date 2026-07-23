@@ -153,20 +153,19 @@ export default function KelasClient({
   }
 
   // Handlers Edit/Save
-  const handleSaveMurid = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formMurid.nisn || formMurid.nisn.length !== 10) {
+  const handleSaveMurid = async (formData: any) => {
+    if (!formData.nisn || formData.nisn.length !== 10) {
       alert("NISN harus 10 digit angka!")
       return
     }
     setIsSubmitting(true)
     try {
-      if (formMurid.id) {
-        await editSiswa(formMurid.id, { ...formMurid, nis: formMurid.nisn || `NIS-${Date.now()}` })
-        setStudents(students.map((s: any) => s.id === formMurid.id ? { ...s, ...formMurid, riwayatKelas: [{ subKelasId: formMurid.subKelasId, subKelas: classrooms.find((c: any) => c.id === formMurid.subKelasId) }] } : s))
+      if (formData.id) {
+        await editSiswa(formData.id, { ...formData, nis: formData.nisn || `NIS-${Date.now()}` })
+        setStudents(students.map((s: any) => s.id === formData.id ? { ...s, ...formData, riwayatKelas: [{ subKelasId: formData.subKelasId, subKelas: classrooms.find((c: any) => c.id === formData.subKelasId) }] } : s))
       } else {
-        const res = await tambahSiswa({ ...formMurid, nis: formMurid.nisn || `NIS-${Date.now()}` })
-        setStudents([{ ...res, riwayatKelas: [{ subKelasId: formMurid.subKelasId, subKelas: classrooms.find((c: any) => c.id === formMurid.subKelasId) }] }, ...students])
+        const res = await tambahSiswa({ ...formData, nis: formData.nisn || `NIS-${Date.now()}` })
+        setStudents([{ ...res, riwayatKelas: [{ subKelasId: formData.subKelasId, subKelas: classrooms.find((c: any) => c.id === formData.subKelasId) }] }, ...students])
       }
       setShowModalMurid(false)
     } catch (err: any) { alert(err.message) }
