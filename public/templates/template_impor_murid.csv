@@ -1,3 +1,3 @@
-NIS *,Nama Lengkap *,NISN,Jenis Kelamin,Agama,No Telepon Siswa,Tanggal Lahir (YYYY-MM-DD),Email,Asal Sekolah,Nama Orang Tua,No Telepon Ortu,Alamat Lengkap,No Formulir,Username,Beasiswa (YA)
-10101,Ahmad Budi,0010101010,Laki-laki,Islam,08123456789,2010-05-14,ahmad@email.com,SMPN 1,Budi Santoso,08987654321,Jl. Merdeka No 1,F-001,ahmad123,
-10102,Siti Aminah,0010101011,Perempuan,Islam,,,2010-08-20,,,,,,,YA
+NIS *,Nama Lengkap *,NISN,Jenis Kelamin,Agama,Tempat Lahir,Tanggal Lahir (YYYY-MM-DD),NIK,Nama Ayah,Nama Ibu,Pekerjaan Ayah,Pekerjaan Ibu,No Telepon Ortu,Alamat Jalan,RT,RW,Kelurahan,Kecamatan,Beasiswa (YA)
+10101,Ahmad Budi,0010101010,L,Islam,Jakarta,2010-05-14,3170000000000001,Budi Santoso,Siti Aminah,Karyawan Swasta,Ibu Rumah Tangga,08123456789,Jl. Merdeka No 1,001,002,Melawai,Kebayoran Baru,
+10102,Siti Aminah,0010101011,P,Islam,Bandung,2010-08-20,3170000000000002,Asep Suratman,Nengsih,Wiraswasta,Guru,08987654321,Jl. Asia Afrika No 2,003,004,Braga,Sumur Bandung,YA

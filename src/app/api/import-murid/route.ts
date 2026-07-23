@@ -47,15 +47,31 @@ export async function POST(req: Request) {
       const nis = (row["NIS *"] || "").toString().trim()
       const nama = (row["Nama Lengkap *"] || "").toString().trim()
       const nisn = (row["NISN"] || "").toString().trim()
-      const jk = (row["Jenis Kelamin"] || "").toString().trim()
+      
+      let jk = (row["Jenis Kelamin"] || "").toString().trim()
+      if (jk.toUpperCase() === "L") jk = "Laki-laki"
+      else if (jk.toUpperCase() === "P") jk = "Perempuan"
+
       const agama = (row["Agama"] || "").toString().trim()
-      const noTelpSiswa = (row["No Telepon Siswa"] || "").toString().trim()
+      const tempatLahir = (row["Tempat Lahir"] || "").toString().trim()
       const tglLahirStr = (row["Tanggal Lahir (YYYY-MM-DD)"] || "").toString().trim()
+      const nik = (row["NIK"] || "").toString().trim()
+      const namaAyah = (row["Nama Ayah"] || "").toString().trim()
+      const namaIbu = (row["Nama Ibu"] || "").toString().trim()
+      const pekAyah = (row["Pekerjaan Ayah"] || "").toString().trim()
+      const pekIbu = (row["Pekerjaan Ibu"] || "").toString().trim()
+      const noTelpOrtu = (row["No Telepon Ortu"] || "").toString().trim()
+      
+      const alamat = (row["Alamat Jalan"] || "").toString().trim()
+      const rt = (row["RT"] || "").toString().trim()
+      const rw = (row["RW"] || "").toString().trim()
+      const kel = (row["Kelurahan"] || "").toString().trim()
+      const kec = (row["Kecamatan"] || "").toString().trim()
+      
+      // Keep old fields just in case they use old template
+      const noTelpSiswa = (row["No Telepon Siswa"] || "").toString().trim()
       const email = (row["Email"] || "").toString().trim()
       const asalSekolah = (row["Asal Sekolah"] || "").toString().trim()
-      const namaOrtu = (row["Nama Orang Tua"] || "").toString().trim()
-      const noTelpOrtu = (row["No Telepon Ortu"] || "").toString().trim()
-      const alamat = (row["Alamat Lengkap"] || "").toString().trim()
       const formNo = (row["No Formulir"] || "").toString().trim()
       const username = (row["Username"] || "").toString().trim()
       const isBeasiswa = (row["Beasiswa (YA)"] || "").toString().trim().toUpperCase() === "YA"
@@ -94,15 +110,24 @@ export async function POST(req: Request) {
               nis,
               name: nama,
               nisn: nisn || null,
-              gender: (jk === "Laki-laki" || jk === "Perempuan") ? jk : null,
+              gender: jk || null,
               religion: agama || null,
               phone: noTelpSiswa || null,
+              birthPlace: tempatLahir || null,
               birthDate: birthDate,
+              nik: nik || null,
               email: email || null,
               previousSchool: asalSekolah || null,
-              fatherName: namaOrtu || null,
+              fatherName: namaAyah || (row["Nama Orang Tua"] || "").toString().trim() || null,
+              motherName: namaIbu || null,
+              fatherOccupation: pekAyah || null,
+              motherOccupation: pekIbu || null,
               parentPhone: noTelpOrtu || null,
-              address: alamat || null,
+              address: alamat || (row["Alamat Lengkap"] || "").toString().trim() || null,
+              rt: rt || null,
+              rw: rw || null,
+              village: kel || null,
+              district: kec || null,
               formNo: formNo || null,
               username: username || null,
               isScholarship: isBeasiswa,

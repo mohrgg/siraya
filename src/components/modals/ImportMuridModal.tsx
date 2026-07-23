@@ -3,6 +3,8 @@ import { useState, useRef } from "react"
 import { X, UploadCloud, AlertCircle, CheckCircle2, Download, FileSpreadsheet, Loader2 } from "lucide-react"
 import Papa from "papaparse"
 
+import * as XLSX from "xlsx"
+
 interface ImportMuridModalProps {
   isOpen: boolean
   onClose: () => void
@@ -38,11 +40,11 @@ export default function ImportMuridModal({
     e.preventDefault()
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const droppedFile = e.dataTransfer.files[0]
-      if (droppedFile.name.endsWith('.csv')) {
+      if (droppedFile.name.endsWith('.csv') || droppedFile.name.endsWith('.xlsx') || droppedFile.name.endsWith('.xls')) {
         setFile(droppedFile)
         setResult(null)
       } else {
-        alert("Mohon unggah file dengan format .csv")
+        alert("Mohon unggah file dengan format .csv, .xlsx, atau .xls")
       }
     }
   }
@@ -53,43 +55,51 @@ export default function ImportMuridModal({
     setIsProcessing(true)
     setResult(null)
 
-    // Parse CSV
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results) => {
-        try {
-          const formData = new FormData()
-          formData.append('data', JSON.stringify(results.data))
-          formData.append('unitId', selectedUnit)
-          formData.append('subKelasId', selectedSubKelas)
+    try {
+      let jsonData: any[] = []
 
-          const response = await fetch('/api/import-murid', {
-            method: 'POST',
-            body: formData,
+      if (file.name.endsWith('.csv')) {
+        jsonData = await new Promise<any[]>((resolve, reject) => {
+          Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => resolve(results.data),
+            error: (error: any) => reject(error)
           })
-
-          const data = await response.json()
-          
-          if (!response.ok) {
-            throw new Error(data.error || "Gagal mengimpor data")
-          }
-
-          setResult(data)
-          if (data.success > 0) {
-            onSuccess() // Refresh table
-          }
-        } catch (error: any) {
-          alert("Terjadi kesalahan: " + error.message)
-        } finally {
-          setIsProcessing(false)
-        }
-      },
-      error: (error: any) => {
-        alert("Gagal membaca file CSV: " + error.message)
-        setIsProcessing(false)
+        })
+      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        const buffer = await file.arrayBuffer()
+        const workbook = XLSX.read(buffer, { type: 'array' })
+        const firstSheetName = workbook.SheetNames[0]
+        const worksheet = workbook.Sheets[firstSheetName]
+        jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" })
       }
-    })
+
+      const formData = new FormData()
+      formData.append('data', JSON.stringify(jsonData))
+      formData.append('unitId', selectedUnit)
+      formData.append('subKelasId', selectedSubKelas)
+
+      const response = await fetch('/api/import-murid', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Gagal mengimpor data")
+      }
+
+      setResult(data)
+      if (data.success > 0) {
+        onSuccess() // Refresh table
+      }
+    } catch (error: any) {
+      alert("Terjadi kesalahan: " + error.message)
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   return (
@@ -120,7 +130,7 @@ export default function ImportMuridModal({
                 <h3 className="font-bold text-sm text-blue-900 mb-2 flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs">1</span> Download Template</h3>
                 <p className="text-xs text-blue-800/80 mb-3 leading-relaxed">
                   Gunakan template CSV resmi kami. Kolom dengan tanda bintang merah (<b>*</b>) pada file CSV wajib diisi. 
-                  Untuk <b>Jenis Kelamin</b> isi persis dengan <b>Laki-laki</b> atau <b>Perempuan</b>.
+                  Untuk <b>Jenis Kelamin</b> bisa diisi dengan awalan <b>L</b> (Laki-laki) atau <b>P</b> (Perempuan).
                 </p>
                 <a href="/templates/template_impor_murid.csv" download className="inline-flex items-center gap-2 px-4 py-2 bg-white text-blue-700 border border-blue-200 hover:bg-blue-50 rounded-lg text-xs font-bold transition-colors shadow-sm">
                   <Download size={14} /> Download template_impor_murid.csv
@@ -145,15 +155,15 @@ export default function ImportMuridModal({
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs font-bold text-purple-800 mb-1.5">Rombel (Sub Kelas)</label>
+                    <label className="block text-xs font-bold text-purple-800 mb-1.5">Kelas Tujuan</label>
                     <select 
-                      className="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm font-medium"
+                      className="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm font-medium disabled:opacity-50"
                       value={selectedSubKelas}
                       onChange={(e) => setSelectedSubKelas(e.target.value)}
                       disabled={!selectedUnit}
                     >
-                      <option value="" disabled>-- Pilih Rombel --</option>
-                      {filteredClassrooms.map(c => (
+                      <option value="">-- Pilih Kelas --</option>
+                      {filteredClassrooms.map((c: any) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
                     </select>
@@ -162,39 +172,42 @@ export default function ImportMuridModal({
               </div>
 
               {/* Step 3 */}
-              <div>
-                <h3 className="font-bold text-sm text-text-main mb-3 flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center text-xs">3</span> Upload File CSV</h3>
+              <div className="bg-gray-50/80 border border-gray-200 rounded-xl p-4">
+                <h3 className="font-bold text-sm text-text-main mb-3 flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center text-xs">3</span> Unggah File CSV / Excel</h3>
                 <div 
-                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${file ? 'border-primary bg-primary/5' : 'border-border hover:bg-gray-50 hover:border-gray-300'} ${!selectedSubKelas ? 'opacity-50 pointer-events-none' : ''}`}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={handleDrop}
+                  className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-white hover:bg-gray-50 transition-colors cursor-pointer group"
+                  onClick={() => fileInputRef.current?.click()}
                 >
                   <input 
                     type="file" 
-                    accept=".csv" 
+                    ref={fileInputRef} 
                     className="hidden" 
-                    ref={fileInputRef}
+                    accept=".csv,.xlsx,.xls"
                     onChange={handleFileChange}
                   />
                   
                   {file ? (
-                    <div className="flex flex-col items-center">
-                      <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-3">
+                    <div className="flex flex-col items-center gap-2 text-emerald-600">
+                      <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
                         <CheckCircle2 size={24} />
                       </div>
-                      <p className="font-bold text-text-main">{file.name}</p>
-                      <p className="text-xs text-text-muted mt-1">{(file.size / 1024).toFixed(2)} KB</p>
-                      <button onClick={() => setFile(null)} className="mt-4 text-xs font-bold text-red-500 hover:text-red-700">
-                        Ganti File
-                      </button>
+                      <div>
+                        <p className="font-bold">{file.name}</p>
+                        <p className="text-xs text-emerald-600/70">{(file.size / 1024).toFixed(2)} KB • Siap diimpor</p>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2 hover:underline">Klik untuk mengganti file</p>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                      <div className="w-12 h-12 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mb-3">
+                    <div className="flex flex-col items-center gap-2 text-gray-500 group-hover:text-primary transition-colors">
+                      <div className="w-12 h-12 bg-gray-100 group-hover:bg-primary/10 rounded-full flex items-center justify-center transition-colors">
                         <UploadCloud size={24} />
                       </div>
-                      <p className="font-bold text-text-main text-sm">Klik atau seret file CSV ke sini</p>
-                      <p className="text-xs text-text-muted mt-1">Maksimal ukuran file 5MB</p>
+                      <div>
+                        <p className="font-bold">Klik atau drag & drop file CSV/Excel di sini</p>
+                        <p className="text-xs opacity-70">Maksimal 5MB (.csv, .xlsx, .xls)</p>
+                      </div>
                     </div>
                   )}
                 </div>

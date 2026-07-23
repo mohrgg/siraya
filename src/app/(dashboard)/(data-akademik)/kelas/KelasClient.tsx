@@ -731,10 +731,24 @@ export default function KelasClient({
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Status Siswa</span>
                     <span className="font-medium">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${viewDetailMurid.status === 'AKTIF' ? 'bg-emerald-100 text-emerald-700' : viewDetailMurid.status === 'LULUS' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${viewDetailMurid.status?.toUpperCase() === 'AKTIF' ? 'bg-emerald-100 text-emerald-700' : viewDetailMurid.status?.toUpperCase() === 'LULUS' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>
                         {viewDetailMurid.status}
                       </span>
                     </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Jalur Beasiswa</span>
+                    <span className="font-medium">{viewDetailMurid.isScholarship ? "Ya (Penerima Beasiswa)" : "Tidak"}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Tempat, Tanggal Lahir</span>
+                    <span className="font-medium">
+                      {viewDetailMurid.birthPlace || "-"}, {viewDetailMurid.birthDate ? new Date(viewDetailMurid.birthDate).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }) : "-"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">NIK</span>
+                    <span className="font-medium">{viewDetailMurid.nik || "-"}</span>
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Jenis Kelamin</span>
@@ -748,21 +762,38 @@ export default function KelasClient({
                     <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">No. Telepon Siswa</span>
                     <span className="font-medium">{viewDetailMurid.phone || "-"}</span>
                   </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Anak Ke / Bersaudara</span>
+                    <span className="font-medium">{viewDetailMurid.childOrder || "?"} dari {viewDetailMurid.siblingCount || "?"}</span>
+                  </div>
                   
                   <div className="col-span-1 md:col-span-2 mt-4 pt-4 border-t border-border">
                     <h4 className="font-bold text-text-main mb-4">Informasi Orang Tua / Wali</h4>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-text-muted">Nama Ayah</span>
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Nama Ayah</span>
                     <span className="font-medium">{viewDetailMurid.fatherName || "-"}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Nama Ibu</span>
+                    <span className="font-medium">{viewDetailMurid.motherName || "-"}</span>
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">No. Telepon Orang Tua</span>
                     <span className="font-medium">{viewDetailMurid.parentPhone || "-"}</span>
                   </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Golongan Darah</span>
+                    <span className="font-medium">{viewDetailMurid.bloodType || "-"}</span>
+                  </div>
                   <div className="col-span-1 md:col-span-2 flex flex-col gap-1">
                     <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Alamat Lengkap</span>
-                    <span className="font-medium">{viewDetailMurid.address || "-"}</span>
+                    <span className="font-medium">
+                      {viewDetailMurid.address || "-"}
+                      {viewDetailMurid.rt || viewDetailMurid.rw ? `, RT ${viewDetailMurid.rt || '-'} / RW ${viewDetailMurid.rw || '-'}` : ""}
+                      {viewDetailMurid.village ? `, Kel. ${viewDetailMurid.village}` : ""}
+                      {viewDetailMurid.district ? `, Kec. ${viewDetailMurid.district}` : ""}
+                    </span>
                   </div>
                 </div>
 

@@ -231,7 +231,19 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main">Tanggal Lahir</label>
-          <Input type="date" value={formData.birthDate ? formData.birthDate.split('T')[0] : ""} onChange={e => handleChange("birthDate", e.target.value)} />
+          <Input 
+            type="date" 
+            value={
+              formData.birthDate 
+                ? (typeof formData.birthDate === 'string' 
+                    ? formData.birthDate.split('T')[0] 
+                    : formData.birthDate instanceof Date 
+                      ? formData.birthDate.toISOString().split('T')[0] 
+                      : "") 
+                : ""
+            } 
+            onChange={e => handleChange("birthDate", e.target.value)} 
+          />
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main">Jenis Kelamin</label>
