@@ -41,34 +41,45 @@ export async function getSiswaPaginated(params: {
   limit: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  statusFilter?: string;
 }) {
   const session = await auth()
   if (!session) throw new Error("Unauthorized")
 
-  const where = {
+  const where: any = {
     ...(params.unitSekolahId ? { unitSekolahId: params.unitSekolahId } : {}),
-    // Filter by RiwayatKelas if there's any academic filter
-    ...(params.tahunAkademikId || params.subKelasId || params.tingkatId || params.jurusanId ? {
-      riwayatKelas: {
-        some: {
-          ...(params.tahunAkademikId ? { tahunAkademikId: params.tahunAkademikId } : {}),
-          ...(params.subKelasId ? { subKelasId: params.subKelasId } : {}),
-          ...(params.tingkatId || params.jurusanId ? {
-            subKelas: {
-              ...(params.tingkatId ? { tingkatId: params.tingkatId } : {}),
-              ...(params.jurusanId ? { jurusanId: params.jurusanId } : {})
-            }
-          } : {})
-        }
+  }
+  
+  if (params.statusFilter && params.statusFilter !== 'SEMUA') {
+    if (params.statusFilter === 'NON_AKTIF') {
+      where.status = { not: 'AKTIF' }
+    } else {
+      where.status = params.statusFilter
+    }
+  }
+
+  // Filter by RiwayatKelas if there's any academic filter
+  if (params.tahunAkademikId || params.subKelasId || params.tingkatId || params.jurusanId) {
+    where.riwayatKelas = {
+      some: {
+        ...(params.tahunAkademikId ? { tahunAkademikId: params.tahunAkademikId } : {}),
+        ...(params.subKelasId ? { subKelasId: params.subKelasId } : {}),
+        ...(params.tingkatId || params.jurusanId ? {
+          subKelas: {
+            ...(params.tingkatId ? { tingkatId: params.tingkatId } : {}),
+            ...(params.jurusanId ? { jurusanId: params.jurusanId } : {})
+          }
+        } : {})
       }
-    } : {}),
-    ...(params.search ? {
-      OR: [
-        { name: { contains: params.search, mode: "insensitive" as any } },
-        { nisn: { contains: params.search, mode: "insensitive" as any } },
-        { nis: { contains: params.search, mode: "insensitive" as any } },
-      ]
-    } : {})
+    }
+  }
+
+  if (params.search) {
+    where.OR = [
+      { name: { contains: params.search, mode: "insensitive" as any } },
+      { nisn: { contains: params.search, mode: "insensitive" as any } },
+      { nis: { contains: params.search, mode: "insensitive" as any } },
+    ]
   }
   
   const orderBy: any = {};

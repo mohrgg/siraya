@@ -192,7 +192,8 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
             <option value="AKTIF">Aktif</option>
             <option value="LULUS">Lulus</option>
             <option value="PINDAH">Pindah</option>
-            <option value="DO">Drop Out (DO)</option>
+            <option value="KELUAR">Keluar (Drop Out)</option>
+            <option value="CUTI">Cuti</option>
           </select>
         </div>
       </div>

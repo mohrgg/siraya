@@ -66,7 +66,11 @@ export async function getKelas(unitSekolahId?: string, tahunAkademikId?: string)
       jurusan: true,
       tahunAkademik: true,
       _count: {
-        select: { riwayatKelas: true }
+        select: { 
+          riwayatKelas: {
+            where: { murid: { status: "AKTIF" } }
+          } 
+        }
       }
     },
     orderBy: [

@@ -17,12 +17,15 @@ export default function KelasClient({
 }: { 
   activeUnitId?: string, activeYearId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[] 
 }) {
-  const [activeTab, setActiveTab] = useState<"kelas" | "sub-kelas" | "murid">("kelas")
+  const [activeTab, setActiveTab] = useState<"kelas" | "sub-kelas" | "murid" | "alumni">("kelas")
 
   // States
   const [grades, setGrades] = useState(initialGrades)
   const [classrooms, setClassrooms] = useState(initialClassrooms)
   const [students, setStudents] = useState(initialStudents)
+
+  const [pageSize, setPageSize] = useState(10)
+  const [fullscreenPhotoUrl, setFullscreenPhotoUrl] = useState<string | null>(null)
 
   useEffect(() => {
     setGrades(initialGrades)
@@ -50,7 +53,7 @@ export default function KelasClient({
   // Forms
   const [formMurid, setFormMurid] = useState<any>({
     id: "", nisn: "", name: "", unitSekolahId: schoolUnits[0]?.id || "", subKelasId: "",
-    previousSchool: "", phone: "", birthDate: "", email: "", studentStatus: "Aktif",
+    previousSchool: "", phone: "", birthDate: "", email: "", studentStatus: "AKTIF",
     parentName: "", parentPhone: "", religion: "Islam", gender: "Laki-laki",
     address: "", formNo: "", username: ""
   })
@@ -64,6 +67,7 @@ export default function KelasClient({
   const [filterMuridTingkat, setFilterMuridTingkat] = useState("")
   const [filterMuridJurusan, setFilterMuridJurusan] = useState("")
   const [filterMuridSubKelas, setFilterMuridSubKelas] = useState("")
+  const [filterAlumniStatus, setFilterAlumniStatus] = useState("NON_AKTIF")
 
   // Client-side Sorting for Kelas & Sub Kelas
   const filteredGrades = grades.filter((g: any) => {
@@ -83,6 +87,18 @@ export default function KelasClient({
   // Pagination & Server-side Sorting for Murid
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+
+  // Local Pagination for Kelas & Sub Kelas
+  const paginatedGrades = sortedGrades.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const paginatedClassrooms = sortedClassrooms.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  
+  const computedTotalPages = (activeTab === "murid" || activeTab === "alumni") 
+    ? totalPages 
+    : activeTab === "kelas"
+      ? Math.ceil(sortedGrades.length / pageSize) || 1
+      : Math.ceil(sortedClassrooms.length / pageSize) || 1
+
+
   const [isLoadingStudents, setIsLoadingStudents] = useState(false)
   const [muridSort, setMuridSort] = useState<{ key: string, direction: 'asc' | 'desc' | null }>({ key: 'name', direction: 'asc' })
 
@@ -95,7 +111,7 @@ export default function KelasClient({
 
   // Fetch Students Paginated
   useEffect(() => {
-    if (activeTab !== "murid") return; // only fetch when in murid tab
+    if (activeTab !== "murid" && activeTab !== "alumni") return;
     
     const fetchStudents = async () => {
       setIsLoadingStudents(true)
@@ -107,9 +123,10 @@ export default function KelasClient({
           subKelasId: filterMuridSubKelas,
           search: searchTerm,
           page: currentPage,
-          limit: 10,
+          limit: pageSize,
           sortBy: muridSort.direction ? muridSort.key : undefined,
-          sortOrder: muridSort.direction || undefined
+          sortOrder: muridSort.direction || undefined,
+          statusFilter: activeTab === "murid" ? "AKTIF" : filterAlumniStatus
         })
         setStudents(res.data)
         setTotalPages(res.totalPages)
@@ -122,12 +139,12 @@ export default function KelasClient({
     
     const timeout = setTimeout(fetchStudents, 300)
     return () => clearTimeout(timeout)
-  }, [activeUnitId, searchTerm, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, currentPage, schoolUnits, activeTab, muridSort])
+  }, [activeUnitId, searchTerm, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, filterAlumniStatus, currentPage, pageSize, schoolUnits, activeTab, muridSort])
 
   // Reset page on search or unit change or filters
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, activeUnitId])
+  }, [searchTerm, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, activeUnitId, filterAlumniStatus, activeTab])
 
   // Handlers Delete
   const handleDeleteConfirm = async () => {
@@ -150,6 +167,15 @@ export default function KelasClient({
     } finally {
       setIsDeleting(false)
     }
+  }
+
+  const getStatusBadge = (status?: string) => {
+    const s = status?.toUpperCase() || "AKTIF";
+    if (s === "AKTIF") return "bg-emerald-100 text-emerald-700";
+    if (s === "LULUS") return "bg-blue-100 text-blue-700";
+    if (s === "PINDAH") return "bg-orange-100 text-orange-700";
+    if (s === "CUTI") return "bg-yellow-100 text-yellow-800";
+    return "bg-rose-100 text-rose-700"; // KELUAR / DO
   }
 
   // Handlers Edit/Save
@@ -245,7 +271,8 @@ export default function KelasClient({
         <div className="flex gap-2 mb-6 border-b border-border">
           <TabButton id="kelas" label="Daftar Kelas (Tingkat)" />
           <TabButton id="sub-kelas" label="Daftar Sub Kelas (Rombel)" />
-          <TabButton id="murid" label="Daftar Murid" />
+          <TabButton id="murid" label="Murid Aktif" />
+          <TabButton id="alumni" label="Riwayat & Alumni" />
         </div>
 
         {/* Toolbar */}
@@ -276,7 +303,7 @@ export default function KelasClient({
               </select>
             )}
             
-            {activeTab === "murid" && (
+            {(activeTab === "murid" || activeTab === "alumni") && (
               <>
                 <select 
                   className="px-3 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
@@ -313,12 +340,28 @@ export default function KelasClient({
                   ))}
                 </select>
 
-                {(searchTerm || filterMuridTingkat || filterMuridJurusan || filterMuridSubKelas) && (
+                {activeTab === "alumni" && (
+                  <select 
+                    className="px-3 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
+                    value={filterAlumniStatus}
+                    onChange={(e) => setFilterAlumniStatus(e.target.value)}
+                  >
+                    <option value="SEMUA">Semua Status</option>
+                    <option value="NON_AKTIF">Semua (Non-Aktif)</option>
+                    <option value="LULUS">Lulus</option>
+                    <option value="PINDAH">Pindah</option>
+                    <option value="CUTI">Cuti</option>
+                    <option value="KELUAR">Keluar (DO)</option>
+                  </select>
+                )}
+
+                {(searchTerm || filterMuridTingkat || filterMuridJurusan || filterMuridSubKelas || (activeTab === 'alumni' && filterAlumniStatus !== "NON_AKTIF")) && (
                   <Button variant="outline" size="sm" onClick={() => {
                     setSearchTerm("")
                     setFilterMuridTingkat("")
                     setFilterMuridJurusan("")
                     setFilterMuridSubKelas("")
+                    if (activeTab === 'alumni') setFilterAlumniStatus("NON_AKTIF")
                   }}>
                     Reset Filter
                   </Button>
@@ -365,7 +408,7 @@ export default function KelasClient({
               <Button onClick={() => {
                 setFormMurid({
                   id: "", nisn: "", name: "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "", subKelasId: "",
-                  previousSchool: "", phone: "", birthDate: "", email: "", studentStatus: "Aktif",
+                  previousSchool: "", phone: "", birthDate: "", email: "", studentStatus: "AKTIF",
                   parentName: "", parentPhone: "", religion: "Islam", gender: "Laki-laki",
                   address: "", formNo: "", username: ""
                 })
@@ -399,7 +442,7 @@ export default function KelasClient({
                     <th className="p-4 font-semibold text-right">Aksi</th>
                   </>
                 )}
-                {activeTab === "murid" && (
+                {(activeTab === "murid" || activeTab === "alumni") && (
                   <>
                     <SortableHeader label="Nama Murid" sortKey="name" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
                     <SortableHeader label="NISN / NIS" sortKey="nisn" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
@@ -412,9 +455,12 @@ export default function KelasClient({
               </tr>
             </thead>
             <tbody>
-              {activeTab === "kelas" && sortedGrades.map((g: any, i: number) => (
+              {activeTab === "kelas" && paginatedGrades.length === 0 && (
+                <tr><td colSpan={4} className="px-4 py-8 text-center text-text-muted">Belum ada data tingkat kelas.</td></tr>
+              )}
+              {activeTab === "kelas" && paginatedGrades.map((g: any, i: number) => (
                 <tr key={g.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
-                  <td className="p-4">{i + 1}</td>
+                  <td className="p-4">{(currentPage - 1) * pageSize + i + 1}</td>
                   <td className="p-4 text-text-main font-medium">{g.unitSekolah?.name}</td>
                   <td className="p-4 font-bold text-text-main">{g.name}</td>
                   <td className="p-4">
@@ -425,9 +471,12 @@ export default function KelasClient({
                 </tr>
               ))}
               
-              {activeTab === "sub-kelas" && sortedClassrooms.map((c: any, i: number) => (
+              {activeTab === "sub-kelas" && paginatedClassrooms.length === 0 && (
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-text-muted">Belum ada data rombel.</td></tr>
+              )}
+              {activeTab === "sub-kelas" && paginatedClassrooms.map((c: any, i: number) => (
                 <tr key={c.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
-                  <td className="p-4">{i + 1}</td>
+                  <td className="p-4">{(currentPage - 1) * pageSize + i + 1}</td>
                   <td className="p-4 text-text-main font-medium">{c.unitSekolah?.name}</td>
                   <td className="p-4 text-text-main">{c.tingkat?.name}</td>
                   <td className="p-4 font-bold text-text-main">{c.name}</td>
@@ -448,23 +497,23 @@ export default function KelasClient({
                 </tr>
               ))}
 
-              {activeTab === "murid" && students.length === 0 && !isLoadingStudents && (
+              {((activeTab === "murid" || activeTab === "alumni") && !isLoadingStudents && students.length === 0) && (
                 <tr>
                   <td colSpan={8} className="p-8 text-center text-text-muted">
                     {searchTerm ? "Tidak ada siswa yang cocok dengan pencarian" : "Belum ada data siswa"}
                   </td>
                 </tr>
               )}
-              {activeTab === "murid" && isLoadingStudents && (
+              {((activeTab === "murid" || activeTab === "alumni") && isLoadingStudents) && (
                 <tr>
                   <td colSpan={8} className="p-8 text-center text-text-muted">
                     Memuat data siswa...
                   </td>
                 </tr>
               )}
-              {activeTab === "murid" && !isLoadingStudents && students.map((s: any, i: number) => (
+              {((activeTab === "murid" || activeTab === "alumni") && !isLoadingStudents) && students.map((s: any, i: number) => (
                 <tr key={s.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
-                  <td className="p-4">{i + 1}</td>
+                  <td className="p-4">{(currentPage - 1) * pageSize + i + 1}</td>
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gray-100 flex-shrink-0 border border-border overflow-hidden flex items-center justify-center">
@@ -493,8 +542,8 @@ export default function KelasClient({
                     )}
                   </td>
                   <td className="p-4">
-                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${s.status?.toUpperCase() === 'AKTIF' ? 'bg-emerald-100 text-emerald-700' : s.status?.toUpperCase() === 'LULUS' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>
-                      {s.status?.toUpperCase()}
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${getStatusBadge(s.status)}`}>
+                      {s.status?.toUpperCase() || "AKTIF"}
                     </span>
                   </td>
                   <td className="p-4">
@@ -516,12 +565,31 @@ export default function KelasClient({
         </div>
 
         {/* Pagination Controls */}
-        {activeTab === "murid" && totalPages > 1 && (
-          <div className="p-4 mt-4 border-t border-border flex items-center justify-between bg-surface rounded-b-2xl">
-            <span className="text-sm font-medium text-text-muted">Halaman {currentPage} dari {totalPages}</span>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1 || isLoadingStudents}>Sebelumnya</Button>
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || isLoadingStudents}>Selanjutnya</Button>
+        {computedTotalPages > 0 && (
+          <div className="p-4 mt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-surface rounded-b-2xl">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="bg-bg border border-border rounded-lg text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium"
+              >
+                <option value={10}>10 Baris</option>
+                <option value={20}>20 Baris</option>
+                <option value={50}>50 Baris</option>
+                <option value={100}>100 Baris</option>
+              </select>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-text-muted">Halaman {currentPage} dari {computedTotalPages}</span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1 || isLoadingStudents}>Sebelumnya</Button>
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(computedTotalPages, p + 1))} disabled={currentPage === computedTotalPages || isLoadingStudents}>Selanjutnya</Button>
+              </div>
             </div>
           </div>
         )}
@@ -707,7 +775,12 @@ export default function KelasClient({
                 <div className="flex items-center gap-4 border-b border-border pb-4">
                   <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl uppercase overflow-hidden border-2 border-primary/20 shrink-0">
                     {viewDetailMurid.photoUrl ? (
-                      <img src={viewDetailMurid.photoUrl} alt={viewDetailMurid.name} className="w-full h-full object-cover" />
+                      <img 
+                        src={viewDetailMurid.photoUrl} 
+                        alt={viewDetailMurid.name} 
+                        className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity" 
+                        onClick={() => setFullscreenPhotoUrl(viewDetailMurid.photoUrl)}
+                      />
                     ) : (
                       viewDetailMurid.name.substring(0, 2)
                     )}
@@ -730,8 +803,8 @@ export default function KelasClient({
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Status Siswa</span>
                     <span className="font-medium">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${viewDetailMurid.status?.toUpperCase() === 'AKTIF' ? 'bg-emerald-100 text-emerald-700' : viewDetailMurid.status?.toUpperCase() === 'LULUS' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>
-                        {viewDetailMurid.status}
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${getStatusBadge(viewDetailMurid.status)}`}>
+                        {viewDetailMurid.status?.toUpperCase() || "AKTIF"}
                       </span>
                     </span>
                   </div>
@@ -816,6 +889,26 @@ export default function KelasClient({
         schoolUnits={schoolUnits}
         classrooms={classrooms}
       />
+
+      {/* Fullscreen Photo Overlay */}
+      {fullscreenPhotoUrl && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-[2000] flex items-center justify-center p-4 backdrop-blur-md cursor-pointer animate-in fade-in duration-200"
+          onClick={() => setFullscreenPhotoUrl(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors text-4xl"
+            onClick={(e) => { e.stopPropagation(); setFullscreenPhotoUrl(null); }}
+          >
+            &times;
+          </button>
+          <img 
+            src={fullscreenPhotoUrl} 
+            alt="Fullscreen Photo" 
+            className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl pointer-events-none" 
+          />
+        </div>
+      )}
     </div>
   )
 }
