@@ -19,9 +19,11 @@ import {
   Calendar,
   Users2,
   Landmark,
-  Receipt
+  Receipt,
+  Key
 } from "lucide-react"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import ChangePasswordModal from "@/components/modals/ChangePasswordModal"
 
 const menuGroups = [
   {
@@ -68,6 +70,7 @@ export default function Sidebar({ user }: { user: any }) {
   const [isCollapsed, setIsCollapsed] = useState(false)
 
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
 
   const filteredGroups = menuGroups.map(group => ({
     ...group,
@@ -163,13 +166,22 @@ export default function Sidebar({ user }: { user: any }) {
               </div>
             )}
             {!isCollapsed && (
-              <button 
-                onClick={() => setShowLogoutModal(true)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-red-300 hover:bg-red-500/20 hover:text-red-200 transition-colors shrink-0" 
-                title="Keluar" 
-              >
-                <LogOut size={18} />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <button 
+                  onClick={() => setShowChangePasswordModal(true)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-white/70 hover:bg-white/10 hover:text-white transition-colors" 
+                  title="Ganti Password" 
+                >
+                  <Key size={16} />
+                </button>
+                <button 
+                  onClick={() => setShowLogoutModal(true)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-red-300 hover:bg-red-500/20 hover:text-red-200 transition-colors" 
+                  title="Keluar" 
+                >
+                  <LogOut size={18} />
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -184,6 +196,11 @@ export default function Sidebar({ user }: { user: any }) {
         confirmText="Keluar"
         cancelText="Batal"
         confirmVariant="primary"
+      />
+
+      <ChangePasswordModal 
+        isOpen={showChangePasswordModal}
+        onClose={() => setShowChangePasswordModal(false)}
       />
     </>
   )

@@ -103,6 +103,35 @@ export async function resetPasswordPengguna(id: string) {
   await logAktivitas("RESET_PASSWORD", "MANAJEMEN_USER", `Mereset password akun dengan ID: ${id}`)
 }
 
+export async function gantiPasswordMandiri(oldPassword: string, newPassword: string) {
+  const session = await auth()
+  if (!session || !session.user.id) {
+    throw new Error("Sesi tidak valid, harap login kembali.")
+  }
+
+  const user = await prisma.pengguna.findUnique({
+    where: { id: session.user.id }
+  })
+
+  if (!user) {
+    throw new Error("Pengguna tidak ditemukan.")
+  }
+
+  const isMatch = await bcrypt.compare(oldPassword, user.password)
+  if (!isMatch) {
+    throw new Error("Password lama salah.")
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10)
+  
+  await prisma.pengguna.update({
+    where: { id: user.id },
+    data: { password: hashedPassword }
+  })
+
+  await logAktivitas("GANTI_PASSWORD_MANDIRI", "PROFIL", `Pengguna mengganti passwordnya sendiri`)
+}
+
 export async function nonaktifkanPengguna(id: string) {
   await requireAdmin()
   
