@@ -2,6 +2,7 @@
 import { useState, useRef } from "react"
 import { X, UploadCloud, AlertCircle, CheckCircle2, Download, FileSpreadsheet, Loader2 } from "lucide-react"
 import Papa from "papaparse"
+import toast from "react-hot-toast"
 
 import * as XLSX from "xlsx"
 
@@ -44,7 +45,7 @@ export default function ImportMuridModal({
         setFile(droppedFile)
         setResult(null)
       } else {
-        alert("Mohon unggah file dengan format .csv, .xlsx, atau .xls")
+        toast.error("Mohon unggah file dengan format .csv, .xlsx, atau .xls")
       }
     }
   }
@@ -93,10 +94,11 @@ export default function ImportMuridModal({
 
       setResult(data)
       if (data.success > 0) {
+        toast.success(`Berhasil mengimpor ${data.success} murid`)
         onSuccess() // Refresh table
       }
     } catch (error: any) {
-      alert("Terjadi kesalahan: " + error.message)
+      toast.error("Terjadi kesalahan: " + error.message)
     } finally {
       setIsProcessing(false)
     }

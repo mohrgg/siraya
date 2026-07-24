@@ -254,3 +254,53 @@ export async function hapusSiswa(id: string) {
   revalidatePath("/data-master")
   return result
 }
+
+export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: string) {
+  const session = await auth()
+  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+
+  // Get active academic year
+  const activeTahun = await prisma.tahunAkademik.findFirst({
+    where: { isActive: true },
+    select: { id: true }
+  })
+
+  if (!activeTahun) {
+    throw new Error("Tahun akademik aktif tidak ditemukan")
+  }
+
+  let successCount = 0
+  
+  await prisma.$transaction(async (tx) => {
+    for (const muridId of muridIds) {
+      // Cek apakah sudah ada di kelas yang sama di tahun ini
+      const existing = await tx.riwayatKelas.findFirst({
+        where: {
+          muridId,
+          tahunAkademikId: activeTahun.id
+        }
+      })
+
+      if (existing) {
+        // Update riwayat yang sudah ada
+        await tx.riwayatKelas.update({
+          where: { id: existing.id },
+          data: { subKelasId: newSubKelasId }
+        })
+      } else {
+        // Buat riwayat baru
+        await tx.riwayatKelas.create({
+          data: {
+            muridId,
+            subKelasId: newSubKelasId,
+            tahunAkademikId: activeTahun.id
+          }
+        })
+      }
+      successCount++
+    }
+  })
+
+  revalidatePath("/kelas")
+  return { success: successCount }
+}

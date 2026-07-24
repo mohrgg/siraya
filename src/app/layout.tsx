@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import "./ui.css";
 
@@ -14,7 +15,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <Toaster position="top-center" reverseOrder={false} />
+        {children}
+      </body>
     </html>
   );
 }
