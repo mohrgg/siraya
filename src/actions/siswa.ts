@@ -10,6 +10,7 @@ export async function getSiswa(unitSekolahId?: string, subKelasId?: string) {
 
   return prisma.murid.findMany({
     where: {
+      isDeleted: false,
       ...(unitSekolahId ? { unitSekolahId } : {}),
       ...(subKelasId ? { riwayatKelas: { some: { subKelasId } } } : {}),
     },
@@ -47,6 +48,7 @@ export async function getSiswaPaginated(params: {
   if (!session) throw new Error("Unauthorized")
 
   const where: any = {
+    isDeleted: false,
     ...(params.unitSekolahId ? { unitSekolahId: params.unitSekolahId } : {}),
   }
   
@@ -250,7 +252,14 @@ export async function importSiswaBulk(studentsData: any[]) {
 export async function hapusSiswa(id: string) {
   const session = await auth()
   if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
-  const result = await prisma.murid.delete({ where: { id } })
+  const result = await prisma.murid.update({
+    where: { id },
+    data: { 
+      isDeleted: true,
+      isActive: false,
+      status: "TERHAPUS"
+    }
+  })
   revalidatePath("/data-master")
   return result
 }

@@ -1,12 +1,15 @@
 "use client"
 
-import { useActionState, useEffect } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { loginAction } from "@/actions/auth"
 import { useRouter } from "next/navigation"
+import { Eye, EyeOff } from "lucide-react"
+import toast from "react-hot-toast"
 
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState(loginAction, null)
   const router = useRouter()
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     if (state?.success) {
@@ -71,25 +74,45 @@ export default function LoginPage() {
                 type="email"
                 name="email"
                 required
+                autoFocus
                 className="w-full px-4 py-3.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium placeholder-text-muted/50"
                 placeholder="admin@albasyariah.com"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-text-main">Kata Sandi</label>
-              <input
-                type="password"
-                name="password"
-                required
-                className="w-full px-4 py-3.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium placeholder-text-muted/50 tracking-wider"
-                placeholder="••••••••"
-              />
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-text-main">Kata Sandi</label>
+                <button 
+                  type="button" 
+                  onClick={() => toast("Silakan hubungi Administrator Utama atau Tata Usaha untuk mereset kata sandi Anda menjadi default.", { icon: '🔒' })}
+                  className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors"
+                >
+                  Lupa Kata Sandi?
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  required
+                  className="w-full px-4 py-3.5 pr-12 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium placeholder-text-muted/50 tracking-wider"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                  title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
 
             {state?.error && (
               <div className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-medium flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-red-50 shrink-0"></span>
                 {state.error}
               </div>
             )}

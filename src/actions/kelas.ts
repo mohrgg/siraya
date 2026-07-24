@@ -10,7 +10,10 @@ export async function getTingkatan(unitSekolahId?: string) {
   if (!session) throw new Error("Unauthorized")
 
   return prisma.tingkat.findMany({
-    where: unitSekolahId ? { unitSekolahId } : undefined,
+    where: {
+      isDeleted: false,
+      ...(unitSekolahId ? { unitSekolahId } : {})
+    },
     include: { unitSekolah: true },
     orderBy: { order: "asc" }
   })
@@ -33,6 +36,7 @@ export async function getJurusan() {
   if (!session) throw new Error("Unauthorized")
 
   return prisma.jurusan.findMany({
+    where: { isDeleted: false },
     include: { unitSekolah: true },
     orderBy: [
       { unitSekolah: { name: "asc" } },
@@ -57,6 +61,7 @@ export async function getKelas(unitSekolahId?: string, tahunAkademikId?: string)
 
   return prisma.subKelas.findMany({
     where: {
+      isDeleted: false,
       ...(unitSekolahId ? { unitSekolahId } : {}),
       ...(tahunAkademikId ? { tahunAkademikId } : {})
     },
@@ -101,7 +106,7 @@ export async function tambahKelas(data: { name: string, tingkatId: string, jurus
 export async function hapusTingkatan(id: string) {
   const session = await auth()
   if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
-  const result = await prisma.tingkat.delete({ where: { id } })
+  const result = await prisma.tingkat.update({ where: { id }, data: { isDeleted: true } })
   revalidatePath("/data-master")
   return result
 }
@@ -117,7 +122,7 @@ export async function editJurusan(id: string, data: { name: string, code: string
 export async function hapusJurusan(id: string) {
   const session = await auth()
   if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
-  const result = await prisma.jurusan.delete({ where: { id } })
+  const result = await prisma.jurusan.update({ where: { id }, data: { isDeleted: true } })
   revalidatePath("/data-master")
   return result
 }
@@ -134,7 +139,7 @@ export async function editKelas(id: string, data: { name?: string, tingkatId?: s
 export async function hapusKelas(id: string) {
   const session = await auth()
   if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
-  const result = await prisma.subKelas.delete({ where: { id } })
+  const result = await prisma.subKelas.update({ where: { id }, data: { isDeleted: true } })
   revalidatePath("/data-master")
   return result
 }

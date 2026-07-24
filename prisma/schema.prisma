@@ -75,6 +75,7 @@ model TahunAkademik {
   id        String   @id @default(cuid())
   name      String   @db.VarChar(50) // "2025/2026"
   isActive  Boolean  @default(false)
+  isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
 
   subKelas          SubKelas[]
@@ -86,9 +87,10 @@ model TahunAkademik {
 
 // ========== KELAS & MURID ==========
 model Tingkat {
-  id            String @id @default(cuid())
-  name          String @db.VarChar(50) // "X", "XI", "XII"
+  id            String  @id @default(cuid())
+  name          String  @db.VarChar(50) // "X", "XI", "XII"
   order         Int // untuk sorting
+  isDeleted     Boolean @default(false)
   unitSekolahId String
 
   unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
@@ -96,9 +98,10 @@ model Tingkat {
 }
 
 model Jurusan {
-  id            String @id @default(cuid())
-  name          String @db.VarChar(100) // "TKJ", "RPL", "OTKP"
-  code          String @db.VarChar(20)
+  id            String  @id @default(cuid())
+  name          String  @db.VarChar(100) // "TKJ", "RPL", "OTKP"
+  code          String  @db.VarChar(20)
+  isDeleted     Boolean @default(false)
   unitSekolahId String
 
   unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
@@ -113,6 +116,7 @@ model SubKelas {
   tingkatId       String
   jurusanId       String?
   tahunAkademikId String
+  isDeleted       Boolean @default(false)
   unitSekolahId   String
 
   unitSekolah   UnitSekolah    @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
@@ -128,6 +132,7 @@ model Murid {
   name          String  @db.VarChar(150)
   unitSekolahId String
   isActive      Boolean @default(true)
+  isDeleted     Boolean @default(false)
   isScholarship Boolean @default(false)
 
   // Field pendaftaran
