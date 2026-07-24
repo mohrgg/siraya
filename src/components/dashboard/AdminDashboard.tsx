@@ -1,269 +1,216 @@
-"use client"
-import { useState } from "react"
-import { Shield, Users, Building, Activity, ShieldAlert, Server, Users2, Banknote, ArrowDownRight, ArrowUpRight, CheckCircle2, LayoutDashboard, MonitorPlay } from "lucide-react"
-import ActivityChart from "./ActivityChart"
-import UnitDistributionChart from "./UnitDistributionChart"
+'use client'
 
-export default function AdminDashboard({ 
-  usersCount, 
-  unitCount, 
-  divisiCount,
-  muridCount,
-  kelasCount,
-  kasIn,
-  kasOut,
-  unitDistribution,
-  activityData,
-  logs,
-  userRolesCount,
-  activeUsersToday
-}: { 
-  usersCount: number, 
-  unitCount: number, 
-  divisiCount: number, 
-  muridCount: number,
-  kelasCount: number,
-  kasIn: number,
-  kasOut: number,
-  unitDistribution: any[],
-  activityData: any[],
-  logs: any[],
-  userRolesCount: any,
-  activeUsersToday: number
-}) {
-  const [activeTab, setActiveTab] = useState<"operasional" | "sistem">("operasional")
+import { Users, Building, Layers, ShieldCheck, Gauge, TrendingUp, MapPin } from "lucide-react"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend, AreaChart, Area, Treemap } from 'recharts'
+import React from 'react'
 
-  // Format date helper
-  const timeAgo = (date: Date) => {
-    const diff = Math.floor((new Date().getTime() - new Date(date).getTime()) / 60000)
-    if (diff < 1) return "Baru saja"
-    if (diff < 60) return `${diff} menit lalu`
-    if (diff < 1440) return `${Math.floor(diff/60)} jam lalu`
-    return `${Math.floor(diff/1440)} hari lalu`
-  }
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
 
-  const formatRp = (num: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num)
-  }
+export default function AdminDashboard(props: any) {
+  const { 
+    usersCount, unitCount, rombelCount, muridCount, 
+    units, unitDistribution, scholarshipData, genderData, 
+    dataQualityIndex, trendData, districtData, classEfficiency, statusDataGlobal 
+  } = props
 
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('id-ID').format(num)
-  }
+  const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num)
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-2">
-        <div>
-          <h1 className="text-3xl font-extrabold text-text-main mb-2 tracking-tight">Command Center</h1>
-          <p className="text-text-muted">Pantauan operasional yayasan dan analitik sistem terpusat.</p>
+    <div className="flex flex-col gap-6 pb-12">
+      <div className="mb-2">
+        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Dashboard Yayasan</h1>
+        <p className="text-gray-500 mt-1">Ringkasan eksekutif seluruh unit sekolah di bawah yayasan.</p>
+      </div>
+
+      {/* METRIC CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center"><Users size={20} /></div>
+            <h3 className="font-bold text-gray-700 text-sm">Total Siswa Aktif</h3>
+          </div>
+          <p className="text-3xl font-black text-gray-900">{formatNumber(muridCount)}</p>
+        </div>
+        
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center"><Building size={20} /></div>
+            <h3 className="font-bold text-gray-700 text-sm">Total Unit Sekolah</h3>
+          </div>
+          <p className="text-3xl font-black text-gray-900">{formatNumber(unitCount)}</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center"><Layers size={20} /></div>
+            <h3 className="font-bold text-gray-700 text-sm">Total Rombel</h3>
+          </div>
+          <p className="text-3xl font-black text-gray-900">{formatNumber(rombelCount)}</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center"><ShieldCheck size={20} /></div>
+            <h3 className="font-bold text-gray-700 text-sm">Total Pengguna</h3>
+          </div>
+          <p className="text-3xl font-black text-gray-900">{formatNumber(usersCount)}</p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-2 bg-surface/50 p-1.5 rounded-2xl w-max border border-border shadow-sm">
-        <button 
-          onClick={() => setActiveTab("operasional")} 
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === "operasional" ? "bg-white text-primary shadow-sm border border-gray-100" : "text-text-muted hover:text-text-main hover:bg-gray-50/50"}`}
-        >
-          <LayoutDashboard size={16} /> Operasional Yayasan
-        </button>
-        <button 
-          onClick={() => setActiveTab("sistem")} 
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === "sistem" ? "bg-white text-primary shadow-sm border border-gray-100" : "text-text-muted hover:text-text-main hover:bg-gray-50/50"}`}
-        >
-          <MonitorPlay size={16} /> Sistem & Keamanan
-        </button>
+      {/* NEW WIDGETS ROW 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Data Quality Gauge / Index */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col justify-center items-center text-center">
+          <h3 className="font-bold text-gray-800 mb-2 flex items-center gap-2"><Gauge size={20} className="text-primary"/> Indeks Kualitas Data</h3>
+          <p className="text-xs text-gray-500 mb-6">Persentase kelengkapan data NIK, NISN, dan Wali</p>
+          <div className="relative w-40 h-40 flex items-center justify-center">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="40" stroke="#f1f5f9" strokeWidth="12" fill="none" />
+              <circle cx="50" cy="50" r="40" stroke={dataQualityIndex >= 90 ? '#10b981' : dataQualityIndex >= 70 ? '#f59e0b' : '#ef4444'} strokeWidth="12" fill="none" 
+                strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * dataQualityIndex) / 100} strokeLinecap="round" 
+                className="transition-all duration-1000 ease-out" />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-3xl font-black text-gray-900">{dataQualityIndex}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tren Pertumbuhan Siswa */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm lg:col-span-2">
+          <h3 className="font-bold text-gray-800 mb-1 flex items-center gap-2">
+            <TrendingUp size={20} className="text-blue-500"/> Tren Penambahan Siswa 
+            <span className="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full ml-auto">DUMMY</span>
+          </h3>
+          <p className="text-xs text-gray-500 mb-4">Pertumbuhan jumlah murid dalam 5 tahun terakhir (contoh data).</p>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trendData}>
+                <defs>
+                  <linearGradient id="colorTrend" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                <RechartsTooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorTrend)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
-      {/* -------------------- TAB OPERASIONAL -------------------- */}
-      {activeTab === "operasional" && (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
-          {/* Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex flex-col justify-between hover:border-primary/30 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shadow-inner border border-purple-100"><Users2 size={20} /></div>
-                <h3 className="font-bold text-text-main text-sm">Total Murid Aktif</h3>
-              </div>
-              <p className="text-3xl font-black text-text-main tracking-tight">{formatNumber(muridCount)}</p>
-              <p className="text-xs text-text-muted mt-1 font-medium">Dalam naungan yayasan</p>
-            </div>
-            
-            <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex flex-col justify-between hover:border-primary/30 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shadow-inner border border-blue-100"><Building size={20} /></div>
-                <h3 className="font-bold text-text-main text-sm">Kelas & Rombel</h3>
-              </div>
-              <p className="text-3xl font-black text-text-main tracking-tight">{formatNumber(kelasCount)}</p>
-              <p className="text-xs text-text-muted mt-1 font-medium">Sub Kelas berjalan</p>
-            </div>
-
-            <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex flex-col justify-between hover:border-primary/30 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shadow-inner border border-emerald-100"><ArrowDownRight size={20} /></div>
-                <h3 className="font-bold text-text-main text-sm">Pemasukan Kas</h3>
-              </div>
-              <p className="text-2xl lg:text-xl xl:text-2xl font-black text-emerald-700 tracking-tight">{formatRp(kasIn)}</p>
-              <p className="text-xs text-text-muted mt-1 font-medium">Total Akumulasi Masuk</p>
-            </div>
-
-            <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex flex-col justify-between hover:border-primary/30 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-red-50 text-red-600 rounded-xl flex items-center justify-center shadow-inner border border-red-100"><ArrowUpRight size={20} /></div>
-                <h3 className="font-bold text-text-main text-sm">Pengeluaran Kas</h3>
-              </div>
-              <p className="text-2xl lg:text-xl xl:text-2xl font-black text-red-700 tracking-tight">{formatRp(kasOut)}</p>
-              <p className="text-xs text-text-muted mt-1 font-medium">Total Akumulasi Keluar</p>
-            </div>
+      {/* ROW 2: Bar & Treemap */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Rasio Efisiensi Kelas */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <h3 className="font-bold text-gray-800 mb-1">Rasio Kepadatan Kelas (Siswa/Rombel)</h3>
+          <p className="text-xs text-gray-500 mb-6">Melihat unit mana yang kelebihan atau kekurangan kapasitas per kelas.</p>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={classEfficiency} layout="vertical" margin={{ left: 0, right: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
+                <XAxis type="number" axisLine={false} tickLine={false} />
+                <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11}} />
+                <RechartsTooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                <Bar dataKey="ratio" radius={[0, 4, 4, 0]}>
+                  {classEfficiency.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={entry.ratio > 35 ? '#ef4444' : entry.ratio < 20 ? '#f59e0b' : '#10b981'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-
-          <div className="grid grid-cols-1 gap-6">
-            <div className="bg-surface border border-border rounded-3xl p-6 shadow-sm min-h-[400px] flex flex-col">
-              <div className="mb-6 flex justify-between items-center">
-                <div>
-                  <h3 className="font-extrabold text-lg flex items-center gap-2"><Building size={20} className="text-purple-600" /> Sebaran Murid per Unit Sekolah</h3>
-                  <p className="text-sm text-text-muted mt-1 font-medium">Perbandingan jumlah murid aktif pada masing-masing unit sekolah (SD, SMP, SMK, dst).</p>
-                </div>
-                <div className="px-4 py-1.5 bg-gray-50 border border-border rounded-lg text-sm font-bold text-text-main shadow-sm">
-                  {unitCount} Unit Tersedia
-                </div>
-              </div>
-              <div className="flex-1 w-full h-full min-h-[300px]">
-                <UnitDistributionChart data={unitDistribution} />
-              </div>
-            </div>
+          <div className="flex gap-4 justify-center mt-2 text-xs text-gray-500">
+            <span className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-emerald-500"></div> Ideal (20-35)</span>
+            <span className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-red-500"></div> Padat (&gt;35)</span>
+            <span className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-amber-500"></div> Sepi (&lt;20)</span>
           </div>
         </div>
-      )}
 
-      {/* -------------------- TAB SISTEM -------------------- */}
-      {activeTab === "sistem" && (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
-          {/* Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex flex-col justify-between hover:border-primary/30 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shadow-inner border border-blue-100"><Users size={20} /></div>
-                <h3 className="font-bold text-text-main text-sm">Total Pengguna</h3>
-              </div>
-              <p className="text-3xl font-black text-text-main tracking-tight">{formatNumber(usersCount)}</p>
-              <p className="text-xs text-text-muted mt-1 font-medium">Akun Sistem Terdaftar</p>
-            </div>
-            
-            <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex flex-col justify-between hover:border-primary/30 transition-colors relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-[100px] -z-10"></div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center shadow-inner border border-primary/20"><Activity size={20} /></div>
-                <h3 className="font-bold text-text-main text-sm">Pengguna Aktif</h3>
-              </div>
-              <div className="flex items-end gap-2">
-                <p className="text-3xl font-black text-primary tracking-tight">{formatNumber(activeUsersToday)}</p>
-              </div>
-              <p className="text-xs text-primary/70 mt-1 font-medium">Akun yang Login Hari Ini</p>
-            </div>
-
-            <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 flex flex-col justify-center">
-              <h3 className="font-bold text-text-main text-sm mb-3 px-1 border-b border-border pb-2 flex items-center gap-2"><Shield size={16} className="text-text-muted"/> Komposisi Role</h3>
-              <div className="flex flex-col gap-2.5 px-1">
-                <div className="flex justify-between items-center text-sm font-semibold">
-                  <span className="text-text-muted">Administrator</span>
-                  <span className="bg-gray-100 px-2 py-0.5 rounded text-text-main">{userRolesCount?.ADMIN || 0}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm font-semibold">
-                  <span className="text-text-muted">Tata Usaha</span>
-                  <span className="bg-gray-100 px-2 py-0.5 rounded text-text-main">{userRolesCount?.TATA_USAHA || 0}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm font-semibold">
-                  <span className="text-text-muted">Kepala Sekolah</span>
-                  <span className="bg-gray-100 px-2 py-0.5 rounded text-text-main">{userRolesCount?.KEPALA_SEKOLAH || 0}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex flex-col justify-between hover:border-primary/30 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shadow-inner border border-emerald-100"><Server size={20} /></div>
-                <h3 className="font-bold text-text-main text-sm">System Health</h3>
-              </div>
-              <div className="flex items-center gap-3 mb-1 mt-1">
-                <div className="relative flex h-4 w-4">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 shadow-sm border border-white"></span>
-                </div>
-                <span className="text-base font-black text-emerald-600 tracking-tight">OPERATIONAL</span>
-              </div>
-              <p className="text-xs text-text-muted mt-2 font-medium">Database Connected • No Errors</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Activity Trend Chart */}
-            <div className="lg:col-span-2 bg-surface border border-border rounded-3xl p-6 shadow-sm flex flex-col min-h-[300px]">
-              <div className="mb-6 flex justify-between items-center">
-                <div>
-                  <h3 className="font-extrabold text-lg flex items-center gap-2"><Activity size={20} className="text-blue-600" /> Tren Aktivitas Sistem</h3>
-                  <p className="text-sm text-text-muted mt-1 font-medium">Pemantauan lalu lintas interaksi (Login vs Perubahan Data) selama 7 hari terakhir.</p>
-                </div>
-              </div>
-              <div className="flex-1 w-full h-full min-h-[250px]">
-                <ActivityChart data={activityData} />
-              </div>
-            </div>
-
-            {/* Log Aktivitas Terakhir */}
-            <div className="bg-surface border border-border rounded-3xl p-6 shadow-sm flex flex-col h-[400px]">
-              <div className="mb-6 shrink-0 flex justify-between items-center">
-                <div>
-                  <h3 className="font-extrabold text-lg flex items-center gap-2"><ShieldAlert size={20} className="text-amber-600" /> Jejak Audit (Log)</h3>
-                  <p className="text-sm text-text-muted mt-1 font-medium">Rekaman sistem real-time.</p>
-                </div>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                <div className="flex flex-col gap-3">
-                  {logs && logs.length > 0 ? logs.map(log => {
-                    const isLogin = log.aksi.includes("LOGIN")
-                    const isDelete = log.aksi.includes("HAPUS") || log.aksi.includes("NONAKTIF")
-                    const isCreate = log.aksi.includes("TAMBAH")
-                    
-                    let badgeColor = "bg-blue-100 text-blue-700 border-blue-200"
-                    if (isLogin) badgeColor = "bg-emerald-100 text-emerald-700 border-emerald-200"
-                    else if (isDelete) badgeColor = "bg-red-100 text-red-700 border-red-200"
-                    else if (isCreate) badgeColor = "bg-purple-100 text-purple-700 border-purple-200"
-                    
-                    return (
-                      <div key={log.id} className="p-3 rounded-2xl border border-border/50 bg-gray-50/50 flex gap-3 hover:bg-white hover:shadow-sm transition-all hover:border-gray-200">
-                        <div className="mt-1 shrink-0">
-                          {isLogin ? (
-                            <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-inner border border-emerald-100"><CheckCircle2 size={16} /></div>
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shadow-inner border border-blue-100"><Activity size={16} /></div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start mb-1.5 gap-2">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${badgeColor} shrink-0`}>
-                              {log.aksi.replace(/_/g, " ")}
-                            </span>
-                            <span className="text-[10px] font-bold text-text-muted/70 whitespace-nowrap">{timeAgo(log.createdAt)}</span>
-                          </div>
-                          <p className="text-sm font-semibold text-text-main line-clamp-2 leading-snug">{log.keterangan}</p>
-                          <p className="text-[11px] font-medium text-text-muted mt-1.5">Oleh: <span className="font-bold text-text-main">{log.pengguna?.name}</span> <span className="text-gray-400">({log.pengguna?.role})</span></p>
-                        </div>
-                      </div>
-                    )
-                  }) : (
-                    <div className="text-center py-10 flex flex-col items-center">
-                      <ShieldAlert size={32} className="text-gray-300 mb-3" />
-                      <p className="text-sm font-bold text-text-main">Belum ada log aktivitas.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+        {/* Peta Wilayah Asal */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <h3 className="font-bold text-gray-800 mb-1 flex items-center gap-2"><MapPin size={20} className="text-red-500"/> Pemetaan Asal Siswa (Kecamatan)</h3>
+          <p className="text-xs text-gray-500 mb-2">Distribusi tempat tinggal siswa terbanyak.</p>
+          <div className="h-72">
+            {districtData && districtData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={districtData} layout="vertical" margin={{ left: 10, right: 30, top: 10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
+                  <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11}} />
+                  <YAxis dataKey="name" type="category" width={80} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11}} />
+                  <RechartsTooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                  <Bar dataKey="value" name="Jumlah Siswa" fill="#f97316" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400 text-sm">Belum ada data alamat/kecamatan.</div>
+            )}
           </div>
         </div>
-      )}
+      </div>
+
+      {/* ROW 3: Existing Pie Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col items-center">
+          <h3 className="font-bold text-gray-800 mb-4 w-full text-center">Status Beasiswa</h3>
+          <div className="h-48 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={scholarshipData} cx="50%" cy="50%" innerRadius={45} outerRadius={60} paddingAngle={5} dataKey="value">
+                  {scholarshipData.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <RechartsTooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                <Legend iconType="circle" wrapperStyle={{fontSize: '12px'}} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col items-center">
+          <h3 className="font-bold text-gray-800 mb-4 w-full text-center">Demografi Gender</h3>
+          <div className="h-48 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={genderData} cx="50%" cy="50%" innerRadius={45} outerRadius={60} paddingAngle={5} dataKey="value">
+                  {genderData.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <RechartsTooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                <Legend iconType="circle" wrapperStyle={{fontSize: '12px'}} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col items-center">
+          <h3 className="font-bold text-gray-800 mb-4 w-full text-center">Status Siswa</h3>
+          <div className="h-48 w-full">
+            {statusDataGlobal && statusDataGlobal.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={statusDataGlobal} cx="50%" cy="50%" innerRadius={45} outerRadius={60} paddingAngle={5} dataKey="value">
+                    {statusDataGlobal.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                  <Legend iconType="circle" wrapperStyle={{fontSize: '12px'}} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+               <div className="h-full flex items-center justify-center text-gray-400 text-sm">Belum ada data status.</div>
+            )}
+          </div>
+        </div>
+      </div>
+      
     </div>
   )
 }
