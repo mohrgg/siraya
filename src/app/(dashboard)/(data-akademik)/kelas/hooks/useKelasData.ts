@@ -121,21 +121,40 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
     setCurrentPage(1)
   }, [debouncedSearchTerm, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, filterAlumniStatus, activeTab])
 
+  const [targetTahunAkademikId, setTargetTahunAkademikId] = useState("")
+
   // Bulk Promote Handler
   const handleBulkPromote = async () => {
-    if (selectedStudents.length === 0 || !targetSubKelasId) {
-      toast.error("Pilih murid dan rombel tujuan terlebih dahulu")
+    if (selectedStudents.length === 0 || !targetSubKelasId || !targetTahunAkademikId) {
+      toast.error("Pilih murid, tahun ajaran, dan kelas tujuan terlebih dahulu")
       return
     }
     setIsPromoting(true)
     try {
-      const res = await promoteSiswaBatch(selectedStudents, targetSubKelasId)
-      toast.success(`Berhasil memindahkan ${res.success} murid ke rombel baru`)
+      const res = await promoteSiswaBatch(selectedStudents, targetSubKelasId, targetTahunAkademikId)
+      toast.success(`Berhasil memindahkan ${res.success} murid ke kelas baru`)
       setSelectedStudents([])
       setTargetSubKelasId("")
+      setTargetTahunAkademikId("")
       setFilterMuridSubKelas(targetSubKelasId)
     } catch (e: any) {
       toast.error("Gagal memindahkan murid: " + e.message)
+    } finally {
+      setIsPromoting(false)
+    }
+  }
+
+  const handleBulkGraduation = async () => {
+    if (selectedStudents.length === 0) return
+    setIsPromoting(true)
+    try {
+      // @ts-ignore
+      const { luluskanSiswaBatch } = await import("@/actions/siswa")
+      const res = await luluskanSiswaBatch(selectedStudents)
+      toast.success(`Berhasil meluluskan ${res.success} murid`)
+      setSelectedStudents([])
+    } catch (e: any) {
+      toast.error("Gagal meluluskan murid: " + e.message)
     } finally {
       setIsPromoting(false)
     }
@@ -158,8 +177,10 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
     
     // Bulk Promote
     selectedStudents, setSelectedStudents,
-    isPromoting, targetSubKelasId, setTargetSubKelasId,
-    handleBulkPromote,
+    isPromoting, 
+    targetSubKelasId, setTargetSubKelasId,
+    targetTahunAkademikId, setTargetTahunAkademikId,
+    handleBulkPromote, handleBulkGraduation,
 
     // Pagination & Sort
     currentPage, setCurrentPage,

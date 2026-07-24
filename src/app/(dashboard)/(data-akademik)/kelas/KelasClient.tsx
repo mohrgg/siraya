@@ -319,30 +319,54 @@ export default function KelasClient({
         )}
       </div>
 
-      {/* Floating Action Bar (Bulk Promote) */}
+      {/* Floating Action Bar (Bulk Promote & Grad) */}
       {data.selectedStudents.length > 0 && data.activeTab === "murid" && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-border px-6 py-4 flex items-center gap-6 animate-in slide-in-from-bottom-10 fade-in duration-300 z-50">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-border px-6 py-4 flex flex-wrap items-center justify-center gap-6 animate-in slide-in-from-bottom-10 fade-in duration-300 z-50">
           <div className="flex items-center gap-3 text-sm font-semibold">
             <span className="flex items-center justify-center bg-primary/10 text-primary w-6 h-6 rounded-full text-xs">{data.selectedStudents.length}</span>
             Siswa Dipilih
           </div>
-          <div className="h-8 w-px bg-border"></div>
-          <div className="flex items-center gap-3">
+          <div className="h-8 w-px bg-border hidden sm:block"></div>
+          
+          <div className="flex flex-wrap items-center gap-3">
             <select 
-              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium w-48"
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium w-36"
+              value={data.targetTahunAkademikId}
+              onChange={(e) => data.setTargetTahunAkademikId(e.target.value)}
+            >
+              <option value="">Tahun Ajaran...</option>
+              {academicYears.map((y: any) => (
+                <option key={y.id} value={y.id}>{y.name} {y.isActive ? '(Aktif)' : ''}</option>
+              ))}
+            </select>
+            
+            <select 
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium w-40"
               value={data.targetSubKelasId}
               onChange={(e) => data.setTargetSubKelasId(e.target.value)}
             >
-              <option value="">Pilih Rombel Tujuan...</option>
+              <option value="">Rombel Tujuan...</option>
               {data.classrooms.map((c: any) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
-            <Button onClick={data.handleBulkPromote} disabled={!data.targetSubKelasId || data.isPromoting} isLoading={data.isPromoting}>
-              Naik Kelas / Pindahkan
+            
+            <Button onClick={data.handleBulkPromote} disabled={!data.targetSubKelasId || !data.targetTahunAkademikId || data.isPromoting} isLoading={data.isPromoting}>
+              Naik Kelas / Mutasi
             </Button>
-            <button onClick={() => data.setSelectedStudents([])} className="text-gray-400 hover:text-gray-600 p-2">
-              <X size={20} />
+            
+            <div className="h-8 w-px bg-border mx-2"></div>
+            
+            <Button variant="danger" onClick={() => {
+              if (window.confirm('Yakin ingin meluluskan siswa terpilih? Mereka akan dipindahkan ke tab Alumni.')) {
+                data.handleBulkGraduation();
+              }
+            }} disabled={data.isPromoting} isLoading={data.isPromoting}>
+              Luluskan
+            </Button>
+            
+            <button onClick={() => data.setSelectedStudents([])} className="text-gray-400 hover:text-gray-600 p-2 ml-2 bg-gray-100 rounded-full">
+              <X size={16} />
             </button>
           </div>
         </div>

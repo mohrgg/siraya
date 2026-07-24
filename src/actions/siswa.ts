@@ -255,45 +255,42 @@ export async function hapusSiswa(id: string) {
   return result
 }
 
-export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: string) {
+export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: string, targetTahunAkademikId?: string) {
   const session = await auth()
   if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
 
-  // Get active academic year
-  const activeTahun = await prisma.tahunAkademik.findFirst({
-    where: { isActive: true },
-    select: { id: true }
-  })
-
-  if (!activeTahun) {
-    throw new Error("Tahun akademik aktif tidak ditemukan")
+  let tahunAkademikId = targetTahunAkademikId;
+  if (!tahunAkademikId) {
+    const activeTahun = await prisma.tahunAkademik.findFirst({
+      where: { isActive: true },
+      select: { id: true }
+    })
+    if (!activeTahun) throw new Error("Tahun akademik aktif tidak ditemukan")
+    tahunAkademikId = activeTahun.id;
   }
 
   let successCount = 0
   
   await prisma.$transaction(async (tx) => {
     for (const muridId of muridIds) {
-      // Cek apakah sudah ada di kelas yang sama di tahun ini
       const existing = await tx.riwayatKelas.findFirst({
         where: {
           muridId,
-          tahunAkademikId: activeTahun.id
+          tahunAkademikId
         }
       })
 
       if (existing) {
-        // Update riwayat yang sudah ada
         await tx.riwayatKelas.update({
           where: { id: existing.id },
           data: { subKelasId: newSubKelasId }
         })
       } else {
-        // Buat riwayat baru
         await tx.riwayatKelas.create({
           data: {
             muridId,
             subKelasId: newSubKelasId,
-            tahunAkademikId: activeTahun.id
+            tahunAkademikId
           }
         })
       }
@@ -303,4 +300,22 @@ export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: strin
 
   revalidatePath("/kelas")
   return { success: successCount }
+}
+
+export async function luluskanSiswaBatch(muridIds: string[]) {
+  const session = await auth()
+  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+
+  const result = await prisma.murid.updateMany({
+    where: {
+      id: { in: muridIds }
+    },
+    data: {
+      status: "ALUMNI",
+      isActive: false
+    }
+  })
+
+  revalidatePath("/kelas")
+  return { success: result.count }
 }
