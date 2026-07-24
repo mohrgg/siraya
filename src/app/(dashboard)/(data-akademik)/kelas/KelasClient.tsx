@@ -49,6 +49,7 @@ export default function KelasClient({
   // Confirm Delete Modal
   const [deleteData, setDeleteData] = useState<{ id: string, type: "tingkat" | "subkelas" | "murid" } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
 
   // Forms
   const [formMurid, setFormMurid] = useState<any>({
@@ -147,6 +148,54 @@ export default function KelasClient({
   }, [searchTerm, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, activeUnitId, filterAlumniStatus, activeTab])
 
   // Handlers Delete
+  const handleExportExcel = async () => {
+    if (activeTab !== "murid" && activeTab !== "alumni") return
+    setIsExporting(true)
+    try {
+      // Ambil seluruh data sesuai filter saat ini (limit 9999 agar terambil semua)
+      const res = await getSiswaPaginated({
+        unitSekolahId: activeUnitId || schoolUnits[0]?.id || "",
+        tingkatId: filterMuridTingkat,
+        jurusanId: filterMuridJurusan,
+        subKelasId: filterMuridSubKelas,
+        search: searchTerm,
+        page: 1,
+        limit: 9999,
+        statusFilter: activeTab === "murid" ? "AKTIF" : filterAlumniStatus
+      })
+
+      if (res.data.length === 0) {
+        alert("Tidak ada data untuk diekspor")
+        return
+      }
+
+      // Mapping data agar kolom Excel lebih rapi
+      const mappedData = res.data.map((m: any, index: number) => ({
+        "No": index + 1,
+        "NIS": m.nis,
+        "NISN": m.nisn || "",
+        "Nama Lengkap": m.name,
+        "Jenis Kelamin": m.gender || "",
+        "Rombel Saat Ini": m.riwayatKelas?.[0]?.subKelas?.name || "",
+        "Status": m.status || "",
+        "Tempat Lahir": m.birthPlace || "",
+        "Tanggal Lahir": m.birthDate ? new Date(m.birthDate).toLocaleDateString('id-ID') : "",
+        "Nama Ayah": m.fatherName || "",
+        "Nama Ibu": m.motherName || "",
+        "No Telepon Ortu": m.parentPhone || "",
+        "Alamat": m.address || ""
+      }))
+
+      const { exportToExcel } = await import("@/lib/excel")
+      exportToExcel(mappedData, `Data_${activeTab === "murid" ? "Siswa_Aktif" : "Alumni"}_${new Date().toISOString().split('T')[0]}`)
+    } catch (error) {
+      console.error(error)
+      alert("Gagal mengekspor data")
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   const handleDeleteConfirm = async () => {
     if (!deleteData) return
     setIsDeleting(true)
@@ -369,11 +418,18 @@ export default function KelasClient({
               </>
             )}
 
-            <div className="flex gap-2 border-l border-border pl-3" title="Fitur ekspor akan tersedia di Fase 3 / Reporting">
-              <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled>
-                <FileSpreadsheet size={16} className="mr-1.5" /> Excel
+            <div className="flex gap-2 border-l border-border pl-3" title="Ekspor data siswa sesuai filter saat ini">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100"
+                onClick={handleExportExcel}
+                disabled={isExporting || (activeTab !== 'murid' && activeTab !== 'alumni')}
+              >
+                <FileSpreadsheet size={16} className="mr-1.5" /> 
+                {isExporting ? 'Mengekspor...' : 'Excel'}
               </Button>
-              <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled>
+              <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled title="Akan hadir di fase berikutnya">
                 <FilePdf size={16} className="mr-1.5" /> PDF
               </Button>
               {activeTab === "murid" && (

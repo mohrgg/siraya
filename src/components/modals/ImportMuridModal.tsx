@@ -129,12 +129,17 @@ export default function ImportMuridModal({
               <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4">
                 <h3 className="font-bold text-sm text-blue-900 mb-2 flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs">1</span> Download Template</h3>
                 <p className="text-xs text-blue-800/80 mb-3 leading-relaxed">
-                  Gunakan template CSV resmi kami. Kolom dengan tanda bintang merah (<b>*</b>) pada file CSV wajib diisi. 
+                  Gunakan template Excel resmi kami. Kolom dengan tanda bintang merah (<b>*</b>) pada file CSV wajib diisi. 
                   Untuk <b>Jenis Kelamin</b> bisa diisi dengan awalan <b>L</b> (Laki-laki) atau <b>P</b> (Perempuan).
                 </p>
-                <a href="/templates/template_impor_murid.csv" download className="inline-flex items-center gap-2 px-4 py-2 bg-white text-blue-700 border border-blue-200 hover:bg-blue-50 rounded-lg text-xs font-bold transition-colors shadow-sm">
-                  <Download size={14} /> Download template_impor_murid.csv
-                </a>
+                <button 
+                  onClick={() => {
+                    import("@/lib/excel").then((mod) => mod.downloadSiswaTemplate())
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white text-blue-700 border border-blue-200 hover:bg-blue-50 rounded-lg text-xs font-bold transition-colors shadow-sm"
+                >
+                  <Download size={14} /> Download Template Excel
+                </button>
               </div>
 
               {/* Step 2 */}
