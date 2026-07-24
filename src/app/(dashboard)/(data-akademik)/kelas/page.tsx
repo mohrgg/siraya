@@ -5,8 +5,10 @@ import KelasClient from "./KelasClient"
 import prisma from "@/lib/prisma"
 
 import { cookies } from "next/headers"
+import { auth } from "@/lib/auth"
 
 export default async function KelasPage() {
+  const session = await auth()
   let schoolUnits = await prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } })
   const levelOrder: Record<string, number> = { "SD": 1, "SMP": 2, "SMA": 3, "SMK": 4, "MA": 5 }
   schoolUnits = schoolUnits.sort((a, b) => (levelOrder[a.level] || 99) - (levelOrder[b.level] || 99))
@@ -37,6 +39,7 @@ export default async function KelasPage() {
         initialStudents={students}
         academicYears={academicYears}
         schoolUnits={schoolUnits}
+        userRole={session?.user?.role}
       />
     </div>
   )

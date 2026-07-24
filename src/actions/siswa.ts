@@ -128,7 +128,7 @@ export async function getSiswaPaginated(params: {
 
 export async function tambahSiswa(data: any) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   const result = await prisma.$transaction(async (tx) => {
     const existingMurid = await tx.murid.findUnique({ where: { nis: data.nis } })
@@ -175,7 +175,7 @@ export async function editSiswa(id: string, data: {
   photoUrl?: string, formNo?: string, username?: string
 }) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   const result = await prisma.$transaction(async (tx) => {
     // Exclude subKelasId and rename studentStatus -> status
@@ -239,7 +239,7 @@ export async function editSiswa(id: string, data: {
 
 export async function importSiswaBulk(studentsData: any[]) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   const result = await prisma.murid.createMany({
     data: studentsData
@@ -251,7 +251,7 @@ export async function importSiswaBulk(studentsData: any[]) {
 
 export async function hapusSiswa(id: string) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
   const result = await prisma.murid.update({
     where: { id },
     data: { 
@@ -266,7 +266,7 @@ export async function hapusSiswa(id: string) {
 
 export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: string, targetTahunAkademikId?: string) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   let tahunAkademikId = targetTahunAkademikId;
   if (!tahunAkademikId) {
@@ -313,7 +313,7 @@ export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: strin
 
 export async function luluskanSiswaBatch(muridIds: string[]) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   const result = await prisma.murid.updateMany({
     where: {

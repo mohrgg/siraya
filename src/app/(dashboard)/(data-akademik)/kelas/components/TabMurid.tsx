@@ -22,36 +22,43 @@ export default function TabMurid({
   targetSubKelasId,
   setTargetSubKelasId,
   handleBulkPromote,
-  isPromoting
+  isPromoting,
+  isReadOnly
 }: any) {
   return (
     <>
       <thead className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
         <tr>
-          <th className="p-4 font-semibold text-center w-12">
-            <input 
-              type="checkbox" 
-              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-              checked={students.length > 0 && selectedStudents.length === students.length}
-              onChange={(e) => {
-                if (e.target.checked) setSelectedStudents(students.map((s: any) => s.id))
-                else setSelectedStudents([])
-              }}
-            />
-          </th>
+          {!isReadOnly && (
+            <th className="p-4 font-semibold text-center w-12">
+              <input 
+                type="checkbox" 
+                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                checked={students.length > 0 && selectedStudents.length === students.length}
+                onChange={(e) => {
+                  if (e.target.checked) setSelectedStudents(students.map((s: any) => s.id))
+                  else setSelectedStudents([])
+                }}
+              />
+            </th>
+          )}
           <th className="p-4 font-semibold text-left w-12">No</th>
           <SortableHeader label="Nama Murid" sortKey="name" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
           <SortableHeader label="NISN / NIS" sortKey="nisn" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
           <th className="p-4 font-semibold text-left">Jenis Kelamin</th>
           <th className="p-4 font-semibold text-left">Kelas / Rombel</th>
           <SortableHeader label="Status" sortKey="status" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
-          <th className="p-4 font-semibold text-right">Aksi</th>
+          {isReadOnly ? (
+            <th className="p-4 font-semibold text-right">Detail</th>
+          ) : (
+            <th className="p-4 font-semibold text-right">Aksi</th>
+          )}
         </tr>
       </thead>
       <tbody>
         {(!isLoadingStudents && students.length === 0) && (
           <tr>
-            <td colSpan={8} className="p-8 text-center text-text-muted">
+            <td colSpan={isReadOnly ? 7 : 8} className="p-8 text-center text-text-muted">
               Belum ada data siswa
             </td>
           </tr>
@@ -90,17 +97,19 @@ export default function TabMurid({
         
         {!isLoadingStudents && students.map((s: any, i: number) => (
           <tr key={s.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
-            <td className="p-4 text-center">
-              <input 
-                type="checkbox" 
-                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                checked={selectedStudents.includes(s.id)}
-                onChange={(e) => {
-                  if (e.target.checked) setSelectedStudents([...selectedStudents, s.id])
-                  else setSelectedStudents(selectedStudents.filter((id: string) => id !== s.id))
-                }}
-              />
-            </td>
+            {!isReadOnly && (
+              <td className="p-4 text-center">
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  checked={selectedStudents.includes(s.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) setSelectedStudents([...selectedStudents, s.id])
+                    else setSelectedStudents(selectedStudents.filter((id: string) => id !== s.id))
+                  }}
+                />
+              </td>
+            )}
             <td className="p-4">{(currentPage - 1) * pageSize + i + 1}</td>
             <td className="p-4">
               <div className="flex items-center gap-3">
@@ -134,18 +143,27 @@ export default function TabMurid({
                 {s.status?.toUpperCase() || "AKTIF"}
               </span>
             </td>
-            <td className="p-4">
-              <div className="flex items-center justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={() => setViewDetailMurid(s)}><Info size={16} /></Button>
-                <Button variant="outline" size="sm" onClick={() => { 
-                  setFormMurid({ ...s, subKelasId: s.riwayatKelas?.[0]?.subKelasId || "" }); 
-                  setShowModalMurid(true); 
-                }}>
-                  <Edit2 size={16} />
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: s.id, type: "murid" })}><Trash2 size={16} /></Button>
-              </div>
-            </td>
+            {!isReadOnly && (
+              <td className="p-4">
+                <div className="flex items-center justify-end gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setViewDetailMurid(s)}><Info size={16} /></Button>
+                  <Button variant="outline" size="sm" onClick={() => { 
+                    setFormMurid({ ...s, subKelasId: s.riwayatKelas?.[0]?.subKelasId || "" }); 
+                    setShowModalMurid(true); 
+                  }}>
+                    <Edit2 size={16} />
+                  </Button>
+                  <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: s.id, type: "murid" })}><Trash2 size={16} /></Button>
+                </div>
+              </td>
+            )}
+            {isReadOnly && (
+              <td className="p-4">
+                <div className="flex items-center justify-end gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setViewDetailMurid(s)}><Info size={16} /></Button>
+                </div>
+              </td>
+            )}
           </tr>
         ))}
       </tbody>

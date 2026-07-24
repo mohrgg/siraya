@@ -18,10 +18,11 @@ import { tambahKelas, editKelas, hapusKelas, hapusTingkatan, tambahTingkatan } f
 import { hapusSiswa, tambahSiswa, editSiswa } from "@/actions/siswa"
 
 export default function KelasClient({ 
-  activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits 
+  activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits, userRole 
 }: { 
-  activeUnitId?: string, activeYearId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[] 
+  activeUnitId?: string, activeYearId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[], userRole?: string 
 }) {
+  const isReadOnly = userRole === "KEPALA_SEKOLAH"
   const data = useKelasData({ activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits })
 
   // Modals Local State (Keep here since they trigger API mutations that might affect data)
@@ -257,13 +258,14 @@ export default function KelasClient({
           setFormKelas={setFormKelas}
           setFormSubKelas={setFormSubKelas}
           setFormMurid={setFormMurid}
+          isReadOnly={isReadOnly}
         />
 
         {/* Data Table */}
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
-            {data.activeTab === "kelas" && <TabKelas {...data} setDeleteData={setDeleteData} />}
-            {data.activeTab === "sub-kelas" && <TabSubKelas {...data} setDeleteData={setDeleteData} setViewDetailSubKelas={setViewDetailSubKelas} setFormSubKelas={setFormSubKelas} setShowModalSubKelas={setShowModalSubKelas} />}
+            {data.activeTab === "kelas" && <TabKelas {...data} setDeleteData={setDeleteData} isReadOnly={isReadOnly} />}
+            {data.activeTab === "sub-kelas" && <TabSubKelas {...data} setDeleteData={setDeleteData} setViewDetailSubKelas={setViewDetailSubKelas} setFormSubKelas={setFormSubKelas} setShowModalSubKelas={setShowModalSubKelas} isReadOnly={isReadOnly} />}
             {(data.activeTab === "murid" || data.activeTab === "alumni") && (
               <TabMurid 
                 {...data} 
@@ -271,7 +273,8 @@ export default function KelasClient({
                 setViewDetailMurid={setViewDetailMurid} 
                 setFormMurid={setFormMurid} 
                 setShowModalMurid={setShowModalMurid} 
-                getStatusBadge={getStatusBadge} 
+                getStatusBadge={getStatusBadge}
+                isReadOnly={isReadOnly}
               />
             )}
           </table>
@@ -320,7 +323,7 @@ export default function KelasClient({
       </div>
 
       {/* Floating Action Bar (Bulk Promote & Grad) */}
-      {data.selectedStudents.length > 0 && data.activeTab === "murid" && (
+      {data.selectedStudents.length > 0 && data.activeTab === "murid" && !isReadOnly && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-border px-6 py-4 flex flex-wrap items-center justify-center gap-6 animate-in slide-in-from-bottom-10 fade-in duration-300 z-50">
           <div className="flex items-center gap-3 text-sm font-semibold">
             <span className="flex items-center justify-center bg-primary/10 text-primary w-6 h-6 rounded-full text-xs">{data.selectedStudents.length}</span>

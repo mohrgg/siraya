@@ -15,7 +15,7 @@ export async function getUnitSekolah() {
 
 export async function tambahUnitSekolah(data: { name: string, level: string, address?: string, phone?: string }) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   const result = await prisma.unitSekolah.create({ data })
   revalidatePath("/data-master")
@@ -25,7 +25,7 @@ export async function tambahUnitSekolah(data: { name: string, level: string, add
 
 export async function editUnitSekolah(id: string, data: { name?: string, level?: string, address?: string, phone?: string, isActive?: boolean }) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   const result = await prisma.unitSekolah.update({
     where: { id },
@@ -38,7 +38,7 @@ export async function editUnitSekolah(id: string, data: { name?: string, level?:
 
 export async function hapusUnitSekolah(id: string) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   const result = await prisma.unitSekolah.delete({
     where: { id }

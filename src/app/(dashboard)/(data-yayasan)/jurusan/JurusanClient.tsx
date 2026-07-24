@@ -11,8 +11,9 @@ import { tambahJurusan, editJurusan, hapusJurusan } from "@/actions/kelas"
 
 type Major = any
 
-export default function JurusanClient({ initialData, schoolUnits }: { initialData: Major[], schoolUnits: any[] }) {
-  const [activeUnitId, setActiveUnitId] = useState<string>(schoolUnits[0]?.id || "")
+export default function JurusanClient({ initialData, units, userRole }: { initialData: Major[], units: any[], userRole?: string }) {
+  const isReadOnly = userRole === "KEPALA_SEKOLAH"
+  const [activeUnitId, setActiveUnitId] = useState<string>(units[0]?.id || "")
   const [data, setData] = useState<Major[]>(initialData)
   const [searchTerm, setSearchTerm] = useState("")
   
@@ -102,12 +103,12 @@ export default function JurusanClient({ initialData, schoolUnits }: { initialDat
       if (formData.id) {
         // Edit
         const res = await editJurusan(formData.id, { name: formData.name, code: formData.code, unitSekolahId: formData.unitSekolahId })
-        const updatedUnit = schoolUnits.find(u => u.id === formData.unitSekolahId)
+        const updatedUnit = units.find(u => u.id === formData.unitSekolahId)
         setData(data.map(d => d.id === formData.id ? { ...res, unitSekolah: updatedUnit } : d))
       } else {
         // Create
         const res = await tambahJurusan({ name: formData.name, code: formData.code, unitSekolahId: formData.unitSekolahId })
-        const newUnit = schoolUnits.find(u => u.id === formData.unitSekolahId)
+        const newUnit = units.find(u => u.id === formData.unitSekolahId)
         setData([...data, { ...res, unitSekolah: newUnit }])
       }
       setIsAdding(false)
@@ -149,7 +150,7 @@ export default function JurusanClient({ initialData, schoolUnits }: { initialDat
                     onChange={e => setFormData({ ...formData, unitSekolahId: e.target.value })}
                     required
                   >
-                    {schoolUnits.map(unit => (
+                    {units.map(unit => (
                       <option key={unit.id} value={unit.id}>{unit.name}</option>
                     ))}
                   </select>
@@ -194,7 +195,7 @@ export default function JurusanClient({ initialData, schoolUnits }: { initialDat
 
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex overflow-x-auto no-scrollbar gap-2 pb-2">
-          {schoolUnits.map((unit: any) => (
+          {units.map((unit: any) => (
             <button
               key={unit.id}
               onClick={() => setActiveUnitId(unit.id)}
@@ -216,9 +217,11 @@ export default function JurusanClient({ initialData, schoolUnits }: { initialDat
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button onClick={handleAddClick}>
-            <Plus size={16} className="mr-2" /> Tambah Program/Jurusan
-          </Button>
+          {!isReadOnly && (
+            <Button onClick={handleAddClick}>
+              <Plus size={16} className="mr-2" /> Tambah Program/Jurusan
+            </Button>
+          )}
         </div>
       </div>
 
@@ -235,7 +238,7 @@ export default function JurusanClient({ initialData, schoolUnits }: { initialDat
                   <th className="p-4 font-semibold">No</th>
                   <SortableHeader label="Kode Program" sortKey="code" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
                   <SortableHeader label="Nama Program / Jurusan" sortKey="name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
-                  <th className="p-4 font-semibold text-right">Aksi</th>
+                  {!isReadOnly && <th className="p-4 font-semibold text-right">Aksi</th>}
                 </tr>
               </thead>
               <tbody>
@@ -244,16 +247,18 @@ export default function JurusanClient({ initialData, schoolUnits }: { initialDat
                     <td className="p-4">{index + 1}</td>
                     <td className="p-4 font-mono text-sm text-text-muted font-semibold">{item.code}</td>
                     <td className="p-4 font-bold text-text-main">{item.name}</td>
-                    <td className="p-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEditClick(item)}>
-                          <Edit2 size={16} />
-                        </Button>
-                        <Button variant="danger" size="sm" onClick={() => setDeleteId(item.id)}>
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </td>
+                    {!isReadOnly && (
+                      <td className="p-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEditClick(item)}>
+                            <Edit2 size={16} />
+                          </Button>
+                          <Button variant="danger" size="sm" onClick={() => setDeleteId(item.id)}>
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

@@ -1,14 +1,19 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
 import { Edit2, Plus, Building, Trash2 } from "lucide-react"
 import { tambahUnitSekolah, editUnitSekolah, hapusUnitSekolah } from "@/actions/unit-sekolah"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { Input } from "@/components/ui/Input"
 
-export default function UnitSekolahClient({ initialData }: { initialData: any[] }) {
-  const [data, setData] = useState(initialData)
+type UnitSekolah = { id: string, name: string, level: string, address: string | null, phone: string | null, logo?: string | null, isActive: boolean, createdAt?: Date, updatedAt?: Date }
+
+export default function UnitSekolahClient({ initialData, userRole }: { initialData: UnitSekolah[], userRole?: string }) {
+  const router = useRouter()
+  const isReadOnly = userRole === "KEPALA_SEKOLAH"
+  const [data, setData] = useState<UnitSekolah[]>(initialData)
   const [isAdding, setIsAdding] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({ id: "", name: "", level: "SD", address: "", phone: "", isActive: true })
@@ -126,9 +131,11 @@ export default function UnitSekolahClient({ initialData }: { initialData: any[] 
           <h2 className="text-xl font-bold text-albas-green">Manajemen Unit Sekolah</h2>
         </div>
 
-        <Button onClick={() => setIsAdding(true)} className="mb-6">
-          <Plus size={16} className="mr-2"/> Tambah Unit Sekolah
-        </Button>
+        {!isReadOnly && (
+          <Button onClick={() => setIsAdding(true)} className="mb-6">
+            <Plus size={16} className="mr-2"/> Tambah Unit Sekolah
+          </Button>
+        )}
 
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
@@ -138,7 +145,7 @@ export default function UnitSekolahClient({ initialData }: { initialData: any[] 
                 <th className="p-4 font-semibold">LEVEL</th>
                 <th className="p-4 font-semibold">TELEPON</th>
                 <th className="p-4 font-semibold">STATUS</th>
-                <th className="p-4 font-semibold text-right">AKSI</th>
+                {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
               </tr>
             </thead>
             <tbody>
@@ -157,21 +164,23 @@ export default function UnitSekolahClient({ initialData }: { initialData: any[] 
                       {item.isActive ? "Aktif" : "Nonaktif"}
                     </span>
                   </td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
-                        <Edit2 size={16} />
-                      </Button>
-                      <Button variant="danger" size="sm" onClick={() => setDeleteId(item.id)}>
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </td>
+                  {!isReadOnly && (
+                    <td className="p-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button variant="danger" size="sm" onClick={() => setDeleteId(item.id)}>
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
               {data.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-text-muted">
+                  <td colSpan={isReadOnly ? 4 : 5} className="p-8 text-center text-text-muted">
                     Belum ada data Unit Sekolah.
                   </td>
                 </tr>

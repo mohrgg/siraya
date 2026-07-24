@@ -21,7 +21,7 @@ export async function getTingkatan(unitSekolahId?: string) {
 
 export async function tambahTingkatan(data: { name: string, order: number, unitSekolahId: string }) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   const result = await prisma.tingkat.create({ 
     data: { name: data.name, order: data.order, unitSekolahId: data.unitSekolahId } 
@@ -47,7 +47,7 @@ export async function getJurusan() {
 
 export async function tambahJurusan(data: { name: string, code: string, unitSekolahId: string }) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   const result = await prisma.jurusan.create({ data })
   revalidatePath("/data-master")
@@ -87,7 +87,7 @@ export async function getKelas(unitSekolahId?: string, tahunAkademikId?: string)
 
 export async function tambahKelas(data: { name: string, tingkatId: string, jurusanId?: string, tahunAkademikId: string, unitSekolahId: string }) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   // Ensure jurusanId is null if empty string
   const cleanData = { 
@@ -105,7 +105,7 @@ export async function tambahKelas(data: { name: string, tingkatId: string, jurus
 
 export async function hapusTingkatan(id: string) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
   const result = await prisma.tingkat.update({ where: { id }, data: { isDeleted: true } })
   revalidatePath("/data-master")
   return result
@@ -113,7 +113,7 @@ export async function hapusTingkatan(id: string) {
 
 export async function editJurusan(id: string, data: { name: string, code: string, unitSekolahId: string }) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
   const result = await prisma.jurusan.update({ where: { id }, data })
   revalidatePath("/data-master")
   return result
@@ -121,7 +121,7 @@ export async function editJurusan(id: string, data: { name: string, code: string
 
 export async function hapusJurusan(id: string) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
   const result = await prisma.jurusan.update({ where: { id }, data: { isDeleted: true } })
   revalidatePath("/data-master")
   return result
@@ -129,7 +129,7 @@ export async function hapusJurusan(id: string) {
 
 export async function editKelas(id: string, data: { name?: string, tingkatId?: string, jurusanId?: string, tahunAkademikId?: string, unitSekolahId?: string }) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
   const cleanData = { ...data, jurusanId: data.jurusanId || null }
   const result = await prisma.subKelas.update({ where: { id }, data: cleanData })
   revalidatePath("/data-master")
@@ -138,7 +138,7 @@ export async function editKelas(id: string, data: { name?: string, tingkatId?: s
 
 export async function hapusKelas(id: string) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
   const result = await prisma.subKelas.update({ where: { id }, data: { isDeleted: true } })
   revalidatePath("/data-master")
   return result

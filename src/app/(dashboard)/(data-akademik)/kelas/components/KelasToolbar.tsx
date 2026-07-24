@@ -25,7 +25,8 @@ export default function KelasToolbar({
   setShowModalMurid,
   setFormKelas,
   setFormSubKelas,
-  setFormMurid
+  setFormMurid,
+  isReadOnly
 }: any) {
   return (
     <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
@@ -140,7 +141,7 @@ export default function KelasToolbar({
           <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled title="Akan hadir di fase berikutnya">
             <FilePdf size={16} className="mr-1.5" /> PDF
           </Button>
-          {activeTab === "murid" && (
+          {activeTab === "murid" && !isReadOnly && (
             <Button 
               variant="outline" 
               size="sm" 
@@ -153,35 +154,37 @@ export default function KelasToolbar({
         </div>
       </div>
 
-      <div className="flex-shrink-0">
-        {activeTab === "kelas" && (
-          <Button onClick={() => {
-            setFormKelas({ id: "", name: "", order: 1, unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
-            setShowModalKelas(true)
-          }}><Plus size={16} className="mr-1.5" /> Tambah Tingkat</Button>
-        )}
-        {activeTab === "sub-kelas" && (
-          <Button onClick={() => {
-            setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
-            setShowModalSubKelas(true)
-          }}>
-            <Plus size={16} className="mr-2" /> Tambah Sub Kelas
-          </Button>
-        )}
-        {activeTab === "murid" && (
-          <Button onClick={() => {
-            setFormMurid({
-              id: "", nisn: "", name: "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "", subKelasId: "",
-              previousSchool: "", phone: "", birthDate: "", email: "", studentStatus: "AKTIF",
-              parentName: "", parentPhone: "", religion: "Islam", gender: "Laki-laki",
-              address: "", formNo: "", username: ""
-            })
-            setShowModalMurid(true)
-          }}>
-            <Plus size={16} className="mr-2" /> Tambah Murid
-          </Button>
-        )}
-      </div>
+      {!isReadOnly && (
+        <div className="flex-shrink-0">
+          {activeTab === "kelas" && (
+            <Button onClick={() => {
+              setFormKelas({ id: "", name: "", order: 1, unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
+              setShowModalKelas(true)
+            }}><Plus size={16} className="mr-1.5" /> Tambah Tingkat</Button>
+          )}
+          {activeTab === "sub-kelas" && (
+            <Button onClick={() => {
+              setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
+              setShowModalSubKelas(true)
+            }}>
+              <Plus size={16} className="mr-2" /> Tambah Sub Kelas
+            </Button>
+          )}
+          {activeTab === "murid" && (
+            <Button onClick={() => {
+              setFormMurid({
+                id: "", nisn: "", name: "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "", subKelasId: "",
+                previousSchool: "", phone: "", birthDate: "", email: "", studentStatus: "AKTIF",
+                parentName: "", parentPhone: "", religion: "Islam", gender: "Laki-laki",
+                address: "", formNo: "", username: ""
+              })
+              setShowModalMurid(true)
+            }}>
+              <Plus size={16} className="mr-2" /> Tambah Murid
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

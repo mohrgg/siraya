@@ -3,7 +3,10 @@ import TahunAkademikClient from "./TahunAkademikClient"
 import prisma from "@/lib/prisma"
 import { cookies } from "next/headers"
 
+import { auth } from "@/lib/auth"
+
 export default async function TahunAkademikPage() {
+  const session = await auth()
   const data = await getTahunAkademik()
 
   return (
@@ -12,7 +15,7 @@ export default async function TahunAkademikPage() {
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Tahun Akademik</h1>
         <p className="text-text-muted">Kelola tahun ajaran akademik Yayasan</p>
       </div>
-      <TahunAkademikClient initialData={data} />
+      <TahunAkademikClient initialData={data} userRole={session?.user?.role} />
     </div>
   )
 }

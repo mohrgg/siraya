@@ -11,8 +11,9 @@ import { tambahTahunAkademik, editTahunAkademik, hapusTahunAkademik } from "@/ac
 
 type AcademicYear = any
 
-export default function TahunAkademikClient({ initialData }: { initialData: AcademicYear[] }) {
+export default function TahunAkademikClient({ initialData, userRole }: { initialData: AcademicYear[], userRole?: string }) {
   const router = useRouter()
+  const isReadOnly = userRole === "KEPALA_SEKOLAH"
   const [data, setData] = useState<AcademicYear[]>(initialData)
   const [searchTerm, setSearchTerm] = useState("")
   
@@ -209,9 +210,11 @@ export default function TahunAkademikClient({ initialData }: { initialData: Acad
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button onClick={handleAddClick}>
-          <Plus size={16} className="mr-2" /> Tambah Tahun Akademik
-        </Button>
+        {!isReadOnly && (
+          <Button onClick={handleAddClick}>
+            <Plus size={16} className="mr-2" /> Tambah Tahun Akademik
+          </Button>
+        )}
       </div>
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
@@ -227,7 +230,7 @@ export default function TahunAkademikClient({ initialData }: { initialData: Acad
                   <th className="p-4 font-semibold">No</th>
                   <SortableHeader label="Tahun Akademik" sortKey="name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
                   <SortableHeader label="Status" sortKey="isActive" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
-                  <th className="p-4 font-semibold text-right">Aksi</th>
+                  {!isReadOnly && <th className="p-4 font-semibold text-right">Aksi</th>}
                 </tr>
               </thead>
               <tbody>
@@ -246,16 +249,18 @@ export default function TahunAkademikClient({ initialData }: { initialData: Acad
                         </span>
                       )}
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEditClick(item)}>
-                          <Edit2 size={16} />
-                        </Button>
-                        <Button variant="danger" size="sm" onClick={() => setDeleteId(item.id)}>
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </td>
+                    {!isReadOnly && (
+                      <td className="p-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEditClick(item)}>
+                            <Edit2 size={16} />
+                          </Button>
+                          <Button variant="danger" size="sm" onClick={() => setDeleteId(item.id)}>
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
