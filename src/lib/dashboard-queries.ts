@@ -286,7 +286,22 @@ export async function getAdminOperasionalData() {
     id: l.id, aksi: l.aksi, modul: l.modul, keterangan: l.keterangan, createdAt: l.createdAt.toISOString(), penggunaName: l.pengguna.name
   }))
 
-  return { trendData, modulData, roleData, heatmapData, leaderboard, recentLogs }
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  
+  const dauCount = await prisma.pengguna.count({
+    where: { lastActiveAt: { gte: todayStart } }
+  })
+
+  const monthStart = new Date()
+  monthStart.setDate(1)
+  monthStart.setHours(0, 0, 0, 0)
+
+  const monthlyLogsCount = await prisma.logAktivitas.count({
+    where: { createdAt: { gte: monthStart } }
+  })
+
+  return { trendData, modulData, roleData, heatmapData, leaderboard, recentLogs, dauCount, monthlyLogsCount }
 }
 
 // ==================== TATA USAHA ====================

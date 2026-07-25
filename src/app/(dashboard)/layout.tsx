@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 import Sidebar from "@/components/layout/Sidebar"
 import Header from "@/components/layout/Header"
+import { UserActivityTracker } from "@/components/UserActivityTracker"
 
 export default async function DashboardLayout({
   children,
@@ -53,6 +54,7 @@ export default async function DashboardLayout({
           activeUnitId={activeUnitId}
           activeYearId={activeYearId}
         />
+        <UserActivityTracker />
         <main className="flex-1 p-6 md:p-8 overflow-y-auto overflow-x-hidden">
           {children}
         </main>

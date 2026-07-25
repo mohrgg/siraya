@@ -156,8 +156,8 @@ export async function POST(req: Request) {
 
     if (successCount > 0) {
       await logAktivitas(
-        session.user.id,
         "TAMBAH_MURID_MASSAL",
+        "MANAJEMEN_MURID",
         `Berhasil impor ${successCount} data murid baru via CSV dengan data lengkap`
       )
     }

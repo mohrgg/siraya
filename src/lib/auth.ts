@@ -27,6 +27,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!isPasswordValid) return null
 
+        // Rekam aktivitas login ke Audit Trail
+        try {
+          await prisma.logAktivitas.create({
+            data: {
+              penggunaId: user.id,
+              aksi: "LOGIN",
+              modul: "SISTEM",
+              keterangan: "Pengguna berhasil login ke dalam sistem"
+            }
+          })
+        } catch (e) {
+          console.error("Gagal mencatat log login:", e)
+        }
+
         return {
           id: user.id,
           email: user.email,

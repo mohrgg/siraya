@@ -5,6 +5,18 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6']
 
+const CustomReferenceLabel = (props: any) => {
+  const { viewBox } = props;
+  return (
+    <g>
+      <rect x={viewBox.width / 2 - 50} y={viewBox.y - 12} width={100} height={20} fill="rgba(255, 255, 255, 0.9)" rx={4} />
+      <text x={viewBox.width / 2} y={viewBox.y + 3} fill="#ef4444" fontSize={11} fontWeight="bold" textAnchor="middle">
+        Batas Ideal (30)
+      </text>
+    </g>
+  );
+};
+
 export default function AdminUnitDashboard(props: any) {
   const { unitName, totalMurid, totalSubKelas, totalJurusan, statusData, paralelData, tingkatDistribution, genderData, ageData } = props
 
@@ -108,7 +120,7 @@ export default function AdminUnitDashboard(props: any) {
                       <Cell key={`cell-${index}`} fill={entry.average > 30 ? '#ef4444' : '#f59e0b'} />
                     ))}
                   </Bar>
-                  <ReferenceLine y={30} stroke="#ef4444" strokeDasharray="3 3" label={{ position: 'top', value: 'Batas Ideal (30)', fill: '#ef4444', fontSize: 11, fontWeight: 'bold' }} />
+                  <ReferenceLine y={30} stroke="#ef4444" strokeDasharray="3 3" label={<CustomReferenceLabel />} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
