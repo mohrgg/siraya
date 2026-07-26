@@ -83,7 +83,10 @@
     left: 0;
     top: 0;
     width: 100%;
-    padding: 20mm;
+    padding: 0;
+    margin: 0;
+    background: white !important;
+    color: black !important;
   }
 
   /* Force show elements with print: prefix (Tailwind) */

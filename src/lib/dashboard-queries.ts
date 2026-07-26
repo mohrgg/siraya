@@ -49,6 +49,17 @@ export async function getYayasanDashboardData() {
           jurusan: { where: { isDeleted: false } },
           subKelas: { where: { isDeleted: false } }
         }
+      },
+      tingkat: {
+        select: {
+          name: true,
+          subKelas: {
+            where: { isDeleted: false },
+            select: {
+              _count: { select: { riwayatKelas: { where: { murid: { isActive: true } } } } }
+            }
+          }
+        }
       }
     },
     orderBy: { name: 'asc' }
@@ -62,7 +73,11 @@ export async function getYayasanDashboardData() {
 
   const unitDistribution = unitsRaw.map(u => ({
     name: u.name,
-    total: u._count.murid
+    total: u._count.murid,
+    classes: u.tingkat.map(t => ({
+      name: t.name,
+      total: t.subKelas.reduce((sum, sk) => sum + sk._count.riwayatKelas, 0)
+    })).filter(t => t.total > 0).sort((a, b) => sortSchoolClasses(a.name, b.name))
   })).filter(u => u.total > 0)
 
   // 2. Komposisi Beasiswa

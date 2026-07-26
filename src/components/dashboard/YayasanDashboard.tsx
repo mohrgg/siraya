@@ -1,6 +1,6 @@
 'use client'
 
-import React from "react"
+import React, { useState } from "react"
 import { 
   Building, Users, GraduationCap, LayoutDashboard, ShieldCheck, 
   AlertTriangle, ArrowRight, TrendingUp, MapPin, CheckCircle2, 
@@ -20,7 +20,7 @@ interface YayasanDashboardProps {
   muridCount?: number
   rombelCount?: number
   usersCount?: number
-  unitData?: Array<{ name: string; total: number }>
+  unitData?: Array<any>
   genderData?: Array<{ name: string; value: number; color?: string }>
   scholarshipData?: Array<{ name: string; value: number; color?: string }>
   dataQualityIndex?: number
@@ -49,6 +49,8 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
     classEfficiency = [],
     academicYear
   } = props
+
+  const [selectedUnitDrillDown, setSelectedUnitDrillDown] = useState<any>(null)
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
 
@@ -152,22 +154,65 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
 
       {/* Row 2: Distribusi Siswa & Gender Demography */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Bar Chart: Siswa per Unit */}
+        {/* Bar Chart: Siswa per Unit / Drill-Down Tingkat */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm lg:col-span-2 flex flex-col">
           <div className="flex items-center justify-between mb-2">
             <div>
               <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
                 <Building size={18} className="text-primary" />
-                Distribusi Siswa per Unit Sekolah
+                {selectedUnitDrillDown ? `Sebaran Siswa per Tingkat: ${selectedUnitDrillDown.name}` : 'Distribusi Siswa per Unit Sekolah'}
               </h3>
-              <p className="text-xs text-gray-500 mt-0.5">Jumlah populasi peserta didik aktif pada masing-masing unit.</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {selectedUnitDrillDown ? 'Distribusi populasi siswa pada tingkat kelas di unit ini.' : 'Klik pada batang grafik unit untuk melihat sebaran siswa per tingkat kelas.'}
+              </p>
             </div>
+            {selectedUnitDrillDown && (
+              <button
+                onClick={() => setSelectedUnitDrillDown(null)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-all shadow-sm shrink-0"
+              >
+                ← Kembali ke Semua Unit
+              </button>
+            )}
           </div>
 
           <div className="flex-1 min-h-[300px] mt-4">
-            {unitData && unitData.length > 0 ? (
+            {selectedUnitDrillDown ? (
+              selectedUnitDrillDown.classes && selectedUnitDrillDown.classes.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={selectedUnitDrillDown.classes} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} 
+                      formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Total Siswa']}
+                    />
+                    <Bar dataKey="total" fill="#8b5cf6" radius={[8, 8, 0, 0]} barSize={40}>
+                      {selectedUnitDrillDown.classes.map((entry: any, index: number) => (
+                        <Cell key={`cell-drill-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                  <GraduationCap size={32} className="text-gray-300 mb-2" />
+                  <p className="text-sm font-semibold text-gray-600">Belum Ada Data Tingkat Kelas</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Tidak ditemukan sebaran kelas pada unit ini.</p>
+                </div>
+              )
+            ) : unitData && unitData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={unitData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <BarChart 
+                  data={unitData} 
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  onClick={(data: any) => {
+                    if (data && data.activePayload && data.activePayload[0] && data.activePayload[0].payload && data.activePayload[0].payload.classes) {
+                      setSelectedUnitDrillDown(data.activePayload[0].payload)
+                    }
+                  }}
+                >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
@@ -175,7 +220,18 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                     contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} 
                     formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Total']}
                   />
-                  <Bar dataKey="total" fill="#3b82f6" radius={[8, 8, 0, 0]} barSize={40}>
+                  <Bar 
+                    dataKey="total" 
+                    fill="#3b82f6" 
+                    radius={[8, 8, 0, 0]} 
+                    barSize={40}
+                    cursor="pointer"
+                    onClick={(data: any) => {
+                      if (data && data.classes) {
+                        setSelectedUnitDrillDown(data)
+                      }
+                    }}
+                  >
                     {unitData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}

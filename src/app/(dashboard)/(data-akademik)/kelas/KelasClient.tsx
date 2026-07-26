@@ -38,6 +38,7 @@ export default function KelasClient({
   const [deleteData, setDeleteData] = useState<{ id: string, type: "tingkat" | "subkelas" | "murid" } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [isExportingPDF, setIsExportingPDF] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Forms
@@ -59,10 +60,33 @@ export default function KelasClient({
   }
 
   // Handlers Delete
+  // Handlers Export
   const handleExportExcel = async () => {
-    if (data.activeTab !== "murid" && data.activeTab !== "alumni") return
+    if (data.activeTab !== "murid" && data.activeTab !== "alumni" && data.activeTab !== "sub-kelas") return
     setIsExporting(true)
+    const unitName = schoolUnits.find((u: any) => u.id === activeUnitId)?.name || "SemuaUnit"
+    const dateStr = new Date().toISOString().split('T')[0]
+
     try {
+      const { exportToExcel } = await import("@/lib/excel")
+      if (data.activeTab === "sub-kelas") {
+        if (!data.classrooms || data.classrooms.length === 0) {
+          toast.error("Tidak ada data rombel untuk diekspor")
+          return
+        }
+        const mappedData = data.classrooms.map((c: any, index: number) => ({
+          "No": index + 1,
+          "Nama Rombel": c.name || "-",
+          "Tingkat": c.tingkat?.name || "-",
+          "Jurusan": c.jurusan?.name || "-",
+          "Tahun Akademik": c.tahunAkademik?.name || "-",
+          "Wali Kelas": c.waliKelas || "Belum ditentukan"
+        }))
+        exportToExcel(mappedData, `Rombel_${unitName}_${dateStr}`.replace(/\s+/g, '_'))
+        toast.success("Berhasil mengekspor data rombel (Excel)")
+        return
+      }
+
       // Re-fetch data full length since students state is paginated
       const { getSiswaPaginated } = await import("@/actions/siswa")
       const res = await getSiswaPaginated({
@@ -97,7 +121,6 @@ export default function KelasClient({
         "Alamat": m.address || ""
       }))
 
-      const unitName = schoolUnits.find((u: any) => u.id === activeUnitId)?.name || "SemuaUnit"
       let filterTags = ""
       if (data.filterMuridTingkat) {
         const t = data.grades.find((g: any) => g.id === data.filterMuridTingkat)
@@ -113,19 +136,100 @@ export default function KelasClient({
       }
       
       const statusName = data.activeTab === "murid" ? "Aktif" : (data.filterAlumniStatus || "SemuaStatus")
-      const dateStr = new Date().toISOString().split('T')[0]
       const finalFileName = `Siswa_${unitName}_${statusName}${filterTags}_${dateStr}`.replace(/\s+/g, '_')
 
-      const { exportToExcel } = await import("@/lib/excel")
       exportToExcel(mappedData, finalFileName)
-      toast.success("Berhasil mengekspor data")
+      toast.success("Berhasil mengekspor data (Excel)")
     } catch (error) {
       console.error(error)
-      toast.error("Gagal mengekspor data")
+      toast.error("Gagal mengekspor data Excel")
     } finally {
       setIsExporting(false)
     }
   }
+
+  const handleExportPDF = async () => {
+    if (data.activeTab !== "murid" && data.activeTab !== "alumni" && data.activeTab !== "sub-kelas") return
+    setIsExportingPDF(true)
+    const unitObj = schoolUnits.find((u: any) => u.id === activeUnitId) || schoolUnits[0]
+    const schoolUnitName = unitObj ? `UNIT ${unitObj.name.toUpperCase()} SIRAYA` : "YAYASAN AL-BASYARIAH SIRAYA"
+    const dateStr = new Date().toISOString().split('T')[0]
+
+    try {
+      const { exportToPdfTable } = await import("@/lib/pdf")
+      if (data.activeTab === "sub-kelas") {
+        if (!data.classrooms || data.classrooms.length === 0) {
+          toast.error("Tidak ada data rombel untuk diekspor")
+          return
+        }
+        const headers = ["No", "Nama Rombel", "Tingkat", "Jurusan", "Tahun Akademik", "Wali Kelas"]
+        const pdfRows = data.classrooms.map((c: any, index: number) => [
+          index + 1,
+          c.name || "-",
+          c.tingkat?.name || "-",
+          c.jurusan?.name || "-",
+          c.tahunAkademik?.name || "-",
+          c.waliKelas || "Belum ditentukan"
+        ])
+        exportToPdfTable({
+          title: "Daftar Rombongan Belajar (Sub Kelas)",
+          subtitle: `Unit: ${unitObj?.name || "Semua Unit"} • Tahun Ajaran: ${academicYears.find((y: any) => y.id === activeYearId)?.name || "Aktif"}`,
+          headers,
+          data: pdfRows,
+          filename: `Daftar_Rombel_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
+          schoolUnitName,
+          orientation: 'portrait'
+        })
+      } else {
+        const { getSiswaPaginated } = await import("@/actions/siswa")
+        const res = await getSiswaPaginated({
+          unitSekolahId: activeUnitId || schoolUnits[0]?.id || "",
+          tingkatId: data.filterMuridTingkat,
+          jurusanId: data.filterMuridJurusan,
+          subKelasId: data.filterMuridSubKelas,
+          search: data.searchTerm,
+          page: 1,
+          limit: 9999,
+          statusFilter: data.activeTab === "murid" ? "AKTIF" : data.filterAlumniStatus
+        })
+
+        if (res.data.length === 0) {
+          toast.error("Tidak ada data murid untuk diekspor")
+          return
+        }
+
+        const headers = ["No", "NIS", "NISN", "Nama Lengkap", "L/P", "Rombel", "Status", "No Telp Ortu"]
+        const pdfRows = res.data.map((m: any, index: number) => [
+          index + 1,
+          m.nis || "-",
+          m.nisn || "-",
+          m.name || "-",
+          m.gender === "Perempuan" ? "P" : "L",
+          m.riwayatKelas?.[0]?.subKelas?.name || "-",
+          m.status || "-",
+          m.parentPhone || "-"
+        ])
+
+        const statusName = data.activeTab === "murid" ? "Aktif" : (data.filterAlumniStatus || "Semua Status")
+        exportToPdfTable({
+          title: `Daftar Murid (${statusName})`,
+          subtitle: `Unit: ${unitObj?.name || "Semua Unit"} • Total: ${res.data.length} Siswa`,
+          headers,
+          data: pdfRows,
+          filename: `Daftar_Murid_${unitObj?.name || "Semua"}_${statusName}_${dateStr}`.replace(/\s+/g, '_'),
+          schoolUnitName,
+          orientation: 'landscape'
+        })
+      }
+      toast.success("Berhasil mengekspor dokumen PDF resmi")
+    } catch (error) {
+      console.error(error)
+      toast.error("Gagal mengekspor dokumen PDF")
+    } finally {
+      setIsExportingPDF(false)
+    }
+  }
+
 
   const handleDeleteConfirm = async () => {
     if (!deleteData) return
@@ -252,6 +356,8 @@ export default function KelasClient({
           academicYears={academicYears}
           handleExportExcel={handleExportExcel}
           isExporting={isExporting}
+          handleExportPDF={handleExportPDF}
+          isExportingPDF={isExportingPDF}
           setShowModalImportMurid={setShowModalImportMurid}
           setShowModalKelas={setShowModalKelas}
           setShowModalSubKelas={setShowModalSubKelas}

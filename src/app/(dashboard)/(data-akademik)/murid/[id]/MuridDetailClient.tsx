@@ -95,7 +95,7 @@ export default function MuridDetailClient({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 print-content">
       
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 print:hidden">
@@ -134,8 +134,9 @@ export default function MuridDetailClient({
         </div>
       </div>
 
-      {/* 360° Hero Banner */}
-      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-white/10">
+      <div className="space-y-6 print:hidden">
+        {/* 360° Hero Banner */}
+        <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-white/10">
         <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute right-1/3 -top-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -737,6 +738,144 @@ export default function MuridDetailClient({
           </div>
         </div>
       )}
+      </div>
+
+      {/* ========================================================== */}
+      {/* DEDICATED PRINT LAYOUT (BUKU INDUK SISWA 360°)             */}
+      {/* ========================================================== */}
+      <div className="hidden print:block space-y-6 text-black bg-white font-sans p-2">
+        
+        {/* KOP SURAT SEKOLAH */}
+        <div className="border-b-2 border-black pb-3 text-center space-y-1">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-600">YAYASAN AL-BASYARIAH / SIRAYA EDUCATION</h2>
+          <h1 className="text-xl font-black uppercase tracking-wide text-black">UNIT {unitName} SIRAYA</h1>
+          <p className="text-[11px] text-gray-700">Jl. Pendidikan Nusantara No. 123, Bandung, Jawa Barat • Telp: (022) 1234567 • Email: info@siraya.edu</p>
+        </div>
+
+        {/* JUDUL DOKUMEN */}
+        <div className="text-center py-2 bg-gray-100 rounded border border-gray-300">
+          <h2 className="text-base font-extrabold uppercase tracking-wide text-black">BUKU INDUK PESERTA DIDIK - PROFIL 360°</h2>
+          <p className="text-xs font-mono text-gray-800 mt-0.5">NIS: {murid.nis || "-"} | NISN: {murid.nisn || "-"}</p>
+        </div>
+
+        {/* PAS FOTO & IDENTITAS SINGKAT */}
+        <div className="flex items-start justify-between gap-6 border border-gray-300 p-4 rounded-lg">
+          <div className="w-24 h-32 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center text-center p-1 bg-gray-50 shrink-0">
+            {murid.photoUrl ? (
+              <img src={murid.photoUrl} alt="Foto Siswa" className="w-full h-full object-cover rounded" />
+            ) : (
+              <span className="text-[10px] font-bold text-gray-500">PAS FOTO<br/>3 x 4 cm</span>
+            )}
+          </div>
+          <div className="flex-1 grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
+            <div><span className="text-gray-500 font-semibold block">Nama Lengkap:</span><span className="font-bold text-sm text-black">{murid.name}</span></div>
+            <div><span className="text-gray-500 font-semibold block">Rombel Saat Ini:</span><span className="font-bold text-sm text-black">{murid.riwayatKelas?.[0]?.subKelas?.name || "-"}</span></div>
+            <div><span className="text-gray-500 font-semibold block">Jenis Kelamin:</span><span className="font-semibold">{murid.gender}</span></div>
+            <div><span className="text-gray-500 font-semibold block">Status Siswa:</span><span className="font-semibold uppercase">{murid.status}</span></div>
+            <div><span className="text-gray-500 font-semibold block">Tempat, Tanggal Lahir:</span><span className="font-semibold">{murid.birthPlace || "-"}, {murid.birthDate ? new Date(murid.birthDate).toLocaleDateString('id-ID') : "-"}</span></div>
+            <div><span className="text-gray-500 font-semibold block">Agama:</span><span className="font-semibold uppercase">{murid.religion || "Islam"}</span></div>
+          </div>
+        </div>
+
+        {/* BAGIAN 1: ALAMAT & KONTAK */}
+        <div className="border border-gray-300 rounded-lg overflow-hidden">
+          <div className="bg-gray-100 px-3 py-1.5 border-b border-gray-300 font-bold text-xs uppercase tracking-wider text-black">A. Alamat & Kontak Siswa</div>
+          <div className="p-3 grid grid-cols-2 gap-2 text-xs">
+            <div className="col-span-2"><span className="text-gray-500 block">Alamat Tinggal:</span><span className="font-semibold">{murid.address || "-"} (RT {murid.rt || "-"} / RW {murid.rw || "-"})</span></div>
+            <div><span className="text-gray-500 block">Kelurahan / Desa:</span><span className="font-semibold">{murid.village || "-"}</span></div>
+            <div><span className="text-gray-500 block">Kecamatan:</span><span className="font-semibold">{murid.district || "-"}</span></div>
+            <div><span className="text-gray-500 block">No. Telepon / WhatsApp:</span><span className="font-mono font-semibold">{murid.phone || "-"}</span></div>
+            <div><span className="text-gray-500 block">Alamat Email:</span><span className="font-semibold">{murid.email || "-"}</span></div>
+          </div>
+        </div>
+
+        {/* BAGIAN 2: DATA ORANG TUA / WALI */}
+        <div className="border border-gray-300 rounded-lg overflow-hidden">
+          <div className="bg-gray-100 px-3 py-1.5 border-b border-gray-300 font-bold text-xs uppercase tracking-wider text-black">B. Data Orang Tua Kandung / Wali</div>
+          <div className="p-3 grid grid-cols-2 gap-4 text-xs">
+            <div className="border-r border-gray-200 pr-3 space-y-1">
+              <div className="font-bold underline text-black">Data Ayah Kandung</div>
+              <div><span className="text-gray-500">Nama:</span> <span className="font-semibold">{murid.fatherName || "-"}</span></div>
+              <div><span className="text-gray-500">NIK:</span> <span className="font-mono">{murid.fatherNik || "-"}</span></div>
+              <div><span className="text-gray-500">Pekerjaan:</span> <span>{murid.fatherOccupation || "-"}</span></div>
+              <div><span className="text-gray-500">Pendidikan:</span> <span>{murid.fatherEducation || "-"}</span></div>
+              <div><span className="text-gray-500">Penghasilan:</span> <span>{murid.fatherIncome || "-"}</span></div>
+            </div>
+            <div className="space-y-1">
+              <div className="font-bold underline text-black">Data Ibu Kandung</div>
+              <div><span className="text-gray-500">Nama:</span> <span className="font-semibold">{murid.motherName || "-"}</span></div>
+              <div><span className="text-gray-500">NIK:</span> <span className="font-mono">{murid.motherNik || "-"}</span></div>
+              <div><span className="text-gray-500">Pekerjaan:</span> <span>{murid.motherOccupation || "-"}</span></div>
+              <div><span className="text-gray-500">Pendidikan:</span> <span>{murid.motherEducation || "-"}</span></div>
+              <div><span className="text-gray-500">Penghasilan:</span> <span>{murid.motherIncome || "-"}</span></div>
+            </div>
+          </div>
+          <div className="bg-gray-50 px-3 py-1.5 border-t border-gray-300 text-xs">
+            <span className="text-gray-600 font-semibold">No. Telepon / WhatsApp Orang Tua:</span> <span className="font-mono font-bold text-black">{murid.parentPhone || "-"}</span>
+          </div>
+        </div>
+
+        {/* BAGIAN 3: RIWAYAT KELAS */}
+        <div className="border border-gray-300 rounded-lg overflow-hidden">
+          <div className="bg-gray-100 px-3 py-1.5 border-b border-gray-300 font-bold text-xs uppercase tracking-wider text-black">C. Riwayat Rombongan Belajar & Penempatan Kelas</div>
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-300 font-bold">
+                <th className="py-1.5 px-3 border-r border-gray-200">Tahun Ajaran</th>
+                <th className="py-1.5 px-3 border-r border-gray-200">Tingkat</th>
+                <th className="py-1.5 px-3 border-r border-gray-200">Rombel / Sub Kelas</th>
+                <th className="py-1.5 px-3">Jurusan</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {murid.riwayatKelas && murid.riwayatKelas.length > 0 ? (
+                murid.riwayatKelas.map((rk: any, i: number) => (
+                  <tr key={rk.id || i}>
+                    <td className="py-1.5 px-3 border-r border-gray-200 font-semibold">{rk.tahunAkademik?.year || "-"}</td>
+                    <td className="py-1.5 px-3 border-r border-gray-200">{rk.subKelas?.tingkat?.name || "-"}</td>
+                    <td className="py-1.5 px-3 border-r border-gray-200 font-bold text-black">{rk.subKelas?.name || "-"}</td>
+                    <td className="py-1.5 px-3">{rk.subKelas?.jurusan?.name || "Umum"}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr><td colSpan={4} className="py-2 px-3 text-center text-gray-500 italic">Belum ada riwayat kelas</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* BAGIAN 4: RINGKASAN STATUS KEUANGAN */}
+        <div className="border border-gray-300 rounded-lg overflow-hidden">
+          <div className="bg-gray-100 px-3 py-1.5 border-b border-gray-300 font-bold text-xs uppercase tracking-wider text-black">D. Ringkasan SPP & Administrasi Keuangan</div>
+          <div className="p-3 grid grid-cols-3 gap-4 text-center text-xs">
+            <div className="border border-gray-200 p-2 rounded bg-gray-50">
+              <span className="text-gray-500 block">Total Tagihan:</span>
+              <span className="font-mono font-bold text-sm text-black">{formatRupiah(summaryKeuangan.totalTagihan)}</span>
+            </div>
+            <div className="border border-gray-200 p-2 rounded bg-gray-50">
+              <span className="text-gray-500 block">Total Terbayar:</span>
+              <span className="font-mono font-bold text-sm text-emerald-700">{formatRupiah(summaryKeuangan.totalTerbayar)}</span>
+            </div>
+            <div className="border border-gray-200 p-2 rounded bg-gray-50">
+              <span className="text-gray-500 block">Sisa Tunggakan:</span>
+              <span className={`font-mono font-bold text-sm ${summaryKeuangan.sisaTunggakan > 0 ? "text-red-600" : "text-black"}`}>{formatRupiah(summaryKeuangan.sisaTunggakan)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* TANDA TANGAN & PENGESAHAN */}
+        <div className="pt-8 flex items-start justify-between text-center text-xs break-inside-avoid">
+          <div className="w-56 space-y-12">
+            <p className="text-gray-600">Mengetahui,<br/>Orang Tua / Wali Siswa</p>
+            <p className="font-bold underline text-black">( ........................................ )</p>
+          </div>
+          <div className="w-56 space-y-12">
+            <p className="text-gray-600">Bandung, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}<br/>Kepala Sekolah / Wali Kelas</p>
+            <p className="font-bold underline text-black">( ........................................ )</p>
+          </div>
+        </div>
+
+      </div>
 
       {/* Modal Edit Form (Untuk Admin & TU) */}
       {!isReadOnly && (

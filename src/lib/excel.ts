@@ -28,29 +28,60 @@ export function exportToExcel(data: any[], fileName: string, sheetName: string =
 }
 
 /**
- * Fungsi khusus untuk mengunduh template Excel Impor Siswa.
+ * Fungsi khusus untuk mengunduh template Excel Impor Siswa dengan 2 Sheet (Data & Referensi ID).
  */
-export function downloadSiswaTemplate() {
+export function downloadSiswaTemplate(schoolUnits: any[] = [], classrooms: any[] = []) {
   const templateData = [
     {
-      "NISN": "1234567890",
+      "NISN": "0051234567",
+      "NIS": "2025001",
       "Nama Lengkap": "Ahmad Dahlan",
-      "Jenis Kelamin": "L",
-      "Agama": "ISLAM",
+      "Jenis Kelamin": "Laki-laki",
+      "Agama": "Islam",
       "Tempat Lahir": "Bandung",
-      "Tanggal Lahir": "2005-12-31",
-      "Alamat": "Jl. Merdeka No 1"
+      "Tanggal Lahir (YYYY-MM-DD)": "2008-05-14",
+      "No Telepon Ortu": "081234567890",
+      "Alamat": "Jl. Merdeka No 1, Bandung",
+      "ID Sub Kelas (Opsional)": ""
     },
     {
-      "NISN": "0987654321",
+      "NISN": "0067654321",
+      "NIS": "2025002",
       "Nama Lengkap": "Siti Aisyah",
-      "Jenis Kelamin": "P",
-      "Agama": "ISLAM",
+      "Jenis Kelamin": "Perempuan",
+      "Agama": "Islam",
       "Tempat Lahir": "Jakarta",
-      "Tanggal Lahir": "2006-01-15",
-      "Alamat": "Jl. Jendral Sudirman No 2"
+      "Tanggal Lahir (YYYY-MM-DD)": "2009-01-20",
+      "No Telepon Ortu": "081987654321",
+      "Alamat": "Jl. Sudirman No 2, Jakarta",
+      "ID Sub Kelas (Opsional)": ""
     }
   ];
 
-  exportToExcel(templateData, 'Template_Impor_Siswa', 'Template');
+  const refData = classrooms && classrooms.length > 0 ? classrooms.map((c: any, index: number) => ({
+    "No": index + 1,
+    "Nama Rombel / Sub Kelas": c.name || "-",
+    "Tingkat": c.tingkat?.name || "-",
+    "Jurusan": c.jurusan?.name || "Umum",
+    "Unit Sekolah": schoolUnits.find((u: any) => u.id === c.unitSekolahId)?.name || "-",
+    "ID Sub Kelas (Salin ke Sheet 1 jika perlu)": c.id
+  })) : [
+    {
+      "No": 1,
+      "Nama Rombel / Sub Kelas": "X IPA 1 (Contoh)",
+      "Tingkat": "Kelas 10",
+      "Jurusan": "IPA",
+      "Unit Sekolah": "SMA SIRAYA",
+      "ID Sub Kelas (Salin ke Sheet 1 jika perlu)": "clx12345exampleid67890"
+    }
+  ];
+
+  const workbook = XLSX.utils.book_new();
+  const sheet1 = XLSX.utils.json_to_sheet(templateData);
+  const sheet2 = XLSX.utils.json_to_sheet(refData);
+
+  XLSX.utils.book_append_sheet(workbook, sheet1, "Data_Impor_Siswa");
+  XLSX.utils.book_append_sheet(workbook, sheet2, "Referensi_ID_Rombel");
+
+  XLSX.writeFile(workbook, "Template_Impor_Siswa_Siraya.xlsx");
 }

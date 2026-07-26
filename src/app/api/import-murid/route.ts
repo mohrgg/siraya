@@ -13,10 +13,10 @@ export async function POST(req: Request) {
     const formData = await req.formData()
     const rawData = formData.get("data") as string
     const unitId = formData.get("unitId") as string
-    const subKelasId = formData.get("subKelasId") as string
+    const subKelasId = (formData.get("subKelasId") || "") as string
 
-    if (!rawData || !unitId || !subKelasId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    if (!rawData || !unitId) {
+      return NextResponse.json({ error: "Missing required fields (data or unitId)" }, { status: 400 })
     }
 
     const rows = JSON.parse(rawData)
@@ -44,9 +44,10 @@ export async function POST(req: Request) {
       const row = rows[i]
 
       // Extract raw fields mapped from CSV header
-      const nis = (row["NIS *"] || "").toString().trim()
-      const nama = (row["Nama Lengkap *"] || "").toString().trim()
+      const nis = (row["NIS *"] || row["NIS"] || "").toString().trim()
+      const nama = (row["Nama Lengkap *"] || row["Nama Lengkap"] || "").toString().trim()
       const nisn = (row["NISN"] || "").toString().trim()
+      const targetSubKelasId = (row["ID Sub Kelas (Opsional)"] || row["ID Sub Kelas"] || subKelasId || "").toString().trim()
       
       let jk = (row["Jenis Kelamin"] || "").toString().trim()
       if (jk.toUpperCase() === "L") jk = "Laki-laki"
@@ -79,6 +80,12 @@ export async function POST(req: Request) {
       if (!nis || !nama) {
         failedCount++
         errors.push({ row: rowNumber, msg: "Kolom NIS dan Nama Lengkap wajib diisi." })
+        continue
+      }
+
+      if (!targetSubKelasId) {
+        failedCount++
+        errors.push({ row: rowNumber, msg: "Rombel/Kelas tujuan tidak ditentukan (kosong di Excel & di pilihan default)." })
         continue
       }
 
@@ -141,7 +148,7 @@ export async function POST(req: Request) {
           await tx.riwayatKelas.create({
             data: {
               muridId: newMurid.id,
-              subKelasId: subKelasId,
+              subKelasId: targetSubKelasId,
               tahunAkademikId: activeTahun.id
             }
           })

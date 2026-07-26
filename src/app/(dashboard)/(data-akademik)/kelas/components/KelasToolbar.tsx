@@ -19,6 +19,8 @@ export default function KelasToolbar({
   academicYears,
   handleExportExcel,
   isExporting,
+  handleExportPDF,
+  isExportingPDF,
   setShowModalImportMurid,
   setShowModalKelas,
   setShowModalSubKelas,
@@ -127,19 +129,26 @@ export default function KelasToolbar({
           </>
         )}
 
-        <div className="flex gap-2 border-l border-border pl-3" title="Ekspor data siswa sesuai filter saat ini">
+        <div className="flex gap-2 border-l border-border pl-3" title="Ekspor data sesuai filter saat ini">
           <Button 
             variant="outline" 
             size="sm" 
             className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100"
             onClick={handleExportExcel}
-            disabled={isExporting || (activeTab !== 'murid' && activeTab !== 'alumni')}
+            disabled={isExporting || (activeTab !== 'murid' && activeTab !== 'alumni' && activeTab !== 'sub-kelas')}
           >
             <FileSpreadsheet size={16} className="mr-1.5" /> 
             {isExporting ? 'Mengekspor...' : 'Excel'}
           </Button>
-          <Button variant="outline" size="sm" className="opacity-50 cursor-not-allowed" disabled title="Akan hadir di fase berikutnya">
-            <FilePdf size={16} className="mr-1.5" /> PDF
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800" 
+            onClick={handleExportPDF}
+            disabled={isExportingPDF || (activeTab !== 'murid' && activeTab !== 'alumni' && activeTab !== 'sub-kelas')}
+          >
+            <FilePdf size={16} className="mr-1.5" /> 
+            {isExportingPDF ? 'Mengekspor...' : 'PDF'}
           </Button>
           {activeTab === "murid" && !isReadOnly && (
             <Button 

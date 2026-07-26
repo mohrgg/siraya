@@ -149,7 +149,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
       {/* Row 2: Kepadatan Rombel (Bar Chart with Reference Line) & Task Alert List */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Bar Chart: Kepadatan Rombel */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm lg:col-span-2 flex flex-col">
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm lg:col-span-2 flex flex-col h-[420px]">
           <div className="flex items-center justify-between mb-2">
             <div>
               <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
@@ -160,18 +160,23 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                 Batas ideal maksimal adalah 35 siswa/rombel (Garis Merah).
               </p>
             </div>
-            {capacityWarnings.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">
-                <AlertTriangle size={14} />
-                {capacityWarnings.length} Kelas Melebihi Batas
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 border border-red-200 rounded-lg text-[11px] font-bold">
+                Batas Ideal: 35
               </span>
-            )}
+              {capacityWarnings.length > 0 && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold shadow-sm">
+                  <AlertTriangle size={14} />
+                  {capacityWarnings.length} Melebihi Batas
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="flex-1 min-h-[300px] mt-4">
+          <div className="flex-1 w-full mt-4 min-h-0">
             {rombelData && rombelData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={rombelData} margin={{ top: 20, right: 10, left: -20, bottom: 40 }}>
+                <BarChart data={rombelData} margin={{ top: 25, right: 10, left: -20, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis 
                     dataKey="name" 
@@ -182,12 +187,30 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                     angle={-30}
                     textAnchor="end"
                   />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#64748b', fontSize: 12 }}
+                    domain={[0, (dataMax: number) => Math.max(Math.round(dataMax * 1.25), 45)]}
+                  />
                   <Tooltip 
                     contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} 
                     formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Jumlah']}
                   />
-                  <ReferenceLine y={35} label={{ value: 'Maks Ideal (35)', fill: '#ef4444', fontSize: 11, position: 'top' }} stroke="#ef4444" strokeDasharray="3 3" strokeWidth={2} />
+                  <ReferenceLine 
+                    y={35} 
+                    label={{ 
+                      value: 'Maks Ideal (35)', 
+                      fill: '#dc2626', 
+                      fontSize: 11, 
+                      fontWeight: 'bold', 
+                      position: 'top',
+                      dy: -6
+                    }} 
+                    stroke="#ef4444" 
+                    strokeDasharray="4 4" 
+                    strokeWidth={2} 
+                  />
                   <Bar dataKey="total" radius={[6, 6, 0, 0]} barSize={32}>
                     {rombelData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.total > 35 ? '#ef4444' : '#3b82f6'} />
@@ -205,9 +228,9 @@ export default function UnitDashboard(props: UnitDashboardProps) {
         </div>
 
         {/* Task & Anomaly Center */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between h-[420px]">
+          <div className="flex flex-col flex-1 min-h-0">
+            <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3 shrink-0">
               <div className="flex gap-4">
                 <button
                   onClick={() => setActiveTab('anomali')}
@@ -228,7 +251,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
               </div>
             </div>
 
-            <div className="max-h-[280px] overflow-y-auto pr-1 space-y-2.5">
+            <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 min-h-0">
               {activeTab === 'anomali' ? (
                 anomalyList.length > 0 ? (
                   anomalyList.map((item, idx) => (
@@ -277,7 +300,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 shrink-0">
             <span>Siswa tanpa data wali:</span>
             <span className="font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100">{missingParent} Siswa</span>
           </div>
