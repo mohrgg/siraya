@@ -56,7 +56,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
     <div className="flex flex-col gap-6 pb-12 animate-in fade-in duration-300">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <div>
+        <div className="flex-1 min-w-0 pr-0 lg:pr-6">
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-primary/10 text-primary border border-primary/20">
               {role === 'ADMIN' ? 'Superadmin Area' : 'Tata Usaha Area'}
@@ -72,17 +72,17 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
 
         {/* Role Injection: Shortcut navigasi khusus Administrator */}
         {role === 'ADMIN' && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5 shrink-0 self-start md:self-center">
             <Link 
               href="/manajemen-user" 
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all duration-200"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 whitespace-nowrap"
             >
               <Settings size={16} />
               Kelola Pengguna
             </Link>
             <Link 
               href="/unit-sekolah" 
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all duration-200"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 whitespace-nowrap"
             >
               <Building size={16} />
               Unit Sekolah

@@ -68,7 +68,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
     <div className="flex flex-col gap-6 pb-12 animate-in fade-in duration-300">
       {/* Header & Role Injection (Quick Actions for TU) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <div>
+        <div className="flex-1 min-w-0 pr-0 lg:pr-6">
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-blue-50 text-blue-600 border border-blue-100">
               {role === 'ADMIN' ? 'Superadmin • Supervisi Unit' : 'Tata Usaha • Operasional Unit'}
@@ -84,18 +84,18 @@ export default function UnitDashboard(props: UnitDashboardProps) {
 
         {/* Role Injection: TU mendapatkan tombol Quick Actions, Admin mendapatkan mode Supervisi */}
         {role === 'TATA_USAHA' ? (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2.5 shrink-0 self-start md:self-center">
             <Link
               href="/kelas"
               onClick={() => handleQuickAction('Kelola Kelas & Murid')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all duration-200"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 whitespace-nowrap"
             >
               <PlusCircle size={16} />
               Kelola Kelas & Murid
             </Link>
           </div>
         ) : (
-          <div className="px-4 py-2 bg-gray-50 rounded-xl border border-gray-200 text-xs font-semibold text-gray-500">
+          <div className="px-4 py-2 bg-gray-50 rounded-xl border border-gray-200 text-xs font-semibold text-gray-500 shrink-0 self-start md:self-center whitespace-nowrap">
             Mode Supervisi (Read-Only)
           </div>
         )}

@@ -14,6 +14,8 @@ import ImportMuridModal from "@/components/modals/ImportMuridModal"
 import MuridFormModal from "@/components/modals/MuridFormModal"
 import TingkatFormModal from "./components/TingkatFormModal"
 import SubKelasFormModal from "./components/SubKelasFormModal"
+import SubKelasDetailModal from "./components/SubKelasDetailModal"
+import MuridDetailModal from "@/components/modals/MuridDetailModal"
 import { tambahKelas, editKelas, hapusKelas, hapusTingkatan, tambahTingkatan } from "@/actions/kelas"
 import { hapusSiswa, tambahSiswa, editSiswa } from "@/actions/siswa"
 
@@ -421,6 +423,40 @@ export default function KelasClient({
         }}
         schoolUnits={schoolUnits}
         classrooms={data.classrooms}
+      />
+
+      {/* Modal Detail Sub Kelas (Rombel) */}
+      <SubKelasDetailModal
+        isOpen={!!viewDetailSubKelas}
+        onClose={() => setViewDetailSubKelas(null)}
+        subKelas={viewDetailSubKelas}
+        isReadOnly={isReadOnly}
+        onEdit={(sub) => {
+          setFormSubKelas({
+            id: sub.id,
+            name: sub.name,
+            tingkatId: sub.tingkatId,
+            jurusanId: sub.jurusanId || "",
+            tahunAkademikId: sub.tahunAkademikId,
+            unitSekolahId: sub.unitSekolahId
+          })
+          setShowModalSubKelas(true)
+        }}
+        onViewStudent={(student) => {
+          setViewDetailMurid(student)
+        }}
+      />
+
+      {/* Modal Detail Murid */}
+      <MuridDetailModal
+        isOpen={!!viewDetailMurid}
+        onClose={() => setViewDetailMurid(null)}
+        murid={viewDetailMurid}
+        isReadOnly={isReadOnly}
+        onEdit={(m) => {
+          setFormMurid({ ...m, subKelasId: m.riwayatKelas?.[0]?.subKelasId || m.subKelasId || "" })
+          setShowModalMurid(true)
+        }}
       />
 
     </div>

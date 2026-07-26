@@ -23,7 +23,11 @@ export default function TabSubKelas({
           <SortableHeader label="Tingkat" sortKey="tingkat.name" currentSortKey={sortClassrooms?.key as string} currentDirection={sortClassrooms?.direction} onSort={requestSortClassrooms as any} />
           <SortableHeader label="Sub Kelas (Rombel)" sortKey="name" currentSortKey={sortClassrooms?.key as string} currentDirection={sortClassrooms?.direction} onSort={requestSortClassrooms as any} />
           <th className="p-4 font-semibold">Jumlah Siswa</th>
-          {!isReadOnly && <th className="p-4 font-semibold text-right">Aksi</th>}
+          {isReadOnly ? (
+            <th className="p-4 font-semibold text-right">Detail</th>
+          ) : (
+            <th className="p-4 font-semibold text-right">Aksi</th>
+          )}
         </tr>
       </thead>
       <tbody>
@@ -41,15 +45,23 @@ export default function TabSubKelas({
             <td className="p-4 text-text-main">{c.tingkat?.name}</td>
             <td className="p-4 font-bold text-text-main">{c.name}</td>
             <td className="p-4 text-text-muted">{c._count?.riwayatKelas || c._count?.murid || 0}</td>
-            {!isReadOnly && (
+            {isReadOnly ? (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setViewDetailSubKelas(c)}><Info size={16} /></Button>
+                  <Button variant="outline" size="sm" onClick={() => setViewDetailSubKelas(c)} className="text-primary hover:bg-primary/10 font-bold gap-1.5">
+                    <Info size={16} /> Lihat Detail
+                  </Button>
+                </div>
+              </td>
+            ) : (
+              <td className="p-4">
+                <div className="flex items-center justify-end gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setViewDetailSubKelas(c)} title="Lihat Detail Rombel & Daftar Siswa"><Info size={16} /></Button>
                   <Button variant="outline" size="sm" onClick={() => {
                     setFormSubKelas({ id: c.id, name: c.name, tingkatId: c.tingkatId, jurusanId: c.jurusanId || "", tahunAkademikId: c.tahunAkademikId, unitSekolahId: c.unitSekolahId })
                     setShowModalSubKelas(true)
-                  }}><Edit2 size={16} /></Button>
-                  <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: c.id, type: "subkelas" })}><Trash2 size={16} /></Button>
+                  }} title="Edit Rombel"><Edit2 size={16} /></Button>
+                  <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: c.id, type: "subkelas" })} title="Hapus Rombel"><Trash2 size={16} /></Button>
                 </div>
               </td>
             )}

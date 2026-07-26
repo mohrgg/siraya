@@ -1,7 +1,8 @@
 'use client'
 
-import { Building, Users, LayoutDashboard, Calendar, GraduationCap, CheckCircle2, TrendingUp, TrendingDown, BookOpen, Wallet } from "lucide-react"
+import { Building, Users, LayoutDashboard, Calendar, GraduationCap, CheckCircle2, TrendingUp, TrendingDown, BookOpen, Wallet, Award, Layers } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, Treemap } from 'recharts'
+import Link from "next/link"
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
 
@@ -30,48 +31,47 @@ export default function KepsekDashboard(props: any) {
   }
 
   return (
-    <div className="flex flex-col gap-6 pb-12">
-      <div className="mb-2">
-        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Dashboard Kepala Sekolah</h1>
-        <p className="text-gray-500 mt-1">Ringkasan eksekutif laporan data akademik untuk pimpinan.</p>
+    <div className="flex flex-col gap-6 pb-12 animate-in fade-in duration-300">
+      {/* Header Banner Standar (Konsisten dengan Yayasan & Unit) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="flex-1 min-w-0 pr-0 lg:pr-6">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-emerald-50 text-emerald-600 border border-emerald-100">
+              Kepala Sekolah Area • Pimpinan Unit
+            </span>
+            <span className="text-gray-400">•</span>
+            <span className="text-xs font-semibold text-gray-500">Tahun Akademik: {activeYear?.name || 'Aktif'}</span>
+            <span className="text-gray-400">•</span>
+            <span className="text-xs font-bold text-gray-800">{activeUnit?.name || '-'}</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Dashboard Kepala Sekolah</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Ringkasan eksekutif dan analitik laporan data akademik, retensi, serta demografi siswa pada {activeUnit?.name || 'Unit Sekolah'}.
+          </p>
+        </div>
+
+        {/* Action Buttons (Sejajar horizontal, anti wrap pada desktop) */}
+        <div className="flex items-center gap-2.5 shrink-0 self-start md:self-center">
+          <Link
+            href="/kelas"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 whitespace-nowrap"
+          >
+            <GraduationCap size={16} />
+            Data Kelas
+          </Link>
+          <Link
+            href="/jurusan"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 whitespace-nowrap"
+          >
+            <Award size={16} />
+            Data Jurusan
+          </Link>
+        </div>
       </div>
 
-      {/* Info Bar Yayasan & Unit */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-4 flex flex-wrap items-center gap-6 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white text-blue-600 rounded-lg flex items-center justify-center shadow-sm border border-blue-100">
-            <LayoutDashboard size={20} />
-          </div>
-          <div>
-            <p className="text-xs text-blue-600 font-medium">Unit Aktif</p>
-            <p className="text-sm font-bold text-gray-900">{activeUnit?.name || '-'}</p>
-          </div>
-        </div>
-        <div className="w-px h-8 bg-blue-200 hidden sm:block" />
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white text-blue-600 rounded-lg flex items-center justify-center shadow-sm border border-blue-100">
-            <Calendar size={20} />
-          </div>
-          <div>
-            <p className="text-xs text-blue-600 font-medium">Tahun Akademik</p>
-            <p className="text-sm font-bold text-gray-900">{activeYear?.name || '-'}</p>
-          </div>
-        </div>
-        <div className="w-px h-8 bg-blue-200 hidden sm:block" />
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white text-emerald-600 rounded-lg flex items-center justify-center shadow-sm border border-emerald-100">
-            <CheckCircle2 size={20} />
-          </div>
-          <div>
-            <p className="text-xs text-emerald-600 font-medium">Skor Kualitas Data</p>
-            <p className={`text-sm font-bold ${dataQualityScore >= 90 ? 'text-emerald-700' : 'text-amber-600'}`}>{dataQualityScore}% Lengkap</p>
-          </div>
-        </div>
-      </div>
-
-      {/* METRIC CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+      {/* METRIC CARDS (4 Kolom) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center"><Users size={20} /></div>
             <h3 className="font-bold text-gray-700 text-sm">Total Siswa Aktif</h3>
@@ -79,7 +79,7 @@ export default function KepsekDashboard(props: any) {
           <p className="text-3xl font-black text-gray-900">{formatNumber(totalMurid)}</p>
         </div>
         
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center"><GraduationCap size={20} /></div>
             <h3 className="font-bold text-gray-700 text-sm">Kelas Berjalan</h3>
@@ -87,12 +87,25 @@ export default function KepsekDashboard(props: any) {
           <p className="text-3xl font-black text-gray-900">{formatNumber(totalRombel)}</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center"><BookOpen size={20} /></div>
             <h3 className="font-bold text-gray-700 text-sm">Total Jurusan</h3>
           </div>
           <p className="text-3xl font-black text-gray-900">{formatNumber(totalJurusan)}</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center"><CheckCircle2 size={20} /></div>
+            <h3 className="font-bold text-gray-700 text-sm">Skor Kualitas Data</h3>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-black text-gray-900">{dataQualityScore}%</p>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${dataQualityScore >= 90 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+              {dataQualityScore >= 90 ? 'Lengkap' : 'Perlu Review'}
+            </span>
+          </div>
         </div>
       </div>
 

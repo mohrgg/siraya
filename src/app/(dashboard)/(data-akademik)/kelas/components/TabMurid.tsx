@@ -96,7 +96,11 @@ export default function TabMurid({
         )}
         
         {!isLoadingStudents && students.map((s: any, i: number) => (
-          <tr key={s.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
+          <tr key={s.id} className="border-b border-border hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={(e) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('button') || target.closest('input')) return;
+            setViewDetailMurid(s)
+          }}>
             {!isReadOnly && (
               <td className="p-4 text-center">
                 <input 
@@ -146,21 +150,23 @@ export default function TabMurid({
             {!isReadOnly && (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setViewDetailMurid(s)}><Info size={16} /></Button>
+                  <Button variant="outline" size="sm" onClick={() => setViewDetailMurid(s)} title="Lihat Detail Murid"><Info size={16} /></Button>
                   <Button variant="outline" size="sm" onClick={() => { 
                     setFormMurid({ ...s, subKelasId: s.riwayatKelas?.[0]?.subKelasId || "" }); 
                     setShowModalMurid(true); 
-                  }}>
+                  }} title="Edit Murid">
                     <Edit2 size={16} />
                   </Button>
-                  <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: s.id, type: "murid" })}><Trash2 size={16} /></Button>
+                  <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: s.id, type: "murid" })} title="Hapus Murid"><Trash2 size={16} /></Button>
                 </div>
               </td>
             )}
             {isReadOnly && (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setViewDetailMurid(s)}><Info size={16} /></Button>
+                  <Button variant="outline" size="sm" onClick={() => setViewDetailMurid(s)} className="text-primary hover:bg-primary/10 font-bold gap-1.5">
+                    <Info size={16} /> Lihat Detail
+                  </Button>
                 </div>
               </td>
             )}
