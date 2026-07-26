@@ -2,19 +2,16 @@ import { cookies } from "next/headers"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 import { 
-  getAdminYayasanData, getAdminUnitData, getAdminOperasionalData, 
-  getTuYayasanData, getTuUnitData, getKepsekData 
+  getYayasanDashboardData, getUnitDashboardData, getAdminOperasionalData, 
+  getKepsekData 
 } from "@/lib/dashboard-queries"
 
 import AdminTabs from "@/components/dashboard/AdminTabs"
-import AdminDashboard from "@/components/dashboard/AdminDashboard"
-import AdminUnitDashboard from "@/components/dashboard/AdminUnitDashboard"
-import AdminOperasionalDashboard from "@/components/dashboard/AdminOperasionalDashboard"
+import YayasanDashboard from "@/components/dashboard/YayasanDashboard"
+import UnitDashboard from "@/components/dashboard/UnitDashboard"
+import OperasionalDashboard from "@/components/dashboard/OperasionalDashboard"
 
 import TuTabs from "@/components/dashboard/TuTabs"
-import TuYayasanDashboard from "@/components/dashboard/TuYayasanDashboard"
-import TuDashboard from "@/components/dashboard/TuDashboard"
-
 import KepsekDashboard from "@/components/dashboard/KepsekDashboard"
 
 export default async function DashboardPage(props: { searchParams: Promise<any> }) {
@@ -45,11 +42,11 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
     const { schoolUnits, activeYearId } = await getActiveContext()
 
     if (activeTab === "yayasan") {
-      const data = await getAdminYayasanData()
+      const data = await getYayasanDashboardData()
       return (
         <div className="max-w-7xl mx-auto w-full">
           <AdminTabs units={schoolUnits} />
-          <AdminDashboard {...data} />
+          <YayasanDashboard role="ADMIN" {...data} />
         </div>
       )
     }
@@ -67,11 +64,11 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
         )
       }
 
-      const data = await getAdminUnitData(selectedUnitId, activeYearId)
+      const data = await getUnitDashboardData(selectedUnitId, activeYearId)
       return (
         <div className="max-w-7xl mx-auto w-full">
           <AdminTabs units={schoolUnits} />
-          <AdminUnitDashboard unitName={selectedUnit?.name || 'Unit'} {...data} />
+          <UnitDashboard role="ADMIN" unitName={selectedUnit?.name || 'Unit'} {...data} />
         </div>
       )
     }
@@ -81,17 +78,17 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
       return (
         <div className="max-w-7xl mx-auto w-full">
           <AdminTabs units={schoolUnits} />
-          <AdminOperasionalDashboard {...data} />
+          <OperasionalDashboard {...data} />
         </div>
       )
     }
 
     // Default fallback
-    const data = await getAdminYayasanData()
+    const data = await getYayasanDashboardData()
     return (
       <div className="max-w-7xl mx-auto w-full">
         <AdminTabs units={schoolUnits} />
-        <AdminDashboard {...data} />
+        <YayasanDashboard role="ADMIN" {...data} />
       </div>
     )
   }
@@ -99,11 +96,11 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
   // ==================== TATA USAHA ====================
   if (role === "TATA_USAHA") {
     if (activeTab === "yayasan") {
-      const data = await getTuYayasanData()
+      const data = await getYayasanDashboardData()
       return (
         <div className="max-w-7xl mx-auto w-full">
           <TuTabs />
-          <TuYayasanDashboard {...data} />
+          <YayasanDashboard role="TATA_USAHA" {...data} />
         </div>
       )
     }
@@ -119,11 +116,11 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
       )
     }
 
-    const data = await getTuUnitData(activeUnitId, activeYearId)
+    const data = await getUnitDashboardData(activeUnitId, activeYearId)
     return (
       <div className="max-w-7xl mx-auto w-full">
         <TuTabs />
-        <TuDashboard activeUnit={activeUnit} activeYear={activeYear} {...data} />
+        <UnitDashboard role="TATA_USAHA" unitName={activeUnit?.name || 'Unit Sekolah'} {...data} />
       </div>
     )
   }

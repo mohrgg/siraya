@@ -1,6 +1,6 @@
 'use client'
 
-import { Building, Users, LayoutDashboard, Calendar, GraduationCap, CheckCircle2, TrendingUp, TrendingDown, BookOpen } from "lucide-react"
+import { Building, Users, LayoutDashboard, Calendar, GraduationCap, CheckCircle2, TrendingUp, TrendingDown, BookOpen, Wallet } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, Treemap } from 'recharts'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
@@ -8,7 +8,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 export default function KepsekDashboard(props: any) {
   const { 
     activeUnit, activeYear, totalMurid, totalRombel, totalJurusan, 
-    dataQualityScore, jobData, topCrowded, topEmpty, retentionData, 
+    dataQualityScore, jobData, incomeData, topCrowded, topEmpty, retentionData, 
     jenjangData, genderData, statusData, anomalyList, capacityData
   } = props
 
@@ -182,38 +182,33 @@ export default function KepsekDashboard(props: any) {
           </div>
         </div>
 
-        {/* Target vs Kapasitas */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col items-center justify-center">
-          <h3 className="font-bold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
-            Pencapaian Target Siswa
-            <span className="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full">DUMMY</span>
-          </h3>
-          <div className="relative w-full h-12 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
-            {capacityData && (
-              <div 
-                className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-1000 ease-out" 
-                style={{ width: `${Math.min((capacityData.actual / capacityData.target) * 100, 100)}%` }}
-              ></div>
-            )}
-            {capacityData && capacityData.actual >= capacityData.target && (
-              <div className="absolute top-0 left-0 w-full h-full bg-emerald-500 flex items-center justify-center">
-                <span className="text-xs font-bold text-white tracking-wider">TARGET TERCAPAI</span>
-              </div>
+        {/* Rentang Gaji Orang Tua */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 className="font-bold text-gray-800 mb-1 flex items-center justify-center sm:justify-start gap-2">
+              <Wallet size={18} className="text-emerald-500" />
+              Rentang Gaji Orang Tua
+            </h3>
+            <p className="text-xs text-gray-500 mb-4 text-center sm:text-left">Demografi penghasilan bulanan orang tua / wali.</p>
+          </div>
+
+          <div className="h-56 my-auto">
+            {incomeData && incomeData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={incomeData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={4} dataKey="value">
+                    {incomeData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada data penghasilan.</div>
             )}
           </div>
-          {capacityData && (
-            <div className="flex justify-between w-full mt-3 px-2">
-              <div className="text-left">
-                <p className="text-[10px] text-gray-500 font-bold uppercase">Siswa Saat Ini</p>
-                <p className="text-lg font-black text-gray-900">{formatNumber(capacityData.actual)}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] text-gray-500 font-bold uppercase">Target</p>
-                <p className="text-lg font-black text-gray-900">{formatNumber(capacityData.target)}</p>
-              </div>
-            </div>
-          )}
-          <p className="text-xs text-gray-400 mt-6 text-center italic">*Target diambil berdasarkan pertumbuhan tahunan (asumsi +10%).</p>
         </div>
       </div>
     </div>
