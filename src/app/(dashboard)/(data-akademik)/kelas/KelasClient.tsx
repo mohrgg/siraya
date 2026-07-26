@@ -14,8 +14,7 @@ import ImportMuridModal from "@/components/modals/ImportMuridModal"
 import MuridFormModal from "@/components/modals/MuridFormModal"
 import TingkatFormModal from "./components/TingkatFormModal"
 import SubKelasFormModal from "./components/SubKelasFormModal"
-import SubKelasDetailModal from "./components/SubKelasDetailModal"
-import MuridDetailModal from "@/components/modals/MuridDetailModal"
+import SubKelasDetailDrawer from "./components/SubKelasDetailDrawer"
 import { tambahKelas, editKelas, hapusKelas, hapusTingkatan, tambahTingkatan } from "@/actions/kelas"
 import { hapusSiswa, tambahSiswa, editSiswa } from "@/actions/siswa"
 
@@ -272,7 +271,6 @@ export default function KelasClient({
               <TabMurid 
                 {...data} 
                 setDeleteData={setDeleteData} 
-                setViewDetailMurid={setViewDetailMurid} 
                 setFormMurid={setFormMurid} 
                 setShowModalMurid={setShowModalMurid} 
                 getStatusBadge={getStatusBadge}
@@ -425,8 +423,8 @@ export default function KelasClient({
         classrooms={data.classrooms}
       />
 
-      {/* Modal Detail Sub Kelas (Rombel) */}
-      <SubKelasDetailModal
+      {/* Drawer Detail Sub Kelas (Rombel) */}
+      <SubKelasDetailDrawer
         isOpen={!!viewDetailSubKelas}
         onClose={() => setViewDetailSubKelas(null)}
         subKelas={viewDetailSubKelas}
@@ -442,21 +440,18 @@ export default function KelasClient({
           })
           setShowModalSubKelas(true)
         }}
-        onViewStudent={(student) => {
-          setViewDetailMurid(student)
+        onPrev={() => {
+          if (!viewDetailSubKelas || !data.classrooms) return
+          const idx = data.classrooms.findIndex((c: any) => c.id === viewDetailSubKelas.id)
+          if (idx > 0) setViewDetailSubKelas(data.classrooms[idx - 1])
         }}
-      />
-
-      {/* Modal Detail Murid */}
-      <MuridDetailModal
-        isOpen={!!viewDetailMurid}
-        onClose={() => setViewDetailMurid(null)}
-        murid={viewDetailMurid}
-        isReadOnly={isReadOnly}
-        onEdit={(m) => {
-          setFormMurid({ ...m, subKelasId: m.riwayatKelas?.[0]?.subKelasId || m.subKelasId || "" })
-          setShowModalMurid(true)
+        onNext={() => {
+          if (!viewDetailSubKelas || !data.classrooms) return
+          const idx = data.classrooms.findIndex((c: any) => c.id === viewDetailSubKelas.id)
+          if (idx !== -1 && idx < data.classrooms.length - 1) setViewDetailSubKelas(data.classrooms[idx + 1])
         }}
+        prevDisabled={!viewDetailSubKelas || !data.classrooms || data.classrooms.findIndex((c: any) => c.id === viewDetailSubKelas.id) <= 0}
+        nextDisabled={!viewDetailSubKelas || !data.classrooms || data.classrooms.findIndex((c: any) => c.id === viewDetailSubKelas.id) >= data.classrooms.length - 1 || data.classrooms.findIndex((c: any) => c.id === viewDetailSubKelas.id) === -1}
       />
 
     </div>

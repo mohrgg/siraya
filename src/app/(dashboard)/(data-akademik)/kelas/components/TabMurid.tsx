@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation"
 import { Info, Edit2, Trash2, User, X } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { SortableHeader } from "@/components/ui/SortableHeader"
@@ -25,6 +26,7 @@ export default function TabMurid({
   isPromoting,
   isReadOnly
 }: any) {
+  const router = useRouter()
   return (
     <>
       <thead className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
@@ -99,7 +101,7 @@ export default function TabMurid({
           <tr key={s.id} className="border-b border-border hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={(e) => {
             const target = e.target as HTMLElement;
             if (target.closest('button') || target.closest('input')) return;
-            setViewDetailMurid(s)
+            router.push(`/murid/${s.id}`)
           }}>
             {!isReadOnly && (
               <td className="p-4 text-center">
@@ -150,7 +152,7 @@ export default function TabMurid({
             {!isReadOnly && (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setViewDetailMurid(s)} title="Lihat Detail Murid"><Info size={16} /></Button>
+                  <Button variant="outline" size="sm" onClick={() => router.push(`/murid/${s.id}`)} title="Lihat Profil 360° Murid"><Info size={16} /></Button>
                   <Button variant="outline" size="sm" onClick={() => { 
                     setFormMurid({ ...s, subKelasId: s.riwayatKelas?.[0]?.subKelasId || "" }); 
                     setShowModalMurid(true); 
@@ -164,8 +166,8 @@ export default function TabMurid({
             {isReadOnly && (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setViewDetailMurid(s)} className="text-primary hover:bg-primary/10 font-bold gap-1.5">
-                    <Info size={16} /> Lihat Detail
+                  <Button variant="outline" size="sm" onClick={() => router.push(`/murid/${s.id}`)} className="text-primary hover:bg-primary/10 font-bold gap-1.5">
+                    <Info size={16} /> Profil 360°
                   </Button>
                 </div>
               </td>
