@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react"
+import { Trash2, Edit2 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 
@@ -9,6 +9,7 @@ export default function TabKelas({
   currentPage,
   pageSize,
   setDeleteData,
+  onEditTingkat,
   isReadOnly
 }: any) {
   return (
@@ -33,7 +34,12 @@ export default function TabKelas({
             {!isReadOnly && (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
-                  <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: g.id, type: "tingkat" })}><Trash2 size={16} /></Button>
+                  <Button variant="outline" size="sm" onClick={() => onEditTingkat && onEditTingkat(g)} title="Edit Tingkat">
+                    <Edit2 size={16} />
+                  </Button>
+                  <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: g.id, type: "tingkat" })} title="Hapus Tingkat">
+                    <Trash2 size={16} />
+                  </Button>
                 </div>
               </td>
             )}

@@ -6,7 +6,8 @@ import toast from "react-hot-toast"
 import { 
   ArrowLeft, Share2, Printer, Edit2, User, Users, HeartPulse, 
   GraduationCap, MapPin, Award, CreditCard, Clock, FileText, 
-  CheckCircle2, AlertCircle, Calendar, Building, DollarSign 
+  CheckCircle2, AlertCircle, Calendar, Building, DollarSign,
+  FileSpreadsheet
 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import MuridFormModal from "@/components/modals/MuridFormModal"
@@ -48,6 +49,8 @@ export default function MuridDetailClient({
   const [activeBioTab, setActiveBioTab] = useState("utama")
   const [showEditModal, setShowEditModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isExportingExcel, setIsExportingExcel] = useState(false)
+  const [isExportingPDF, setIsExportingPDF] = useState(false)
 
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
@@ -59,6 +62,75 @@ export default function MuridDetailClient({
   const handlePrint = () => {
     if (typeof window !== "undefined") {
       window.print()
+    }
+  }
+
+  const handleExportExcel = async () => {
+    setIsExportingExcel(true)
+    try {
+      const { exportToExcel } = await import("@/lib/excel")
+      const dataToExport = [{
+        "NISN": murid.nisn || "-",
+        "NIS / NIK": murid.nis || "-",
+        "Nama Lengkap": murid.name,
+        "Unit Sekolah": murid.unitSekolah?.name || "-",
+        "Rombel Saat Ini": murid.riwayatKelas?.[0]?.subKelas?.name || murid.subKelas?.name || "-",
+        "Status": murid.status || "AKTIF",
+        "Tempat, Tgl Lahir": `${murid.birthPlace || "-"}, ${murid.birthDate ? new Date(murid.birthDate).toLocaleDateString("id-ID") : "-"}`,
+        "Jenis Kelamin": murid.gender,
+        "Agama": murid.religion || "-",
+        "Alamat": murid.address || "-",
+        "Nama Orang Tua": murid.parentName || "-",
+        "No. HP Orang Tua": murid.parentPhone || "-",
+        "Asal Sekolah": murid.previousSchool || "-"
+      }]
+      const dateStr = new Date().toISOString().split('T')[0]
+      exportToExcel(dataToExport, `Profil_Siswa_${murid.name}_${dateStr}`.replace(/\s+/g, '_'))
+      toast.success("Berhasil mengunduh Excel Profil Siswa")
+    } catch (err: any) {
+      toast.error("Gagal ekspor Excel: " + err.message)
+    } finally {
+      setIsExportingExcel(false)
+    }
+  }
+
+  const handleExportPDF = async () => {
+    setIsExportingPDF(true)
+    try {
+      const { exportToPdfTable } = await import("@/lib/pdf")
+      const unitName = murid.unitSekolah?.name || "Unit Sekolah"
+      const currentRombel = murid.riwayatKelas?.[0]?.subKelas?.name || murid.subKelas?.name || "Belum ada kelas"
+      const schoolUnitName = murid.unitSekolah?.name ? `UNIT ${murid.unitSekolah.name.toUpperCase()} SIRAYA` : "YAYASAN AL-BASYARIAH SIRAYA"
+      const dateStr = new Date().toISOString().split('T')[0]
+
+      const headers = ["Keterangan / Field", "Informasi Siswa"]
+      const pdfRows = [
+        ["Nama Lengkap", murid.name],
+        ["NISN / NIS", `${murid.nisn || "-"}/${murid.nis || "-"}`],
+        ["Unit / Rombel", `${unitName} / ${currentRombel}`],
+        ["Status Siswa", murid.status || "AKTIF"],
+        ["Tempat, Tgl Lahir", `${murid.birthPlace || "-"}, ${murid.birthDate ? new Date(murid.birthDate).toLocaleDateString("id-ID") : "-"}`],
+        ["Jenis Kelamin / Agama", `${murid.gender} / ${murid.religion || "-"}`],
+        ["Alamat Tinggal", murid.address || "-"],
+        ["Nama Orang Tua / Wali", murid.parentName || "-"],
+        ["No. HP Orang Tua", murid.parentPhone || "-"],
+        ["Asal Sekolah Sebelumnya", murid.previousSchool || "-"]
+      ]
+
+      exportToPdfTable({
+        title: `Profil Siswa 360° - ${murid.name}`,
+        subtitle: `NISN: ${murid.nisn || "-"} • Unit: ${unitName} • Rombel: ${currentRombel}`,
+        headers,
+        data: pdfRows,
+        filename: `Profil_Siswa_${murid.name}_${dateStr}`.replace(/\s+/g, '_'),
+        schoolUnitName,
+        orientation: 'portrait'
+      })
+      toast.success("Berhasil mengunduh PDF Profil Siswa")
+    } catch (err: any) {
+      toast.error("Gagal ekspor PDF: " + err.message)
+    } finally {
+      setIsExportingPDF(false)
     }
   }
 
@@ -114,6 +186,22 @@ export default function MuridDetailClient({
             className="gap-2 text-xs font-semibold bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
           >
             <Share2 size={15} /> Salin Tautan Profil
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleExportExcel}
+            disabled={isExportingExcel}
+            className="gap-1.5 text-xs font-semibold bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+          >
+            <FileSpreadsheet size={15} /> Excel
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleExportPDF}
+            disabled={isExportingPDF}
+            className="gap-1.5 text-xs font-semibold bg-white text-rose-600 border-rose-200 hover:bg-rose-50"
+          >
+            <FileText size={15} /> PDF
           </Button>
           <Button 
             variant="outline" 

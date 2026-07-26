@@ -18,6 +18,7 @@ import {
   BookOpen,
   Calendar,
   Users2,
+  GraduationCap,
   Landmark,
   Receipt,
   Key
@@ -43,6 +44,7 @@ const menuGroups = [
     title: "DATA AKADEMIK",
     items: [
       { href: "/tahun-akademik", label: "Tahun Akademik", icon: Calendar, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/guru", label: "Guru & Staf", icon: GraduationCap, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
       { href: "/kelas", label: "Kelas & Murid", icon: Users2, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
     ]
   },

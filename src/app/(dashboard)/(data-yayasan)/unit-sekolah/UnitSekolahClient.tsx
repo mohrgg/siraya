@@ -7,6 +7,7 @@ import { Edit2, Plus, Building, Trash2 } from "lucide-react"
 import { tambahUnitSekolah, editUnitSekolah, hapusUnitSekolah } from "@/actions/unit-sekolah"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { Input } from "@/components/ui/Input"
+import { Modal } from "@/components/ui/Modal"
 
 type UnitSekolah = { id: string, name: string, level: string, address: string | null, phone: string | null, logo?: string | null, isActive: boolean, createdAt?: Date, updatedAt?: Date }
 
@@ -81,50 +82,48 @@ export default function UnitSekolahClient({ initialData, userRole }: { initialDa
         isLoading={isDeleting}
       />
 
-      {isAdding && (
-        <div className="fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-surface rounded-2xl shadow-xl border border-border flex flex-col">
-            <div className="p-6 border-b border-border">
-              <h3 className="text-xl font-bold text-text-main">{formData.id ? "Edit Unit Sekolah" : "Tambah Unit Sekolah Baru"}</h3>
-            </div>
-            <div className="p-6">
-              <form onSubmit={handleSave} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Nama Unit</label>
-                  <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required placeholder="ex: SMK Al Basyariah" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Level</label>
-                  <select className="w-full px-3 py-2 bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main" value={formData.level} onChange={e => setFormData({ ...formData, level: e.target.value })} required>
-                    <option value="SD">SD</option>
-                    <option value="SMP">SMP</option>
-                    <option value="SMA">SMA</option>
-                    <option value="SMK">SMK</option>
-                    <option value="MI">MI</option>
-                    <option value="MTs">MTs</option>
-                    <option value="MA">MA</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Telepon (Opsional)</label>
-                  <Input value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="ex: 021-123456" />
-                </div>
-                {formData.id && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <input type="checkbox" id="isActive" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} className="w-4 h-4 accent-albas-green" />
-                    <label htmlFor="isActive" className="font-semibold cursor-pointer text-text-main text-sm">Unit Aktif</label>
-                  </div>
-                )}
-                
-                <div className="flex gap-3 mt-4 justify-end">
-                  <Button type="button" variant="outline" onClick={() => { setIsAdding(false); setFormData({ id: "", name: "", level: "SD", address: "", phone: "", isActive: true }) }}>Batal</Button>
-                  <Button type="submit" isLoading={isSubmitting}>Simpan</Button>
-                </div>
-              </form>
-            </div>
+      <Modal
+        isOpen={isAdding}
+        onClose={() => { setIsAdding(false); setFormData({ id: "", name: "", level: "SD", address: "", phone: "", isActive: true }) }}
+        title={formData.id ? "Edit Unit Sekolah" : "Tambah Unit Sekolah Baru"}
+        subtitle="Kelola identitas dan jenjang pendidikan unit sekolah yayasan"
+        icon={Building}
+        widthClassName="max-w-lg"
+      >
+        <form onSubmit={handleSave} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-main">Nama Unit</label>
+            <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required placeholder="ex: SMK Al Basyariah" />
           </div>
-        </div>
-      )}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-main">Level</label>
+            <select className="w-full px-3 py-2 bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main" value={formData.level} onChange={e => setFormData({ ...formData, level: e.target.value })} required>
+              <option value="SD">SD</option>
+              <option value="SMP">SMP</option>
+              <option value="SMA">SMA</option>
+              <option value="SMK">SMK</option>
+              <option value="MI">MI</option>
+              <option value="MTs">MTs</option>
+              <option value="MA">MA</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-main">Telepon (Opsional)</label>
+            <Input value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="ex: 021-123456" />
+          </div>
+          {formData.id && (
+            <div className="flex items-center gap-2 mt-2">
+              <input type="checkbox" id="isActive" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} className="w-4 h-4 accent-albas-green" />
+              <label htmlFor="isActive" className="font-semibold cursor-pointer text-text-main text-sm">Unit Aktif</label>
+            </div>
+          )}
+          
+          <div className="flex gap-3 mt-4 justify-end">
+            <Button type="button" variant="outline" onClick={() => { setIsAdding(false); setFormData({ id: "", name: "", level: "SD", address: "", phone: "", isActive: true }) }}>Batal</Button>
+            <Button type="submit" isLoading={isSubmitting}>Simpan</Button>
+          </div>
+        </form>
+      </Modal>
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden p-6">
         <div className="flex justify-between items-center mb-6">

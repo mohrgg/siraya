@@ -59,6 +59,7 @@ model UnitSekolah {
   tingkat           Tingkat[]
   jurusan           Jurusan[]
   subKelas          SubKelas[]
+  guru              Guru[]
   murid             Murid[]
   klasifikasiAkun   KlasifikasiAkun[]
   akunPenting       AkunPenting[]
@@ -116,14 +117,43 @@ model SubKelas {
   tingkatId       String
   jurusanId       String?
   tahunAkademikId String
+  waliKelasGuruId String?
+  waliKelas       String? @db.VarChar(150)
+  waliKelasPhone  String? @db.VarChar(50)
   isDeleted       Boolean @default(false)
   unitSekolahId   String
 
-  unitSekolah   UnitSekolah    @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
-  tingkat       Tingkat        @relation(fields: [tingkatId], references: [id], onDelete: Cascade)
-  jurusan       Jurusan?       @relation(fields: [jurusanId], references: [id])
-  tahunAkademik TahunAkademik  @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
-  riwayatKelas  RiwayatKelas[]
+  unitSekolah     UnitSekolah    @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  tingkat         Tingkat        @relation(fields: [tingkatId], references: [id], onDelete: Cascade)
+  jurusan         Jurusan?       @relation(fields: [jurusanId], references: [id])
+  tahunAkademik   TahunAkademik  @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
+  waliKelasGuru   Guru?          @relation("GuruWaliKelas", fields: [waliKelasGuruId], references: [id])
+  riwayatKelas    RiwayatKelas[]
+}
+
+model Guru {
+  id                String      @id @default(cuid())
+  nip               String?     @db.VarChar(50)
+  name              String      @db.VarChar(150)
+  gender            String      @db.VarChar(20)
+  phone             String?     @db.VarChar(50)
+  email             String?     @db.VarChar(100)
+  statusKepegawaian String      @default("GTY") @db.VarChar(50)
+  pendidikan        String?     @db.VarChar(50)
+  bidangStudi       String?     @db.VarChar(100)
+  bankName          String?     @db.VarChar(50)
+  bankAccount       String?     @db.VarChar(50)
+  bankAccountName   String?     @db.VarChar(150)
+  isActive          Boolean     @default(true)
+  isDeleted         Boolean     @default(false)
+  unitSekolahId     String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  unitSekolah       UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  rombelWali        SubKelas[]  @relation("GuruWaliKelas")
+
+  @@index([unitSekolahId])
 }
 
 model Murid {

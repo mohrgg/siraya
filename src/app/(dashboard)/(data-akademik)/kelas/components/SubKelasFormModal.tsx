@@ -1,6 +1,7 @@
 import { Modal } from "@/components/ui/Modal"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
+import { Users } from "lucide-react"
 
 export default function SubKelasFormModal({
   isOpen,
@@ -12,10 +13,20 @@ export default function SubKelasFormModal({
   schoolUnits,
   grades,
   academicYears,
-  initialMajors
+  initialMajors,
+  initialTeachers = []
 }: any) {
+  const teachersForUnit = initialTeachers.filter((t: any) => !formData.unitSekolahId || t.unitSekolahId === formData.unitSekolahId)
+  const isCustomTeacher = !formData.waliKelasGuruId && (formData.waliKelas || formData.waliKelasPhone)
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={formData.id ? "Edit Sub Kelas" : "Tambah Sub Kelas (Rombel)"}>
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title={formData.id ? "Edit Sub Kelas (Rombel)" : "Tambah Sub Kelas (Rombel)"}
+      subtitle="Alokasi kelas dan penunjukan Wali Kelas untuk tahun ajaran aktif"
+      icon={Users}
+      widthClassName="max-w-xl"
+    >
       <form onSubmit={onSave} className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-semibold text-text-main mb-1.5">Unit Sekolah</label>
@@ -82,6 +93,61 @@ export default function SubKelasFormModal({
             value={formData.name}
             onChange={e => setFormData({ ...formData, name: e.target.value })}
           />
+        </div>
+
+        <div className="pt-2 border-t border-border mt-1">
+          <label className="block text-sm font-semibold text-text-main mb-1.5">Wali Kelas / Pembimbing Akademik</label>
+          <select
+            className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm mb-2"
+            value={formData.waliKelasGuruId ? formData.waliKelasGuruId : (isCustomTeacher ? "CUSTOM" : "")}
+            onChange={e => {
+              const val = e.target.value
+              if (val === "") {
+                setFormData({ ...formData, waliKelasGuruId: "", waliKelas: "", waliKelasPhone: "" })
+              } else if (val === "CUSTOM") {
+                setFormData({ ...formData, waliKelasGuruId: "" })
+              } else {
+                const selectedGuru = initialTeachers.find((t: any) => t.id === val)
+                if (selectedGuru) {
+                  setFormData({
+                    ...formData,
+                    waliKelasGuruId: selectedGuru.id,
+                    waliKelas: selectedGuru.name,
+                    waliKelasPhone: selectedGuru.phone || ""
+                  })
+                }
+              }
+            }}
+          >
+            <option value="">-- Belum Dipilih --</option>
+            {teachersForUnit.map((t: any) => (
+              <option key={t.id} value={t.id}>
+                {t.name} ({t.nip ? `NIP: ${t.nip}` : t.statusKepegawaian})
+              </option>
+            ))}
+            <option value="CUSTOM">+ Ketik Manual (Jika guru belum terdaftar)...</option>
+          </select>
+
+          {(!formData.waliKelasGuruId && (isCustomTeacher || formData.waliKelasGuruId === "")) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 bg-primary/5 p-3 rounded-xl border border-primary/10">
+              <div>
+                <label className="block text-xs font-medium text-text-main mb-1">Nama Wali Kelas</label>
+                <Input
+                  placeholder="Cth: Bpk. Ahmad Dahlan, S.Pd."
+                  value={formData.waliKelas || ""}
+                  onChange={e => setFormData({ ...formData, waliKelas: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-main mb-1">No. WhatsApp / Telepon</label>
+                <Input
+                  placeholder="Cth: 081234567890"
+                  value={formData.waliKelasPhone || ""}
+                  onChange={e => setFormData({ ...formData, waliKelasPhone: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-border">
           <Button type="button" variant="outline" onClick={onClose}>Batal</Button>

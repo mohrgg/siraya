@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Users, GraduationCap, Building, Award, Calendar, User, Edit2, Info, ArrowRight } from "lucide-react"
+import { Users, GraduationCap, Building, Award, Calendar, User, Edit2, Info, ArrowRight, Phone, MessageCircle, FileSpreadsheet, FileText } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { SideDrawer } from "@/components/ui/SideDrawer"
 import { getSiswaPaginated } from "@/actions/siswa"
+import toast from "react-hot-toast"
 
 interface SubKelasDetailDrawerProps {
   isOpen: boolean
@@ -33,6 +34,8 @@ export default function SubKelasDetailDrawer({
   const router = useRouter()
   const [students, setStudents] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isExportingExcel, setIsExportingExcel] = useState(false)
+  const [isExportingPDF, setIsExportingPDF] = useState(false)
 
   useEffect(() => {
     if (isOpen && subKelas?.id) {
@@ -65,6 +68,79 @@ export default function SubKelasDetailDrawer({
   const handleStudentClick = (studentId: string) => {
     onClose()
     router.push(`/murid/${studentId}`)
+  }
+
+  const formatWhatsAppUrl = (phone: string | null | undefined) => {
+    if (!phone) return null
+    let clean = phone.replace(/\D/g, "")
+    if (clean.startsWith("0")) clean = "62" + clean.slice(1)
+    return `https://wa.me/${clean}`
+  }
+
+  const handleExportExcel = async () => {
+    if (students.length === 0) {
+      toast.error("Tidak ada data siswa untuk diekspor")
+      return
+    }
+    setIsExportingExcel(true)
+    try {
+      const { exportToExcel } = await import("@/lib/excel")
+      const mappedData = students.map((s, idx) => ({
+        "No": idx + 1,
+        "NISN": s.nisn || "-",
+        "NIS": s.nis || "-",
+        "Nama Siswa": s.name,
+        "Gender": s.gender,
+        "Status": s.status || "AKTIF",
+        "Asal Sekolah": s.previousSchool || "-",
+        "Nama Orang Tua / Wali": s.parentName || "-",
+        "No. HP Orang Tua": s.parentPhone || "-"
+      }))
+      const dateStr = new Date().toISOString().split('T')[0]
+      exportToExcel(mappedData, `Roster_Siswa_${subKelas.name}_${dateStr}`.replace(/\s+/g, '_'))
+      toast.success("Berhasil mengunduh Excel Daftar Siswa")
+    } catch (err: any) {
+      toast.error("Gagal ekspor Excel: " + err.message)
+    } finally {
+      setIsExportingExcel(false)
+    }
+  }
+
+  const handleExportPDF = async () => {
+    if (students.length === 0) {
+      toast.error("Tidak ada data siswa untuk diekspor")
+      return
+    }
+    setIsExportingPDF(true)
+    try {
+      const { exportToPdfTable } = await import("@/lib/pdf")
+      const schoolUnitName = subKelas.unitSekolah?.name ? `UNIT ${subKelas.unitSekolah.name.toUpperCase()} SIRAYA` : "YAYASAN AL-BASYARIAH SIRAYA"
+      const dateStr = new Date().toISOString().split('T')[0]
+      const headers = ["No", "NISN / NIS", "Nama Siswa", "L/P", "Status", "Nama Orang Tua", "No. HP Orang Tua"]
+      const pdfRows = students.map((s, idx) => [
+        idx + 1,
+        `${s.nisn || "-"}\n${s.nis || "-"}`,
+        s.name,
+        s.gender?.toLowerCase().includes("laki") ? "L" : "P",
+        s.status || "AKTIF",
+        s.parentName || "-",
+        s.parentPhone || "-"
+      ])
+      exportToPdfTable({
+        title: `Daftar Siswa (Roster) - Kelas ${subKelas.name}`,
+        subtitle: `Tingkat: ${subKelas.tingkat?.name || "-"} • Tahun Ajaran: ${subKelas.tahunAkademik?.year || "-"} • Wali Kelas: ${subKelas.waliKelasGuru?.name || subKelas.waliKelas || "Belum ditentukan"}`,
+        headers,
+        data: pdfRows,
+        filename: `Roster_Siswa_${subKelas.name}_${dateStr}`.replace(/\s+/g, '_'),
+        schoolUnitName,
+        orientation: 'portrait'
+      })
+      toast.success("Berhasil mengunduh PDF Daftar Siswa")
+    } catch (err: any) {
+      toast.error("Gagal ekspor PDF: " + err.message)
+    } finally {
+      setIsExportingPDF(false)
+    }
   }
 
   const subtitle = (
@@ -178,16 +254,74 @@ export default function SubKelasDetailDrawer({
         </div>
       </div>
 
+      {/* Kartu Kontak Wali Kelas (QoL Feature) */}
+      <div className="bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-transparent p-4 rounded-2xl border border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shrink-0">
+            <GraduationCap size={24} />
+          </div>
+          <div>
+            <div className="text-xs text-emerald-700 font-extrabold uppercase tracking-wide">Wali Kelas / Pembimbing</div>
+            <div className="text-lg font-bold text-text-main">
+              {subKelas.waliKelasGuru?.name || subKelas.waliKelas || <span className="italic text-text-muted font-normal">Belum Ditentukan</span>}
+            </div>
+            {subKelas.waliKelasGuru?.nip && (
+              <div className="text-xs text-text-muted font-mono">NIP: {subKelas.waliKelasGuru.nip}</div>
+            )}
+          </div>
+        </div>
+
+        {(subKelas.waliKelasGuru?.phone || subKelas.waliKelasPhone) ? (
+          <a
+            href={formatWhatsAppUrl(subKelas.waliKelasGuru?.phone || subKelas.waliKelasPhone) || "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all font-semibold text-xs w-fit"
+          >
+            <MessageCircle className="w-4 h-4 fill-white text-emerald-600" />
+            <span>Chat WhatsApp ({subKelas.waliKelasGuru?.phone || subKelas.waliKelasPhone})</span>
+          </a>
+        ) : (
+          <div className="text-xs text-text-muted italic flex items-center gap-1.5 bg-background/60 px-3 py-1.5 rounded-lg border border-border">
+            <Phone className="w-3.5 h-3.5" /> Kontak telepon belum tersedia
+          </div>
+        )}
+      </div>
+
       {/* Daftar Siswa (Roster) */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-          <h3 className="font-black text-gray-900 text-lg flex items-center gap-2">
-            <Users size={18} className="text-primary" />
-            Daftar Siswa (Roster)
-          </h3>
-          <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
-            Klik siswa untuk melihat Profil 360°
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200 pb-3">
+          <div>
+            <h3 className="font-black text-gray-900 text-lg flex items-center gap-2">
+              <Users size={18} className="text-primary" />
+              Daftar Siswa (Roster)
+            </h3>
+            <span className="text-xs font-semibold text-gray-500">
+              Klik siswa untuk melihat Profil 360°
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportExcel}
+              disabled={isExportingExcel || students.length === 0}
+              className="flex items-center gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50 text-xs font-semibold"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Excel</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportPDF}
+              disabled={isExportingPDF || students.length === 0}
+              className="flex items-center gap-1.5 text-rose-600 border-rose-200 hover:bg-rose-50 text-xs font-semibold"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>PDF</span>
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (

@@ -15,13 +15,13 @@ import MuridFormModal from "@/components/modals/MuridFormModal"
 import TingkatFormModal from "./components/TingkatFormModal"
 import SubKelasFormModal from "./components/SubKelasFormModal"
 import SubKelasDetailDrawer from "./components/SubKelasDetailDrawer"
-import { tambahKelas, editKelas, hapusKelas, hapusTingkatan, tambahTingkatan } from "@/actions/kelas"
+import { tambahKelas, editKelas, hapusKelas, hapusTingkatan, tambahTingkatan, editTingkatan } from "@/actions/kelas"
 import { hapusSiswa, tambahSiswa, editSiswa } from "@/actions/siswa"
 
 export default function KelasClient({ 
-  activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits, userRole 
+  activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits, initialTeachers = [], userRole 
 }: { 
-  activeUnitId?: string, activeYearId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[], userRole?: string 
+  activeUnitId?: string, activeYearId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[], initialTeachers?: any[], userRole?: string 
 }) {
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
   const data = useKelasData({ activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits })
@@ -49,7 +49,7 @@ export default function KelasClient({
     address: "", formNo: "", username: ""
   })
   const [formKelas, setFormKelas] = useState({ id: "", name: "", order: 1, unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
-  const [formSubKelas, setFormSubKelas] = useState({ id: "", name: "", tingkatId: "", jurusanId: "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
+  const [formSubKelas, setFormSubKelas] = useState({ id: "", name: "", tingkatId: "", jurusanId: "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "", waliKelasGuruId: "", waliKelas: "", waliKelasPhone: "" })
 
   const getStatusBadge = (status: string) => {
     if (status === "AKTIF") return "bg-emerald-100 text-emerald-700";
@@ -280,12 +280,14 @@ export default function KelasClient({
     setIsSubmitting(true)
     try {
       if (formKelas.id) {
-        toast.error("Fitur edit tingkat belum didukung.")
+        const res = await editTingkatan(formKelas.id, { name: formKelas.name, order: Number(formKelas.order), unitSekolahId: formKelas.unitSekolahId })
+        data.setGrades(data.grades.map((g: any) => g.id === formKelas.id ? { ...res, unitSekolah: schoolUnits.find((u: any) => u.id === formKelas.unitSekolahId) } : g).sort((a: any, b: any) => a.order - b.order))
+        toast.success("Tingkat berhasil diperbarui")
       } else {
         const res = await tambahTingkatan({ ...formKelas, order: Number(formKelas.order) })
-        data.setGrades([...data.grades, { ...res, unitSekolah: schoolUnits.find((u: any) => u.id === formKelas.unitSekolahId) }].sort((a, b) => a.order - b.order))
+        data.setGrades([...data.grades, { ...res, unitSekolah: schoolUnits.find((u: any) => u.id === formKelas.unitSekolahId) }].sort((a: any, b: any) => a.order - b.order))
+        toast.success("Tingkat berhasil ditambahkan")
       }
-      toast.success("Tingkat berhasil disimpan")
       setShowModalKelas(false)
       setFormKelas({ id: "", name: "", order: formKelas.order + 1, unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
     } catch (err: any) { toast.error(err.message) }
@@ -309,7 +311,7 @@ export default function KelasClient({
       }
       toast.success("Sub kelas berhasil disimpan")
       setShowModalSubKelas(false)
-      setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
+      setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "", waliKelasGuruId: "", waliKelas: "", waliKelasPhone: "" })
     } catch (err: any) { toast.error(err.message) }
     setIsSubmitting(false)
   }
@@ -371,7 +373,10 @@ export default function KelasClient({
         {/* Data Table */}
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
-            {data.activeTab === "kelas" && <TabKelas {...data} setDeleteData={setDeleteData} isReadOnly={isReadOnly} />}
+            {data.activeTab === "kelas" && <TabKelas {...data} setDeleteData={setDeleteData} onEditTingkat={(g: any) => {
+              setFormKelas({ id: g.id, name: g.name, order: g.order, unitSekolahId: g.unitSekolahId })
+              setShowModalKelas(true)
+            }} isReadOnly={isReadOnly} />}
             {data.activeTab === "sub-kelas" && <TabSubKelas {...data} setDeleteData={setDeleteData} setViewDetailSubKelas={setViewDetailSubKelas} setFormSubKelas={setFormSubKelas} setShowModalSubKelas={setShowModalSubKelas} isReadOnly={isReadOnly} />}
             {(data.activeTab === "murid" || data.activeTab === "alumni") && (
               <TabMurid 
@@ -514,6 +519,7 @@ export default function KelasClient({
         grades={data.grades}
         academicYears={academicYears}
         initialMajors={initialMajors}
+        initialTeachers={initialTeachers}
       />
       
       {/* Import Modal */}
@@ -542,7 +548,10 @@ export default function KelasClient({
             tingkatId: sub.tingkatId,
             jurusanId: sub.jurusanId || "",
             tahunAkademikId: sub.tahunAkademikId,
-            unitSekolahId: sub.unitSekolahId
+            unitSekolahId: sub.unitSekolahId,
+            waliKelasGuruId: sub.waliKelasGuruId || "",
+            waliKelas: sub.waliKelas || "",
+            waliKelasPhone: sub.waliKelasPhone || ""
           })
           setShowModalSubKelas(true)
         }}

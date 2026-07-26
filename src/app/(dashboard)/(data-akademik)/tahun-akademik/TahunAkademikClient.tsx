@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Edit2, Trash2, CheckCircle2, Search } from "lucide-react"
+import { Plus, Edit2, Trash2, CheckCircle2, Search, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import { Modal } from "@/components/ui/Modal"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 import { useSortableData } from "@/hooks/useSortableData"
 import { tambahTahunAkademik, editTahunAkademik, hapusTahunAkademik } from "@/actions/tahun-akademik"
@@ -143,61 +144,58 @@ export default function TahunAkademikClient({ initialData, userRole }: { initial
         isLoading={isDeleting}
       />
 
-      {isAdding && (
-        <div className="fixed inset-0 bg-black/60 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-surface rounded-2xl shadow-xl border border-border flex flex-col">
-            <div className="p-6 border-b border-border flex justify-between items-center bg-bg rounded-t-2xl">
-              <h3 className="text-xl font-bold text-albas-green m-0">{formData.id ? "Edit Tahun Akademik" : "Tambah Tahun Akademik Baru"}</h3>
-              <button onClick={() => setIsAdding(false)} className="text-2xl text-text-muted hover:text-text-main transition-colors">&times;</button>
-            </div>
-            <div className="p-6">
-              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-100 rounded-xl text-sm text-yellow-800 flex gap-3">
-                <div className="font-bold shrink-0">Catatan:</div>
-                <div>Tahun akademik yang diset "Aktif" akan menjadi tahun berjalan utama sistem (ditampilkan otomatis).</div>
-              </div>
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Pilih Tahun Akademik <span className="text-red-500">*</span></label>
-                  <select 
-                    className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
-                    value={selectedPreset}
-                    onChange={handlePresetChange}
-                  >
-                    {PRESETS.map(p => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                    <option value="CUSTOM">-- Ketik Manual (Lainnya) --</option>
-                  </select>
-                </div>
-
-                {isCustom && (
-                  <div className="flex flex-col gap-1.5 p-4 bg-gray-50 rounded-xl border border-border mt-1">
-                    <label className="text-sm font-semibold text-text-main">Input Tahun Manual <span className="text-red-500">*</span></label>
-                    <input 
-                      type="text"
-                      placeholder="Contoh: 2024/2025"
-                      className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
-                      value={formData.name}
-                      onChange={e => setFormData({ ...formData, name: e.target.value })}
-                      required
-                    />
-                    <span className="text-xs text-text-muted">Gunakan format YYYY/YYYY</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2 mt-2">
-                  <input type="checkbox" id="isActive" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} className="w-4 h-4 accent-albas-green" />
-                  <label htmlFor="isActive" className="font-semibold cursor-pointer text-text-main text-sm">Jadikan Aktif (Tahun Berjalan)</label>
-                </div>
-                
-                <div className="flex gap-3 mt-4 justify-end">
-                  <Button type="button" variant="outline" onClick={() => setIsAdding(false)}>Batal</Button>
-                  <Button type="submit" isLoading={isSubmitting}>Simpan</Button>
-                </div>
-              </form>
-            </div>
-          </div>
+      <Modal
+        isOpen={isAdding}
+        onClose={() => setIsAdding(false)}
+        title={formData.id ? "Edit Tahun Akademik" : "Tambah Tahun Akademik Baru"}
+        subtitle="Konfigurasi tahun ajaran dan penentuan tahun berjalan utama"
+        icon={Calendar}
+        widthClassName="max-w-lg"
+      >
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-100 rounded-xl text-sm text-yellow-800 flex gap-3">
+          <div className="font-bold shrink-0">Catatan:</div>
+          <div>Tahun akademik yang diset "Aktif" akan menjadi tahun berjalan utama sistem (ditampilkan otomatis).</div>
         </div>
-      )}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-main">Pilih Tahun Akademik <span className="text-red-500">*</span></label>
+            <select 
+              className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
+              value={selectedPreset}
+              onChange={handlePresetChange}
+            >
+              {PRESETS.map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+              <option value="CUSTOM">-- Ketik Manual (Lainnya) --</option>
+            </select>
+          </div>
+
+          {isCustom && (
+            <div className="flex flex-col gap-1.5 p-4 bg-gray-50 rounded-xl border border-border mt-1">
+              <label className="text-sm font-semibold text-text-main">Input Tahun Manual <span className="text-red-500">*</span></label>
+              <input 
+                type="text"
+                placeholder="Contoh: 2024/2025"
+                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
+                value={formData.name}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+              <span className="text-xs text-text-muted">Gunakan format YYYY/YYYY</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 mt-2">
+            <input type="checkbox" id="isActive" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} className="w-4 h-4 accent-albas-green" />
+            <label htmlFor="isActive" className="font-semibold cursor-pointer text-text-main text-sm">Jadikan Aktif (Tahun Berjalan)</label>
+          </div>
+          
+          <div className="flex gap-3 mt-4 justify-end">
+            <Button type="button" variant="outline" onClick={() => setIsAdding(false)}>Batal</Button>
+            <Button type="submit" isLoading={isSubmitting}>Simpan</Button>
+          </div>
+        </form>
+      </Modal>
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div className="relative w-full max-w-xs">

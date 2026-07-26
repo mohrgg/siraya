@@ -1,6 +1,7 @@
 import { getTingkatan, getJurusan, getKelas } from "@/actions/kelas"
 import { getSiswa } from "@/actions/siswa"
 import { getTahunAkademik } from "@/actions/tahun-akademik"
+import { getGuruList } from "@/actions/guru"
 import KelasClient from "./KelasClient"
 import prisma from "@/lib/prisma"
 
@@ -21,6 +22,7 @@ export default async function KelasPage() {
   const grades = await getTingkatan(activeUnitId)
   const majors = await getJurusan()
   const classrooms = await getKelas(activeUnitId, activeYearId)
+  const teachers = await getGuruList()
   const students: any[] = [] // Now fetched asynchronously in KelasClient via pagination
 
   return (
@@ -39,6 +41,7 @@ export default async function KelasPage() {
         initialStudents={students}
         academicYears={academicYears}
         schoolUnits={schoolUnits}
+        initialTeachers={teachers}
         userRole={session?.user?.role}
       />
     </div>

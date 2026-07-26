@@ -5,9 +5,11 @@ import { Plus, Edit2, Trash2, BookOpen, Search } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import { Modal } from "@/components/ui/Modal"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 import { useSortableData } from "@/hooks/useSortableData"
 import { tambahJurusan, editJurusan, hapusJurusan } from "@/actions/kelas"
+import toast from "react-hot-toast"
 
 type Major = any
 
@@ -89,8 +91,9 @@ export default function JurusanClient({ initialData, units, userRole }: { initia
       await hapusJurusan(deleteId)
       setData(data.filter(d => d.id !== deleteId))
       setDeleteId(null)
+      toast.success("Jurusan berhasil dihapus")
     } catch (e: any) {
-      alert("Gagal menghapus data: " + e.message)
+      toast.error(e.message || "Gagal menghapus jurusan")
     } finally {
       setIsDeleting(false)
     }
@@ -105,15 +108,17 @@ export default function JurusanClient({ initialData, units, userRole }: { initia
         const res = await editJurusan(formData.id, { name: formData.name, code: formData.code, unitSekolahId: formData.unitSekolahId })
         const updatedUnit = units.find(u => u.id === formData.unitSekolahId)
         setData(data.map(d => d.id === formData.id ? { ...res, unitSekolah: updatedUnit } : d))
+        toast.success("Jurusan berhasil diperbarui")
       } else {
         // Create
         const res = await tambahJurusan({ name: formData.name, code: formData.code, unitSekolahId: formData.unitSekolahId })
         const newUnit = units.find(u => u.id === formData.unitSekolahId)
         setData([...data, { ...res, unitSekolah: newUnit }])
+        toast.success("Jurusan berhasil ditambahkan")
       }
       setIsAdding(false)
     } catch (e: any) {
-      alert(e.message)
+      toast.error(e.message || "Gagal menyimpan jurusan")
     } finally {
       setIsSubmitting(false)
     }
@@ -130,68 +135,66 @@ export default function JurusanClient({ initialData, units, userRole }: { initia
         isLoading={isDeleting}
       />
 
-      {isAdding && (
-        <div className="fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-surface rounded-2xl shadow-xl border border-border flex flex-col">
-            <div className="p-6 border-b border-border">
-              <h3 className="text-xl font-bold text-text-main">{formData.id ? "Edit Jurusan" : "Tambah Jurusan Baru"}</h3>
-            </div>
-            <div className="p-6">
-              <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-800 flex gap-3">
-                <div className="font-bold shrink-0">Catatan:</div>
-                <div>Jurusan ini hanya akan muncul sebagai pilihan saat Anda membuat kelas pada <b>Unit Sekolah</b> yang bersangkutan.</div>
-              </div>
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5 hidden">
-                  <label className="text-sm font-semibold text-text-main">Unit Sekolah <span className="text-red-500">*</span></label>
-                  <select 
-                    className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
-                    value={formData.unitSekolahId}
-                    onChange={e => setFormData({ ...formData, unitSekolahId: e.target.value })}
-                    required
-                  >
-                    {units.map(unit => (
-                      <option key={unit.id} value={unit.id}>{unit.name}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-text-main">Pilih Preset Jurusan / Program</label>
-                  <select 
-                    className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
-                    value={selectedPreset}
-                    onChange={handlePresetChange}
-                  >
-                    {PRESETS.map(p => (
-                      <option key={p.code} value={p.code}>{p.code} - {p.name}</option>
-                    ))}
-                    <option value="CUSTOM">-- Ketik Manual (Lainnya) --</option>
-                  </select>
-                </div>
-
-                {isCustom && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 p-4 bg-gray-50 rounded-xl border border-border">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-semibold text-text-main">Kode Jurusan (Cth: TKJ)</label>
-                      <Input value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} maxLength={20} required />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-semibold text-text-main">Nama Lengkap Jurusan</label>
-                      <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} maxLength={100} required />
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex gap-3 mt-4 justify-end">
-                  <Button type="button" variant="outline" onClick={() => setIsAdding(false)}>Batal</Button>
-                  <Button type="submit" isLoading={isSubmitting}>Simpan</Button>
-                </div>
-              </form>
-            </div>
-          </div>
+      <Modal
+        isOpen={isAdding}
+        onClose={() => setIsAdding(false)}
+        title={formData.id ? "Edit Jurusan" : "Tambah Jurusan Baru"}
+        subtitle="Daftar peminatan atau program studi vokasi untuk unit sekolah"
+        icon={BookOpen}
+        widthClassName="max-w-lg"
+      >
+        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-800 flex gap-3">
+          <div className="font-bold shrink-0">Catatan:</div>
+          <div>Jurusan ini hanya akan muncul sebagai pilihan saat Anda membuat kelas pada <b>Unit Sekolah</b> yang bersangkutan.</div>
         </div>
-      )}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5 hidden">
+            <label className="text-sm font-semibold text-text-main">Unit Sekolah <span className="text-red-500">*</span></label>
+            <select 
+              className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
+              value={formData.unitSekolahId}
+              onChange={e => setFormData({ ...formData, unitSekolahId: e.target.value })}
+              required
+            >
+              {units.map(unit => (
+                <option key={unit.id} value={unit.id}>{unit.name}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-main">Pilih Preset Jurusan / Program</label>
+            <select 
+              className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
+              value={selectedPreset}
+              onChange={handlePresetChange}
+            >
+              {PRESETS.map(p => (
+                <option key={p.code} value={p.code}>{p.code} - {p.name}</option>
+              ))}
+              <option value="CUSTOM">-- Ketik Manual (Lainnya) --</option>
+            </select>
+          </div>
+
+          {isCustom && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 p-4 bg-gray-50 rounded-xl border border-border">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-text-main">Kode Jurusan (Cth: TKJ)</label>
+                <Input value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} maxLength={20} required />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-text-main">Nama Lengkap Jurusan</label>
+                <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} maxLength={100} required />
+              </div>
+            </div>
+          )}
+          
+          <div className="flex gap-3 mt-4 justify-end">
+            <Button type="button" variant="outline" onClick={() => setIsAdding(false)}>Batal</Button>
+            <Button type="submit" isLoading={isSubmitting}>Simpan</Button>
+          </div>
+        </form>
+      </Modal>
 
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex overflow-x-auto no-scrollbar gap-2 pb-2">
