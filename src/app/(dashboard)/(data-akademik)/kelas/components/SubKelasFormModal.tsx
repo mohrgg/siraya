@@ -16,7 +16,22 @@ export default function SubKelasFormModal({
   initialMajors,
   initialTeachers = []
 }: any) {
-  const teachersForUnit = initialTeachers.filter((t: any) => !formData.unitSekolahId || t.unitSekolahId === formData.unitSekolahId)
+  const isSelectedGuruInList = initialTeachers.some((t: any) => t.id === formData.waliKelasGuruId)
+  const teachersForUnit = [
+    ...(formData.waliKelasGuruId && !isSelectedGuruInList ? [{
+      id: formData.waliKelasGuruId,
+      name: `${formData.waliKelas || 'Guru Terpilih'} (Telah Dihapus/Nonaktif)`,
+      unitSekolah: { name: "Nonaktif" },
+      statusKepegawaian: "-"
+    }] : []),
+    ...initialTeachers
+  ].sort((a: any, b: any) => {
+    if (a.id === formData.waliKelasGuruId && !isSelectedGuruInList) return -1;
+    const aMatch = a.unitSekolahId === formData.unitSekolahId ? -1 : 1;
+    const bMatch = b.unitSekolahId === formData.unitSekolahId ? -1 : 1;
+    if (aMatch !== bMatch) return aMatch - bMatch;
+    return a.name.localeCompare(b.name);
+  });
   const isCustomTeacher = !formData.waliKelasGuruId && (formData.waliKelas || formData.waliKelasPhone)
   return (
     <Modal 
@@ -64,16 +79,16 @@ export default function SubKelasFormModal({
               value={formData.jurusanId}
               onChange={e => setFormData({ ...formData, jurusanId: e.target.value })}
             >
-              <option value="">Tidak ada jurusan</option>
+              <option value="">-- Umum / Tanpa Jurusan --</option>
               {initialMajors.filter((m: any) => m.unitSekolahId === formData.unitSekolahId).map((m: any) => (
-                <option key={m.id} value={m.id}>{m.name}</option>
+                <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
               ))}
             </select>
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-semibold text-text-main mb-1.5">Tahun Akademik</label>
+          <label className="block text-sm font-semibold text-text-main mb-1.5">Tahun Ajaran</label>
           <select 
             required 
             className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -81,12 +96,12 @@ export default function SubKelasFormModal({
             onChange={e => setFormData({ ...formData, tahunAkademikId: e.target.value })}
           >
             {academicYears.map((y: any) => (
-              <option key={y.id} value={y.id}>{y.name} - {y.isActive ? '(Aktif)' : ''}</option>
+              <option key={y.id} value={y.id}>{y.year} {y.semester} {y.isActive ? "(Aktif)" : ""}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Rombel (Cth: 10-RPL-1)</label>
+          <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Sub Kelas (Rombel)</label>
           <Input 
             required
             placeholder="Masukkan nama rombel"
@@ -122,7 +137,7 @@ export default function SubKelasFormModal({
             <option value="">-- Belum Dipilih --</option>
             {teachersForUnit.map((t: any) => (
               <option key={t.id} value={t.id}>
-                {t.name} ({t.nip ? `NIP: ${t.nip}` : t.statusKepegawaian})
+                {t.name} • {t.unitSekolah?.name || "Yayasan"} ({t.nip ? `NIP: ${t.nip}` : t.statusKepegawaian})
               </option>
             ))}
             <option value="CUSTOM">+ Ketik Manual (Jika guru belum terdaftar)...</option>

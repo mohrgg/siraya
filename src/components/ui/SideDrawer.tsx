@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useEffect } from "react"
+import React, { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { X, ChevronLeft, ChevronRight } from "lucide-react"
 
 interface SideDrawerProps {
@@ -34,6 +35,12 @@ export function SideDrawer({
   nextDisabled = false,
   headerExtra
 }: SideDrawerProps) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   // Lock body scroll when drawer is open
   useEffect(() => {
     if (isOpen) {
@@ -57,10 +64,10 @@ export function SideDrawer({
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [isOpen, onClose])
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] overflow-hidden">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
@@ -143,6 +150,7 @@ export function SideDrawer({
 
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

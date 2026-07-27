@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { Eye, EyeOff, X } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
@@ -12,6 +13,12 @@ export default function ChangePasswordModal({
 }: {
   isOpen: boolean, onClose: () => void
 }) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -22,7 +29,7 @@ export default function ChangePasswordModal({
 
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,10 +40,9 @@ export default function ChangePasswordModal({
     if (newPassword !== confirmPassword) {
       return toast.error("Konfirmasi password baru tidak cocok!")
     }
-
-    setIsSubmitting(true)
     try {
-      await gantiPasswordMandiri(oldPassword, newPassword)
+      setIsSubmitting(true)
+      const res = await gantiPasswordMandiri(oldPassword, newPassword)
       toast.success("Password berhasil diubah! Sesi akan diakhiri untuk keamanan...")
       
       // Auto logout setelah berhasil
@@ -63,8 +69,8 @@ export default function ChangePasswordModal({
     onClose()
   }
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose}></div>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md relative animate-in fade-in zoom-in duration-200">
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
@@ -139,6 +145,7 @@ export default function ChangePasswordModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

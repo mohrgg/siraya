@@ -147,7 +147,16 @@ export async function tambahKelas(data: {
     waliKelasPhone: data.waliKelasPhone || null
   }
 
-  const result = await prisma.subKelas.create({ data: cleanData })
+  const result = await prisma.subKelas.create({ 
+    data: cleanData,
+    include: {
+      unitSekolah: true,
+      tingkat: true,
+      jurusan: true,
+      tahunAkademik: true,
+      waliKelasGuru: true
+    }
+  })
   revalidatePath("/data-master")
   revalidatePath("/kelas")
   return result
@@ -226,7 +235,17 @@ export async function editKelas(id: string, data: {
     waliKelas: data.waliKelas === "" ? null : data.waliKelas,
     waliKelasPhone: data.waliKelasPhone === "" ? null : data.waliKelasPhone
   }
-  const result = await prisma.subKelas.update({ where: { id }, data: cleanData })
+  const result = await prisma.subKelas.update({ 
+    where: { id }, 
+    data: cleanData,
+    include: {
+      unitSekolah: true,
+      tingkat: true,
+      jurusan: true,
+      tahunAkademik: true,
+      waliKelasGuru: true
+    }
+  })
   revalidatePath("/data-master")
   revalidatePath("/kelas")
   return result

@@ -1,5 +1,7 @@
+"use client"
 import { X } from "lucide-react"
-import React from "react"
+import React, { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 
 interface ModalProps {
   isOpen: boolean
@@ -20,10 +22,16 @@ export function Modal({
   widthClassName = "max-w-lg", 
   children 
 }: ModalProps) {
-  if (!isOpen) return null
+  const [mounted, setMounted] = useState(false)
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!isOpen || !mounted) return null
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
       <div className={`relative bg-surface rounded-2xl shadow-2xl w-full ${widthClassName} overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-border flex flex-col max-h-[90vh]`}>
         <div className="flex items-center justify-between p-5 border-b border-border bg-bg/50 shrink-0">
@@ -50,7 +58,8 @@ export function Modal({
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

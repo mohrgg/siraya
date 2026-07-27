@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { X, Briefcase, User, GraduationCap, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 
@@ -27,6 +28,11 @@ export default function GuruFormModal({ isOpen, onClose, onSave, initialData, sc
   const [activeTab, setActiveTab] = useState("kepegawaian")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<any>({})
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (isOpen) {
@@ -40,7 +46,7 @@ export default function GuruFormModal({ isOpen, onClose, onSave, initialData, sc
     }
   }, [isOpen, initialData])
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [field]: value }))
@@ -56,8 +62,8 @@ export default function GuruFormModal({ isOpen, onClose, onSave, initialData, sc
     }
   }
 
-  return (
-    <div className="fixed inset-0 bg-black/60 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-full max-w-5xl bg-surface rounded-2xl shadow-xl border border-border flex flex-col h-[85vh]">
         {/* Header */}
         <div className="p-5 border-b border-border flex justify-between items-center bg-bg rounded-t-2xl shrink-0">
@@ -119,7 +125,7 @@ export default function GuruFormModal({ isOpen, onClose, onSave, initialData, sc
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </div></div>,
+    document.body
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { X, UploadCloud, AlertCircle, CheckCircle2, Download, FileSpreadsheet, Loader2, ArrowLeft, ArrowRight, Eye, ShieldCheck, AlertTriangle, HelpCircle } from "lucide-react"
 import Papa from "papaparse"
 import toast from "react-hot-toast"
@@ -35,6 +36,12 @@ export default function ImportMuridModal({
   schoolUnits,
   classrooms 
 }: ImportMuridModalProps) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
   const [selectedUnit, setSelectedUnit] = useState("")
   const [selectedSubKelas, setSelectedSubKelas] = useState("")
@@ -203,8 +210,10 @@ export default function ImportMuridModal({
   const validCount = previewRows.filter(r => r.status === 'valid').length
   const invalidCount = previewRows.filter(r => r.status === 'invalid').length
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+  if (!isOpen || !mounted) return null
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] border border-gray-100 overflow-hidden">
         
         <div className="p-6 bg-gradient-to-r from-gray-900 via-gray-800 to-primary text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -527,6 +536,7 @@ export default function ImportMuridModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

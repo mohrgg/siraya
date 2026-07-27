@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { X, User, Users, HeartPulse, GraduationCap, MapPin, Save } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 
@@ -30,6 +31,11 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
   const [activeTab, setActiveTab] = useState("utama")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<any>({})
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (isOpen) {
@@ -42,7 +48,7 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
     }
   }, [isOpen, initialData])
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [field]: value }))
@@ -58,8 +64,8 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
     }
   }
 
-  return (
-    <div className="fixed inset-0 bg-black/60 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-full max-w-5xl bg-surface rounded-2xl shadow-xl border border-border flex flex-col h-[90vh]">
         {/* Header */}
         <div className="p-5 border-b border-border flex justify-between items-center bg-bg rounded-t-2xl shrink-0">
@@ -116,6 +122,7 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

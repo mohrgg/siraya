@@ -173,10 +173,20 @@ export async function hapusGuru(id: string) {
     throw new Error("Akses ditolak.")
   }
 
-  const result = await prisma.guru.update({
-    where: { id },
-    data: { isDeleted: true, isActive: false }
-  })
+  const [result] = await prisma.$transaction([
+    prisma.guru.update({
+      where: { id },
+      data: { isDeleted: true, isActive: false }
+    }),
+    prisma.subKelas.updateMany({
+      where: { waliKelasGuruId: id },
+      data: {
+        waliKelasGuruId: null,
+        waliKelas: null,
+        waliKelasPhone: null
+      }
+    })
+  ])
 
   revalidatePath("/guru")
   revalidatePath("/kelas")
