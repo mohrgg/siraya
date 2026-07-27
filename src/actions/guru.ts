@@ -95,17 +95,18 @@ export async function tambahGuru(data: {
     throw new Error("Akses ditolak.")
   }
 
+  const { id, unitSekolah, rombelWali, createdAt, updatedAt, ...guruData } = data as any;
   const result = await prisma.guru.create({
     data: {
-      ...data,
-      nip: data.nip || null,
-      phone: data.phone || null,
-      email: data.email || null,
-      pendidikan: data.pendidikan || null,
-      bidangStudi: data.bidangStudi || null,
-      bankName: data.bankName || null,
-      bankAccount: data.bankAccount || null,
-      bankAccountName: data.bankAccountName || null
+      ...guruData,
+      nip: guruData.nip || null,
+      phone: guruData.phone || null,
+      email: guruData.email || null,
+      pendidikan: guruData.pendidikan || null,
+      bidangStudi: guruData.bidangStudi || null,
+      bankName: guruData.bankName || null,
+      bankAccount: guruData.bankAccount || null,
+      bankAccountName: guruData.bankAccountName || null
     }
   })
 
@@ -134,18 +135,19 @@ export async function editGuru(id: string, data: {
     throw new Error("Akses ditolak.")
   }
 
+  const { id: _, unitSekolah, rombelWali, createdAt, updatedAt, ...guruData } = data as any;
   const result = await prisma.guru.update({
     where: { id },
     data: {
-      ...data,
-      nip: data.nip === "" ? null : data.nip,
-      phone: data.phone === "" ? null : data.phone,
-      email: data.email === "" ? null : data.email,
-      pendidikan: data.pendidikan === "" ? null : data.pendidikan,
-      bidangStudi: data.bidangStudi === "" ? null : data.bidangStudi,
-      bankName: data.bankName === "" ? null : data.bankName,
-      bankAccount: data.bankAccount === "" ? null : data.bankAccount,
-      bankAccountName: data.bankAccountName === "" ? null : data.bankAccountName
+      ...guruData,
+      nip: guruData.nip === "" ? null : guruData.nip,
+      phone: guruData.phone === "" ? null : guruData.phone,
+      email: guruData.email === "" ? null : guruData.email,
+      pendidikan: guruData.pendidikan === "" ? null : guruData.pendidikan,
+      bidangStudi: guruData.bidangStudi === "" ? null : guruData.bidangStudi,
+      bankName: guruData.bankName === "" ? null : guruData.bankName,
+      bankAccount: guruData.bankAccount === "" ? null : guruData.bankAccount,
+      bankAccountName: guruData.bankAccountName === "" ? null : guruData.bankAccountName
     }
   })
 

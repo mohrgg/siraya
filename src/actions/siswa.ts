@@ -136,7 +136,7 @@ export async function tambahSiswa(data: any) {
       throw new Error(`Siswa dengan NIS / NISN (${data.nis}) sudah terdaftar di sistem.`)
     }
 
-    const { subKelasId, studentStatus, birthDate, riwayatKelas, unitSekolah, subKelas, createdAt, updatedAt, id, ...muridData } = data as any;
+    const { subKelasId, studentStatus, birthDate, riwayatKelas, unitSekolah, subKelas, createdAt, updatedAt, id, parentName, ...muridData } = data as any;
 
     const murid = await tx.murid.create({
       data: {
@@ -180,7 +180,7 @@ export async function editSiswa(id: string, data: {
   const result = await prisma.$transaction(async (tx) => {
     // Exclude subKelasId and rename studentStatus -> status
     // Also exclude relation and metadata objects that might be passed from frontend
-    const { subKelasId, studentStatus, birthDate, riwayatKelas, unitSekolah, subKelas, createdAt, updatedAt, ...muridData } = data as any;
+    const { subKelasId, studentStatus, birthDate, riwayatKelas, unitSekolah, subKelas, createdAt, updatedAt, id, parentName, ...muridData } = data as any;
     
     // Check NIS uniqueness if it's being updated
     if (muridData.nis) {
