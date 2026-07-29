@@ -30,7 +30,7 @@ export default function AkunKeuanganClient({
 }) {
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
 
-  const [activeTab, setActiveTab] = useState<"AKUN" | "SUBKLASIFIKASI">("AKUN")
+  const [activeTab, setActiveTab] = useState<"AKUN" | "SUBKLASIFIKASI">("SUBKLASIFIKASI")
   const [searchTerm, setSearchTerm] = useState("")
 
   // Data States
@@ -55,7 +55,12 @@ export default function AkunKeuanganClient({
   // Filtering Logic
   const filteredSubKlas = subKlasifikasi.filter(s => 
     s.nama.toLowerCase().includes(searchTerm.toLowerCase()) || s.kode.includes(searchTerm)
-  )
+  ).sort((a, b) => {
+    const numA = parseInt(a.kode)
+    const numB = parseInt(b.kode)
+    if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB
+    return a.kode.localeCompare(b.kode)
+  })
 
   const filteredAkun = akunDetail.filter(a => {
     const matchesSearch = a.nama.toLowerCase().includes(searchTerm.toLowerCase()) || a.kode.includes(searchTerm)
@@ -67,7 +72,35 @@ export default function AkunKeuanganClient({
       return matchesSearch && matchesUnit
     }
     return matchesSearch
+  }).sort((a, b) => {
+    const numA = parseInt(a.kode)
+    const numB = parseInt(b.kode)
+    if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB
+    return a.kode.localeCompare(b.kode)
   })
+
+  // ===================== GENERATOR KODE OTOMATIS =====================
+  const generateSubKlasKode = (klasId: string, currentSubKlasList: SubKlasifikasi[]) => {
+    const klas = klasifikasi.find(k => k.id === klasId)
+    if (!klas) return ""
+    const prefix = klas.kode
+    const existing = currentSubKlasList.filter(s => s.klasifikasiAkunId === klasId && s.kode.startsWith(prefix))
+    if (existing.length === 0) return prefix + "1"
+    const nums = existing.map(s => parseInt(s.kode)).filter(n => !isNaN(n))
+    if (nums.length === 0) return prefix + "1"
+    return (Math.max(...nums) + 1).toString()
+  }
+
+  const generateAkunKode = (subKlasId: string, currentAkunList: AkunDetail[]) => {
+    const sub = subKlasifikasi.find(s => s.id === subKlasId)
+    if (!sub) return ""
+    const prefix = sub.kode
+    const existing = currentAkunList.filter(a => a.subKlasifikasiAkunId === subKlasId && a.kode.startsWith(prefix))
+    if (existing.length === 0) return prefix + "01"
+    const nums = existing.map(a => parseInt(a.kode)).filter(n => !isNaN(n))
+    if (nums.length === 0) return prefix + "01"
+    return (Math.max(...nums) + 1).toString()
+  }
 
   // ===================== HANDLERS UNTUK SUBKLASIFIKASI =====================
   const handleEditSubKlas = (item: SubKlasifikasi) => {
@@ -85,7 +118,12 @@ export default function AkunKeuanganClient({
         setSubKlasifikasi(prev => prev.map(s => s.id === subKlasForm.id ? { ...s, ...res, klasifikasi: updatedKlasifikasi } : s))
         toast.success("Subklasifikasi berhasil diperbarui")
       } else {
-        const res = await tambahSubKlasifikasi(subKlasForm)
+        const payload = {
+          kode: subKlasForm.kode,
+          nama: subKlasForm.nama,
+          klasifikasiAkunId: subKlasForm.klasifikasiAkunId
+        }
+        const res = await tambahSubKlasifikasi(payload)
         const newKlasifikasi = klasifikasi.find(k => k.id === res.klasifikasiAkunId)
         setSubKlasifikasi(prev => [...prev, { ...res, klasifikasi: newKlasifikasi, _count: { akunDetail: 0 } }])
         toast.success("Subklasifikasi berhasil ditambahkan")
@@ -105,11 +143,11 @@ export default function AkunKeuanganClient({
       await hapusSubKlasifikasi(deleteSubKlasId)
       setSubKlasifikasi(prev => prev.filter(s => s.id !== deleteSubKlasId))
       toast.success("Subklasifikasi berhasil dihapus")
-      setDeleteSubKlasId(null)
     } catch (err: any) {
       toast.error(err.message)
     } finally {
       setIsDeleting(false)
+      setDeleteSubKlasId(null)
     }
   }
 
@@ -131,9 +169,10 @@ export default function AkunKeuanganClient({
     e.preventDefault()
     setIsSubmitting(true)
     try {
+      const { id, ...restForm } = akunForm
       const payload = {
-        ...akunForm,
-        unitSekolahId: akunForm.unitSekolahId === "" ? null : akunForm.unitSekolahId
+        ...restForm,
+        unitSekolahId: restForm.unitSekolahId === "" ? null : restForm.unitSekolahId
       }
 
       if (akunForm.id) {
@@ -164,11 +203,11 @@ export default function AkunKeuanganClient({
       await hapusAkunDetail(deleteAkunId)
       setAkunDetail(prev => prev.filter(a => a.id !== deleteAkunId))
       toast.success("Akun berhasil dihapus")
-      setDeleteAkunId(null)
     } catch (err: any) {
       toast.error(err.message)
     } finally {
       setIsDeleting(false)
+      setDeleteAkunId(null)
     }
   }
 
@@ -202,7 +241,19 @@ export default function AkunKeuanganClient({
         <form id="form-subklas" onSubmit={handleSaveSubKlas} className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text-main">Kepala Akun (Klasifikasi Utama)</label>
-            <select className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-text-main" value={subKlasForm.klasifikasiAkunId} onChange={e => setSubKlasForm({ ...subKlasForm, klasifikasiAkunId: e.target.value })} required>
+            <select 
+              className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-text-main" 
+              value={subKlasForm.klasifikasiAkunId} 
+              onChange={e => {
+                const newKlasId = e.target.value
+                setSubKlasForm({ 
+                  ...subKlasForm, 
+                  klasifikasiAkunId: newKlasId, 
+                  kode: subKlasForm.id ? subKlasForm.kode : generateSubKlasKode(newKlasId, subKlasifikasi) 
+                })
+              }} 
+              required
+            >
               {klasifikasi.map(k => <option key={k.id} value={k.id}>{k.kode} - {k.nama}</option>)}
             </select>
           </div>
@@ -233,7 +284,19 @@ export default function AkunKeuanganClient({
         <form id="form-akun" onSubmit={handleSaveAkun} className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text-main">Induk (Subklasifikasi)</label>
-            <select className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-text-main" value={akunForm.subKlasifikasiAkunId} onChange={e => setAkunForm({ ...akunForm, subKlasifikasiAkunId: e.target.value })} required>
+            <select 
+              className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-text-main" 
+              value={akunForm.subKlasifikasiAkunId} 
+              onChange={e => {
+                const newSubId = e.target.value
+                setAkunForm({ 
+                  ...akunForm, 
+                  subKlasifikasiAkunId: newSubId, 
+                  kode: akunForm.id ? akunForm.kode : generateAkunKode(newSubId, akunDetail) 
+                })
+              }} 
+              required
+            >
               {subKlasifikasi.map(s => <option key={s.id} value={s.id}>{s.kode} - {s.nama}</option>)}
             </select>
           </div>
@@ -247,11 +310,11 @@ export default function AkunKeuanganClient({
           </div>
           
           <div className="flex flex-col gap-1.5 p-4 bg-primary/5 border border-primary/10 rounded-xl mt-2">
-            <label className="text-sm font-semibold text-primary">Tingkat Kepemilikan (Eksklusivitas)</label>
+            <label className="text-sm font-semibold text-primary">Tipe Administrasi (Kepemilikan Akun)</label>
             <p className="text-xs text-text-muted mb-2">Kosongkan jika akun ini berlaku Global/Yayasan (semua unit bisa memakai).</p>
             <select className="w-full px-3 py-2 bg-white border border-border rounded-lg text-text-main" value={akunForm.unitSekolahId} onChange={e => setAkunForm({ ...akunForm, unitSekolahId: e.target.value })}>
-              <option value="">-- Akun Global (Semua Unit) --</option>
-              {unitSekolahList.map(u => <option key={u.id} value={u.id}>Eksklusif: {u.name}</option>)}
+              <option value="">-- Administrasi Global (Semua Unit) --</option>
+              {unitSekolahList.map(u => <option key={u.id} value={u.id}>Administrasi: {u.name}</option>)}
             </select>
           </div>
 
@@ -280,53 +343,61 @@ export default function AkunKeuanganClient({
       </SideDrawer>
 
       {/* Main Container */}
-      <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
-        {/* Tabs & Controls */}
-        <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex gap-2 p-1 bg-bg rounded-xl">
+      <div className="space-y-6">
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
+          
+          {/* Tabs Navigation */}
+          <div className="flex gap-2 mb-6 border-b border-border">
             <button 
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'AKUN' ? 'bg-white shadow-sm text-primary' : 'text-text-muted hover:text-text-main'}`}
-              onClick={() => setActiveTab('AKUN')}
-            >
-              Daftar Akun
-            </button>
-            <button 
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'SUBKLASIFIKASI' ? 'bg-white shadow-sm text-primary' : 'text-text-muted hover:text-text-main'}`}
+              className={`px-6 py-3 font-semibold text-sm transition-colors ${activeTab === 'SUBKLASIFIKASI' ? 'border-b-2 border-primary text-primary' : 'text-text-muted hover:text-text-main'}`}
               onClick={() => setActiveTab('SUBKLASIFIKASI')}
             >
-              Subklasifikasi
+              Kategori / Subklasifikasi
+            </button>
+            <button 
+              className={`px-6 py-3 font-semibold text-sm transition-colors ${activeTab === 'AKUN' ? 'border-b-2 border-primary text-primary' : 'text-text-muted hover:text-text-main'}`}
+              onClick={() => setActiveTab('AKUN')}
+            >
+              Daftar Akun Transaksi
             </button>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
-              <input 
-                type="text" 
-                placeholder="Cari kode atau nama..." 
-                className="w-full pl-10 pr-4 py-2 rounded-xl bg-bg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-              />
+          {/* Top Filter & Toolbar */}
+          <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
+            <div className="flex flex-wrap gap-3 items-center flex-1">
+              <div className="relative w-full md:w-64 flex-shrink-0">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input 
+                  type="text" 
+                  placeholder="Cari kode atau nama..." 
+                  className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
-            {!isReadOnly && activeTab === 'AKUN' && (
-              <Button onClick={() => {
-                setAkunForm({ id: "", kode: "", nama: "", subKlasifikasiAkunId: subKlasifikasi[0]?.id || "", unitSekolahId: "", isKasBank: false, isActive: true })
-                setIsAkunDrawerOpen(true)
-              }} className="shrink-0">
-                <Plus size={16} className="mr-2"/> Tambah Akun
-              </Button>
-            )}
-            {!isReadOnly && activeTab === 'SUBKLASIFIKASI' && (
-              <Button onClick={() => {
-                setSubKlasForm({ id: "", kode: "", nama: "", klasifikasiAkunId: klasifikasi[0]?.id || "" })
-                setIsSubKlasDrawerOpen(true)
-              }} className="shrink-0">
-                <Plus size={16} className="mr-2"/> Tambah Subklas
-              </Button>
-            )}
+
+            <div className="flex gap-2">
+              {!isReadOnly && activeTab === 'AKUN' && (
+                <Button onClick={() => {
+                  const defaultSubId = subKlasifikasi[0]?.id || ""
+                  setAkunForm({ id: "", kode: generateAkunKode(defaultSubId, akunDetail), nama: "", subKlasifikasiAkunId: defaultSubId, unitSekolahId: "", isKasBank: false, isActive: true })
+                  setIsAkunDrawerOpen(true)
+                }} className="shrink-0">
+                  <Plus size={16} className="mr-1.5"/> Tambah Akun
+                </Button>
+              )}
+              {!isReadOnly && activeTab === 'SUBKLASIFIKASI' && (
+                <Button onClick={() => {
+                  const defaultKlasId = klasifikasi[0]?.id || ""
+                  setSubKlasForm({ id: "", kode: generateSubKlasKode(defaultKlasId, subKlasifikasi), nama: "", klasifikasiAkunId: defaultKlasId })
+                  setIsSubKlasDrawerOpen(true)
+                }} className="shrink-0">
+                  <Plus size={16} className="mr-1.5"/> Tambah Subklasifikasi
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
 
         {/* Tab Content: AKUN */}
         {activeTab === 'AKUN' && (
@@ -389,9 +460,11 @@ export default function AkunKeuanganClient({
                 ))}
                 {filteredAkun.length === 0 && (
                   <tr>
-                    <td colSpan={isReadOnly ? 6 : 7} className="p-8 text-center text-text-muted flex flex-col items-center">
-                      <Book size={40} className="text-gray-300 mb-3" />
-                      <p>Belum ada data Akun Transaksi.</p>
+                    <td colSpan={isReadOnly ? 6 : 7} className="p-8">
+                      <div className="flex flex-col items-center justify-center text-center text-text-muted">
+                        <Book size={40} className="text-gray-300 mb-3" />
+                        <p>Belum ada data Akun Transaksi.</p>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -442,9 +515,11 @@ export default function AkunKeuanganClient({
                 ))}
                 {filteredSubKlas.length === 0 && (
                   <tr>
-                    <td colSpan={isReadOnly ? 4 : 5} className="p-8 text-center text-text-muted flex flex-col items-center">
-                      <Layers size={40} className="text-gray-300 mb-3" />
-                      <p>Belum ada data Subklasifikasi.</p>
+                    <td colSpan={isReadOnly ? 4 : 5} className="p-8">
+                      <div className="flex flex-col items-center justify-center text-center text-text-muted">
+                        <Layers size={40} className="text-gray-300 mb-3" />
+                        <p>Belum ada data Subklasifikasi.</p>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -452,6 +527,7 @@ export default function AkunKeuanganClient({
             </table>
           </div>
         )}
+        </div>
       </div>
     </div>
   )
