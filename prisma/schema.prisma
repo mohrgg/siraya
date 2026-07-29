@@ -26,9 +26,6 @@ model Pengguna {
   unitSekolah UnitSekolah? @relation(fields: [unitSekolahId], references: [id])
   divisi      Divisi?      @relation(fields: [divisiId], references: [id])
 
-  transaksiKas     TransaksiKas[]
-  pembayaran       Pembayaran[]
-  urutanPengesahan UrutanPengesahan[]
   logAktivitas     LogAktivitas[]
 }
 
@@ -41,7 +38,6 @@ model Divisi {
   updatedAt DateTime @updatedAt
 
   pengguna     Pengguna[]
-  transaksiKas TransaksiKas[]
 }
 
 // ========== UNIT SEKOLAH ==========
@@ -61,14 +57,7 @@ model UnitSekolah {
   subKelas          SubKelas[]
   guru              Guru[]
   murid             Murid[]
-  klasifikasiAkun   KlasifikasiAkun[]
-  akunPenting       AkunPenting[]
-  urutanPengesahan  UrutanPengesahan[]
-  transaksiKas      TransaksiKas[]
   pengguna          Pengguna[]
-  jenisTagihan      JenisTagihan[]
-  anggaran          Anggaran[]
-  penjualanFormulir PenjualanFormulir[]
 }
 
 // ========== TAHUN AKADEMIK ==========
@@ -80,9 +69,6 @@ model TahunAkademik {
   createdAt DateTime @default(now())
 
   subKelas          SubKelas[]
-  jenisTagihan      JenisTagihan[]
-  anggaran          Anggaran[]
-  penjualanFormulir PenjualanFormulir[]
   riwayatKelas      RiwayatKelas[]
 }
 
@@ -237,7 +223,6 @@ model Murid {
 
   unitSekolah  UnitSekolah    @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
   riwayatKelas RiwayatKelas[]
-  tagihan      Tagihan[]
 }
 
 model RiwayatKelas {
@@ -254,189 +239,7 @@ model RiwayatKelas {
   @@unique([muridId, tahunAkademikId])
 }
 
-// ========== AKUN KEUANGAN ==========
-model KlasifikasiAkun {
-  id            String @id @default(cuid())
-  code          String @default("0") @db.VarChar(10) // "1"=HARTA, "2"=KEWAJIBAN, "3"=MODAL, "4"=PENDAPATAN, "5"=BEBAN
-  name          String @db.VarChar(100) // "HARTA", "PENDAPATAN"
-  unitSekolahId String
 
-  unitSekolah        UnitSekolah          @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
-  subKlasifikasiAkun SubKlasifikasiAkun[]
-}
-
-model SubKlasifikasiAkun {
-  id                String @id @default(cuid())
-  code              String @unique @db.VarChar(50) // "10000001"
-  name              String @db.VarChar(100) // "KAS & BANK"
-  klasifikasiAkunId String
-
-  klasifikasiAkun KlasifikasiAkun @relation(fields: [klasifikasiAkunId], references: [id], onDelete: Cascade)
-  akunDetail      AkunDetail[]
-}
-
-model AkunDetail {
-  id                   String  @id @default(cuid())
-  code                 String  @unique @db.VarChar(50)
-  name                 String  @db.VarChar(150)
-  subKlasifikasiAkunId String
-  isActive             Boolean @default(true)
-  bankAccountNumber    String? @db.VarChar(100)
-
-  subKlasifikasiAkun SubKlasifikasiAkun @relation(fields: [subKlasifikasiAkunId], references: [id], onDelete: Cascade)
-  transaksiKas       TransaksiKas[]
-  itemTransaksiKas   ItemTransaksiKas[]
-  anggaranDetails    ItemAnggaran[]
-}
-
-model AkunPenting {
-  id            String  @id @default(cuid())
-  name          String  @db.VarChar(100) // "Laba Ditahan"
-  description   String  @db.Text
-  akunDetailId  String? // akun yang dipilih
-  unitSekolahId String
-
-  unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
-}
-
-// ========== URUTAN PENGESAHAN ==========
-model UrutanPengesahan {
-  id            String  @id @default(cuid())
-  penggunaId    String
-  unitSekolahId String
-  name          String  @db.VarChar(100)
-  order         Int
-  status        Boolean @default(true)
-
-  pengguna    Pengguna    @relation(fields: [penggunaId], references: [id], onDelete: Cascade)
-  unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
-}
-
-// ========== TRANSAKSI KAS ==========
-model TransaksiKas {
-  id            String   @id @default(cuid())
-  type          String   @db.VarChar(20) // IN, OUT
-  referenceNo   String   @unique @db.VarChar(100) // auto-generate
-  formNo        String?  @db.VarChar(50)
-  akunDetailId  String
-  unitSekolahId String
-  studentName   String?  @db.VarChar(150)
-  classroomName String?  @db.VarChar(100)
-  description   String?  @db.Text
-  totalAmount   Decimal  @db.Decimal(15, 2)
-  date          DateTime
-  status        String   @default("DRAFT") @db.VarChar(30) // DRAFT, APPROVED, REJECTED
-  bookkeeping   String?  @db.VarChar(100)
-  recipientName String?  @db.VarChar(150)
-  isDeleted     Boolean  @default(false)
-  isEdited      Boolean  @default(false)
-  editReason    String?  @db.Text
-  createdById   String
-  divisiId      String? // Relasi opsional ke divisi untuk cost center
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  unitSekolah UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
-  akunDetail  AkunDetail  @relation(fields: [akunDetailId], references: [id], onDelete: Cascade)
-  createdBy   Pengguna    @relation(fields: [createdById], references: [id])
-  divisi      Divisi?     @relation(fields: [divisiId], references: [id])
-
-  items ItemTransaksiKas[]
-}
-
-// ========== ITEM TRANSAKSI KAS (MULTI-BARIS) ==========
-model ItemTransaksiKas {
-  id             String  @id @default(cuid())
-  transaksiKasId String
-  akunDetailId   String
-  amount         Decimal @db.Decimal(15, 2)
-  description    String? @db.Text
-
-  transaksiKas TransaksiKas @relation(fields: [transaksiKasId], references: [id], onDelete: Cascade)
-  akunDetail   AkunDetail   @relation(fields: [akunDetailId], references: [id], onDelete: Cascade)
-}
-
-// ========== TAGIHAN & PEMBAYARAN ==========
-model JenisTagihan {
-  id              String  @id @default(cuid())
-  name            String  @db.VarChar(150) // "SPP", "Ujian"
-  amount          Decimal @db.Decimal(15, 2)
-  tahunAkademikId String
-  unitSekolahId   String
-
-  unitSekolah   UnitSekolah   @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
-  tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
-  tagihan       Tagihan[]
-}
-
-model Tagihan {
-  id             String    @id @default(cuid())
-  jenisTagihanId String
-  muridId        String
-  amount         Decimal   @db.Decimal(15, 2)
-  dueDate        DateTime?
-  status         String    @default("UNPAID") @db.VarChar(30) // UNPAID, PARTIAL, PAID
-  createdAt      DateTime  @default(now())
-
-  jenisTagihan JenisTagihan @relation(fields: [jenisTagihanId], references: [id], onDelete: Cascade)
-  murid        Murid        @relation(fields: [muridId], references: [id], onDelete: Cascade)
-  pembayaran   Pembayaran[]
-}
-
-model Pembayaran {
-  id          String   @id @default(cuid())
-  tagihanId   String
-  amount      Decimal  @db.Decimal(15, 2)
-  paymentDate DateTime
-  method      String   @db.VarChar(50) // TUNAI, TRANSFER
-  methodOther String?  @db.VarChar(100)
-  vaNumber    String?  @db.VarChar(50)
-  receiptNo   String?  @db.VarChar(100)
-  createdById String
-  createdAt   DateTime @default(now())
-
-  tagihan   Tagihan  @relation(fields: [tagihanId], references: [id], onDelete: Cascade)
-  createdBy Pengguna @relation(fields: [createdById], references: [id])
-}
-
-// ========== ANGGARAN ==========
-model Anggaran {
-  id              String   @id @default(cuid())
-  name            String   @db.VarChar(150)
-  tahunAkademikId String
-  unitSekolahId   String
-  totalAmount     Decimal  @db.Decimal(15, 2)
-  createdAt       DateTime @default(now())
-
-  unitSekolah   UnitSekolah    @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
-  tahunAkademik TahunAkademik  @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
-  itemAnggaran  ItemAnggaran[]
-}
-
-model ItemAnggaran {
-  id           String  @id @default(cuid())
-  anggaranId   String
-  akunDetailId String
-  amount       Decimal @db.Decimal(15, 2)
-  realized     Decimal @default(0) @db.Decimal(15, 2)
-
-  anggaran   Anggaran   @relation(fields: [anggaranId], references: [id], onDelete: Cascade)
-  akunDetail AkunDetail @relation(fields: [akunDetailId], references: [id], onDelete: Cascade)
-}
-
-// ========== FORMULIR PSB ==========
-model PenjualanFormulir {
-  id              String   @id @default(cuid())
-  buyerName       String   @db.VarChar(150)
-  amount          Decimal  @db.Decimal(15, 2)
-  saleDate        DateTime
-  tahunAkademikId String
-  unitSekolahId   String
-  createdAt       DateTime @default(now())
-
-  unitSekolah   UnitSekolah   @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
-  tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
-}
 
 // ========== LOG AKTIVITAS (AUDIT TRAIL) ==========
 model LogAktivitas {

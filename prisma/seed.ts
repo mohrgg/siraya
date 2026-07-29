@@ -46,18 +46,6 @@ async function main() {
     }
   })
 
-  // Seed Akun Keuangan Dasar
-  const klasifikasiHarta = await prisma.klasifikasiAkun.create({
-    data: { name: 'HARTA', unitSekolahId: school.id }
-  })
-  
-  const subKas = await prisma.subKlasifikasiAkun.create({
-    data: { name: 'Kas & Bank', code: '11', klasifikasiAkunId: klasifikasiHarta.id }
-  })
-
-  await prisma.akunDetail.create({
-    data: { name: 'Kas Tunai Utama', code: '1101', subKlasifikasiAkunId: subKas.id }
-  })
 
   console.log('Seeding finished.')
 }
