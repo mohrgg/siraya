@@ -98,13 +98,14 @@ export default function ImportGuruModal({
         if (jk.toUpperCase() === "L") jk = "Laki-laki"
         else if (jk.toUpperCase() === "P") jk = "Perempuan"
         
-        const statusKepegawaian = (row["Status Kepegawaian *"] || row["Status Kepegawaian"] || "").toString().trim()
+        let statusKepegawaian = (row["Status Kepegawaian *"] || row["Status Kepegawaian"] || "").toString().trim()
+        if (!statusKepegawaian) {
+          statusKepegawaian = "GTY"
+        }
 
         const errors: string[] = []
         if (!nama) errors.push("Nama Lengkap wajib diisi")
-        if (!statusKepegawaian) {
-          errors.push("Status Kepegawaian wajib diisi")
-        } else if (!["GTY", "GTT", "PNS", "DPK", "PPPK", "Honor", "Staf TU", "Satpam", "OB"].includes(statusKepegawaian)) {
+        if (!["GTY", "GTT", "PNS", "DPK", "PPPK", "Honor", "Staf TU", "Satpam", "OB"].includes(statusKepegawaian)) {
           errors.push(`Status Kepegawaian '${statusKepegawaian}' tidak valid. Hanya: GTY, GTT, PNS, DPK, PPPK, Honor, Staf TU, Satpam, OB.`)
         }
 
@@ -284,7 +285,7 @@ export default function ImportGuruModal({
                       Langkah 1: Gunakan Template Excel Resmi
                     </h3>
                     <p className="text-xs text-blue-800/80 leading-relaxed max-w-xl">
-                      Template terbaru memiliki 2 Sheet. Silakan baca Sheet 2 (Referensi) untuk melihat penulisan baku 'Status Kepegawaian' yang tidak boleh salah ketik (contoh: GTY, PNS).
+                      Template terbaru memiliki 2 Sheet. Silakan baca Sheet 2 (Referensi) untuk melihat penulisan baku 'Status Kepegawaian' yang tidak boleh salah ketik (contoh: GTY, PNS). <strong>Jika kolom ini dikosongkan pada Excel, sistem otomatis menetapkannya sebagai GTY.</strong>
                     </p>
                   </div>
                   <button 

@@ -19,9 +19,10 @@ import {
   Building2,
   BadgeCheck,
   UploadCloud,
-  User
+  User,
+  X
 } from "lucide-react"
-import { tambahGuru, editGuru, hapusGuru } from "@/actions/guru"
+import { tambahGuru, editGuru, hapusGuru, hapusGuruMassal } from "@/actions/guru"
 import toast from "react-hot-toast"
 import GuruFormModal from "@/components/modals/GuruFormModal"
 import ImportGuruModal from "@/components/modals/ImportGuruModal"
@@ -63,6 +64,11 @@ export default function GuruClient({
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
 
   const [data, setData] = useState<Guru[]>(initialData)
+  
+  useEffect(() => {
+    setData(initialData)
+  }, [initialData])
+
   const [activeUnitId, setActiveUnitId] = useState<string>("")
   const [statusFilter, setStatusFilter] = useState<string>("")
   const [searchTerm, setSearchTerm] = useState<string>("")
@@ -81,8 +87,11 @@ export default function GuruClient({
 
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  
   const [showModalImportGuru, setShowModalImportGuru] = useState(false)
+
+  const [selectedGurus, setSelectedGurus] = useState<string[]>([])
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false)
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false)
 
   const defaultForm = {
     id: "",
@@ -143,6 +152,22 @@ export default function GuruClient({
       toast.error("Gagal menghapus data: " + err.message)
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  const handleBulkDeleteConfirm = async () => {
+    if (selectedGurus.length === 0) return
+    setIsDeletingBulk(true)
+    try {
+      await hapusGuruMassal(selectedGurus)
+      setData(data.filter(d => !selectedGurus.includes(d.id)))
+      toast.success(`Berhasil menghapus ${selectedGurus.length} data guru`)
+      setSelectedGurus([])
+      setShowBulkDeleteModal(false)
+    } catch (err: any) {
+      toast.error("Gagal menghapus data massal: " + err.message)
+    } finally {
+      setIsDeletingBulk(false)
     }
   }
 
@@ -396,9 +421,15 @@ export default function GuruClient({
                   <th className="p-4 font-semibold text-center w-12">
                     <input 
                       type="checkbox" 
-                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      disabled
-                      title="Fitur aksi massal sedang dalam pengembangan"
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                      checked={paginatedData.length > 0 && selectedGurus.length === paginatedData.length}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedGurus(paginatedData.map(d => d.id))
+                        } else {
+                          setSelectedGurus([])
+                        }
+                      }}
                     />
                   </th>
                 )}
@@ -432,8 +463,15 @@ export default function GuruClient({
                         <td className="p-4 text-center">
                           <input 
                             type="checkbox" 
-                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary opacity-50"
-                            disabled
+                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                            checked={selectedGurus.includes(item.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedGurus([...selectedGurus, item.id])
+                              } else {
+                                setSelectedGurus(selectedGurus.filter(id => id !== item.id))
+                              }
+                            }}
                           />
                         </td>
                       )}
@@ -558,6 +596,39 @@ export default function GuruClient({
         )}
       </div>
 
+      {/* Floating Action Bar (Bulk Actions) */}
+      {selectedGurus.length > 0 && !isReadOnly && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-border px-4 py-3 flex items-center justify-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-300 z-50 w-max max-w-[98vw] overflow-x-auto hide-scrollbar text-sm">
+          {/* Info Section */}
+          <div className="flex items-center gap-2 font-semibold shrink-0">
+            <span className="text-primary font-bold">{selectedGurus.length}</span>
+            <span className="hidden sm:inline">Guru</span> Dipilih
+          </div>
+          
+          <div className="h-6 w-px bg-border shrink-0"></div>
+          
+          <div className="flex items-center gap-2 shrink-0">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="text-red-600 border-red-200 hover:bg-red-50 text-xs py-1.5 px-3 shrink-0"
+              onClick={() => setShowBulkDeleteModal(true)}
+            >
+              Hapus
+            </Button>
+            
+            {/* Cancel */}
+            <button 
+              onClick={() => setSelectedGurus([])}
+              className="text-gray-400 hover:text-gray-600 p-1.5 ml-1 bg-gray-100 rounded-full shrink-0"
+              title="Batal pilih semua"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Modular 4-Tab Guru Form Modal */}
       <GuruFormModal
         isOpen={isAdding}
@@ -587,6 +658,18 @@ export default function GuruClient({
         confirmText="Ya, Hapus"
         cancelText="Batal"
         isLoading={isDeleting}
+      />
+
+      {/* Bulk Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showBulkDeleteModal}
+        onCancel={() => setShowBulkDeleteModal(false)}
+        onConfirm={handleBulkDeleteConfirm}
+        title="Hapus Data Massal"
+        message={`Apakah Anda yakin ingin menghapus ${selectedGurus.length} data guru yang dipilih? Guru yang dihapus tidak akan muncul lagi pada pilihan Wali Kelas.`}
+        confirmText="Ya, Hapus Massal"
+        cancelText="Batal"
+        isLoading={isDeletingBulk}
       />
     </div>
   )

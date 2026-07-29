@@ -206,3 +206,29 @@ export async function importGuruBulk(guruData: any[]) {
   revalidatePath("/guru")
   return result
 }
+
+export async function hapusGuruMassal(ids: string[]) {
+  const session = await auth()
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) {
+    throw new Error("Akses ditolak.")
+  }
+
+  const [result] = await prisma.$transaction([
+    prisma.guru.updateMany({
+      where: { id: { in: ids } },
+      data: { isDeleted: true, isActive: false }
+    }),
+    prisma.subKelas.updateMany({
+      where: { waliKelasGuruId: { in: ids } },
+      data: {
+        waliKelasGuruId: null,
+        waliKelas: null,
+        waliKelasPhone: null
+      }
+    })
+  ])
+
+  revalidatePath("/guru")
+  revalidatePath("/kelas")
+  return result
+}

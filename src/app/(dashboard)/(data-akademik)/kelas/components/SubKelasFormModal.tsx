@@ -32,7 +32,6 @@ export default function SubKelasFormModal({
     if (aMatch !== bMatch) return aMatch - bMatch;
     return a.name.localeCompare(b.name);
   });
-  const isCustomTeacher = !formData.waliKelasGuruId && (formData.waliKelas || formData.waliKelasPhone)
   return (
     <Modal 
       isOpen={isOpen} 
@@ -114,13 +113,11 @@ export default function SubKelasFormModal({
           <label className="block text-sm font-semibold text-text-main mb-1.5">Wali Kelas / Pembimbing Akademik</label>
           <select
             className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm mb-2"
-            value={formData.waliKelasGuruId ? formData.waliKelasGuruId : (isCustomTeacher ? "CUSTOM" : "")}
+            value={formData.waliKelasGuruId || ""}
             onChange={e => {
               const val = e.target.value
               if (val === "") {
                 setFormData({ ...formData, waliKelasGuruId: "", waliKelas: "", waliKelasPhone: "" })
-              } else if (val === "CUSTOM") {
-                setFormData({ ...formData, waliKelasGuruId: "" })
               } else {
                 const selectedGuru = initialTeachers.find((t: any) => t.id === val)
                 if (selectedGuru) {
@@ -140,25 +137,24 @@ export default function SubKelasFormModal({
                 {t.name} • {t.unitSekolah?.name || "Yayasan"} ({t.nip ? `NIP: ${t.nip}` : t.statusKepegawaian})
               </option>
             ))}
-            <option value="CUSTOM">+ Ketik Manual (Jika guru belum terdaftar)...</option>
           </select>
 
-          {(!formData.waliKelasGuruId && (isCustomTeacher || formData.waliKelasGuruId === "")) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 bg-primary/5 p-3 rounded-xl border border-primary/10">
+          {formData.waliKelasGuruId && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 bg-gray-50 p-3 rounded-xl border border-gray-200 opacity-80">
               <div>
-                <label className="block text-xs font-medium text-text-main mb-1">Nama Wali Kelas</label>
+                <label className="block text-xs font-medium text-text-main mb-1">Preview Nama di Rapot</label>
                 <Input
-                  placeholder="Cth: Bpk. Ahmad Dahlan, S.Pd."
                   value={formData.waliKelas || ""}
-                  onChange={e => setFormData({ ...formData, waliKelas: e.target.value })}
+                  disabled
+                  className="text-sm bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-text-main mb-1">No. WhatsApp / Telepon</label>
+                <label className="block text-xs font-medium text-text-main mb-1">Kontak Tersinkron</label>
                 <Input
-                  placeholder="Cth: 081234567890"
-                  value={formData.waliKelasPhone || ""}
-                  onChange={e => setFormData({ ...formData, waliKelasPhone: e.target.value })}
+                  value={formData.waliKelasPhone || "Belum ada no. HP"}
+                  disabled
+                  className="text-sm bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed italic"
                 />
               </div>
             </div>
