@@ -38,6 +38,7 @@ export async function getYayasanDashboardData() {
   const totalUnit = await prisma.unitSekolah.count({ where: { isActive: true } })
   const totalRombel = await prisma.subKelas.count({ where: { isDeleted: false } })
   const totalSiswa = await prisma.murid.count({ where: { isActive: true } })
+  const totalGuru = await prisma.guru.count({ where: { isDeleted: false, isActive: true } })
 
   const unitsRaw = await prisma.unitSekolah.findMany({
     select: {
@@ -78,7 +79,7 @@ export async function getYayasanDashboardData() {
       name: t.name,
       total: t.subKelas.reduce((sum, sk) => sum + sk._count.riwayatKelas, 0)
     })).filter(t => t.total > 0).sort((a, b) => sortSchoolClasses(a.name, b.name))
-  })).filter(u => u.total > 0)
+  }))
 
   // 2. Komposisi Beasiswa
   const scholarshipCount = await prisma.murid.count({ where: { isActive: true, isScholarship: true } })
@@ -189,6 +190,7 @@ export async function getYayasanDashboardData() {
     unitCount: totalUnit, totalUnit,
     rombelCount: totalRombel, totalRombel,
     muridCount: totalSiswa, totalSiswa,
+    guruCount: totalGuru, totalGuru,
     units, unitDistribution, unitData: unitDistribution,
     scholarshipData, genderData,
     dataQualityIndex, incompleteData, trendData, trendSiswaDummy: trendData,
@@ -205,6 +207,28 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
   const totalMurid = await prisma.murid.count({ where: { isActive: true, unitSekolahId: unitId } })
   const totalRombel = await prisma.subKelas.count({ where: { unitSekolahId: unitId, isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) } })
   const totalJurusan = await prisma.jurusan.count({ where: { unitSekolahId: unitId, isDeleted: false } })
+  const totalGuru = await prisma.guru.count({ where: { unitSekolahId: unitId, isDeleted: false, isActive: true } })
+
+  // Status Guru
+  const guruStatusDist = await prisma.guru.groupBy({
+    by: ['statusKepegawaian'],
+    where: { unitSekolahId: unitId, isDeleted: false, isActive: true },
+    _count: { _all: true }
+  })
+  const guruStatusData = guruStatusDist.map(s => ({
+    name: s.statusKepegawaian || 'Lainnya',
+    value: s._count._all
+  }))
+
+  const guruPendidikanDist = await prisma.guru.groupBy({
+    by: ['pendidikan'],
+    where: { unitSekolahId: unitId, isDeleted: false, isActive: true },
+    _count: { _all: true }
+  })
+  const guruPendidikanData = guruPendidikanDist.map(p => ({
+    name: p.pendidikan || 'Tidak Diketahui',
+    value: p._count._all
+  }))
 
   // Status Siswa
   const statusDist = await prisma.murid.groupBy({
@@ -343,9 +367,10 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
   }))
 
   return {
-    totalMurid, totalRombel, totalSubKelas: totalRombel, totalJurusan,
+    totalMurid, totalRombel, totalSubKelas: totalRombel, totalJurusan, totalGuru,
     rombelData, statusData, paralelData, tingkatDistribution, capacityWarnings,
     genderData, parentData, scholarshipData, incomeData, ageData,
+    guruStatusData, guruPendidikanData,
     anomalyList, missingParent, mutationLogs, unitLogs
   }
 }
@@ -484,6 +509,28 @@ export async function getKepsekData(unitId: string, yearId?: string) {
   const totalMurid = await prisma.murid.count({ where: { isActive: true, unitSekolahId: unitId } })
   const totalRombel = await prisma.subKelas.count({ where: { isDeleted: false, unitSekolahId: unitId, ...(yearId ? { tahunAkademikId: yearId } : {}) } })
   const totalJurusan = await prisma.jurusan.count({ where: { isDeleted: false, unitSekolahId: unitId } })
+  const totalGuru = await prisma.guru.count({ where: { unitSekolahId: unitId, isDeleted: false, isActive: true } })
+
+  // Status & Pendidikan Guru
+  const guruStatusDist = await prisma.guru.groupBy({
+    by: ['statusKepegawaian'],
+    where: { unitSekolahId: unitId, isDeleted: false, isActive: true },
+    _count: { _all: true }
+  })
+  const guruStatusData = guruStatusDist.map(s => ({
+    name: s.statusKepegawaian || 'Lainnya',
+    value: s._count._all
+  }))
+
+  const guruPendidikanDist = await prisma.guru.groupBy({
+    by: ['pendidikan'],
+    where: { unitSekolahId: unitId, isDeleted: false, isActive: true },
+    _count: { _all: true }
+  })
+  const guruPendidikanData = guruPendidikanDist.map(p => ({
+    name: p.pendidikan || 'Tidak Diketahui',
+    value: p._count._all
+  }))
 
   // Skor Kualitas Data
   const completeDataCount = await prisma.murid.count({
@@ -579,5 +626,5 @@ export async function getKepsekData(unitId: string, yearId?: string) {
     target: Math.floor(totalMurid * 1.1) || 100 // Example logic
   }
 
-  return { totalMurid, totalRombel, totalJurusan, dataQualityScore, jobData, incomeData, topCrowded, topEmpty, retentionData, jenjangData, genderData, statusData, anomalyList, capacityData }
+  return { totalMurid, totalRombel, totalJurusan, totalGuru, guruStatusData, guruPendidikanData, dataQualityScore, jobData, incomeData, topCrowded, topEmpty, retentionData, jenjangData, genderData, statusData, anomalyList, capacityData }
 }

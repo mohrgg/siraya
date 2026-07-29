@@ -8,9 +8,10 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 export default function KepsekDashboard(props: any) {
   const { 
-    activeUnit, activeYear, totalMurid, totalRombel, totalJurusan, 
+    activeUnit, activeYear, totalMurid, totalRombel, totalJurusan, totalGuru,
     dataQualityScore, jobData, incomeData, topCrowded, topEmpty, retentionData, 
-    jenjangData, genderData, statusData, anomalyList, capacityData
+    jenjangData, genderData, statusData, anomalyList, capacityData,
+    guruStatusData, guruPendidikanData
   } = props
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num)
@@ -89,10 +90,15 @@ export default function KepsekDashboard(props: any) {
 
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center"><BookOpen size={20} /></div>
-            <h3 className="font-bold text-gray-700 text-sm">Total Jurusan</h3>
+            <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center"><Users size={20} /></div>
+            <h3 className="font-bold text-gray-700 text-sm">Tenaga Pendidik</h3>
           </div>
-          <p className="text-3xl font-black text-gray-900">{formatNumber(totalJurusan)}</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-black text-gray-900">{formatNumber(totalGuru)}</p>
+            <span className="text-xs font-semibold text-amber-600">
+              Rasio 1 : {totalGuru > 0 ? Math.round(totalMurid / totalGuru) : 0}
+            </span>
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
@@ -153,7 +159,7 @@ export default function KepsekDashboard(props: any) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Distribusi Jenjang */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
           <h3 className="font-bold text-gray-800 mb-4 text-center">Siswa per Jenjang</h3>
@@ -220,6 +226,35 @@ export default function KepsekDashboard(props: any) {
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada data penghasilan.</div>
+            )}
+          </div>
+        </div>
+
+        {/* Pendidikan Guru */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 className="font-bold text-gray-800 mb-1 flex items-center justify-center sm:justify-start gap-2">
+              <Award size={18} className="text-pink-500" />
+              Pendidikan Guru
+            </h3>
+            <p className="text-xs text-gray-500 mb-4 text-center sm:text-left">Linieritas pendidikan terakhir.</p>
+          </div>
+
+          <div className="h-56 my-auto">
+            {guruPendidikanData && guruPendidikanData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={guruPendidikanData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={4} dataKey="value">
+                    {guruPendidikanData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.color || COLORS[(index + 3) % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada data pendidik.</div>
             )}
           </div>
         </div>

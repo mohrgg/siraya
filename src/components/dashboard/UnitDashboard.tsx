@@ -21,6 +21,7 @@ interface UnitDashboardProps {
   totalMurid?: number
   totalRombel?: number
   totalJurusan?: number
+  totalGuru?: number
   rombelData?: Array<{ name: string; total: number }>
   capacityWarnings?: Array<{ name: string; total: number }>
   genderData?: Array<{ name: string; value: number; color?: string }>
@@ -31,6 +32,7 @@ interface UnitDashboardProps {
   parentData?: Array<{ name: string; value: number; color?: string }>
   scholarshipData?: Array<{ name: string; value: number; color?: string }>
   incomeData?: Array<{ name: string; value: number; color?: string }>
+  guruStatusData?: Array<{ name: string; value: number; color?: string }>
   ageData?: Array<{ ageGroup: string; name?: string; total: number }>
   unitLogs?: Array<any>
 }
@@ -52,8 +54,10 @@ export default function UnitDashboard(props: UnitDashboardProps) {
     parentData = [],
     scholarshipData = [],
     incomeData = [],
+    guruStatusData = [],
     ageData = [],
-    unitLogs = []
+    unitLogs = [],
+    totalGuru = 0
   } = props
 
   const [activeTab, setActiveTab] = useState<'anomali' | 'mutasi'>('anomali')
@@ -102,7 +106,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
       </div>
 
       {/* Row 1: Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Total Siswa Aktif</span>
@@ -143,6 +147,20 @@ export default function UnitDashboard(props: UnitDashboardProps) {
             <span className="text-xs font-semibold text-emerald-600">Jurusan Terdaftar</span>
           </div>
           <p className="text-[11px] text-gray-400 mt-2">Kompetensi keahlian / peminatan</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Tenaga Pendidik</span>
+            <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+              <Users size={20} />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black text-gray-900">{formatNumber(totalGuru)}</span>
+            <span className="text-xs font-semibold text-amber-600">Guru Aktif</span>
+          </div>
+          <p className="text-[11px] text-gray-400 mt-2">Berbasis di unit ini</p>
         </div>
       </div>
 
@@ -307,8 +325,8 @@ export default function UnitDashboard(props: UnitDashboardProps) {
         </div>
       </div>
 
-      {/* Row 3: 4 Pie Charts (Gender, Wali, Beasiswa, Gaji Ortu) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Row 3: 5 Pie Charts */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         {/* Pie 1: Gender */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
           <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
@@ -386,6 +404,28 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                 <PieChart>
                   <Pie data={incomeData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={4} dataKey="value">
                     {incomeData.map((e, i) => <Cell key={i} fill={e.color || COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: '10px', border: 'none' }} />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada data</div>
+            )}
+          </div>
+        </div>
+
+        {/* Pie 5: Status Kepegawaian Guru */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
+          <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
+            <UserCheck size={16} className="text-pink-500" /> Status Guru
+          </h4>
+          <div className="h-[180px] my-2">
+            {guruStatusData && guruStatusData.length > 0 && guruStatusData.some(d => d.value > 0) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={guruStatusData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={4} dataKey="value">
+                    {guruStatusData.map((e, i) => <Cell key={i} fill={e.color || COLORS[(i + 4) % COLORS.length]} />)}
                   </Pie>
                   <Tooltip contentStyle={{ borderRadius: '10px', border: 'none' }} />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />

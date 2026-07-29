@@ -20,6 +20,7 @@ interface YayasanDashboardProps {
   muridCount?: number
   rombelCount?: number
   usersCount?: number
+  guruCount?: number
   unitData?: Array<any>
   genderData?: Array<{ name: string; value: number; color?: string }>
   scholarshipData?: Array<{ name: string; value: number; color?: string }>
@@ -39,6 +40,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
     muridCount = 0,
     rombelCount = 0,
     usersCount = 0,
+    guruCount = 0,
     unitData = [],
     genderData = [],
     scholarshipData = [],
@@ -139,16 +141,16 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
 
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Staf & Pegawai</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Guru & Pegawai</span>
             <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
               <Users size={20} />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-gray-900">{formatNumber(usersCount)}</span>
-            <span className="text-xs font-semibold text-amber-600">Akun Aktif</span>
+            <span className="text-3xl font-black text-gray-900">{formatNumber(guruCount)}</span>
+            <span className="text-xs font-semibold text-amber-600">Tenaga Pendidik</span>
           </div>
-          <p className="text-[11px] text-gray-400 mt-2">Guru, TU, dan administrator</p>
+          <p className="text-[11px] text-gray-400 mt-2">serta {formatNumber(usersCount)} Akun Pengguna Sistem</p>
         </div>
       </div>
 
