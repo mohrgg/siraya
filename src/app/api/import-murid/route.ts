@@ -77,9 +77,9 @@ export async function POST(req: Request) {
       const username = (row["Username"] || "").toString().trim()
       const isBeasiswa = (row["Beasiswa (YA)"] || "").toString().trim().toUpperCase() === "YA"
 
-      if (!nis || !nama) {
+      if (!nama) {
         failedCount++
-        errors.push({ row: rowNumber, msg: "Kolom NIS dan Nama Lengkap wajib diisi." })
+        errors.push({ row: rowNumber, msg: "Kolom Nama Lengkap wajib diisi." })
         continue
       }
 
@@ -92,21 +92,36 @@ export async function POST(req: Request) {
       // Parse Date if exists
       let birthDate = null
       if (tglLahirStr) {
-        const parsedDate = new Date(tglLahirStr)
-        if (!isNaN(parsedDate.getTime())) {
-          birthDate = parsedDate
+        if (/^\d+$/.test(tglLahirStr)) {
+          // Handle Excel serial date
+          const serial = parseInt(tglLahirStr, 10)
+          const utc_days  = Math.floor(serial - 25569)
+          const utc_value = utc_days * 86400
+          birthDate = new Date(utc_value * 1000)
+        } else {
+          const parsedDate = new Date(tglLahirStr)
+          if (!isNaN(parsedDate.getTime())) {
+            birthDate = parsedDate
+          }
         }
       }
 
-      // Check if NIS already exists
-      const existing = await prisma.murid.findUnique({
-        where: { nis }
-      })
+      // Check if NIS already exists, if provided
+      let finalNis = nis
+      if (!finalNis || finalNis === "-") {
+        finalNis = null
+      }
 
-      if (existing) {
-        failedCount++
-        errors.push({ row: rowNumber, msg: `NIS ${nis} sudah terdaftar.` })
-        continue
+      if (finalNis) {
+        const existing = await prisma.murid.findUnique({
+          where: { nis: finalNis }
+        })
+
+        if (existing) {
+          failedCount++
+          errors.push({ row: rowNumber, msg: `NIS ${finalNis} sudah terdaftar.` })
+          continue
+        }
       }
 
       try {
@@ -114,7 +129,7 @@ export async function POST(req: Request) {
           // 1. Create Murid
           const newMurid = await tx.murid.create({
             data: {
-              nis,
+              nis: finalNis,
               name: nama,
               nisn: nisn || null,
               gender: jk || null,

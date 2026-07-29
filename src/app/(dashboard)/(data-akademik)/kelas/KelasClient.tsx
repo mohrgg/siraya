@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import toast from "react-hot-toast"
 import { useKelasData } from "./hooks/useKelasData"
 import KelasToolbar from "./components/KelasToolbar"
@@ -24,6 +25,7 @@ export default function KelasClient({
   activeUnitId?: string, activeYearId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[], initialTeachers?: any[], userRole?: string 
 }) {
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
+  const router = useRouter()
   const data = useKelasData({ activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits })
 
   // Modals Local State (Keep here since they trigger API mutations that might affect data)
@@ -435,27 +437,30 @@ export default function KelasClient({
 
       {/* Floating Action Bar (Bulk Promote & Grad) */}
       {data.selectedStudents.length > 0 && data.activeTab === "murid" && !isReadOnly && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-border px-6 py-4 flex flex-wrap items-center justify-center gap-6 animate-in slide-in-from-bottom-10 fade-in duration-300 z-50">
-          <div className="flex items-center gap-3 text-sm font-semibold">
-            <span className="flex items-center justify-center bg-primary/10 text-primary w-6 h-6 rounded-full text-xs">{data.selectedStudents.length}</span>
-            Siswa Dipilih
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-border px-4 py-3 flex items-center justify-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-300 z-50 w-max max-w-[98vw] overflow-x-auto hide-scrollbar text-sm">
+          {/* Info Section */}
+          <div className="flex items-center gap-2 font-semibold shrink-0">
+            <span className="flex items-center justify-center bg-primary/10 text-primary w-5 h-5 rounded-full text-[10px]">{data.selectedStudents.length}</span>
+            <span className="hidden sm:inline">Siswa</span> Dipilih
           </div>
-          <div className="h-8 w-px bg-border hidden sm:block"></div>
           
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="h-6 w-px bg-border shrink-0"></div>
+          
+          {/* Action Group 1: Promote/Move */}
+          <div className="flex items-center gap-2 shrink-0">
             <select 
-              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium w-36"
+              className="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-xs font-medium w-28 sm:w-32 shrink-0"
               value={data.targetTahunAkademikId}
               onChange={(e) => data.setTargetTahunAkademikId(e.target.value)}
             >
               <option value="">Tahun Ajaran...</option>
               {academicYears.map((y: any) => (
-                <option key={y.id} value={y.id}>{y.name} {y.isActive ? '(Aktif)' : ''}</option>
+                <option key={y.id} value={y.id}>{y.name}</option>
               ))}
             </select>
             
             <select 
-              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium w-40"
+              className="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-xs font-medium w-32 sm:w-36 shrink-0"
               value={data.targetSubKelasId}
               onChange={(e) => data.setTargetSubKelasId(e.target.value)}
             >
@@ -465,13 +470,16 @@ export default function KelasClient({
               ))}
             </select>
             
-            <Button onClick={data.handleBulkPromote} disabled={!data.targetSubKelasId || !data.targetTahunAkademikId || data.isPromoting} isLoading={data.isPromoting}>
+            <Button size="sm" className="shrink-0 text-xs py-1.5 px-3" onClick={data.handleBulkPromote} disabled={!data.targetSubKelasId || !data.targetTahunAkademikId || data.isPromoting} isLoading={data.isPromoting}>
               Naik Kelas / Mutasi
             </Button>
-            
-            <div className="h-8 w-px bg-border mx-2"></div>
-            
-            <Button variant="danger" onClick={() => {
+          </div>
+          
+          <div className="h-6 w-px bg-border shrink-0"></div>
+          
+          {/* Action Group 2: Danger Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Button size="sm" variant="danger" className="text-xs py-1.5 px-3" onClick={() => {
               if (window.confirm('Yakin ingin meluluskan siswa terpilih? Mereka akan dipindahkan ke tab Alumni.')) {
                 data.handleBulkGraduation();
               }
@@ -479,8 +487,16 @@ export default function KelasClient({
               Luluskan
             </Button>
             
-            <button onClick={() => data.setSelectedStudents([])} className="text-gray-400 hover:text-gray-600 p-2 ml-2 bg-gray-100 rounded-full">
-              <X size={16} />
+            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 text-xs py-1.5 px-3 shrink-0" onClick={() => {
+              if (window.confirm('Yakin ingin menghapus secara permanen siswa terpilih?')) {
+                data.handleBulkDelete();
+              }
+            }} disabled={data.isPromoting} isLoading={data.isPromoting}>
+              Hapus
+            </Button>
+            
+            <button onClick={() => data.setSelectedStudents([])} className="text-gray-400 hover:text-gray-600 p-1.5 ml-1 bg-gray-100 rounded-full shrink-0">
+              <X size={14} />
             </button>
           </div>
         </div>
@@ -528,8 +544,10 @@ export default function KelasClient({
         onClose={() => setShowModalImportMurid(false)}
         onSuccess={() => {
           setShowModalImportMurid(false)
-          // To trigger refresh, reset page
+          // To trigger refresh, reset page and call refreshData
           data.setCurrentPage(1)
+          data.refreshData()
+          router.refresh()
         }}
         schoolUnits={schoolUnits}
         classrooms={data.classrooms}
@@ -541,6 +559,11 @@ export default function KelasClient({
         onClose={() => setViewDetailSubKelas(null)}
         subKelas={viewDetailSubKelas}
         isReadOnly={isReadOnly}
+        onManageClass={(sub) => {
+          setViewDetailSubKelas(null)
+          data.setActiveTab("murid")
+          data.setFilterMuridSubKelas(sub.id)
+        }}
         onEdit={(sub) => {
           setFormSubKelas({
             id: sub.id,

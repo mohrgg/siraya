@@ -105,7 +105,6 @@ export default function ImportMuridModal({
         const targetSubKelasId = (row["ID Sub Kelas (Opsional)"] || row["ID Sub Kelas"] || fallbackSubKelasId || "").toString().trim()
 
         const errors: string[] = []
-        if (!nis) errors.push("NIS wajib diisi")
         if (!nama) errors.push("Nama Lengkap wajib diisi")
         if (!targetSubKelasId) errors.push("Rombel tujuan belum ditentukan")
 
@@ -391,7 +390,7 @@ export default function ImportMuridModal({
                         >
                           <td className="py-3 px-4 font-mono font-bold text-gray-500 text-center">{row.rowNum}</td>
                           <td className="py-3 px-4">
-                            <p className="font-bold text-gray-900 font-mono">{row.nis || <span className="text-red-600 italic">Kosong</span>}</p>
+                            <p className="font-bold text-gray-900 font-mono">{row.nis || <span className="text-gray-400 italic">Kosong</span>}</p>
                             <p className="text-[10px] text-gray-500 font-mono">{row.rawRow["NISN"] || "-"}</p>
                           </td>
                           <td className="py-3 px-4 font-bold text-gray-900">

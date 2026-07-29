@@ -131,16 +131,25 @@ export async function tambahSiswa(data: any) {
   if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   const result = await prisma.$transaction(async (tx) => {
-    const existingMurid = await tx.murid.findUnique({ where: { nis: data.nis } })
-    if (existingMurid) {
-      throw new Error(`Siswa dengan NIS / NISN (${data.nis}) sudah terdaftar di sistem.`)
+    // Handle optional NIS
+    let finalNis = data.nis?.trim()
+    if (!finalNis || finalNis === "-") {
+      finalNis = null
     }
 
-    const { subKelasId, studentStatus, birthDate, riwayatKelas, unitSekolah, subKelas, createdAt, updatedAt, id, parentName, ...muridData } = data as any;
+    if (finalNis) {
+      const existingMurid = await tx.murid.findUnique({ where: { nis: finalNis } })
+      if (existingMurid) {
+        throw new Error(`Siswa dengan NIS / NISN (${finalNis}) sudah terdaftar di sistem.`)
+      }
+    }
+
+    const { subKelasId, studentStatus, birthDate, riwayatKelas, unitSekolah, subKelas, createdAt, updatedAt, id, parentName, nis, ...muridData } = data as any;
 
     const murid = await tx.murid.create({
       data: {
         ...muridData,
+        nis: finalNis,
         status: studentStatus || data.status || "AKTIF",
         isActive: data.isActive ?? true,
         isScholarship: data.isScholarship ?? false,
@@ -182,12 +191,21 @@ export async function editSiswa(id: string, data: {
     // Also exclude relation and metadata objects that might be passed from frontend
     const { subKelasId, studentStatus, birthDate, riwayatKelas, unitSekolah, subKelas, createdAt, updatedAt, id, parentName, ...muridData } = data as any;
     
-    // Check NIS uniqueness if it's being updated
-    if (muridData.nis) {
-      const existingMurid = await tx.murid.findUnique({ where: { nis: muridData.nis } })
-      if (existingMurid && existingMurid.id !== id) {
-        throw new Error(`Siswa dengan NIS / NISN (${muridData.nis}) sudah terdaftar di sistem.`)
+    // Handle optional NIS
+    let finalNis = muridData.nis?.trim()
+    if (muridData.hasOwnProperty('nis')) {
+      if (!finalNis || finalNis === "-") {
+        finalNis = null
       }
+      
+      // Check NIS uniqueness if it's being updated and not null
+      if (finalNis) {
+        const existingMurid = await tx.murid.findUnique({ where: { nis: finalNis } })
+        if (existingMurid && existingMurid.id !== id) {
+          throw new Error(`Siswa dengan NIS / NISN (${finalNis}) sudah terdaftar di sistem.`)
+        }
+      }
+      muridData.nis = finalNis
     }
     
     const murid = await tx.murid.update({
@@ -262,6 +280,23 @@ export async function hapusSiswa(id: string) {
   })
   revalidatePath("/data-master")
   return result
+}
+
+export async function hapusSiswaBatch(ids: string[]) {
+  const session = await auth()
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+  
+  const result = await prisma.murid.updateMany({
+    where: { id: { in: ids } },
+    data: { 
+      isDeleted: true,
+      isActive: false,
+      status: "TERHAPUS"
+    }
+  })
+  
+  revalidatePath("/data-master")
+  return { success: result.count }
 }
 
 export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: string, targetTahunAkademikId?: string) {

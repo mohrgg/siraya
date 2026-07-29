@@ -18,6 +18,7 @@ interface SubKelasDetailDrawerProps {
   onNext?: () => void
   prevDisabled?: boolean
   nextDisabled?: boolean
+  onManageClass?: (subKelas: any) => void
 }
 
 export default function SubKelasDetailDrawer({
@@ -29,7 +30,8 @@ export default function SubKelasDetailDrawer({
   onPrev,
   onNext,
   prevDisabled = false,
-  nextDisabled = false
+  nextDisabled = false,
+  onManageClass
 }: SubKelasDetailDrawerProps) {
   const router = useRouter()
   const [students, setStudents] = useState<any[]>([])
@@ -163,6 +165,18 @@ export default function SubKelasDetailDrawer({
         Mode: <span className="font-bold text-gray-700">{isReadOnly ? "Read-Only (Kepala Sekolah)" : "Administrator / TU"}</span>
       </div>
       <div className="flex items-center gap-2">
+        {onManageClass && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              onClose()
+              onManageClass(subKelas)
+            }}
+            className="gap-2 font-semibold bg-primary/5 text-primary border-primary/20 hover:bg-primary hover:text-white"
+          >
+            <Users size={16} /> Kelola Murid Rombel
+          </Button>
+        )}
         {!isReadOnly && onEdit && (
           <Button
             variant="outline"

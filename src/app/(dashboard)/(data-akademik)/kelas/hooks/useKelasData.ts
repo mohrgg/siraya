@@ -12,6 +12,7 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
   const [students, setStudents] = useState(initialStudents)
 
   const [pageSize, setPageSize] = useState(10)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
   
   // Update data if initial props change
   useEffect(() => {
@@ -114,7 +115,7 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
     fetchStudents()
 
     return () => { isMounted = false }
-  }, [activeTab, activeUnitId, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, debouncedSearchTerm, currentPage, pageSize, muridSort, filterAlumniStatus, schoolUnits])
+  }, [activeTab, activeUnitId, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, debouncedSearchTerm, currentPage, pageSize, muridSort, filterAlumniStatus, schoolUnits, refreshTrigger])
 
   // Reset pagination when filter changes
   useEffect(() => {
@@ -160,6 +161,22 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
     }
   }
 
+  const handleBulkDelete = async () => {
+    if (selectedStudents.length === 0) return
+    setIsPromoting(true)
+    try {
+      const { hapusSiswaBatch } = await import("@/actions/siswa")
+      const res = await hapusSiswaBatch(selectedStudents)
+      toast.success(`Berhasil menghapus ${res.success} murid`)
+      setSelectedStudents([])
+      setRefreshTrigger(prev => prev + 1)
+    } catch (e: any) {
+      toast.error("Gagal menghapus murid: " + e.message)
+    } finally {
+      setIsPromoting(false)
+    }
+  }
+
   return {
     // Core Data
     grades, setGrades,
@@ -173,14 +190,18 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
     filterMuridTingkat, setFilterMuridTingkat,
     filterMuridJurusan, setFilterMuridJurusan,
     filterMuridSubKelas, setFilterMuridSubKelas,
-    filterAlumniStatus, setFilterAlumniStatus,
+    filterAlumniStatus,
+    setFilterAlumniStatus,
+    refreshData: () => setRefreshTrigger(prev => prev + 1),
     
     // Bulk Promote
     selectedStudents, setSelectedStudents,
     isPromoting, 
     targetSubKelasId, setTargetSubKelasId,
     targetTahunAkademikId, setTargetTahunAkademikId,
-    handleBulkPromote, handleBulkGraduation,
+    handleBulkPromote,
+    handleBulkGraduation,
+    handleBulkDelete,
 
     // Pagination & Sort
     currentPage, setCurrentPage,

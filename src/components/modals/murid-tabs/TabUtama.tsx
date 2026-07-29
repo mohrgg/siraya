@@ -118,8 +118,8 @@ export default function TabUtama({ formData, handleChange, schoolUnits, classroo
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-text-main">NIS (Nomor Induk Siswa) <span className="text-red-500">*</span></label>
-          <Input placeholder="Contoh: 20240101" value={formData.nis || ""} onChange={e => handleChange("nis", e.target.value)} required />
+          <label className="text-sm font-semibold text-text-main">NIS (Nomor Induk Siswa) <span className="text-gray-400 font-normal">(Opsional)</span></label>
+          <Input placeholder="Contoh: 20240101 atau -" value={formData.nis || ""} onChange={e => handleChange("nis", e.target.value)} />
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main">Jalur Beasiswa?</label>
