@@ -192,3 +192,17 @@ export async function hapusGuru(id: string) {
   revalidatePath("/kelas")
   return result
 }
+
+export async function importGuruBulk(guruData: any[]) {
+  const session = await auth()
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) {
+    throw new Error("Akses ditolak.")
+  }
+
+  const result = await prisma.guru.createMany({
+    data: guruData
+  })
+
+  revalidatePath("/guru")
+  return result
+}

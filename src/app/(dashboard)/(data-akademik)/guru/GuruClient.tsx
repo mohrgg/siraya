@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
@@ -17,11 +17,14 @@ import {
   Phone, 
   MessageCircle,
   Building2,
-  BadgeCheck
+  BadgeCheck,
+  UploadCloud,
+  User
 } from "lucide-react"
 import { tambahGuru, editGuru, hapusGuru } from "@/actions/guru"
 import toast from "react-hot-toast"
 import GuruFormModal from "@/components/modals/GuruFormModal"
+import ImportGuruModal from "@/components/modals/ImportGuruModal"
 
 type Guru = {
   id: string
@@ -69,8 +72,17 @@ export default function GuruClient({
   const [isExportingExcel, setIsExportingExcel] = useState(false)
   const [isExportingPDF, setIsExportingPDF] = useState(false)
 
+  const [pageSize, setPageSize] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeUnitId, statusFilter, searchTerm])
+
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  
+  const [showModalImportGuru, setShowModalImportGuru] = useState(false)
 
   const defaultForm = {
     id: "",
@@ -182,6 +194,12 @@ export default function GuruClient({
     })
   }, [data, activeUnitId, statusFilter, searchTerm])
 
+  const paginatedData = useMemo(() => {
+    return filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  }, [filteredData, currentPage, pageSize])
+
+  const computedTotalPages = Math.ceil(filteredData.length / pageSize)
+
   const handleExportExcel = async () => {
     if (filteredData.length === 0) {
       toast.error("Tidak ada data guru untuk diekspor")
@@ -265,14 +283,34 @@ export default function GuruClient({
 
   return (
     <div className="space-y-6">
-      {/* Top Filter & Toolbar Card */}
-      <div className="bg-surface p-4 rounded-xl border border-border shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
+        {/* Dummy Tab Navigation for UI Consistency */}
+        <div className="flex gap-2 mb-6 border-b border-border">
+          <button className="px-6 py-3 font-semibold text-sm border-b-2 border-primary text-primary transition-colors">
+            Daftar Guru & Staf Aktif
+          </button>
+        </div>
+
+        {/* Top Filter & Toolbar */}
+      <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
+        <div className="flex flex-wrap gap-3 items-center flex-1">
+          {/* Search Box */}
+          <div className="relative w-full md:w-64 flex-shrink-0">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+            <input
+              type="text"
+              placeholder="Cari nama, NIP, tugas..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
+            />
+          </div>
+
           {/* Filter Unit */}
           <select
             value={activeUnitId}
             onChange={(e) => setActiveUnitId(e.target.value)}
-            className="px-3 py-2 bg-background border border-border rounded-lg text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="px-3 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
           >
             <option value="">Semua Unit Sekolah</option>
             {schoolUnits.map(u => (
@@ -284,84 +322,99 @@ export default function GuruClient({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 bg-background border border-border rounded-lg text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="px-3 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
           >
             <option value="">Semua Status</option>
             <option value="GTY">GTY (Tetap Yayasan)</option>
             <option value="GTT">GTT (Honorer)</option>
-            <option value="PNS">PNS / DPK</option>
-            <option value="Staf TU">Staf Tata Usaha</option>
+            <option value="PNS">PNS (Pegawai Negeri Sipil)</option>
+            <option value="DPK">DPK (Diperbantukan)</option>
+            <option value="PPPK">PPPK (Perjanjian Kerja)</option>
+            <option value="Honor">Honor (Pegawai Lepas)</option>
+            <option value="Staf TU">Staf TU (Tata Usaha)</option>
+            <option value="Satpam">Satpam (Keamanan)</option>
+            <option value="OB">OB (Kebersihan)</option>
           </select>
 
-          {/* Search Box */}
-          <div className="relative flex-1 md:w-64">
-            <Search className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Cari nama, NIP, tugas..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
+          {/* Action Buttons */}
+          <div className="flex gap-2 border-l border-border pl-3" title="Ekspor data sesuai filter saat ini">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportExcel}
+              disabled={isExportingExcel || filteredData.length === 0}
+              className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100"
+            >
+              <FileSpreadsheet size={16} className="mr-1.5" />
+              {isExportingExcel ? 'Mengekspor...' : 'Excel'}
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportPDF}
+              disabled={isExportingPDF || filteredData.length === 0}
+              className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800"
+            >
+              <FileText size={16} className="mr-1.5" />
+              {isExportingPDF ? 'Mengekspor...' : 'PDF'}
+            </Button>
+
+            {!isReadOnly && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowModalImportGuru(true)}
+                className="opacity-100 border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800"
+              >
+                <UploadCloud size={16} className="mr-1.5" />
+                Impor Excel
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportExcel}
-            disabled={isExportingExcel || filteredData.length === 0}
-            className="flex items-center gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span className="hidden sm:inline">Excel</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportPDF}
-            disabled={isExportingPDF || filteredData.length === 0}
-            className="flex items-center gap-1.5 text-rose-600 border-rose-200 hover:bg-rose-50"
-          >
-            <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">PDF</span>
-          </Button>
-
-          {!isReadOnly && (
+        {!isReadOnly && (
+          <div className="flex-shrink-0">
             <Button
               onClick={handleOpenAdd}
-              size="sm"
-              className="flex items-center gap-1.5 bg-primary text-white hover:bg-primary/90 shadow-sm"
+              className="flex items-center bg-primary text-white hover:bg-primary/90 shadow-sm"
             >
-              <Plus className="w-4 h-4" />
+              <Plus size={16} className="mr-1.5" />
               <span>Tambah Guru</span>
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Data Table */}
-      <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-background/80 border-b border-border text-xs font-semibold text-text-muted uppercase tracking-wider">
-                <th className="py-3.5 px-4 w-12 text-center">No</th>
-                <th className="py-3.5 px-4">NIP / NUPTK / NIK</th>
-                <th className="py-3.5 px-4">Nama Lengkap & Gelar</th>
-                <th className="py-3.5 px-4">Unit Sekolah</th>
-                <th className="py-3.5 px-4">Status & Tugas</th>
-                <th className="py-3.5 px-4">Kontak WhatsApp</th>
-                {!isReadOnly && <th className="py-3.5 px-4 text-center w-24">Aksi</th>}
+            <thead className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
+              <tr>
+                {!isReadOnly && (
+                  <th className="p-4 font-semibold text-center w-12">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      disabled
+                      title="Fitur aksi massal sedang dalam pengembangan"
+                    />
+                  </th>
+                )}
+                <th className="p-4 font-semibold text-center w-12">NO</th>
+                <th className="p-4 font-semibold text-left">NIP / NUPTK / NIK</th>
+                <th className="p-4 font-semibold text-left">NAMA LENGKAP & GELAR</th>
+                <th className="p-4 font-semibold text-left">UNIT SEKOLAH</th>
+                <th className="p-4 font-semibold text-left">STATUS & TUGAS</th>
+                <th className="p-4 font-semibold text-left">KONTAK WHATSAPP</th>
+                {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-sm">
-              {filteredData.length === 0 ? (
+              {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={isReadOnly ? 6 : 7} className="py-12 text-center">
+                  <td colSpan={isReadOnly ? 6 : 8} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center text-text-muted">
                       <GraduationCap className="w-12 h-12 stroke-[1.2] text-text-muted/40 mb-3" />
                       <p className="font-medium text-text-main">Belum Ada Data Guru</p>
@@ -370,27 +423,40 @@ export default function GuruClient({
                   </td>
                 </tr>
               ) : (
-                filteredData.map((item, idx) => {
+                paginatedData.map((item, idx) => {
+                  const absoluteIdx = (currentPage - 1) * pageSize + idx + 1
                   const waUrl = formatWhatsAppUrl(item.phone)
                   return (
-                    <tr key={item.id} className="hover:bg-primary/[0.02] transition-colors">
-                      <td className="py-3.5 px-4 text-center font-medium text-text-muted">{idx + 1}</td>
-                      <td className="py-3.5 px-4 font-mono text-xs text-text-muted">
-                        {item.nip || <span className="italic opacity-60">Non-NIP</span>}
+                    <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                      {!isReadOnly && (
+                        <td className="p-4 text-center">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary opacity-50"
+                            disabled
+                          />
+                        </td>
+                      )}
+                      <td className="p-4 text-center text-text-main">{absoluteIdx}</td>
+                      <td className="p-4">
+                        <div className="font-mono text-sm text-text-main font-semibold">
+                          {item.nip || "-"}
+                        </div>
+                        <div className="text-xs text-text-muted mt-0.5 opacity-60">Non-NIP</div>
                       </td>
-                      <td className="py-3.5 px-4 font-semibold text-text-main">
-                        <div className="flex items-center gap-2">
-                          <span>{item.name}</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-background border border-border text-text-muted font-normal">
-                            {item.pendidikan || "-"}
-                          </span>
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 flex-shrink-0 border border-border overflow-hidden flex items-center justify-center">
+                            <User size={16} className="text-gray-400" />
+                          </div>
+                          <div>
+                            <div className="font-bold text-text-main">{item.name}</div>
+                            <div className="text-xs text-text-muted mt-0.5">{item.pendidikan || "-"}</div>
+                          </div>
                         </div>
                       </td>
-                      <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-text-main bg-primary/5 text-primary px-2 py-0.5 rounded-full border border-primary/10">
-                          <Building2 className="w-3 h-3" />
-                          {item.unitSekolah?.name || "-"}
-                        </span>
+                      <td className="p-4 font-medium text-text-main">
+                        {item.unitSekolah?.name || "-"}
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="flex flex-col gap-0.5">
@@ -406,7 +472,7 @@ export default function GuruClient({
                           </span>
                         </div>
                       </td>
-                      <td className="py-3.5 px-4">
+                      <td className="p-4">
                         {item.phone ? (
                           <a
                             href={waUrl || "#"}
@@ -423,21 +489,21 @@ export default function GuruClient({
                         )}
                       </td>
                       {!isReadOnly && (
-                        <td className="py-3.5 px-4 text-center">
-                          <div className="flex items-center justify-center gap-1">
+                        <td className="p-4">
+                          <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleEdit(item)}
-                              className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/5 rounded-md transition-colors"
-                              title="Edit Data Guru"
+                              className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg border border-green-200 hover:border-green-600 transition-colors"
+                              title="Edit"
                             >
-                              <Edit2 className="w-4 h-4" />
+                              <Edit2 size={16} />
                             </button>
                             <button
                               onClick={() => setDeleteId(item.id)}
-                              className="p-1.5 text-text-muted hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
-                              title="Hapus Guru"
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg border border-red-200 hover:border-red-600 transition-colors"
+                              title="Hapus"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </td>
@@ -449,6 +515,47 @@ export default function GuruClient({
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {computedTotalPages > 0 && (
+          <div className="pt-4 mt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value))
+                  setCurrentPage(1)
+                }}
+                className="px-3 py-1.5 bg-bg border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/50"
+              >
+                {[5, 10, 20, 50, 100].map(size => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50"
+              >
+                Sebelumnya
+              </button>
+              <span className="px-4 py-1.5 text-sm font-medium text-text-main">
+                Hal {currentPage} dari {computedTotalPages}
+              </span>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(computedTotalPages, p + 1))}
+                disabled={currentPage === computedTotalPages}
+                className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50"
+              >
+                Berikutnya
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modular 4-Tab Guru Form Modal */}
@@ -457,6 +564,16 @@ export default function GuruClient({
         onClose={() => setIsAdding(false)}
         onSave={handleSaveModal}
         initialData={formData}
+        schoolUnits={schoolUnits}
+      />
+
+      <ImportGuruModal
+        isOpen={showModalImportGuru}
+        onClose={() => setShowModalImportGuru(false)}
+        onSuccess={() => {
+          setShowModalImportGuru(false)
+          // Data is refreshed via router.refresh() inside the modal
+        }}
         schoolUnits={schoolUnits}
       />
 
