@@ -58,6 +58,7 @@ model UnitSekolah {
   guru              Guru[]
   murid             Murid[]
   pengguna          Pengguna[]
+  akunDetail        AkunDetail[]
 }
 
 // ========== TAHUN AKADEMIK ==========
@@ -240,6 +241,40 @@ model RiwayatKelas {
 }
 
 
+
+// ========== AKUN KEUANGAN ==========
+model KlasifikasiAkun {
+  id            String @id @default(cuid())
+  kode          String @unique @db.VarChar(10) // "1", "2", "3", "4", "5"
+  nama          String @db.VarChar(100) // "HARTA", "BEBAN"
+  
+  subKlasifikasi SubKlasifikasiAkun[]
+}
+
+model SubKlasifikasiAkun {
+  id                String @id @default(cuid())
+  kode              String @unique @db.VarChar(50) // "11" (Kas & Bank), "51" (Beban Operasional)
+  nama              String @db.VarChar(100)
+  klasifikasiAkunId String
+  
+  klasifikasi       KlasifikasiAkun @relation(fields: [klasifikasiAkunId], references: [id], onDelete: Restrict)
+  akunDetail        AkunDetail[]
+}
+
+model AkunDetail {
+  id                   String  @id @default(cuid())
+  kode                 String  @unique @db.VarChar(50) // "1102"
+  nama                 String  @db.VarChar(150) // "Kas Tunai SD", "Beban Listrik"
+  subKlasifikasiAkunId String
+  
+  unitSekolahId        String? 
+  
+  isKasBank            Boolean @default(false)
+  isActive             Boolean @default(true)
+  
+  subKlasifikasi       SubKlasifikasiAkun @relation(fields: [subKlasifikasiAkunId], references: [id], onDelete: Restrict)
+  unitSekolah          UnitSekolah? @relation(fields: [unitSekolahId], references: [id])
+}
 
 // ========== LOG AKTIVITAS (AUDIT TRAIL) ==========
 model LogAktivitas {

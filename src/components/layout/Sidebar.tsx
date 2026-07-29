@@ -48,6 +48,12 @@ const menuGroups = [
       { href: "/kelas", label: "Kelas & Murid", icon: Users2, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
     ]
   },
+  {
+    title: "KEUANGAN",
+    items: [
+      { href: "/akun-keuangan", label: "Akun Keuangan", icon: Landmark, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+    ]
+  },
 
   {
     title: "PENGATURAN",
