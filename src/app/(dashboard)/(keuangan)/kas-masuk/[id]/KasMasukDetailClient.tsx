@@ -1,0 +1,218 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { ArrowLeft, Printer, FileDown, Receipt, BookOpen, Edit, Link2 } from "lucide-react"
+import { Button } from "@/components/ui/Button"
+import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
+import { format } from "date-fns"
+import { id as idLocale } from "date-fns/locale"
+import toast from "react-hot-toast"
+
+export default function KasMasukDetailClient({ transaksi }: { transaksi: any }) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab") || "resi"
+  const [activeTab, setActiveTab] = useState<'resi' | 'jurnal'>(tabParam as any)
+
+  useEffect(() => {
+    if (tabParam === "resi" || tabParam === "jurnal") {
+      setActiveTab(tabParam)
+    }
+  }, [tabParam])
+
+  const setTab = (tab: 'resi' | 'jurnal') => {
+    setActiveTab(tab)
+    router.replace(`/kas-masuk/${transaksi.id}?tab=${tab}`, { scroll: false })
+  }
+
+  // Pisahkan Debit dan Kredit
+  const detailDebit = transaksi.detail.filter((d: any) => d.posisi === "DEBIT")
+  const detailKredit = transaksi.detail.filter((d: any) => d.posisi === "KREDIT")
+
+  // Helper untuk Terbilang (Sederhana)
+  const terbilang = (angka: number) => {
+    // Fungsi terbilang sederhana, in real app you might want a proper package
+    // For now we'll just format it or provide a dummy terbilang if needed
+    // Or we can just leave it as standard format
+    return "Tiga Ratus Ribu Rupiah" // Dummy for now, let's implement a real one if needed, but for simplicity let's use a basic one or just leave it.
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto w-full pb-24">
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
+            Detail Kas Masuk
+          </h1>
+          <p className="text-text-muted">No. Ref: {transaksi.noReferensi}</p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="bg-white border-border hover:bg-bg shadow-sm">
+            <Printer size={16} className="text-text-main" />
+          </Button>
+          <Link href={`/kas-masuk/${transaksi.id}/edit`}>
+            <Button variant="outline" className="bg-white border-border hover:bg-bg shadow-sm text-blue-500">
+              <Edit size={16} className="mr-2" /> Ubah
+            </Button>
+          </Link>
+          <Link href="/kas-masuk">
+            <Button variant="outline" className="flex items-center gap-2 bg-white border-border hover:bg-bg shadow-sm ml-2">
+              <ArrowLeft size={16} className="text-text-muted" /> <span className="text-text-main font-medium text-sm">Kembali</span>
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
+        
+        <div className="px-6 py-4 border-b border-border bg-bg/50 flex justify-between items-center">
+          <h2 className="font-semibold text-text-main">
+            {activeTab === 'resi' ? 'Resi Pembayaran' : 'Jurnal Akuntansi'}
+          </h2>
+          <div className="flex bg-white border border-border rounded-lg overflow-hidden">
+            <button 
+              onClick={() => setTab('resi')}
+              className={`px-4 py-1.5 text-sm font-medium transition-colors ${activeTab === 'resi' ? 'bg-bg text-text-main font-bold' : 'text-text-muted hover:bg-bg/50'}`}
+            >
+              Resi
+            </button>
+            <div className="w-px bg-border"></div>
+            <button 
+              onClick={() => setTab('jurnal')}
+              className={`px-4 py-1.5 text-sm font-medium transition-colors ${activeTab === 'jurnal' ? 'bg-bg text-text-main font-bold' : 'text-text-muted hover:bg-bg/50'}`}
+            >
+              Jurnal
+            </button>
+          </div>
+        </div>
+
+        {/* TAB RESI */}
+        {activeTab === 'resi' && (
+          <div className="p-6 md:p-8">
+            
+            <div className="grid grid-cols-2 gap-8 mb-8 text-sm">
+              <div>
+                <p className="text-text-muted mb-1">Dari :</p>
+                <p className="font-semibold text-text-main text-base">{transaksi.namaPihakKetiga || "-"}</p>
+                
+                <p className="text-text-muted mb-1 mt-4">Ke :</p>
+                <p className="font-semibold text-text-main text-base">{detailDebit[0]?.akun?.nama || "-"}</p>
+                
+                <p className="text-text-muted mb-1 mt-4">Deskripsi :</p>
+                <p className="font-medium text-text-main">{transaksi.deskripsi || "-"}</p>
+              </div>
+              <div>
+                <p className="text-text-muted mb-1">Referensi Nomer :</p>
+                <p className="font-semibold text-text-main">{transaksi.noReferensi}</p>
+                
+                <p className="text-text-muted mb-1 mt-4">Tanggal :</p>
+                <p className="font-semibold text-text-main">{format(new Date(transaksi.tanggal), "dd-MM-yyyy")}</p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border border-border mb-8">
+              <table className="w-full text-left text-sm border-collapse">
+                <thead>
+                  <tr className="bg-bg/50 text-text-muted text-xs uppercase tracking-wider border-b border-border">
+                    <th className="p-3 text-center w-16">No</th>
+                    <th className="p-3">Akun / Keterangan</th>
+                    <th className="p-3">Deskripsi</th>
+                    <th className="p-3 text-right">Jumlah</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detailKredit.map((d: any, idx: number) => (
+                    <tr key={d.id} className="border-b border-border last:border-b-0 hover:bg-gray-50/50">
+                      <td className="p-3 text-center text-text-muted">{idx + 1}</td>
+                      <td className="p-3 font-medium text-text-main">{d.akun.kode} - {d.akun.nama}</td>
+                      <td className="p-3 text-text-muted">{d.deskripsi}</td>
+                      <td className="p-3 text-right font-bold text-text-main">Rp {d.nilai.toLocaleString('id-ID')}</td>
+                    </tr>
+                  ))}
+                  <tr className="bg-bg/50 border-t border-border">
+                    <td colSpan={3} className="p-3 font-bold text-text-muted text-right">Total</td>
+                    <td className="p-3 text-right font-bold text-albas-green text-lg">Rp {transaksi.totalNilai.toLocaleString('id-ID')}</td>
+                  </tr>
+                  <tr>
+                    <td colSpan={4} className="p-3 italic text-text-muted bg-white border-t border-border">
+                      Terbilang : (Fungsi terbilang belum aktif)
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8 mt-16 text-center text-sm">
+              <div>
+                <p className="text-text-muted mb-24">Dibuat Oleh</p>
+                <div className="border-b border-border w-48 mx-auto"></div>
+                <p className="mt-2 font-medium">{transaksi.pembuat?.name}</p>
+              </div>
+              <div>
+                <p className="text-text-muted mb-24">Diterima Oleh</p>
+                <div className="border-b border-border w-48 mx-auto"></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB JURNAL */}
+        {activeTab === 'jurnal' && (
+          <div className="p-6 md:p-8">
+            
+            <div className="grid grid-cols-[150px_1fr] gap-y-3 mb-8 text-sm">
+              <div className="text-text-muted">Referensi Nomer</div>
+              <div className="font-semibold text-text-main">: {transaksi.noReferensi}</div>
+              
+              <div className="text-text-muted">Tanggal</div>
+              <div className="font-semibold text-text-main">: {format(new Date(transaksi.tanggal), "dd-MM-yyyy")}</div>
+              
+              <div className="text-text-muted">Deskripsi</div>
+              <div className="font-semibold text-text-main">: {transaksi.deskripsi || "-"}</div>
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border border-border mb-8">
+              <table className="w-full text-left text-sm border-collapse">
+                <thead>
+                  <tr className="bg-bg/50 text-text-muted text-xs uppercase tracking-wider border-b border-border">
+                    <th className="p-3">Kode Akun</th>
+                    <th className="p-3">Nama Akun</th>
+                    <th className="p-3 text-right">Debit</th>
+                    <th className="p-3 text-right">Kredit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transaksi.detail.map((d: any) => (
+                    <tr key={d.id} className="border-b border-border last:border-b-0 hover:bg-gray-50/50">
+                      <td className="p-3 font-medium text-text-main">{d.akun.kode}</td>
+                      <td className="p-3 font-medium text-text-main">{d.akun.nama}</td>
+                      <td className="p-3 text-right font-bold text-text-main">
+                        {d.posisi === "DEBIT" ? `Rp ${d.nilai.toLocaleString('id-ID')}` : "-"}
+                      </td>
+                      <td className="p-3 text-right font-bold text-text-main">
+                        {d.posisi === "KREDIT" ? `Rp ${d.nilai.toLocaleString('id-ID')}` : "-"}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className="bg-bg/50 border-t border-border">
+                    <td colSpan={2} className="p-3 font-bold text-text-muted text-right">Total</td>
+                    <td className="p-3 text-right font-bold text-text-main">Rp {transaksi.totalNilai.toLocaleString('id-ID')}</td>
+                    <td className="p-3 text-right font-bold text-text-main">Rp {transaksi.totalNilai.toLocaleString('id-ID')}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-16 text-center text-sm w-48">
+              <p className="text-text-muted mb-24">Dibuat Oleh:</p>
+              <div className="border-b border-border w-full"></div>
+              <p className="mt-2 font-medium">{transaksi.pembuat?.name}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

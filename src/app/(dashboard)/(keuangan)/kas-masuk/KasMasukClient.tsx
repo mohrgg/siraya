@@ -1,12 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Plus, Printer, Download, RefreshCw, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt } from "lucide-react"
+import { Search, Plus, Printer, Download, RefreshCw, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { hapusKasMasuk } from "@/actions/kas-masuk"
+import toast from "react-hot-toast"
+import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 
 type TransaksiWithRelations = any // Type will be inferred properly in real project
 
@@ -14,6 +18,8 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
   const router = useRouter()
   const [data, setData] = useState(initialData)
   const [searchTerm, setSearchTerm] = useState("")
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [filterBy, setFilterBy] = useState<'tanggal_transaksi' | 'tanggal_pembuatan'>('tanggal_transaksi')
   const [timeRange, setTimeRange] = useState<'hari' | 'minggu' | 'bulan' | 'custom'>('bulan')
   
@@ -22,8 +28,22 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
   const [endDate, setEndDate] = useState("")
 
   const handleRefresh = () => {
-    // In a real app, call getKasMasuk here with the current filters
     router.refresh()
+  }
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    setIsDeleting(true)
+    try {
+      await hapusKasMasuk(deleteId)
+      toast.success("Transaksi Kas Masuk berhasil dihapus")
+      setData(data.filter((item: any) => item.id !== deleteId))
+    } catch (error: any) {
+      toast.error(error.message || "Gagal menghapus transaksi")
+    } finally {
+      setIsDeleting(false)
+      setDeleteId(null)
+    }
   }
 
   // Frontend filter for search (since backend filter is already applied, but we can do instant filtering)
@@ -169,17 +189,46 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
                     )}
                   </td>
                   <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="outline" size="sm" className="h-8 w-8 p-0" title="Lihat Detail">
-                        <Eye size={14} className="text-text-muted" />
-                      </Button>
-                      <Button variant="outline" size="sm" className="h-8 w-8 p-0" title="Edit Transaksi">
-                        <Edit size={14} className="text-blue-500" />
-                      </Button>
-                      <Button variant="outline" size="sm" className="h-8 w-8 p-0 hover:border-red-500 hover:bg-red-50" title="Hapus Transaksi">
-                        <Trash2 size={14} className="text-red-500" />
-                      </Button>
-                    </div>
+                    <DropdownMenu.Root>
+                      <DropdownMenu.Trigger asChild>
+                        <Button variant="outline" className="h-9 px-3 flex items-center gap-2 bg-white hover:bg-bg/50 shadow-sm">
+                          <span className="text-xs font-semibold text-text-main">Aksi</span>
+                          <ChevronDown size={16} className="text-text-muted" />
+                        </Button>
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Portal>
+                        <DropdownMenu.Content 
+                          align="end"
+                          className="w-40 bg-white rounded-lg shadow-lg border border-border py-1 z-[100] animate-in fade-in-80 zoom-in-95 data-[side=bottom]:slide-in-from-top-2"
+                        >
+                          <DropdownMenu.Item 
+                            className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-bg/50 transition-colors flex items-center cursor-pointer outline-none"
+                            onClick={() => router.push(`/kas-masuk/${item.id}?tab=resi`)}
+                          >
+                            <Receipt size={14} className="mr-2 text-text-muted" /> Detail
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Item 
+                            className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-bg/50 transition-colors flex items-center cursor-pointer outline-none"
+                            onClick={() => router.push(`/kas-masuk/${item.id}?tab=jurnal`)}
+                          >
+                            <Eye size={14} className="mr-2 text-text-muted" /> Jurnal
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Item 
+                            className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-bg/50 transition-colors flex items-center cursor-pointer outline-none"
+                            onClick={() => router.push(`/kas-masuk/${item.id}/edit`)}
+                          >
+                            <Edit size={14} className="mr-2 text-blue-500" /> Ubah
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Separator className="h-px bg-border my-1" />
+                          <DropdownMenu.Item 
+                            className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors flex items-center cursor-pointer outline-none"
+                            onClick={() => setDeleteId(item.id)}
+                          >
+                            <Trash2 size={14} className="mr-2" /> Hapus
+                          </DropdownMenu.Item>
+                        </DropdownMenu.Content>
+                      </DropdownMenu.Portal>
+                    </DropdownMenu.Root>
                   </td>
                 </tr>
               ))}
@@ -197,6 +246,17 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
           </table>
         </div>
       </div>
+      
+      <ConfirmModal 
+        isOpen={!!deleteId}
+        onCancel={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Hapus Transaksi Kas Masuk"
+        message="Apakah Anda yakin ingin menghapus transaksi ini? Data jurnal dan saldo akan disesuaikan kembali. Tindakan ini tidak dapat dibatalkan."
+        confirmText={isDeleting ? "Menghapus..." : "Hapus Transaksi"}
+        confirmVariant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

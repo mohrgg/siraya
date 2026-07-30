@@ -83,7 +83,6 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
 
       toast.success("Kas Masuk berhasil disimpan!")
       router.push("/kas-masuk")
-      router.refresh()
     } catch (error: any) {
       toast.error(error.message || "Terjadi kesalahan saat menyimpan")
     } finally {

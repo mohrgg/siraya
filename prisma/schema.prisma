@@ -298,6 +298,7 @@ model Transaksi {
   noFormulir     String?  @db.VarChar(50)
   tanggal        DateTime
   jenis          String   @db.VarChar(20) // "KAS_MASUK", "KAS_KELUAR"
+  sumber         String   @default("MANUAL") @db.VarChar(20) // "MANUAL", "TAGIHAN"
   deskripsi      String   @db.Text
   totalNilai     Float
   status         String   @default("POSTED") @db.VarChar(20) // POSTED, VOID

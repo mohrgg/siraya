@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { format } from "date-fns"
+import { revalidatePath } from "next/cache"
 
 export async function getKasMasuk(params?: {
   startDate?: Date,
@@ -153,6 +154,7 @@ export type KasMasukPayload = {
   noFormulir?: string
   namaPihakKetiga?: string
   deskripsi: string
+  sumber?: string
   details: { // KREDIT lines
     akunId: string
     nilai: number
@@ -180,6 +182,7 @@ export async function createKasMasuk(data: KasMasukPayload) {
         noFormulir: data.noFormulir,
         tanggal: data.tanggal,
         jenis: "KAS_MASUK",
+        sumber: data.sumber || "MANUAL",
         deskripsi: data.deskripsi,
         totalNilai: totalNilai,
         status: "POSTED",
@@ -226,6 +229,7 @@ export async function createKasMasuk(data: KasMasukPayload) {
     }
   })
 
+  revalidatePath("/kas-masuk")
   return result
 }
 
@@ -250,5 +254,108 @@ export async function hapusKasMasuk(id: string) {
     }
   })
 
+  revalidatePath("/kas-masuk")
   return true
+}
+
+export async function getKasMasukById(id: string) {
+  const session = await auth()
+  if (!session || !session.user) throw new Error("Unauthorized")
+
+  const tx = await prisma.transaksi.findUnique({
+    where: { id },
+    include: {
+      pembuat: { select: { name: true } },
+      detail: {
+        include: {
+          akun: {
+            select: { kode: true, nama: true }
+          }
+        }
+      }
+    }
+  })
+
+  if (!tx) throw new Error("Transaksi tidak ditemukan")
+  return tx
+}
+
+export async function updateKasMasuk(id: string, data: KasMasukPayload) {
+  const session = await auth()
+  if (!session || !session.user) throw new Error("Unauthorized")
+  const user = session.user as any
+  
+  if (!data.details || data.details.length === 0) {
+    throw new Error("Harus ada minimal satu baris pembukuan")
+  }
+
+  const existingTx = await prisma.transaksi.findUnique({
+    where: { id },
+    include: { detail: true }
+  })
+
+  if (!existingTx) throw new Error("Transaksi tidak ditemukan")
+
+  const totalNilai = data.details.reduce((sum, item) => sum + item.nilai, 0)
+  
+  const result = await prisma.$transaction(async (tx) => {
+    // 1. Update the Header Transaksi
+    const updatedTransaksi = await tx.transaksi.update({
+      where: { id },
+      data: {
+        tanggal: data.tanggal,
+        deskripsi: data.deskripsi,
+        totalNilai: totalNilai,
+        namaPihakKetiga: data.namaPihakKetiga,
+        noFormulir: data.noFormulir,
+        isEdited: true,
+        editReason: "Diedit melalui halaman Ubah Kas Masuk"
+      }
+    })
+
+    // 2. Delete existing details
+    await tx.transaksiDetail.deleteMany({
+      where: { transaksiId: id }
+    })
+
+    // 3. Create the DEBIT line (Uang Masuk ke Kas/Bank yang dipilih)
+    await tx.transaksiDetail.create({
+      data: {
+        transaksiId: id,
+        akunId: data.akunPenerimaId,
+        posisi: "DEBIT",
+        nilai: totalNilai,
+        deskripsi: "Penerimaan Kas: " + data.deskripsi
+      }
+    })
+
+    // 4. Create the KREDIT lines (Sumber Uang)
+    for (const detail of data.details) {
+      await tx.transaksiDetail.create({
+        data: {
+          transaksiId: id,
+          akunId: detail.akunId,
+          posisi: "KREDIT",
+          nilai: detail.nilai,
+          deskripsi: detail.deskripsi || data.deskripsi
+        }
+      })
+    }
+    
+    return updatedTransaksi
+  })
+  
+  // Log Aktivitas
+  await prisma.logAktivitas.create({
+    data: {
+      penggunaId: user.id,
+      aksi: "UPDATE",
+      modul: "KAS_MASUK",
+      keterangan: `Mengubah penerimaan kas masuk (No Ref: ${existingTx.noReferensi}) menjadi Rp ${totalNilai.toLocaleString('id-ID')}`
+    }
+  })
+
+  revalidatePath("/kas-masuk")
+  revalidatePath(`/kas-masuk/${id}`)
+  return result
 }
