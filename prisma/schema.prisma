@@ -27,6 +27,7 @@ model Pengguna {
   divisi      Divisi?      @relation(fields: [divisiId], references: [id])
 
   logAktivitas     LogAktivitas[]
+  transaksi        Transaksi[]
 }
 
 // ========== DIVISI ==========
@@ -59,6 +60,7 @@ model UnitSekolah {
   murid             Murid[]
   pengguna          Pengguna[]
   akunDetail        AkunDetail[]
+  transaksi         Transaksi[]
 }
 
 // ========== TAHUN AKADEMIK ==========
@@ -274,6 +276,7 @@ model AkunDetail {
   
   subKlasifikasi       SubKlasifikasiAkun @relation(fields: [subKlasifikasiAkunId], references: [id], onDelete: Restrict)
   unitSekolah          UnitSekolah? @relation(fields: [unitSekolahId], references: [id])
+  transaksiDetail      TransaksiDetail[]
 }
 
 // ========== LOG AKTIVITAS (AUDIT TRAIL) ==========
@@ -287,3 +290,44 @@ model LogAktivitas {
 
   pengguna Pengguna @relation(fields: [penggunaId], references: [id], onDelete: Cascade)
 }
+
+// ========== TRANSAKSI (JURNAL KEUANGAN) ==========
+model Transaksi {
+  id             String   @id @default(cuid())
+  noReferensi    String   @unique @db.VarChar(50) // Cth: "KM-2607-0001"
+  noFormulir     String?  @db.VarChar(50)
+  tanggal        DateTime
+  jenis          String   @db.VarChar(20) // "KAS_MASUK", "KAS_KELUAR"
+  deskripsi      String   @db.Text
+  totalNilai     Float
+  status         String   @default("POSTED") @db.VarChar(20) // POSTED, VOID
+  
+  namaPihakKetiga String? @db.VarChar(150) // Nama penyetor (teks bebas)
+  
+  unitSekolahId  String?
+  pembuatId      String
+  
+  // Jejak Audit Revisi
+  isEdited       Boolean  @default(false)
+  editReason     String?  @db.Text
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  unitSekolah    UnitSekolah? @relation(fields: [unitSekolahId], references: [id])
+  pembuat        Pengguna     @relation(fields: [pembuatId], references: [id])
+  detail         TransaksiDetail[]
+}
+
+model TransaksiDetail {
+  id             String   @id @default(cuid())
+  transaksiId    String
+  akunId         String
+  posisi         String   @db.VarChar(10) // "DEBIT" atau "KREDIT"
+  nilai          Float
+  deskripsi      String?  @db.VarChar(255)
+  
+  transaksi      Transaksi  @relation(fields: [transaksiId], references: [id], onDelete: Cascade)
+  akun           AkunDetail @relation(fields: [akunId], references: [id], onDelete: Restrict)
+}
+

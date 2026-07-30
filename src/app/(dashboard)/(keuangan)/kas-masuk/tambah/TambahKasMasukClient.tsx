@@ -1,0 +1,303 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { ArrowLeft, Plus, Trash2, Save, Receipt, ChevronDown } from "lucide-react"
+import { Button } from "@/components/ui/Button"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { generateNoReferensi, createKasMasuk } from "@/actions/kas-masuk"
+import toast from "react-hot-toast"
+
+type KasMasukLine = {
+  id: string
+  akunId: string
+  nilai: number
+  deskripsi: string
+}
+
+export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccounts }: { kasBankAccounts: any[], pendapatanAccounts: any[] }) {
+  const router = useRouter()
+  
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [header, setHeader] = useState({
+    akunPenerimaId: kasBankAccounts[0]?.id || "",
+    tanggal: new Date().toISOString().split('T')[0],
+    noReferensi: "",
+    noFormulir: "",
+    namaPihakKetiga: "",
+    deskripsi: ""
+  })
+
+  const [lines, setLines] = useState<KasMasukLine[]>([
+    { id: crypto.randomUUID(), akunId: "", nilai: 0, deskripsi: "" }
+  ])
+
+  // Fetch / Generate No Referensi when date changes
+  useEffect(() => {
+    if (header.tanggal) {
+      generateNoReferensi(new Date(header.tanggal)).then(ref => {
+        setHeader(prev => ({ ...prev, noReferensi: ref }))
+      }).catch(console.error)
+    }
+  }, [header.tanggal])
+
+  const totalNilai = lines.reduce((sum, line) => sum + (Number(line.nilai) || 0), 0)
+
+  const addLine = () => {
+    setLines([...lines, { id: crypto.randomUUID(), akunId: "", nilai: 0, deskripsi: "" }])
+  }
+
+  const removeLine = (id: string) => {
+    if (lines.length > 1) {
+      setLines(lines.filter(l => l.id !== id))
+    }
+  }
+
+  const updateLine = (id: string, field: keyof KasMasukLine, value: any) => {
+    setLines(lines.map(l => l.id === id ? { ...l, [field]: value } : l))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!header.akunPenerimaId) return toast.error("Silakan pilih Akun Penerima Kas")
+    if (lines.some(l => !l.akunId || l.nilai <= 0)) {
+      return toast.error("Semua baris pembukuan harus memiliki Akun dan Nilai > 0")
+    }
+
+    try {
+      setIsSubmitting(true)
+      await createKasMasuk({
+        akunPenerimaId: header.akunPenerimaId,
+        tanggal: new Date(header.tanggal),
+        noReferensi: header.noReferensi,
+        noFormulir: header.noFormulir,
+        namaPihakKetiga: header.namaPihakKetiga,
+        deskripsi: header.deskripsi,
+        details: lines.map(l => ({
+          akunId: l.akunId,
+          nilai: Number(l.nilai),
+          deskripsi: l.deskripsi
+        }))
+      })
+
+      toast.success("Kas Masuk berhasil disimpan!")
+      router.push("/kas-masuk")
+      router.refresh()
+    } catch (error: any) {
+      toast.error(error.message || "Terjadi kesalahan saat menyimpan")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24">
+      
+      {/* Top Navigation */}
+      <div className="flex items-center gap-4 mb-8">
+        <Link href="/kas-masuk">
+          <Button variant="outline" className="h-10 w-10 p-0 rounded-full border-border hover:bg-surface-hover shadow-sm">
+            <ArrowLeft size={18} className="text-text-muted" />
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-text-main flex items-center gap-2">
+            Tambah Kas Masuk
+          </h1>
+          <p className="text-text-muted text-sm mt-1">Catat penerimaan dana / pendapatan umum ke dalam sistem</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        
+        {/* HEADER SECTION */}
+        <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
+          <div className="px-6 py-4 border-b border-border bg-bg/50">
+            <h2 className="font-semibold text-text-main flex items-center gap-2">
+              <Receipt size={18} className="text-primary" /> Informasi Transaksi (Header)
+            </h2>
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <div className="flex flex-col gap-1.5 lg:col-span-1">
+              <label className="text-sm font-semibold text-text-main">Masuk Ke Akun Kas/Bank <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <select 
+                  className="w-full pl-4 pr-10 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none text-sm font-medium"
+                  value={header.akunPenerimaId}
+                  onChange={e => setHeader({ ...header, akunPenerimaId: e.target.value })}
+                  required
+                >
+                  <option value="" disabled>-- Pilih Dompet/Rekening --</option>
+                  {kasBankAccounts.map(akun => (
+                    <option key={akun.id} value={akun.id}>{akun.kode} - {akun.nama}</option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+              </div>
+              <span className="text-xs text-text-muted">Pilih dompet/rekening tempat uang diterima (DEBIT).</span>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-main">Tanggal Transaksi <span className="text-red-500">*</span></label>
+              <input 
+                type="date"
+                required
+                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
+                value={header.tanggal}
+                onChange={e => setHeader({ ...header, tanggal: e.target.value })}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-main">No. Referensi (Auto) <span className="text-red-500">*</span></label>
+              <input 
+                type="text"
+                required
+                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium text-primary font-mono"
+                value={header.noReferensi}
+                onChange={e => setHeader({ ...header, noReferensi: e.target.value })}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-main">Nama Penyetor (Opsional)</label>
+              <input 
+                type="text"
+                placeholder="Contoh: Bpk. Hamba Allah"
+                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                value={header.namaPihakKetiga}
+                onChange={e => setHeader({ ...header, namaPihakKetiga: e.target.value })}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-main">No. Formulir / Kertas (Opsional)</label>
+              <input 
+                type="text"
+                placeholder="Contoh: KWT-001"
+                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                value={header.noFormulir}
+                onChange={e => setHeader({ ...header, noFormulir: e.target.value })}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5 lg:col-span-3">
+              <label className="text-sm font-semibold text-text-main">Keterangan Umum <span className="text-red-500">*</span></label>
+              <input 
+                type="text"
+                required
+                placeholder="Contoh: Penerimaan Donasi Pembangunan Masjid"
+                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                value={header.deskripsi}
+                onChange={e => setHeader({ ...header, deskripsi: e.target.value })}
+              />
+            </div>
+
+          </div>
+        </div>
+
+        {/* DETAIL PEMBUKUAN SECTION */}
+        <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
+          <div className="px-6 py-4 border-b border-border bg-bg/50 flex justify-between items-center">
+            <div>
+              <h2 className="font-semibold text-text-main">Rincian Pembukuan (Pendapatan)</h2>
+              <p className="text-xs text-text-muted mt-0.5">Catat dari mana saja sumber penerimaan uang tersebut (KREDIT).</p>
+            </div>
+          </div>
+          
+          <div className="p-0 overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-bg text-text-muted font-semibold border-b border-border">
+                <tr>
+                  <th className="p-4 w-12 text-center">NO</th>
+                  <th className="p-4 min-w-[300px]">AKUN SUMBER PENDAPATAN <span className="text-red-500">*</span></th>
+                  <th className="p-4 min-w-[300px]">KETERANGAN BARIS (Opsional)</th>
+                  <th className="p-4 w-48 text-right">NILAI (RP) <span className="text-red-500">*</span></th>
+                  <th className="p-4 w-16 text-center">AKSI</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {lines.map((line, idx) => (
+                  <tr key={line.id} className="hover:bg-bg/30">
+                    <td className="p-4 text-center text-text-muted font-medium">{idx + 1}</td>
+                    <td className="p-4">
+                      <select 
+                        className="w-full px-3 py-2 bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                        value={line.akunId}
+                        onChange={e => updateLine(line.id, "akunId", e.target.value)}
+                        required
+                      >
+                        <option value="" disabled>-- Pilih Akun --</option>
+                        {pendapatanAccounts.map(akun => (
+                          <option key={akun.id} value={akun.id}>{akun.kode} - {akun.nama}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="p-4">
+                      <input 
+                        type="text" 
+                        className="w-full px-3 py-2 bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                        placeholder="Ket. spesifik (opsional)"
+                        value={line.deskripsi}
+                        onChange={e => updateLine(line.id, "deskripsi", e.target.value)}
+                      />
+                    </td>
+                    <td className="p-4">
+                      <input 
+                        type="number"
+                        min="0"
+                        className="w-full px-3 py-2 bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm text-right font-semibold text-albas-green"
+                        placeholder="0"
+                        value={line.nilai || ""}
+                        onChange={e => updateLine(line.id, "nilai", e.target.value)}
+                        required
+                      />
+                    </td>
+                    <td className="p-4 text-center">
+                      <button 
+                        type="button" 
+                        onClick={() => removeLine(line.id)}
+                        disabled={lines.length === 1}
+                        className="p-2 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="bg-bg/50 border-t border-border">
+                <tr>
+                  <td colSpan={3} className="p-4 text-right font-bold text-text-main">TOTAL PENERIMAAN:</td>
+                  <td className="p-4 text-right font-bold text-albas-green text-lg">
+                    Rp {totalNilai.toLocaleString('id-ID')}
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          
+          <div className="p-4 bg-white border-t border-border">
+            <Button type="button" variant="outline" onClick={addLine} className="border-dashed border-2">
+              <Plus size={16} className="mr-1.5" /> Tambah Baris Pembukuan
+            </Button>
+          </div>
+        </div>
+
+        {/* Action Bar (Sticky Bottom) */}
+        <div className="fixed bottom-0 left-0 right-0 md:left-[265px] bg-white border-t border-border p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex justify-end gap-3 z-30">
+          <Link href="/kas-masuk">
+            <Button type="button" variant="outline" className="min-w-[100px]">Batal</Button>
+          </Link>
+          <Button type="submit" isLoading={isSubmitting} className="min-w-[150px] shadow-md shadow-primary/20">
+            <Save size={16} className="mr-1.5" /> Simpan Transaksi
+          </Button>
+        </div>
+
+      </form>
+    </div>
+  )
+}

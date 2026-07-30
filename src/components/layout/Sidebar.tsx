@@ -21,7 +21,8 @@ import {
   GraduationCap,
   Landmark,
   Receipt,
-  Key
+  Key,
+  ArrowDownToLine
 } from "lucide-react"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import ChangePasswordModal from "@/components/modals/ChangePasswordModal"
@@ -52,6 +53,7 @@ const menuGroups = [
     title: "KEUANGAN",
     items: [
       { href: "/akun-keuangan", label: "Akun Keuangan", icon: Landmark, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/kas-masuk", label: "Kas Masuk", icon: ArrowDownToLine, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
     ]
   },
 
