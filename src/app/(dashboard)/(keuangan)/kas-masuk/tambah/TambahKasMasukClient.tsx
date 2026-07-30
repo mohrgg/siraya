@@ -92,21 +92,21 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24">
+    <div className="max-w-7xl mx-auto w-full pb-24">
       
       {/* Top Navigation */}
-      <div className="flex items-center gap-4 mb-8">
-        <Link href="/kas-masuk">
-          <Button variant="outline" className="h-10 w-10 p-0 rounded-full border-border hover:bg-surface-hover shadow-sm">
-            <ArrowLeft size={18} className="text-text-muted" />
-          </Button>
-        </Link>
+      <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-text-main flex items-center gap-2">
+          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
             Tambah Kas Masuk
           </h1>
-          <p className="text-text-muted text-sm mt-1">Catat penerimaan dana / pendapatan umum ke dalam sistem</p>
+          <p className="text-text-muted">Catat penerimaan dana / pendapatan umum ke dalam sistem</p>
         </div>
+        <Link href="/kas-masuk">
+          <Button variant="outline" className="flex items-center gap-2 bg-white border-border hover:bg-bg shadow-sm">
+            <ArrowLeft size={16} className="text-text-muted" /> <span className="text-text-main font-medium text-sm">Kembali</span>
+          </Button>
+        </Link>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -114,8 +114,8 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
         {/* HEADER SECTION */}
         <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
           <div className="px-6 py-4 border-b border-border bg-bg/50">
-            <h2 className="font-semibold text-text-main flex items-center gap-2">
-              <Receipt size={18} className="text-primary" /> Informasi Transaksi (Header)
+            <h2 className="font-semibold text-text-main">
+              Informasi Transaksi (Header)
             </h2>
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -155,9 +155,9 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
               <input 
                 type="text"
                 required
-                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium text-primary font-mono"
+                readOnly
+                className="w-full px-4 py-2.5 bg-gray-50 border border-border rounded-xl focus:outline-none text-sm font-medium text-text-muted font-mono cursor-not-allowed"
                 value={header.noReferensi}
-                onChange={e => setHeader({ ...header, noReferensi: e.target.value })}
               />
             </div>
 
@@ -211,80 +211,96 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-bg text-text-muted font-semibold border-b border-border">
                 <tr>
-                  <th className="p-4 w-12 text-center">NO</th>
-                  <th className="p-4 min-w-[300px]">AKUN SUMBER PENDAPATAN <span className="text-red-500">*</span></th>
-                  <th className="p-4 min-w-[300px]">KETERANGAN BARIS (Opsional)</th>
-                  <th className="p-4 w-48 text-right">NILAI (RP) <span className="text-red-500">*</span></th>
-                  <th className="p-4 w-16 text-center">AKSI</th>
+                  <th className="p-4 min-w-[300px]">AKUN <span className="text-red-500">*</span></th>
+                  <th className="p-4 w-48">KODE</th>
+                  <th className="p-4 w-64 text-right">TOTAL <span className="text-red-500">*</span></th>
+                  <th className="p-4 w-16 text-center">HAPUS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {lines.map((line, idx) => (
-                  <tr key={line.id} className="hover:bg-bg/30">
-                    <td className="p-4 text-center text-text-muted font-medium">{idx + 1}</td>
-                    <td className="p-4">
-                      <select 
-                        className="w-full px-3 py-2 bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-                        value={line.akunId}
-                        onChange={e => updateLine(line.id, "akunId", e.target.value)}
-                        required
-                      >
-                        <option value="" disabled>-- Pilih Akun --</option>
-                        {pendapatanAccounts.map(akun => (
-                          <option key={akun.id} value={akun.id}>{akun.kode} - {akun.nama}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="p-4">
-                      <input 
-                        type="text" 
-                        className="w-full px-3 py-2 bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-                        placeholder="Ket. spesifik (opsional)"
-                        value={line.deskripsi}
-                        onChange={e => updateLine(line.id, "deskripsi", e.target.value)}
-                      />
-                    </td>
-                    <td className="p-4">
-                      <input 
-                        type="number"
-                        min="0"
-                        className="w-full px-3 py-2 bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm text-right font-semibold text-albas-green"
-                        placeholder="0"
-                        value={line.nilai || ""}
-                        onChange={e => updateLine(line.id, "nilai", e.target.value)}
-                        required
-                      />
-                    </td>
-                    <td className="p-4 text-center">
-                      <button 
-                        type="button" 
-                        onClick={() => removeLine(line.id)}
-                        disabled={lines.length === 1}
-                        className="p-2 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {lines.map((line, idx) => {
+                  const selectedAkun = pendapatanAccounts.find(a => a.id === line.akunId)
+                  const kodeAkun = selectedAkun ? selectedAkun.kode : ""
+
+                  return (
+                    <tr key={line.id} className="hover:bg-bg/30">
+                      <td className="p-4">
+                        <select 
+                          className="w-full px-3 py-2 bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                          value={line.akunId}
+                          onChange={e => updateLine(line.id, "akunId", e.target.value)}
+                          required
+                        >
+                          <option value="" disabled>Pilih Ke Akun</option>
+                          {pendapatanAccounts.map(akun => (
+                            <option key={akun.id} value={akun.id}>[{akun.kode}] {akun.nama}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="p-4">
+                        <input 
+                          type="text" 
+                          className="w-full px-3 py-2 bg-gray-50 border border-border rounded-lg text-sm text-text-muted cursor-not-allowed font-mono"
+                          value={kodeAkun}
+                          readOnly
+                          placeholder="Kode"
+                        />
+                      </td>
+                      <td className="p-4">
+                        <input 
+                          type="text"
+                          className="w-full px-3 py-2 bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm text-right font-semibold text-albas-green"
+                          placeholder="0"
+                          value={line.nilai ? line.nilai.toLocaleString('id-ID') : ""}
+                          onChange={e => {
+                            const rawValue = e.target.value.replace(/[^0-9]/g, "");
+                            updateLine(line.id, "nilai", rawValue ? Number(rawValue) : 0);
+                          }}
+                          required
+                        />
+                      </td>
+                      <td className="p-4 text-center">
+                        <button 
+                          type="button" 
+                          onClick={() => removeLine(line.id)}
+                          disabled={lines.length === 1}
+                          className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed mx-auto block"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
               <tfoot className="bg-bg/50 border-t border-border">
                 <tr>
-                  <td colSpan={3} className="p-4 text-right font-bold text-text-main">TOTAL PENERIMAAN:</td>
-                  <td className="p-4 text-right font-bold text-albas-green text-lg">
-                    Rp {totalNilai.toLocaleString('id-ID')}
+                  <td colSpan={4} className="p-4">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex justify-center">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={addLine}
+                          className="text-text-muted hover:text-text-main border-border"
+                        >
+                          <Plus size={16} className="mr-1.5" /> Tambah Baris Pembukuan
+                        </Button>
+                      </div>
+                      <div className="flex justify-end items-center gap-8 pt-2">
+                        <span className="font-bold text-text-muted">Total</span>
+                        <span className="font-bold text-albas-green text-lg w-48 text-right">
+                          Rp {totalNilai.toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                    </div>
                   </td>
-                  <td></td>
                 </tr>
               </tfoot>
             </table>
           </div>
           
-          <div className="p-4 bg-white border-t border-border">
-            <Button type="button" variant="outline" onClick={addLine} className="border-dashed border-2">
-              <Plus size={16} className="mr-1.5" /> Tambah Baris Pembukuan
-            </Button>
-          </div>
+
         </div>
 
         {/* Action Bar (Sticky Bottom) */}

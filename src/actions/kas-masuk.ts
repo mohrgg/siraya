@@ -67,7 +67,12 @@ export async function getKasBankAccounts() {
 
   const whereClause: any = {
     isKasBank: true,
-    isActive: true
+    isActive: true,
+    subKlasifikasi: {
+      klasifikasi: {
+        kode: "1" // Wajib dari kelompok Harta (Aset)
+      }
+    }
   }
 
   if (user.role === "TATA_USAHA" && user.unitSekolahId) {
