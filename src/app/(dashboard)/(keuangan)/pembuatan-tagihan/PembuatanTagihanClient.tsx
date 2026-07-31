@@ -270,118 +270,113 @@ export default function PembuatanTagihanClient({
 
   return (
     <div className="max-w-[1600px] mx-auto w-full">
-      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Pembuatan Tagihan Siswa</h1>
-          <p className="text-text-muted">Kelola tagihan massal untuk siswa berdasarkan komponen biaya</p>
-        </div>
-        
-        {gridData.length > 0 && (
-          <Button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm whitespace-nowrap"
-          >
-            <Plus size={16} className="mr-1.5" /> Tambah Tagihan Siswa
-          </Button>
-        )}
+      <div className="mb-6">
+        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Pembuatan Tagihan Siswa</h1>
+        <p className="text-text-muted">Kelola tagihan massal untuk siswa berdasarkan komponen biaya</p>
       </div>
 
-      {/* FILTER PANEL */}
-      <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 flex flex-col gap-4">
-        <h2 className="text-lg font-bold text-text-main flex items-center gap-2">
-          <Filter size={18} className="text-primary" /> Filter Subkelas
-        </h2>
+      {/* Main Content Card (Match KasKeluar Layout) */}
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6 mb-6">
         
-        <div className={`grid grid-cols-1 md:grid-cols-2 ${jurusanList.length > 0 ? 'xl:grid-cols-3' : ''} gap-4 bg-bg/50 p-4 rounded-xl border border-border/50`}>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Kelas</label>
-            <select 
-              className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium disabled:opacity-60"
-              value={kelasId}
-              onChange={e => setKelasId(e.target.value)}
-            >
-              <option value="">-- Pilih Kelas --</option>
-              {kelasList.map(kelas => (
-                <option key={kelas.id} value={kelas.id}>{kelas.name}</option>
-              ))}
-            </select>
-          </div>
+        {/* Tabs Navigation */}
+        <div className="flex gap-2 mb-6 border-b border-border">
+          <button className="px-6 py-3 font-semibold text-sm transition-colors border-b-2 border-primary text-primary">
+            Daftar Tagihan Siswa
+          </button>
+        </div>
 
-          {jurusanList.length > 0 && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Jurusan</label>
+        {/* Filters and Actions Row */}
+        <div className="flex flex-col xl:flex-row justify-between items-start gap-4 mb-6">
+          <div className="flex flex-wrap gap-3 items-center flex-1">
+            
+            <div className="relative w-full md:w-64 flex-shrink-0">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+              <input 
+                type="text" 
+                placeholder="Cari Siswa / No Pendaftaran..." 
+                className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 disabled:opacity-60"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                disabled={gridData.length === 0}
+              />
+            </div>
+
+            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-2 py-1">
+              <Filter size={14} className="text-text-muted ml-2" />
               <select 
-                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium disabled:opacity-60"
-                value={jurusanId}
-                onChange={e => setJurusanId(e.target.value)}
+                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-1"
+                value={kelasId}
+                onChange={e => setKelasId(e.target.value)}
               >
-                <option value="">-- Pilih Jurusan --</option>
-                {jurusanList.map(jurusan => (
-                  <option key={jurusan.id} value={jurusan.id}>{jurusan.name}</option>
+                <option value="">Kelas...</option>
+                {kelasList.map(kelas => (
+                  <option key={kelas.id} value={kelas.id}>{kelas.name}</option>
                 ))}
               </select>
             </div>
-          )}
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Subkelas</label>
-            <div className="flex gap-2">
+            {jurusanList.length > 0 && (
+              <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-2 py-1">
+                <select 
+                  className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-1 px-2"
+                  value={jurusanId}
+                  onChange={e => setJurusanId(e.target.value)}
+                >
+                  <option value="">Jurusan...</option>
+                  {jurusanList.map(jurusan => (
+                    <option key={jurusan.id} value={jurusan.id}>{jurusan.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-2 py-1">
               <select 
-                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium disabled:opacity-60"
+                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-1 px-2"
                 value={subKelasId}
                 onChange={e => setSubKelasId(e.target.value)}
                 disabled={!kelasId}
               >
-                <option value="">-- Pilih Subkelas --</option>
+                <option value="">Subkelas...</option>
                 {subKelasList.map(sk => (
                   <option key={sk.id} value={sk.id}>{sk.name}</option>
                 ))}
               </select>
-              <Button 
-                onClick={handleTampilkan} 
-                disabled={!subKelasId || isLoading}
-                className="px-6 whitespace-nowrap bg-albas-green hover:bg-albas-green/90"
-              >
-                {isLoading ? <Loader2 size={18} className="animate-spin" /> : "Tampilkan"}
-              </Button>
             </div>
+
+            <Button 
+              size="sm"
+              onClick={handleTampilkan} 
+              disabled={!subKelasId || isLoading}
+              className="px-4 py-1.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90"
+            >
+              {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
+            </Button>
+          </div>
+
+          <div className="flex gap-2 flex-wrap items-center">
+            {gridData.length > 0 && (
+              <Button 
+                onClick={() => setIsModalOpen(true)}
+                className="bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm whitespace-nowrap"
+              >
+                <Plus size={16} className="mr-1.5" /> Tambah Tagihan
+              </Button>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* MATRIX TABLE */}
-      {gridData.length > 0 && (
-        <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 flex flex-col relative min-h-[400px]">
-          
-          <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-4">
-            <div>
-              <h2 className="text-lg font-bold text-text-main">Daftar Tagihan Siswa</h2>
-              <p className="text-sm text-text-muted mt-0.5">Subkelas {activeSubKelasName} - Tahun Akademik {activeTahunAkademikName}</p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="relative w-64">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-                <input 
-                  type="text" 
-                  placeholder="Pencarian nama siswa..." 
-                  className="w-full pl-10 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium transition-all"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto pb-4 rounded-xl border border-border">
-            <table className="w-full text-left text-sm border-collapse min-w-max">
+        {/* Table / Empty State Container */}
+        {gridData.length > 0 ? (
+          <div className="overflow-x-auto min-h-[400px]">
+            <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
               <thead>
-                <tr className="bg-bg/80 border-b border-border text-xs uppercase tracking-wider text-text-muted sticky top-0 z-10 backdrop-blur-sm">
-                  <th className="p-3 font-semibold text-center w-12 sticky left-0 bg-bg/95 z-20 shadow-[1px_0_0_0_#e2e8f0]">No.</th>
-                  <th className="p-3 font-semibold min-w-[200px] sticky left-12 bg-bg/95 z-20 shadow-[1px_0_0_0_#e2e8f0]">Siswa/i</th>
+                <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
+                  <th className="p-4 font-semibold text-center w-12 sticky left-0 bg-bg z-20 shadow-[1px_0_0_0_#e2e8f0]">NO</th>
+                  <th className="p-4 font-semibold min-w-[200px] sticky left-12 bg-bg z-20 shadow-[1px_0_0_0_#e2e8f0]">SISWA/I</th>
                   
                   {akunColumns.map(col => (
-                    <th key={col.id} className="p-3 font-semibold text-center min-w-[150px] relative group">
+                    <th key={col.id} className="p-4 font-semibold text-center min-w-[150px] relative group">
                       <div className="flex items-center justify-center gap-2">
                         <div>
                           {col.nama} <br/><span className="text-[10px] opacity-70">[{col.kode}]</span>
@@ -430,8 +425,8 @@ export default function PembuatanTagihanClient({
                     </th>
                   ))}
                   
-                  <th className="p-3 font-semibold text-right min-w-[150px]">Total Tagihan</th>
-                  <th className="p-3 font-semibold text-center w-24 sticky right-0 bg-bg/95 z-20 shadow-[-1px_0_0_0_#e2e8f0]">Aksi</th>
+                  <th className="p-4 font-semibold text-right min-w-[150px]">TAGIHAN BERJALAN (TOTAL)</th>
+                  <th className="p-4 font-semibold text-center w-24 sticky right-0 bg-bg z-20 shadow-[-1px_0_0_0_#e2e8f0]">AKSI</th>
                 </tr>
               </thead>
               <tbody>
@@ -446,18 +441,18 @@ export default function PembuatanTagihanClient({
                     const rowTotal = akunColumns.reduce((acc, col) => acc + (row.tagihanMap[col.id] || 0), 0)
                     
                     return (
-                      <tr key={row.id} className={`border-b border-border/50 hover:bg-gray-50/50 transition-colors ${row.isDirty ? 'bg-amber-50/30' : ''}`}>
-                        <td className="p-3 text-center text-text-muted font-medium sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0]">
+                      <tr key={row.id} className={`border-b border-border/50 hover:bg-bg/50 transition-colors ${row.isDirty ? 'bg-amber-50/30' : ''}`}>
+                        <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
                           {idx + 1}.
                         </td>
-                        <td className="p-3 sticky left-12 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0]">
+                        <td className="p-4 sticky left-12 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
                           <p className="font-semibold text-text-main leading-tight truncate max-w-[200px]" title={row.name}>{row.name}</p>
                           <p className="text-xs text-text-muted mt-0.5">{row.nisn} • {row.formNo}</p>
                         </td>
                         
                         {akunColumns.map(col => (
-                          <td key={col.id} className="p-3">
-                            <div className="relative group">
+                          <td key={col.id} className="p-4">
+                            <div className="relative group/input">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/50 text-xs font-semibold">Rp.</span>
                               <input 
                                 type="text"
@@ -470,10 +465,10 @@ export default function PembuatanTagihanClient({
                           </td>
                         ))}
                         
-                        <td className="p-3 text-right font-bold text-text-main whitespace-nowrap bg-bg/30">
+                        <td className="p-4 text-right font-bold text-text-main whitespace-nowrap bg-bg/30 group-hover:bg-bg/50">
                           Rp. {formatRupiah(rowTotal)}
                         </td>
-                        <td className="p-3 text-center sticky right-0 bg-white z-10 shadow-[-1px_0_0_0_#e2e8f0]">
+                        <td className="p-4 text-center sticky right-0 bg-white z-10 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
                           <Button 
                             variant="outline" 
                             size="sm"
@@ -491,21 +486,18 @@ export default function PembuatanTagihanClient({
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!isLoading && gridData.length === 0 && (
-        <div className="bg-surface rounded-2xl shadow-sm border border-border p-12 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 bg-bg rounded-full flex items-center justify-center mb-4">
-            <Filter className="text-text-muted" size={24} />
-          </div>
-          <h3 className="text-lg font-bold text-text-main mb-2">Pilih Filter Terlebih Dahulu</h3>
-          <p className="text-text-muted max-w-sm">
-            Silakan pilih Kelas dan Subkelas pada panel di atas, lalu klik Tampilkan untuk melihat atau membuat tagihan.
-          </p>
-        </div>
-      )}
+        ) : (
+          !isLoading && (
+            <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted">
+              <Filter className="mb-4 text-text-muted/50" size={48} strokeWidth={1} />
+              <h3 className="text-lg font-bold text-text-main mb-2">Pilih Filter Terlebih Dahulu</h3>
+              <p className="max-w-md">
+                Silakan pilih <strong>Kelas</strong> dan <strong>Subkelas</strong> pada kolom filter di atas, lalu klik tombol <strong>Tampilkan</strong> untuk melihat atau membuat tagihan siswa.
+              </p>
+            </div>
+          )
+        )}
+      </div>
 
       {/* Overlay to close menu */}
       {activeMenuColId && (

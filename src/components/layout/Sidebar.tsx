@@ -24,14 +24,14 @@ const menuGroups = [
   {
     title: "DATA YAYASAN",
     items: [
-      { href: "/unit-sekolah", label: "Unit Sekolah", icon: Building, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/unit-sekolah", label: "Unit Sekolah", icon: Building, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"], isGlobal: true },
       { href: "/jurusan", label: "Program & Jurusan", icon: BookOpen, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
     ]
   },
   {
     title: "DATA AKADEMIK",
     items: [
-      { href: "/tahun-akademik", label: "Tahun Akademik", icon: Calendar, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/tahun-akademik", label: "Tahun Akademik", icon: Calendar, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"], isGlobal: true },
       { href: "/guru", label: "Guru & Staf", icon: GraduationCap, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
       { href: "/kelas", label: "Kelas & Murid", icon: Users2, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
     ]
@@ -39,21 +39,20 @@ const menuGroups = [
   {
     title: "KEUANGAN",
     items: [
-      { href: "/akun-keuangan", label: "Akun Keuangan", icon: Landmark, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/akun-keuangan", label: "Akun Keuangan", icon: Landmark, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"], isGlobal: true },
       { href: "/kas-masuk", label: "Kas Masuk", icon: ArrowDownToLine, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
       { href: "/kas-keluar", label: "Kas Keluar", icon: ArrowUpFromLine, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
       { href: "/pembuatan-tagihan", label: "Pembuatan Tagihan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
     ]
   },
-
   {
     title: "PENGATURAN",
     items: [
-      { href: "/manajemen-user", label: "Manajemen User", icon: Users, allowedRoles: ["ADMIN"] },
-      { href: "/pengaturan", label: "Pengaturan", icon: Settings, allowedRoles: ["ADMIN"] },
+      { href: "/manajemen-user", label: "Manajemen User", icon: Users, allowedRoles: ["ADMIN"], isGlobal: true },
+      { href: "/pengaturan", label: "Pengaturan", icon: Settings, allowedRoles: ["ADMIN"], isGlobal: true },
     ]
   }
-] as { title: string, items: { href: string, label: string, icon: any, allowedRoles: string[] }[] }[]
+] as { title: string, items: { href: string, label: string, icon: any, allowedRoles: string[], isGlobal?: boolean }[] }[]
 
 export default function Sidebar({ user }: { user: any }) {
   const pathname = usePathname()
@@ -131,6 +130,9 @@ export default function Sidebar({ user }: { user: any }) {
                     >
                       <Icon size={20} className={isActive ? "text-white" : "text-white/80"} />
                       {!isCollapsed && <span className="truncate">{item.label}</span>}
+                      {!isCollapsed && item.isGlobal && (
+                        <span className="ml-auto text-[9px] uppercase tracking-wider font-bold bg-white/20 text-white/90 px-1.5 py-0.5 rounded shadow-sm border border-white/10 shrink-0">Global</span>
+                      )}
                     </Link>
                   )
                 })}

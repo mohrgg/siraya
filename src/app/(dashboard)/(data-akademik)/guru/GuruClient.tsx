@@ -54,11 +54,13 @@ type UnitSekolah = {
 export default function GuruClient({
   initialData,
   schoolUnits,
-  userRole
+  userRole,
+  activeUnitId
 }: {
   initialData: Guru[]
   schoolUnits: UnitSekolah[]
   userRole?: string
+  activeUnitId: string
 }) {
   const router = useRouter()
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
@@ -69,7 +71,6 @@ export default function GuruClient({
     setData(initialData)
   }, [initialData])
 
-  const [activeUnitId, setActiveUnitId] = useState<string>("")
   const [statusFilter, setStatusFilter] = useState<string>("")
   const [searchTerm, setSearchTerm] = useState<string>("")
   
@@ -330,18 +331,6 @@ export default function GuruClient({
               className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
             />
           </div>
-
-          {/* Filter Unit */}
-          <select
-            value={activeUnitId}
-            onChange={(e) => setActiveUnitId(e.target.value)}
-            className="px-3 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
-          >
-            <option value="">Semua Unit Sekolah</option>
-            {schoolUnits.map(u => (
-              <option key={u.id} value={u.id}>{u.name}</option>
-            ))}
-          </select>
 
           {/* Filter Status Kepegawaian */}
           <select
