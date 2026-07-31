@@ -102,7 +102,12 @@ export async function getPendapatanAccounts() {
 
   const whereClause: any = {
     isKasBank: false,
-    isActive: true
+    isActive: true,
+    subKlasifikasi: {
+      klasifikasi: {
+        kode: '4'
+      }
+    }
   }
 
   if (user.role === "TATA_USAHA" && user.unitSekolahId) {

@@ -5,24 +5,11 @@ import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { signOut } from "next-auth/react"
 import { 
-  LayoutDashboard, 
-  Users, 
-  Wallet, 
-  FileText, 
-  PieChart, 
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-  Building,
-  BookOpen,
-  Calendar,
-  Users2,
-  GraduationCap,
-  Landmark,
-  Receipt,
-  Key,
-  ArrowDownToLine
+  LayoutDashboard, Building, BookOpen, 
+  Users2, Landmark, GraduationCap,
+  Settings, LogOut, ChevronLeft, ChevronRight, Key,
+  ArrowDownToLine, ArrowUpFromLine, Calendar, Users,
+  FilePlus
 } from "lucide-react"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import ChangePasswordModal from "@/components/modals/ChangePasswordModal"
@@ -54,6 +41,8 @@ const menuGroups = [
     items: [
       { href: "/akun-keuangan", label: "Akun Keuangan", icon: Landmark, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
       { href: "/kas-masuk", label: "Kas Masuk", icon: ArrowDownToLine, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/kas-keluar", label: "Kas Keluar", icon: ArrowUpFromLine, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/pembuatan-tagihan", label: "Pembuatan Tagihan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
     ]
   },
 

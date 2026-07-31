@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Plus, Printer, Download, RefreshCw, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown } from "lucide-react"
+import { Search, Plus, Printer, Download, RefreshCw, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown, FileSpreadsheet, FileText } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
@@ -20,6 +20,9 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
   const [searchTerm, setSearchTerm] = useState("")
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isExportingExcel, setIsExportingExcel] = useState(false)
+  const [isExportingPDF, setIsExportingPDF] = useState(false)
+  
   const [filterBy, setFilterBy] = useState<'tanggal_transaksi' | 'tanggal_pembuatan'>('tanggal_transaksi')
   const [timeRange, setTimeRange] = useState<'hari' | 'minggu' | 'bulan' | 'custom'>('bulan')
   
@@ -52,6 +55,82 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
     (item.namaPihakKetiga || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.deskripsi || "").toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const handleExportExcel = async () => {
+    setIsExportingExcel(true)
+    try {
+      const XLSX = await import("xlsx")
+      const exportData = filteredData.map((item: any, index: number) => ({
+        No: index + 1,
+        "Tgl Transaksi": format(new Date(item.tanggal), "dd/MM/yyyy"),
+        "Tgl Pembuatan": format(new Date(item.createdAt), "dd/MM/yyyy HH:mm"),
+        "No Referensi": item.noReferensi,
+        "No Formulir": item.noFormulir || "-",
+        "Penyetor": item.namaPihakKetiga || "-",
+        "Deskripsi": item.deskripsi || "-",
+        "Total Nilai": item.totalNilai,
+        "Pembuat": item.pembuat?.name || "-",
+        "Status": item.status,
+        "Revisi": item.isEdited ? "Ya" : "-"
+      }))
+      const worksheet = XLSX.utils.json_to_sheet(exportData)
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Kas Masuk")
+      XLSX.writeFile(workbook, `Kas_Masuk_${format(new Date(), "yyyyMMdd")}.xlsx`)
+      toast.success("Berhasil mengekspor Excel")
+    } catch (error) {
+      console.error(error)
+      toast.error("Gagal mengekspor Excel")
+    } finally {
+      setIsExportingExcel(false)
+    }
+  }
+
+  const handleExportPDF = async () => {
+    setIsExportingPDF(true)
+    try {
+      const { jsPDF } = await import("jspdf")
+      const autoTable = (await import("jspdf-autotable")).default
+      
+      const doc = new jsPDF('landscape')
+      doc.setFontSize(16)
+      doc.setFont("helvetica", "bold")
+      doc.text("YAYASAN AL BASYARIAH", 14, 20)
+      doc.setFontSize(11)
+      doc.setFont("helvetica", "normal")
+      doc.text("Laporan Kas Masuk (Penerimaan)", 14, 27)
+      doc.text(`Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 33)
+
+      const tableColumn = ["No", "Tgl Transaksi", "No Referensi", "Penyetor", "Deskripsi", "Total Nilai", "Pembuat", "Status"]
+      const tableRows = filteredData.map((item: any, index: number) => [
+        index + 1,
+        format(new Date(item.tanggal), "dd/MM/yyyy"),
+        item.noReferensi,
+        item.namaPihakKetiga || "-",
+        item.deskripsi || "-",
+        `Rp ${item.totalNilai.toLocaleString('id-ID')}`,
+        item.pembuat?.name || "-",
+        item.status
+      ])
+
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 40,
+        theme: 'grid',
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [46, 125, 50] }
+      })
+
+      doc.save(`Kas_Masuk_${format(new Date(), "yyyyMMdd")}.pdf`)
+      toast.success("Berhasil mengekspor PDF")
+    } catch (error) {
+      console.error(error)
+      toast.error("Gagal mengekspor PDF")
+    } finally {
+      setIsExportingPDF(false)
+    }
+  }
 
   return (
     <div className="max-w-7xl mx-auto w-full">
@@ -122,15 +201,29 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
             
           </div>
 
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" onClick={handleRefresh} title="Refresh Data">
+          <div className="flex gap-2 flex-wrap items-center">
+            <Button variant="outline" size="sm" onClick={handleRefresh} title="Refresh Data">
               <RefreshCw size={16} />
             </Button>
-            <Button variant="outline" className="text-text-main">
-              <Printer size={16} className="mr-1.5" /> PDF
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={handleExportExcel}
+              disabled={isExportingExcel || filteredData.length === 0}
+              className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800"
+            >
+              <FileSpreadsheet size={16} className="mr-1.5" /> 
+              {isExportingExcel ? "Mengekspor..." : "Excel"}
             </Button>
-            <Button variant="outline" className="text-albas-green border-albas-green/30 hover:bg-albas-green/5">
-              <Download size={16} className="mr-1.5" /> Excel
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={handleExportPDF}
+              disabled={isExportingPDF || filteredData.length === 0}
+              className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800"
+            >
+              <FileText size={16} className="mr-1.5" /> 
+              {isExportingPDF ? "Mengekspor..." : "PDF"}
             </Button>
             
             <Link href="/kas-masuk/tambah">

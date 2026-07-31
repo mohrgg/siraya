@@ -27,7 +27,8 @@ model Pengguna {
   divisi      Divisi?      @relation(fields: [divisiId], references: [id])
 
   logAktivitas     LogAktivitas[]
-  transaksi        Transaksi[]
+  transaksiDibuat   Transaksi[] @relation("PembuatTransaksi")
+  transaksiDiterima Transaksi[] @relation("PenerimaTransaksi")
 }
 
 // ========== DIVISI ==========
@@ -39,6 +40,7 @@ model Divisi {
   updatedAt DateTime @updatedAt
 
   pengguna     Pengguna[]
+  transaksi    Transaksi[]
 }
 
 // ========== UNIT SEKOLAH ==========
@@ -73,6 +75,7 @@ model TahunAkademik {
 
   subKelas          SubKelas[]
   riwayatKelas      RiwayatKelas[]
+  tagihan           Tagihan[]
 }
 
 // ========== KELAS & MURID ==========
@@ -226,6 +229,7 @@ model Murid {
 
   unitSekolah  UnitSekolah    @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
   riwayatKelas RiwayatKelas[]
+  tagihan      Tagihan[]
 }
 
 model RiwayatKelas {
@@ -277,6 +281,7 @@ model AkunDetail {
   subKlasifikasi       SubKlasifikasiAkun @relation(fields: [subKlasifikasiAkunId], references: [id], onDelete: Restrict)
   unitSekolah          UnitSekolah? @relation(fields: [unitSekolahId], references: [id])
   transaksiDetail      TransaksiDetail[]
+  tagihan              Tagihan[]
 }
 
 // ========== LOG AKTIVITAS (AUDIT TRAIL) ==========
@@ -307,6 +312,8 @@ model Transaksi {
   
   unitSekolahId  String?
   pembuatId      String
+  penerimaId     String?
+  divisiId       String?
   
   // Jejak Audit Revisi
   isEdited       Boolean  @default(false)
@@ -316,8 +323,11 @@ model Transaksi {
   updatedAt      DateTime @updatedAt
   
   unitSekolah    UnitSekolah? @relation(fields: [unitSekolahId], references: [id])
-  pembuat        Pengguna     @relation(fields: [pembuatId], references: [id])
+  pembuat        Pengguna     @relation("PembuatTransaksi", fields: [pembuatId], references: [id])
+  penerima       Pengguna?    @relation("PenerimaTransaksi", fields: [penerimaId], references: [id])
+  divisi         Divisi?      @relation(fields: [divisiId], references: [id])
   detail         TransaksiDetail[]
+  pembayaranTagihan PembayaranTagihanDetail[]
 }
 
 model TransaksiDetail {
@@ -332,3 +342,38 @@ model TransaksiDetail {
   akun           AkunDetail @relation(fields: [akunId], references: [id], onDelete: Restrict)
 }
 
+// ========== TAGIHAN (INVOICING) ==========
+model Tagihan {
+  id              String   @id @default(cuid())
+  muridId         String
+  akunId          String   // Komponen biaya (Akun Detail, misal: SPP, PSB)
+  tahunAkademikId String
+  
+  jumlah          Float    // Nominal tagihan
+  sisaTagihan     Float    // Sisa belum dibayar (awal = jumlah)
+  status          String   @default("BELUM_LUNAS") @db.VarChar(20) // LUNAS, SEBAGIAN, BELUM_LUNAS
+  keterangan      String?  @db.Text
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  murid           Murid         @relation(fields: [muridId], references: [id], onDelete: Cascade)
+  akun            AkunDetail    @relation(fields: [akunId], references: [id], onDelete: Restrict)
+  tahunAkademik   TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Restrict)
+  
+  pembayaran      PembayaranTagihanDetail[]
+
+  @@unique([muridId, akunId, tahunAkademikId]) // 1 Siswa, 1 Akun, 1 Tahun Akademik
+}
+
+model PembayaranTagihanDetail {
+  id               String   @id @default(cuid())
+  tagihanId        String
+  transaksiId      String   // Relasi ke Transaksi (Kas Masuk)
+  jumlahDibayar    Float
+  
+  createdAt        DateTime @default(now())
+  
+  tagihan          Tagihan    @relation(fields: [tagihanId], references: [id], onDelete: Cascade)
+  transaksi        Transaksi  @relation(fields: [transaksiId], references: [id], onDelete: Cascade)
+}

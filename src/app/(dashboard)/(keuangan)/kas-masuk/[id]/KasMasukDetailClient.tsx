@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowLeft, Printer, FileDown, Receipt, BookOpen, Edit, Link2 } from "lucide-react"
+import { ArrowLeft, Printer, FileDown, Receipt, BookOpen, Edit, Link2, FileText } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -35,7 +35,130 @@ export default function KasMasukDetailClient({ transaksi }: { transaksi: any }) 
     // Fungsi terbilang sederhana, in real app you might want a proper package
     // For now we'll just format it or provide a dummy terbilang if needed
     // Or we can just leave it as standard format
-    return "Tiga Ratus Ribu Rupiah" // Dummy for now, let's implement a real one if needed, but for simplicity let's use a basic one or just leave it.
+  }
+  
+  const [isExportingPDF, setIsExportingPDF] = useState(false)
+
+  const handleExportResiPDF = async () => {
+    setIsExportingPDF(true)
+    try {
+      const { jsPDF } = await import("jspdf")
+      const autoTable = (await import("jspdf-autotable")).default
+      
+      const doc = new jsPDF('portrait')
+      
+      // Header
+      doc.setFontSize(16)
+      doc.setFont("helvetica", "bold")
+      doc.text("YAYASAN AL BASYARIAH", 14, 20)
+      doc.setFontSize(12)
+      doc.setFont("helvetica", "normal")
+      doc.text("RESI BUKTI PENERIMAAN KAS", 14, 28)
+      doc.setLineWidth(0.5)
+      doc.line(14, 32, 196, 32)
+      
+      // Info
+      doc.setFontSize(10)
+      doc.text(`No Referensi : ${transaksi.noReferensi}`, 14, 42)
+      doc.text(`Tanggal      : ${format(new Date(transaksi.tanggal), "dd-MM-yyyy")}`, 14, 48)
+      doc.text(`Terima Dari  : ${transaksi.namaPihakKetiga || "-"}`, 120, 42)
+      doc.text(`Ke Akun      : ${detailDebit[0]?.akun?.nama || "-"}`, 120, 48)
+
+      const tableColumn = ["No", "Akun / Keterangan", "Deskripsi", "Jumlah"]
+      const tableRows = detailKredit.map((d: any, idx: number) => [
+        idx + 1,
+        `${d.akun.kode} - ${d.akun.nama}`,
+        d.deskripsi || "-",
+        `Rp ${d.nilai.toLocaleString('id-ID')}`
+      ])
+
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 55,
+        theme: 'grid',
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [46, 125, 50] } // Albas Green
+      })
+
+      const finalY = (doc as any).lastAutoTable.finalY || 60
+      
+      doc.setFont("helvetica", "bold")
+      doc.text(`Total Penerimaan: Rp ${transaksi.totalNilai.toLocaleString('id-ID')}`, 14, finalY + 10)
+      
+      // Signatures
+      doc.setFont("helvetica", "normal")
+      doc.text("Dibuat Oleh,", 40, finalY + 30)
+      doc.text(transaksi.pembuat?.name || "........................", 40, finalY + 55)
+      
+      doc.text("Diterima Oleh,", 150, finalY + 30)
+      doc.text("........................", 150, finalY + 55)
+
+      doc.save(`Resi_KasMasuk_${transaksi.noReferensi}.pdf`)
+      toast.success("Berhasil mencetak Resi")
+    } catch (error) {
+      console.error(error)
+      toast.error("Gagal mencetak Resi")
+    } finally {
+      setIsExportingPDF(false)
+    }
+  }
+
+  const handleExportJurnalPDF = async () => {
+    setIsExportingPDF(true)
+    try {
+      const { jsPDF } = await import("jspdf")
+      const autoTable = (await import("jspdf-autotable")).default
+      
+      const doc = new jsPDF('portrait')
+      
+      // Header
+      doc.setFontSize(16)
+      doc.setFont("helvetica", "bold")
+      doc.text("YAYASAN AL BASYARIAH", 14, 20)
+      doc.setFontSize(12)
+      doc.setFont("helvetica", "normal")
+      doc.text("JURNAL TRANSAKSI KAS MASUK", 14, 28)
+      doc.setLineWidth(0.5)
+      doc.line(14, 32, 196, 32)
+      
+      // Info
+      doc.setFontSize(10)
+      doc.text(`No Referensi : ${transaksi.noReferensi}`, 14, 42)
+      doc.text(`Tanggal      : ${format(new Date(transaksi.tanggal), "dd-MM-yyyy")}`, 14, 48)
+      doc.text(`Deskripsi    : ${transaksi.deskripsi || "-"}`, 14, 54)
+
+      const tableColumn = ["Kode Akun", "Nama Akun", "Debit", "Kredit"]
+      const tableRows = transaksi.detail.map((d: any) => [
+        d.akun.kode,
+        d.akun.nama,
+        d.posisi === "DEBIT" ? `Rp ${d.nilai.toLocaleString('id-ID')}` : "-",
+        d.posisi === "KREDIT" ? `Rp ${d.nilai.toLocaleString('id-ID')}` : "-"
+      ])
+
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 65,
+        theme: 'grid',
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [46, 125, 50] }
+      })
+
+      const finalY = (doc as any).lastAutoTable.finalY || 70
+      
+      // Signatures
+      doc.text("Dibuat Oleh,", 150, finalY + 30)
+      doc.text(transaksi.pembuat?.name || "........................", 150, finalY + 55)
+
+      doc.save(`Jurnal_KasMasuk_${transaksi.noReferensi}.pdf`)
+      toast.success("Berhasil mencetak Jurnal")
+    } catch (error) {
+      console.error(error)
+      toast.error("Gagal mencetak Jurnal")
+    } finally {
+      setIsExportingPDF(false)
+    }
   }
 
   return (
@@ -49,16 +172,23 @@ export default function KasMasukDetailClient({ transaksi }: { transaksi: any }) 
         </div>
         
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="bg-white border-border hover:bg-bg shadow-sm">
-            <Printer size={16} className="text-text-main" />
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={activeTab === 'resi' ? handleExportResiPDF : handleExportJurnalPDF}
+            disabled={isExportingPDF}
+            className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800"
+          >
+            <FileText size={16} className="mr-1.5" /> 
+            {isExportingPDF ? "Mengekspor..." : `Cetak ${activeTab === 'resi' ? 'Resi' : 'Jurnal'}`}
           </Button>
           <Link href={`/kas-masuk/${transaksi.id}/edit`}>
-            <Button variant="outline" className="bg-white border-border hover:bg-bg shadow-sm text-blue-500">
+            <Button variant="outline" size="sm" className="bg-white border-border hover:bg-bg shadow-sm text-blue-500">
               <Edit size={16} className="mr-2" /> Ubah
             </Button>
           </Link>
           <Link href="/kas-masuk">
-            <Button variant="outline" className="flex items-center gap-2 bg-white border-border hover:bg-bg shadow-sm ml-2">
+            <Button variant="outline" size="sm" className="flex items-center gap-2 bg-white border-border hover:bg-bg shadow-sm ml-2">
               <ArrowLeft size={16} className="text-text-muted" /> <span className="text-text-main font-medium text-sm">Kembali</span>
             </Button>
           </Link>
