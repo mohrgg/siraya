@@ -169,16 +169,6 @@ export default function PembayaranTagihanClient({
     )
   }, [gridData, searchTerm])
 
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm, kelasId, subKelasId, jurusanId])
-
-  const paginatedData = useMemo(() => {
-    return filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-  }, [filteredData, currentPage, pageSize])
-
-  const computedTotalPages = Math.ceil(filteredData.length / pageSize)
-
   const handleCheckboxChange = (muridId: string, tagihanId: string, checked: boolean) => {
     setGridData(prev => prev.map(row => {
       if (row.id === muridId) {
@@ -251,6 +241,13 @@ export default function PembayaranTagihanClient({
       </div>
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6 mb-6">
+        {/* Tabs Navigation */}
+        <div className="flex gap-2 mb-6 border-b border-border">
+          <button className="px-6 py-3 font-semibold text-sm transition-colors border-b-2 border-primary text-primary">
+            Daftar Tagihan Siswa
+          </button>
+        </div>
+
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
             <div className="relative w-full sm:w-64">
@@ -321,168 +318,150 @@ export default function PembayaranTagihanClient({
 
         {/* Table Container */}
         {gridData.length > 0 ? (
-          <>
-            <div className="overflow-x-auto min-h-[400px]">
-              <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
-                <thead>
-                  <tr className="border-b border-border bg-emerald-500 text-white text-xs uppercase tracking-wider">
-                    <th className="p-4 font-bold text-center w-12 sticky left-0 bg-emerald-500 z-20 shadow-[1px_0_0_0_#10b981]">NO</th>
-                    <th className="p-4 font-bold min-w-[200px] sticky left-12 bg-emerald-500 z-20 shadow-[1px_0_0_0_#10b981]">SISWA/I</th>
-                    
-                    {akunColumns.map(col => (
-                      <th key={col.id} className="p-4 font-bold text-center min-w-[150px]">
-                        <div>
-                          {col.nama} <br/><span className="text-[10px] opacity-80 font-medium">[{col.kode}]</span>
-                        </div>
-                      </th>
-                    ))}
-                    
-                    <th className="p-4 font-bold text-right min-w-[150px]">TOTAL BERJALAN</th>
-                    <th className="p-4 font-bold text-center w-24 sticky right-0 bg-emerald-500 z-20 shadow-[-1px_0_0_0_#10b981]">PROSES</th>
+          <div className="overflow-x-auto min-h-[400px]">
+            <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
+              <thead>
+                <tr className="border-b border-border bg-emerald-500 text-white text-xs uppercase tracking-wider">
+                  <th className="p-4 font-bold text-center w-12 sticky left-0 bg-emerald-500 z-20 shadow-[1px_0_0_0_#10b981]">NO</th>
+                  <th className="p-4 font-bold min-w-[200px] sticky left-12 bg-emerald-500 z-20 shadow-[1px_0_0_0_#10b981]">SISWA/I</th>
+                  
+                  {akunColumns.map(col => (
+                    <th key={col.id} className="p-4 font-bold text-center min-w-[150px]">
+                      <div>
+                        {col.nama} <br/><span className="text-[10px] opacity-80 font-medium">[{col.kode}]</span>
+                      </div>
+                    </th>
+                  ))}
+                  
+                  <th className="p-4 font-bold text-right min-w-[150px]">TOTAL BERJALAN</th>
+                  <th className="p-4 font-bold text-center w-24 sticky right-0 bg-emerald-500 z-20 shadow-[-1px_0_0_0_#10b981]">PROSES</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.length === 0 ? (
+                  <tr>
+                    <td colSpan={4 + akunColumns.length} className="p-8 text-center text-text-muted">
+                      Tidak ada data murid yang sesuai pencarian.
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {paginatedData.length === 0 ? (
-                    <tr>
-                      <td colSpan={4 + akunColumns.length} className="p-8 text-center text-text-muted">
-                        Tidak ada data murid yang sesuai pencarian.
-                      </td>
-                    </tr>
-                  ) : (
-                    paginatedData.map((row, idx) => {
-                      // Calculate total of checked items
-                      let totalBerjalan = 0;
-                      let totalTagihanSiswa = 0;
+                ) : (
+                  filteredData.map((row, idx) => {
+                    // Calculate total of checked items
+                    let totalBerjalan = 0;
+                    let totalTagihanSiswa = 0;
 
-                      row.tagihanList.forEach(t => {
-                        totalTagihanSiswa += t.sisaTagihan
-                        if (row.selectedItems[t.id]) {
-                          totalBerjalan += t.sisaTagihan
-                        }
-                      })
-                      
-                      return (
-                        <tr key={row.id} className="border-b border-border hover:bg-gray-50 transition-colors group">
-                          <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
-                            {(currentPage - 1) * pageSize + idx + 1}.
-                          </td>
-                          <td className="p-4 sticky left-12 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
-                            <p className="font-bold text-text-main leading-tight truncate max-w-[200px]" title={row.name}>{row.name}</p>
-                            <p className="text-xs text-text-muted mt-0.5">{row.nisn} • {row.formNo}</p>
-                          </td>
-                          
-                          {akunColumns.map(col => {
-                            const tagihan = row.tagihanList.find(t => t.akunId === col.id)
-                            
-                            return (
-                              <td key={col.id} className="p-4">
-                                {tagihan ? (
-                                  tagihan.sisaTagihan <= 0 ? (
-                                    <div className="flex items-center justify-center p-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition-all select-none">
-                                      <span className="text-sm font-bold opacity-70">Rp 0</span>
-                                    </div>
-                                  ) : (
-                                    <label className={`
-                                      flex items-center justify-center gap-2 p-2 rounded-lg cursor-pointer border select-none transition-all
-                                      ${row.selectedItems[tagihan.id] 
-                                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700' 
-                                        : 'border-border bg-white hover:bg-gray-50 text-text-main'}
-                                    `}>
-                                      <input 
-                                        type="checkbox"
-                                        className="w-4 h-4 text-emerald-500 rounded border-gray-300 focus:ring-emerald-500"
-                                        checked={row.selectedItems[tagihan.id] || false}
-                                        onChange={(e) => handleCheckboxChange(row.id, tagihan.id, e.target.checked)}
-                                      />
-                                      <span className="text-sm font-bold">
-                                        Rp {formatRupiah(tagihan.sisaTagihan)}
-                                      </span>
-                                    </label>
-                                  )
-                                ) : (
-                                  <div className="text-center text-xs text-text-muted/50 p-2 bg-gray-50 rounded-lg">
-                                    -
-                                  </div>
-                                )}
-                              </td>
-                            )
-                          })}
-                          
-                          <td className="p-4 text-right bg-gray-50 group-hover:bg-gray-100">
-                            <div className="font-bold text-emerald-600 text-base">
-                              Rp {formatRupiah(totalBerjalan)}
-                            </div>
-                            <div className="text-[10px] text-text-muted mt-0.5 font-medium">
-                              Total Seluruh: Rp {formatRupiah(totalTagihanSiswa)}
-                            </div>
-                          </td>
-                          <td className="p-4 text-center sticky right-0 bg-white z-10 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
-                            <Button 
-                              size="sm"
-                              disabled={totalBerjalan === 0}
-                              onClick={() => handleBayarClick(row)}
-                              className="px-4 py-2 font-bold rounded-lg text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-200"
-                            >
-                              Bayar
-                            </Button>
-                          </td>
-                        </tr>
-                      )
+                    row.tagihanList.forEach(t => {
+                      totalTagihanSiswa += t.sisaTagihan
+                      if (row.selectedItems[t.id]) {
+                        totalBerjalan += t.sisaTagihan
+                      }
                     })
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {filteredData.length > 0 && (
-              <div className="p-4 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface text-sm rounded-b-2xl">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => {
-                      setPageSize(Number(e.target.value))
-                      setCurrentPage(1)
-                    }}
-                    className="px-3 py-1.5 bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-text-main font-medium"
-                  >
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  >
-                    Sebelumnya
-                  </Button>
-                  <span className="font-medium text-text-muted">
-                    Hal {currentPage} dari {computedTotalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={currentPage === computedTotalPages || computedTotalPages === 0}
-                    onClick={() => setCurrentPage(p => Math.min(computedTotalPages, p + 1))}
-                  >
-                    Berikutnya
-                  </Button>
-                </div>
-              </div>
-            )}
-          </>
+                    
+                    return (
+                      <tr key={row.id} className="border-b border-border hover:bg-gray-50 transition-colors group">
+                        <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
+                          {idx + 1}.
+                        </td>
+                        <td className="p-4 sticky left-12 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
+                          <p className="font-bold text-text-main leading-tight truncate max-w-[200px]" title={row.name}>{row.name}</p>
+                          <p className="text-xs text-text-muted mt-0.5">{row.nisn} • {row.formNo}</p>
+                        </td>
+                        
+                        {akunColumns.map(col => {
+                          const tagihan = row.tagihanList.find(t => t.akunId === col.id)
+                          
+                          return (
+                            <td key={col.id} className="p-4">
+                              {tagihan ? (
+                                tagihan.sisaTagihan <= 0 ? (
+                                  <div className="flex items-center justify-center p-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition-all select-none">
+                                    <span className="text-sm font-bold opacity-70">Rp 0</span>
+                                  </div>
+                                ) : (
+                                  <label className={`
+                                    flex items-center justify-center gap-2 p-2 rounded-lg cursor-pointer border select-none transition-all
+                                    ${row.selectedItems[tagihan.id] 
+                                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700' 
+                                      : 'border-border bg-white hover:bg-gray-50 text-text-main'}
+                                  `}>
+                                    <input 
+                                      type="checkbox"
+                                      className="w-4 h-4 text-emerald-500 rounded border-gray-300 focus:ring-emerald-500"
+                                      checked={row.selectedItems[tagihan.id] || false}
+                                      onChange={(e) => handleCheckboxChange(row.id, tagihan.id, e.target.checked)}
+                                    />
+                                    <span className="text-sm font-bold">
+                                      Rp {formatRupiah(tagihan.sisaTagihan)}
+                                    </span>
+                                  </label>
+                                )
+                              ) : (
+                                <div className="text-center text-xs text-text-muted/50 p-2 bg-gray-50 rounded-lg">
+                                  -
+                                </div>
+                              )}
+                            </td>
+                          )
+                        })}
+                        
+                        <td className="p-4 text-right bg-gray-50 group-hover:bg-gray-100">
+                          <div className="font-bold text-emerald-600 text-base">
+                            Rp {formatRupiah(totalBerjalan)}
+                          </div>
+                          <div className="text-[10px] text-text-muted mt-0.5 font-medium">
+                            Total Seluruh: Rp {formatRupiah(totalTagihanSiswa)}
+                          </div>
+                        </td>
+                        <td className="p-4 text-center sticky right-0 bg-white z-10 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
+                          <Button 
+                            size="sm"
+                            disabled={totalBerjalan === 0}
+                            onClick={() => handleBayarClick(row)}
+                            className="px-4 py-2 font-bold rounded-lg text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-200"
+                          >
+                            Bayar
+                          </Button>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+              {filteredData.length > 0 && (
+                <tfoot className="bg-gray-50 font-bold border-t-2 border-border/60">
+                  <tr>
+                    <td colSpan={2} className="p-4 text-right text-text-main sticky left-0 bg-gray-50 z-10 shadow-[1px_0_0_0_#e2e8f0]">
+                      TOTAL SISA TAGIHAN
+                    </td>
+                    {akunColumns.map(col => {
+                      const colTotal = filteredData.reduce((acc, row) => {
+                        const t = row.tagihanList.find(tag => tag.akunId === col.id)
+                        return acc + (t ? Math.max(0, t.sisaTagihan) : 0)
+                      }, 0)
+                      return (
+                        <td key={col.id} className="p-4 text-center text-emerald-700">
+                          Rp {formatRupiah(colTotal)}
+                        </td>
+                      )
+                    })}
+                    <td className="p-4 text-right bg-emerald-50 text-emerald-700 shadow-[-1px_0_0_0_#e2e8f0]">
+                      Rp {formatRupiah(filteredData.reduce((acc, row) => {
+                        return acc + row.tagihanList.reduce((sum, tag) => sum + Math.max(0, tag.sisaTagihan), 0)
+                      }, 0))}
+                    </td>
+                    <td className="p-4 sticky right-0 bg-gray-50 z-20 shadow-[-1px_0_0_0_#e2e8f0]"></td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
         ) : (
           !isLoading && (
             <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted">
-              <CheckSquare className="mb-4 text-emerald-500/50" size={48} strokeWidth={1} />
+              <Filter className="mb-4 text-text-muted/50" size={48} strokeWidth={1} />
               <h3 className="text-lg font-bold text-text-main mb-2">Pilih Filter Terlebih Dahulu</h3>
               <p className="max-w-md">
-                Silakan pilih <strong>Kelas</strong> dan <strong>Subkelas</strong>, lalu klik <strong>Tampilkan</strong> untuk memuat data tagihan siswa.
+                Silakan pilih <strong>Kelas</strong> pada kolom filter di atas untuk melihat tagihan siswa.
               </p>
             </div>
           )

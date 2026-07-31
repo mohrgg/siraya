@@ -269,19 +269,6 @@ export default function PembuatanTagihanClient({
     )
   }, [gridData, searchTerm])
 
-  const [pageSize, setPageSize] = useState(10)
-  const [currentPage, setCurrentPage] = useState(1)
-
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm, kelasId, subKelasId, jurusanId])
-
-  const paginatedData = useMemo(() => {
-    return filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-  }, [filteredData, currentPage, pageSize])
-
-  const computedTotalPages = Math.ceil(filteredData.length / pageSize)
-
   const activeSubKelasName = subKelasList.find(s => s.id === subKelasId)?.name || ""
   const activeKelasName = kelasList.find(k => k.id === kelasId)?.name || ""
 
@@ -387,175 +374,167 @@ export default function PembuatanTagihanClient({
         {gridData.length > 0 ? (
           <>
             <div className="overflow-x-auto min-h-[400px]">
-            <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
-              <thead>
-                <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
-                  <th className="p-4 font-semibold text-center w-12 sticky left-0 bg-bg z-20 shadow-[1px_0_0_0_#e2e8f0]">NO</th>
-                  <th className="p-4 font-semibold min-w-[200px] sticky left-12 bg-bg z-20 shadow-[1px_0_0_0_#e2e8f0]">SISWA/I</th>
-                  
-                  {akunColumns.map(col => (
-                    <th key={col.id} className="p-4 font-semibold text-center min-w-[150px] relative group">
-                      <div className="flex items-center justify-center gap-2">
-                        <div>
-                          {col.nama} <br/><span className="text-[10px] opacity-70">[{col.kode}]</span>
-                        </div>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveMenuColId(activeMenuColId === col.id ? null : col.id)
-                          }}
-                          className="p-1 rounded text-text-muted hover:bg-black/5 transition-colors"
-                        >
-                          <MoreVertical size={16} />
-                        </button>
-                      </div>
-
-                      {/* Dropdown Menu */}
-                      {activeMenuColId === col.id && (
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-36 bg-white rounded-lg shadow-lg border border-border py-1.5 z-[99] animate-in fade-in zoom-in-95">
-                          <button 
-                            className="w-full px-3 py-2 text-left text-xs font-medium text-text-main hover:bg-bg flex items-center gap-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveMenuColId(null)
-                              setEditingCol({ id: col.id, nama: col.nama })
-                              setEditNominal("0")
-                              setIsEditModalOpen(true)
-                            }}
-                          >
-                            <Edit2 size={14} className="text-blue-500" />
-                            Ubah Nominal
-                          </button>
-                          <button 
-                            className="w-full px-3 py-2 text-left text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveMenuColId(null)
-                              setDeletingCol({ id: col.id, nama: col.nama })
-                              setIsDeleteModalOpen(true)
-                            }}
-                          >
-                            <Trash2 size={14} />
-                            Hapus Kolom
-                          </button>
-                        </div>
-                      )}
-                    </th>
-                  ))}
-                  
-                  <th className="p-4 font-semibold text-right min-w-[150px]">TAGIHAN BERJALAN (TOTAL)</th>
-                  <th className="p-4 font-semibold text-center w-24 sticky right-0 bg-bg z-20 shadow-[-1px_0_0_0_#e2e8f0]">AKSI</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.length === 0 ? (
-                  <tr>
-                    <td colSpan={4 + akunColumns.length} className="p-8 text-center text-text-muted">
-                      Tidak ada data murid yang sesuai pencarian.
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedData.map((row, idx) => {
-                    const rowTotal = akunColumns.reduce((acc, col) => acc + (row.tagihanMap[col.id] || 0), 0)
+              <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
+                <thead>
+                  <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
+                    <th className="p-4 font-semibold text-center w-12 sticky left-0 bg-bg z-20 shadow-[1px_0_0_0_#e2e8f0]">NO</th>
+                    <th className="p-4 font-semibold min-w-[200px] sticky left-12 bg-bg z-20 shadow-[1px_0_0_0_#e2e8f0]">SISWA/I</th>
                     
-                    return (
-                      <tr key={row.id} className={`border-b border-border/50 hover:bg-bg/50 transition-colors ${row.isDirty ? 'bg-amber-50/30' : ''}`}>
-                        <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
-                          {(currentPage - 1) * pageSize + idx + 1}.
-                        </td>
-                        <td className="p-4 sticky left-12 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
-                          <p className="font-semibold text-text-main leading-tight truncate max-w-[200px]" title={row.name}>{row.name}</p>
-                          <p className="text-xs text-text-muted mt-0.5">{row.nisn} • {row.formNo}</p>
-                        </td>
-                        
-                        {akunColumns.map(col => {
-                          const isLocked = row.lockedMap && row.lockedMap[col.id]
-                          return (
-                            <td key={col.id} className="p-4 relative">
-                              {isLocked ? (
-                                <div className="flex items-center justify-between px-3 py-1.5 w-full min-w-[130px] rounded-lg bg-emerald-100/50 border border-emerald-200 text-emerald-700 font-bold select-none">
-                                  <span className="text-xs opacity-70">Rp.</span>
-                                  <span className="text-sm">0</span>
-                                </div>
-                              ) : (
-                                <div className="relative group/input">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/50 text-xs font-semibold z-10">Rp.</span>
-                                  <input 
-                                    type="text"
-                                    className="w-full min-w-[130px] pl-9 pr-3 py-1.5 bg-bg border border-border/60 hover:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary focus:bg-white text-sm font-semibold text-right transition-all text-text-main"
-                                    value={row.tagihanMap[col.id] === undefined ? "" : formatRupiah(row.tagihanMap[col.id])}
-                                    onChange={(e) => handleInputChange(row.id, col.id, e.target.value)}
-                                    placeholder="0"
-                                  />
-                                </div>
-                              )}
-                            </td>
-                          )
-                        })}
-                        
-                        <td className="p-4 text-right font-bold text-text-main whitespace-nowrap bg-bg/30 group-hover:bg-bg/50">
-                          Rp. {formatRupiah(rowTotal)}
-                        </td>
-                        <td className="p-4 text-center sticky right-0 bg-white z-10 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            disabled={!row.isDirty || savingRowId === row.id}
-                            onClick={() => handleSimpanBaris(row)}
-                            className={`px-3 py-1.5 h-auto font-semibold rounded-lg text-xs ${row.isDirty ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'text-text-muted/50'}`}
+                    {akunColumns.map(col => (
+                      <th key={col.id} className="p-4 font-semibold text-center min-w-[150px] relative group">
+                        <div className="flex items-center justify-center gap-2">
+                          <div>
+                            {col.nama} <br/><span className="text-[10px] opacity-70">[{col.kode}]</span>
+                          </div>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuColId(activeMenuColId === col.id ? null : col.id)
+                            }}
+                            className="p-1 rounded text-text-muted hover:bg-black/5 transition-colors"
                           >
-                            {savingRowId === row.id ? "Menyimpan..." : "Simpan"}
-                          </Button>
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                            <MoreVertical size={16} />
+                          </button>
+                        </div>
 
-          {filteredData.length > 0 && (
-            <div className="p-4 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface text-sm rounded-b-2xl">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value))
-                    setCurrentPage(1)
-                  }}
-                  className="px-3 py-1.5 bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium"
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                >
-                  Sebelumnya
-                </Button>
-                <span className="font-medium text-text-muted">
-                  Hal {currentPage} dari {computedTotalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={currentPage === computedTotalPages || computedTotalPages === 0}
-                  onClick={() => setCurrentPage(p => Math.min(computedTotalPages, p + 1))}
-                >
-                  Berikutnya
-                </Button>
-              </div>
+                        {/* Dropdown Menu */}
+                        {activeMenuColId === col.id && (
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-36 bg-white rounded-lg shadow-lg border border-border py-1.5 z-[99] animate-in fade-in zoom-in-95">
+                            <button 
+                              className="w-full px-3 py-2 text-left text-xs font-medium text-text-main hover:bg-bg flex items-center gap-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuColId(null)
+                                setEditingCol({ id: col.id, nama: col.nama })
+                                setEditNominal("0")
+                                setIsEditModalOpen(true)
+                              }}
+                            >
+                              <Edit2 size={14} className="text-blue-500" />
+                              Ubah Nominal
+                            </button>
+                            <button 
+                              className="w-full px-3 py-2 text-left text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuColId(null)
+                                setDeletingCol({ id: col.id, nama: col.nama })
+                                setIsDeleteModalOpen(true)
+                              }}
+                            >
+                              <Trash2 size={14} />
+                              Hapus Kolom
+                            </button>
+                          </div>
+                        )}
+                      </th>
+                    ))}
+                    
+                    <th className="p-4 font-semibold text-right min-w-[150px]">TAGIHAN BERJALAN (TOTAL)</th>
+                    <th className="p-4 font-semibold text-center w-24 sticky right-0 bg-bg z-20 shadow-[-1px_0_0_0_#e2e8f0]">AKSI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredData.length === 0 ? (
+                    <tr>
+                      <td colSpan={4 + akunColumns.length} className="p-8 text-center text-text-muted">
+                        Tidak ada data murid yang sesuai pencarian.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredData.map((row, idx) => {
+                      const rowTotal = akunColumns.reduce((acc, col) => {
+                        const isLocked = row.lockedMap && row.lockedMap[col.id]
+                        return acc + (isLocked ? 0 : (row.tagihanMap[col.id] || 0))
+                      }, 0)
+                      
+                      return (
+                        <tr key={row.id} className={`border-b border-border/50 hover:bg-bg/50 transition-colors ${row.isDirty ? 'bg-amber-50/30' : ''}`}>
+                          <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                            {idx + 1}.
+                          </td>
+                          <td className="p-4 sticky left-12 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                            <p className="font-semibold text-text-main leading-tight truncate max-w-[200px]" title={row.name}>{row.name}</p>
+                            <p className="text-xs text-text-muted mt-0.5">{row.nisn} • {row.formNo}</p>
+                          </td>
+                          
+                          {akunColumns.map(col => {
+                            const isLocked = row.lockedMap && row.lockedMap[col.id]
+                            return (
+                              <td key={col.id} className="p-4 relative">
+                                {isLocked ? (
+                                  <div className="flex items-center justify-between px-3 py-1.5 w-full min-w-[130px] rounded-lg bg-emerald-100/50 border border-emerald-200 text-emerald-700 font-bold select-none">
+                                    <span className="text-xs opacity-70">Rp.</span>
+                                    <span className="text-sm">0</span>
+                                  </div>
+                                ) : (
+                                  <div className="relative group/input">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/50 text-xs font-semibold z-10">Rp.</span>
+                                    <input 
+                                      type="text"
+                                      className="w-full min-w-[130px] pl-9 pr-3 py-1.5 bg-bg border border-border/60 hover:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary focus:bg-white text-sm font-semibold text-right transition-all text-text-main"
+                                      value={row.tagihanMap[col.id] === undefined ? "" : formatRupiah(row.tagihanMap[col.id])}
+                                      onChange={(e) => handleInputChange(row.id, col.id, e.target.value)}
+                                      placeholder="0"
+                                    />
+                                  </div>
+                                )}
+                              </td>
+                            )
+                          })}
+                          
+                          <td className="p-4 text-right font-bold text-text-main whitespace-nowrap bg-bg/30 group-hover:bg-bg/50">
+                            Rp. {formatRupiah(rowTotal)}
+                          </td>
+                          <td className="p-4 text-center sticky right-0 bg-white z-10 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                            <Button 
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleSimpanBaris(row)}
+                              disabled={!row.isDirty || savingRowId === row.id}
+                              className={`px-3 py-1.5 h-auto text-xs font-semibold transition-all shadow-sm ${row.isDirty ? 'bg-primary text-white border-primary hover:bg-primary/90' : ''}`}
+                            >
+                              {savingRowId === row.id ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <><Save size={14} className="mr-1" /> Simpan</>
+                              )}
+                            </Button>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+                {filteredData.length > 0 && (
+                  <tfoot className="bg-gray-50 font-bold">
+                    <tr>
+                      <td colSpan={2} className="p-4 text-right text-text-main sticky left-0 bg-gray-50 z-10 shadow-[1px_0_0_0_#e2e8f0]">
+                        TOTAL KESELURUHAN
+                      </td>
+                      {akunColumns.map(col => {
+                        const colTotal = filteredData.reduce((acc, row) => {
+                          const isLocked = row.lockedMap && row.lockedMap[col.id]
+                          return acc + (isLocked ? 0 : (row.tagihanMap[col.id] || 0))
+                        }, 0)
+                        return (
+                          <td key={col.id} className="p-4 text-right text-emerald-700">
+                            Rp. {formatRupiah(colTotal)}
+                          </td>
+                        )
+                      })}
+                      <td className="p-4 text-right text-emerald-700 bg-emerald-50">
+                        Rp. {formatRupiah(filteredData.reduce((acc, row) => acc + akunColumns.reduce((sum, col) => {
+                          const isLocked = row.lockedMap && row.lockedMap[col.id]
+                          return sum + (isLocked ? 0 : (row.tagihanMap[col.id] || 0))
+                        }, 0), 0))}
+                      </td>
+                      <td className="p-4 sticky right-0 bg-gray-50 z-20 shadow-[-1px_0_0_0_#e2e8f0]"></td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
             </div>
-          )}
           </>
         ) : (
           !isLoading && (
