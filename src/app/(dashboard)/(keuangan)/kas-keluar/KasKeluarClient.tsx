@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Search, Plus, Printer, Download, RefreshCw, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown, FileSpreadsheet, FileText } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { format } from "date-fns"
@@ -50,11 +50,26 @@ export default function KasKeluarClient({ initialData, userRole }: { initialData
   }
 
   // Frontend filter for search (since backend filter is already applied, but we can do instant filtering)
-  const filteredData = data.filter((item: any) => 
-    item.noReferensi.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.namaPihakKetiga || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.deskripsi || "").toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredData = useMemo(() => {
+    return data.filter((item: any) => 
+      item.noReferensi.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.namaPihakKetiga || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.deskripsi || "").toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [data, searchTerm])
+
+  const [pageSize, setPageSize] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, filterBy, timeRange, startDate, endDate])
+
+  const paginatedData = useMemo(() => {
+    return filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  }, [filteredData, currentPage, pageSize])
+
+  const computedTotalPages = Math.ceil(filteredData.length / pageSize)
 
   const handleExportExcel = async () => {
     setIsExportingExcel(true)
@@ -254,7 +269,7 @@ export default function KasKeluarClient({ initialData, userRole }: { initialData
               </tr>
             </thead>
             <tbody>
-              {filteredData.map((item: any, idx: number) => (
+              {paginatedData.map((item: any, idx: number) => (
                 <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
                   <td className="p-4 text-center text-text-muted">{idx + 1}</td>
                   <td className="p-4 font-medium text-text-main">{format(new Date(item.tanggal), 'dd MMM yyyy', { locale: idLocale })}</td>
@@ -338,6 +353,48 @@ export default function KasKeluarClient({ initialData, userRole }: { initialData
             </tbody>
           </table>
         </div>
+
+        {filteredData.length > 0 && (
+          <div className="p-4 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface text-sm rounded-b-2xl">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value))
+                  setCurrentPage(1)
+                }}
+                className="px-3 py-1.5 bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              >
+                Sebelumnya
+              </Button>
+              <span className="font-medium text-text-muted">
+                Hal {currentPage} dari {computedTotalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === computedTotalPages || computedTotalPages === 0}
+                onClick={() => setCurrentPage(p => Math.min(computedTotalPages, p + 1))}
+              >
+                Berikutnya
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
       
       <ConfirmModal 

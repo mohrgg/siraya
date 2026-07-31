@@ -265,6 +265,19 @@ export default function PembuatanTagihanClient({
     )
   }, [gridData, searchTerm])
 
+  const [pageSize, setPageSize] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, kelasId, subKelasId, jurusanId])
+
+  const paginatedData = useMemo(() => {
+    return filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  }, [filteredData, currentPage, pageSize])
+
+  const computedTotalPages = Math.ceil(filteredData.length / pageSize)
+
   const activeSubKelasName = subKelasList.find(s => s.id === subKelasId)?.name || ""
   const activeKelasName = kelasList.find(k => k.id === kelasId)?.name || ""
 
@@ -368,7 +381,8 @@ export default function PembuatanTagihanClient({
 
         {/* Table / Empty State Container */}
         {gridData.length > 0 ? (
-          <div className="overflow-x-auto min-h-[400px]">
+          <>
+            <div className="overflow-x-auto min-h-[400px]">
             <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
@@ -437,13 +451,13 @@ export default function PembuatanTagihanClient({
                     </td>
                   </tr>
                 ) : (
-                  filteredData.map((row, idx) => {
+                  paginatedData.map((row, idx) => {
                     const rowTotal = akunColumns.reduce((acc, col) => acc + (row.tagihanMap[col.id] || 0), 0)
                     
                     return (
                       <tr key={row.id} className={`border-b border-border/50 hover:bg-bg/50 transition-colors ${row.isDirty ? 'bg-amber-50/30' : ''}`}>
                         <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
-                          {idx + 1}.
+                          {(currentPage - 1) * pageSize + idx + 1}.
                         </td>
                         <td className="p-4 sticky left-12 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
                           <p className="font-semibold text-text-main leading-tight truncate max-w-[200px]" title={row.name}>{row.name}</p>
@@ -486,6 +500,49 @@ export default function PembuatanTagihanClient({
               </tbody>
             </table>
           </div>
+
+          {filteredData.length > 0 && (
+            <div className="p-4 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface text-sm rounded-b-2xl">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value))
+                    setCurrentPage(1)
+                  }}
+                  className="px-3 py-1.5 bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                >
+                  Sebelumnya
+                </Button>
+                <span className="font-medium text-text-muted">
+                  Hal {currentPage} dari {computedTotalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === computedTotalPages || computedTotalPages === 0}
+                  onClick={() => setCurrentPage(p => Math.min(computedTotalPages, p + 1))}
+                >
+                  Berikutnya
+                </Button>
+              </div>
+            </div>
+          )}
+          </>
         ) : (
           !isLoading && (
             <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted">
