@@ -8,7 +8,6 @@ export default function ModalTambahTagihan({
   isOpen, 
   onClose,
   onSubmit,
-  tahunAkademikList,
   akunPendapatanList,
   kelasName,
   subKelasName,
@@ -16,14 +15,12 @@ export default function ModalTambahTagihan({
 }: {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: { tahunAkademikId: string, akunId: string, jumlah: number }) => void
-  tahunAkademikList: any[]
+  onSubmit: (data: { akunId: string, jumlah: number }) => void
   akunPendapatanList: any[]
   kelasName: string
   subKelasName: string
   isSubmitting: boolean
 }) {
-  const [tahunAkademikId, setTahunAkademikId] = useState("")
   const [akunId, setAkunId] = useState("")
   const [jumlah, setJumlah] = useState<string>("0")
 
@@ -32,7 +29,6 @@ export default function ModalTambahTagihan({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSubmit({
-      tahunAkademikId,
       akunId,
       jumlah: parseFloat(jumlah.replace(/[^0-9]/g, '')) || 0
     })
@@ -76,21 +72,6 @@ export default function ModalTambahTagihan({
 
         <form onSubmit={handleSubmit} className="p-6">
           <div className="space-y-4">
-            
-            <div className="grid grid-cols-[200px_1fr] items-center gap-4">
-              <label className="text-sm font-semibold text-text-main">Pilih Tahun Akademik</label>
-              <select 
-                className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
-                value={tahunAkademikId}
-                onChange={e => setTahunAkademikId(e.target.value)}
-                required
-              >
-                <option value="" disabled>-- Pilih Tahun Akademik --</option>
-                {tahunAkademikList.map(ta => (
-                  <option key={ta.id} value={ta.id}>{ta.name}</option>
-                ))}
-              </select>
-            </div>
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <label className="text-sm font-semibold text-text-main">Pilih Kode Akun</label>

@@ -3,15 +3,19 @@
 import { useState, useEffect, useMemo } from "react"
 import { 
   getKelasByUnit, 
-  getSubKelasByKelas, 
+  getSubKelasByKelas,
+  getJurusanByUnit,
   getMuridWithTagihan, 
   tambahTagihanMassal, 
-  updateTagihanSiswa 
+  updateTagihanSiswa,
+  editTagihanMassal,
+  hapusTagihanMassal
 } from "@/actions/pembuatan-tagihan"
-import { Plus, Search, Filter, Loader2, Save } from "lucide-react"
+import { Plus, Search, Filter, Loader2, Save, MoreVertical, Edit2, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 import ModalTambahTagihan from "./ModalTambahTagihan"
+import { ConfirmModal } from "@/components/ui/ConfirmModal"
 
 type GridRow = {
   id: string
@@ -23,25 +27,25 @@ type GridRow = {
 }
 
 export default function PembuatanTagihanClient({
-  tahunAkademikAktif,
-  tahunAkademikList,
-  unitSekolahList,
+  activeUnitId,
+  activeTahunAkademikId,
+  activeTahunAkademikName,
   akunPendapatanList,
   user
 }: {
-  tahunAkademikAktif: any
-  tahunAkademikList: any[]
-  unitSekolahList: any[]
+  activeUnitId: string
+  activeTahunAkademikId: string
+  activeTahunAkademikName: string
   akunPendapatanList: any[]
   user: any
 }) {
   // Filter States
-  const [unitId, setUnitId] = useState(unitSekolahList.length === 1 ? unitSekolahList[0].id : "")
   const [kelasList, setKelasList] = useState<any[]>([])
   const [kelasId, setKelasId] = useState("")
+  const [jurusanList, setJurusanList] = useState<any[]>([])
+  const [jurusanId, setJurusanId] = useState("")
   const [subKelasList, setSubKelasList] = useState<any[]>([])
   const [subKelasId, setSubKelasId] = useState("")
-  const [tahunAkademikId, setTahunAkademikId] = useState(tahunAkademikAktif?.id || "")
 
   // Data States
   const [isLoading, setIsLoading] = useState(false)
@@ -54,33 +58,54 @@ export default function PembuatanTagihanClient({
   const [isSubmittingModal, setIsSubmittingModal] = useState(false)
   const [savingRowId, setSavingRowId] = useState<string | null>(null)
 
-  // 1. Fetch Kelas when Unit changes
+  // Header Menu States
+  const [activeMenuColId, setActiveMenuColId] = useState<string | null>(null)
+  
+  // Edit Massal States
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingCol, setEditingCol] = useState<{id: string, nama: string} | null>(null)
+  const [editNominal, setEditNominal] = useState("0")
+  const [isEditingMassal, setIsEditingMassal] = useState(false)
+
+  // Delete Massal States
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [deletingCol, setDeletingCol] = useState<{id: string, nama: string} | null>(null)
+  const [isDeletingMassal, setIsDeletingMassal] = useState(false)
+
   useEffect(() => {
-    if (!unitId) {
+    if (!activeUnitId) {
       setKelasList([])
       setKelasId("")
+      setJurusanList([])
+      setJurusanId("")
       return
     }
-    getKelasByUnit(unitId).then(res => {
+    getKelasByUnit(activeUnitId).then(res => {
       setKelasList(res)
       if (res.length > 0) setKelasId(res[0].id)
       else setKelasId("")
     })
-  }, [unitId])
+    getJurusanByUnit(activeUnitId).then(res => {
+      setJurusanList(res)
+      if (res.length > 0) setJurusanId(res[0].id)
+      else setJurusanId("")
+    })
+  }, [activeUnitId])
 
-  // 2. Fetch SubKelas when Kelas changes
+  // 2. Fetch SubKelas when Kelas or Jurusan changes
   useEffect(() => {
-    if (!kelasId) {
+    if (!kelasId || (jurusanList.length > 0 && !jurusanId)) {
       setSubKelasList([])
       setSubKelasId("")
       return
     }
-    getSubKelasByKelas(kelasId).then(res => {
+    
+    getSubKelasByKelas(kelasId, jurusanList.length > 0 ? jurusanId : undefined).then(res => {
       setSubKelasList(res)
       if (res.length > 0) setSubKelasId(res[0].id)
       else setSubKelasId("")
     })
-  }, [kelasId])
+  }, [kelasId, jurusanId, jurusanList])
 
   // Process data to build Grid and Columns
   const processData = (muridList: any[]) => {
@@ -121,14 +146,14 @@ export default function PembuatanTagihanClient({
   }
 
   const handleTampilkan = async () => {
-    if (!subKelasId || !tahunAkademikId) {
+    if (!subKelasId || !activeTahunAkademikId) {
       toast.error("Pilih Subkelas dan Tahun Akademik terlebih dahulu")
       return
     }
 
     setIsLoading(true)
     try {
-      const data = await getMuridWithTagihan(subKelasId, tahunAkademikId)
+      const data = await getMuridWithTagihan(subKelasId, activeTahunAkademikId)
       processData(data)
     } catch (error: any) {
       toast.error("Gagal mengambil data: " + error.message)
@@ -137,13 +162,14 @@ export default function PembuatanTagihanClient({
     }
   }
 
-  const handleTambahMassalSubmit = async (data: { tahunAkademikId: string, akunId: string, jumlah: number }) => {
-    if (!subKelasId) return
+  const handleModalSubmit = async (data: { akunId: string, jumlah: number }) => {
     setIsSubmittingModal(true)
     try {
       await tambahTagihanMassal({
-        ...data,
-        subKelasId
+        subKelasId,
+        tahunAkademikId: activeTahunAkademikId,
+        akunId: data.akunId,
+        jumlah: data.jumlah
       })
       toast.success("Berhasil membuat tagihan massal!")
       setIsModalOpen(false)
@@ -165,7 +191,7 @@ export default function PembuatanTagihanClient({
         jumlah: row.tagihanMap[col.id] || 0
       }))
 
-      await updateTagihanSiswa(row.id, tahunAkademikId, updates)
+      await updateTagihanSiswa(row.id, activeTahunAkademikId, updates)
       toast.success("Perubahan disimpan")
       
       // Mark as not dirty
@@ -192,6 +218,39 @@ export default function PembuatanTagihanClient({
       }
       return r
     }))
+  }
+
+  const handleEditMassalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!subKelasId || !editingCol) return
+
+    const num = parseFloat(editNominal.replace(/[^0-9]/g, '')) || 0
+    setIsEditingMassal(true)
+    try {
+      await editTagihanMassal(subKelasId, activeTahunAkademikId, editingCol.id, num)
+      toast.success("Berhasil mengubah nominal tagihan massal")
+      setIsEditModalOpen(false)
+      await handleTampilkan()
+    } catch (error: any) {
+      toast.error(error.message || "Gagal mengubah tagihan")
+    } finally {
+      setIsEditingMassal(false)
+    }
+  }
+
+  const handleHapusMassal = async () => {
+    if (!subKelasId || !deletingCol) return
+    setIsDeletingMassal(true)
+    try {
+      await hapusTagihanMassal(subKelasId, activeTahunAkademikId, deletingCol.id)
+      toast.success("Berhasil menghapus komponen tagihan")
+      setIsDeleteModalOpen(false)
+      await handleTampilkan()
+    } catch (error: any) {
+      toast.error(error.message || "Gagal menghapus tagihan")
+    } finally {
+      setIsDeletingMassal(false)
+    }
   }
 
   // Format currency
@@ -228,51 +287,41 @@ export default function PembuatanTagihanClient({
       </div>
 
       {/* FILTER PANEL */}
-      <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Tahun Akademik</label>
-            <select 
-              className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
-              value={tahunAkademikId}
-              onChange={e => setTahunAkademikId(e.target.value)}
-            >
-              <option value="">-- Pilih --</option>
-              {tahunAkademikList.map(ta => (
-                <option key={ta.id} value={ta.id}>{ta.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Tingkat (Unit)</label>
-            <select 
-              className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
-              value={unitId}
-              onChange={e => setUnitId(e.target.value)}
-              disabled={user.role === "TATA_USAHA" && !!user.unitSekolahId}
-            >
-              <option value="">-- Pilih --</option>
-              {unitSekolahList.map(unit => (
-                <option key={unit.id} value={unit.id}>{unit.name}</option>
-              ))}
-            </select>
-          </div>
-
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 flex flex-col gap-4">
+        <h2 className="text-lg font-bold text-text-main flex items-center gap-2">
+          <Filter size={18} className="text-primary" /> Filter Subkelas
+        </h2>
+        
+        <div className={`grid grid-cols-1 md:grid-cols-2 ${jurusanList.length > 0 ? 'xl:grid-cols-3' : ''} gap-4 bg-bg/50 p-4 rounded-xl border border-border/50`}>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Kelas</label>
             <select 
               className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium disabled:opacity-60"
               value={kelasId}
               onChange={e => setKelasId(e.target.value)}
-              disabled={!unitId}
             >
-              <option value="">-- Pilih --</option>
+              <option value="">-- Pilih Kelas --</option>
               {kelasList.map(kelas => (
                 <option key={kelas.id} value={kelas.id}>{kelas.name}</option>
               ))}
             </select>
           </div>
+
+          {jurusanList.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Jurusan</label>
+              <select 
+                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium disabled:opacity-60"
+                value={jurusanId}
+                onChange={e => setJurusanId(e.target.value)}
+              >
+                <option value="">-- Pilih Jurusan --</option>
+                {jurusanList.map(jurusan => (
+                  <option key={jurusan.id} value={jurusan.id}>{jurusan.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Subkelas</label>
@@ -283,7 +332,7 @@ export default function PembuatanTagihanClient({
                 onChange={e => setSubKelasId(e.target.value)}
                 disabled={!kelasId}
               >
-                <option value="">-- Pilih --</option>
+                <option value="">-- Pilih Subkelas --</option>
                 {subKelasList.map(sk => (
                   <option key={sk.id} value={sk.id}>{sk.name}</option>
                 ))}
@@ -302,12 +351,12 @@ export default function PembuatanTagihanClient({
 
       {/* MATRIX TABLE */}
       {gridData.length > 0 && (
-        <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 overflow-hidden flex flex-col relative">
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 flex flex-col relative min-h-[400px]">
           
           <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-4">
             <div>
               <h2 className="text-lg font-bold text-text-main">Daftar Tagihan Siswa</h2>
-              <p className="text-sm text-text-muted mt-0.5">Subkelas {activeSubKelasName} - Tahun Akademik {tahunAkademikList.find(t=>t.id===tahunAkademikId)?.name}</p>
+              <p className="text-sm text-text-muted mt-0.5">Subkelas {activeSubKelasName} - Tahun Akademik {activeTahunAkademikName}</p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -332,8 +381,52 @@ export default function PembuatanTagihanClient({
                   <th className="p-3 font-semibold min-w-[200px] sticky left-12 bg-bg/95 z-20 shadow-[1px_0_0_0_#e2e8f0]">Siswa/i</th>
                   
                   {akunColumns.map(col => (
-                    <th key={col.id} className="p-3 font-semibold text-center min-w-[150px]">
-                      {col.nama} <br/><span className="text-[10px] opacity-70">[{col.kode}]</span>
+                    <th key={col.id} className="p-3 font-semibold text-center min-w-[150px] relative group">
+                      <div className="flex items-center justify-center gap-2">
+                        <div>
+                          {col.nama} <br/><span className="text-[10px] opacity-70">[{col.kode}]</span>
+                        </div>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveMenuColId(activeMenuColId === col.id ? null : col.id)
+                          }}
+                          className="p-1 rounded text-text-muted hover:bg-black/5 transition-colors"
+                        >
+                          <MoreVertical size={16} />
+                        </button>
+                      </div>
+
+                      {/* Dropdown Menu */}
+                      {activeMenuColId === col.id && (
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-36 bg-white rounded-lg shadow-lg border border-border py-1.5 z-[99] animate-in fade-in zoom-in-95">
+                          <button 
+                            className="w-full px-3 py-2 text-left text-xs font-medium text-text-main hover:bg-bg flex items-center gap-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuColId(null)
+                              setEditingCol({ id: col.id, nama: col.nama })
+                              setEditNominal("0")
+                              setIsEditModalOpen(true)
+                            }}
+                          >
+                            <Edit2 size={14} className="text-blue-500" />
+                            Ubah Nominal
+                          </button>
+                          <button 
+                            className="w-full px-3 py-2 text-left text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuColId(null)
+                              setDeletingCol({ id: col.id, nama: col.nama })
+                              setIsDeleteModalOpen(true)
+                            }}
+                          >
+                            <Trash2 size={14} />
+                            Hapus Kolom
+                          </button>
+                        </div>
+                      )}
                     </th>
                   ))}
                   
@@ -409,16 +502,74 @@ export default function PembuatanTagihanClient({
           </div>
           <h3 className="text-lg font-bold text-text-main mb-2">Pilih Filter Terlebih Dahulu</h3>
           <p className="text-text-muted max-w-sm">
-            Silakan pilih Tahun Akademik dan Subkelas pada panel di atas, lalu klik Tampilkan untuk melihat atau membuat tagihan.
+            Silakan pilih Kelas dan Subkelas pada panel di atas, lalu klik Tampilkan untuk melihat atau membuat tagihan.
           </p>
         </div>
       )}
 
+      {/* Overlay to close menu */}
+      {activeMenuColId && (
+        <div className="fixed inset-0 z-[90]" onClick={() => setActiveMenuColId(null)} />
+      )}
+
+      {/* Modal Edit Massal */}
+      {isEditModalOpen && editingCol && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditModalOpen(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <h2 className="text-xl font-bold text-text-main">Ubah Nominal Massal</h2>
+              <button onClick={() => setIsEditModalOpen(false)} className="p-2 text-text-muted hover:bg-bg rounded-lg">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleEditMassalSubmit} className="p-6 space-y-4">
+              <div>
+                <p className="text-sm text-text-muted mb-4">
+                  Anda akan mengubah tagihan <strong>{editingCol.nama}</strong> untuk seluruh siswa di <strong>Subkelas {activeSubKelasName}</strong>.
+                </p>
+                <label className="text-sm font-semibold text-text-main block mb-2">Nominal Baru</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted font-medium text-sm">Rp.</span>
+                  <input 
+                    type="text" 
+                    className="w-full pl-12 pr-4 py-2 bg-white border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-bold"
+                    value={editNominal}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '')
+                      setEditNominal(val ? formatRupiah(parseInt(val)) : "")
+                    }}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
+                <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>Batal</Button>
+                <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700" disabled={isEditingMassal}>
+                  {isEditingMassal ? "Menyimpan..." : "Simpan Perubahan"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Hapus Massal */}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onCancel={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleHapusMassal}
+        title="Hapus Kolom Tagihan"
+        message={`Apakah Anda yakin ingin menghapus tagihan ${deletingCol?.nama} dari seluruh siswa di subkelas ini? Aksi ini akan menghapus semua riwayat tagihan tersebut yang belum dibayar.`}
+        confirmText="Hapus Tagihan"
+        cancelText="Batal"
+        isLoading={isDeletingMassal}
+      />
+
       <ModalTambahTagihan 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={handleTambahMassalSubmit}
-        tahunAkademikList={tahunAkademikList}
+        onSubmit={handleModalSubmit}
         akunPendapatanList={akunPendapatanList}
         kelasName={activeKelasName}
         subKelasName={activeSubKelasName}

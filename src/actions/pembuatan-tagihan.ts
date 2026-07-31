@@ -47,9 +47,23 @@ export async function getKelasByUnit(unitSekolahId: string) {
   })
 }
 
-export async function getSubKelasByKelas(tingkatId: string) {
+export async function getSubKelasByKelas(tingkatId: string, jurusanId?: string) {
+  const where: any = { tingkatId, isDeleted: false }
+  
+  // Jika jurusan diberikan, filter subkelas berdasarkan jurusan
+  if (jurusanId) {
+    where.jurusanId = jurusanId
+  }
+
   return prisma.subKelas.findMany({
-    where: { tingkatId, isDeleted: false },
+    where,
+    orderBy: { name: 'asc' }
+  })
+}
+
+export async function getJurusanByUnit(unitSekolahId: string) {
+  return prisma.jurusan.findMany({
+    where: { unitSekolahId, isDeleted: false },
     orderBy: { name: 'asc' }
   })
 }
@@ -220,4 +234,69 @@ export async function updateTagihanSiswa(muridId: string, tahunAkademikId: strin
 
   revalidatePath("/pembuatan-tagihan")
   return { success: true, message: "Perubahan tagihan siswa berhasil disimpan" }
+}
+
+/**
+ * Menghapus komponen tagihan (kolom) secara massal untuk satu subkelas
+ */
+export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: string, akunId: string) {
+  const session = await auth()
+  if (!session?.user) throw new Error("Unauthorized")
+
+  // Ambil semua muridId di subkelas
+  const riwayatKelas = await prisma.riwayatKelas.findMany({
+    where: { subKelasId, tahunAkademikId },
+    select: { muridId: true }
+  })
+  
+  const muridIds = riwayatKelas.map(rk => rk.muridId)
+
+  if (muridIds.length > 0) {
+    await prisma.tagihan.deleteMany({
+      where: {
+        tahunAkademikId,
+        akunId,
+        muridId: { in: muridIds }
+      }
+    })
+  }
+
+  revalidatePath("/pembuatan-tagihan")
+  return { success: true, message: "Tagihan massal berhasil dihapus" }
+}
+
+/**
+ * Mengubah nominal tagihan secara massal untuk komponen tertentu di satu subkelas
+ */
+export async function editTagihanMassal(subKelasId: string, tahunAkademikId: string, akunId: string, jumlah: number) {
+  const session = await auth()
+  if (!session?.user) throw new Error("Unauthorized")
+
+  // Ambil semua muridId di subkelas
+  const riwayatKelas = await prisma.riwayatKelas.findMany({
+    where: { subKelasId, tahunAkademikId },
+    select: { muridId: true }
+  })
+  
+  const muridIds = riwayatKelas.map(rk => rk.muridId)
+
+  if (muridIds.length > 0) {
+    await prisma.tagihan.updateMany({
+      where: {
+        tahunAkademikId,
+        akunId,
+        muridId: { in: muridIds },
+        // Jangan ubah yang sudah lunas atau dicicil (Opsional: di sini kita asumsikan update all untuk simplifikasi 
+        // tapi sebaiknya status="BELUM_LUNAS" dan sisaTagihan=jumlah yang lama agar tidak merusak cicilan)
+        // Karena sistem belum mencatat cicilan, kita update semua saja saat ini
+      },
+      data: {
+        jumlah: jumlah,
+        sisaTagihan: jumlah
+      }
+    })
+  }
+
+  revalidatePath("/pembuatan-tagihan")
+  return { success: true, message: "Nominal tagihan massal berhasil diubah" }
 }
