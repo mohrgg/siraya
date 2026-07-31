@@ -197,44 +197,54 @@ export default function TahunAkademikClient({ initialData, userRole }: { initial
         </form>
       </Modal>
 
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div className="relative w-full max-w-xs">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-          <input 
-            type="text" 
-            placeholder="Cari tahun akademik..." 
-            className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm text-text-main" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        {!isReadOnly && (
-          <Button onClick={handleAddClick}>
-            <Plus size={16} className="mr-2" /> Tambah Tahun Akademik
-          </Button>
-        )}
-      </div>
-
-      <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
-        {sortedData.length === 0 ? (
-          <div className="p-8 text-center text-text-muted">
-            {searchTerm ? "Tidak ada tahun akademik yang cocok dengan pencarian" : "Belum ada data Tahun Akademik."}
+      <div className="space-y-6">
+        <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden p-6">
+          {/* Tab Navigation */}
+          <div className="flex gap-2 mb-6 border-b border-border">
+            <button className="px-6 py-3 font-semibold text-sm border-b-2 border-primary text-primary transition-colors">
+              Daftar Tahun Akademik
+            </button>
           </div>
-        ) : (
+
+          {/* Top Filter & Toolbar */}
+          <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
+            <div className="flex flex-wrap gap-3 items-center flex-1">
+              <div className="relative w-full md:w-64 flex-shrink-0">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  type="text"
+                  placeholder="Cari tahun akademik..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
+                />
+              </div>
+            </div>
+
+            {!isReadOnly && (
+              <div className="flex-shrink-0">
+                <Button onClick={handleAddClick} className="flex items-center bg-primary text-white hover:bg-primary/90 shadow-sm">
+                  <Plus size={16} className="mr-1.5" />
+                  <span>Tambah Tahun Akademik</span>
+                </Button>
+              </div>
+            )}
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
-              <thead>
-                <tr className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
-                  <th className="p-4 font-semibold">No</th>
+              <thead className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
+                <tr>
+                  <th className="p-4 font-semibold text-center w-12">NO</th>
                   <SortableHeader label="Tahun Akademik" sortKey="name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
                   <SortableHeader label="Status" sortKey="isActive" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} />
-                  {!isReadOnly && <th className="p-4 font-semibold text-right">Aksi</th>}
+                  {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border text-sm">
                 {sortedData.map((item, index) => (
                   <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
-                    <td className="p-4">{index + 1}</td>
+                    <td className="p-4 text-center font-medium text-text-muted">{index + 1}</td>
                     <td className="p-4 font-semibold text-text-main">{item.name}</td>
                     <td className="p-4">
                       {item.isActive ? (
@@ -253,7 +263,7 @@ export default function TahunAkademikClient({ initialData, userRole }: { initial
                           <Button variant="outline" size="sm" onClick={() => handleEditClick(item)}>
                             <Edit2 size={16} />
                           </Button>
-                          <Button variant="danger" size="sm" onClick={() => setDeleteId(item.id)}>
+                          <Button variant="outline" size="sm" onClick={() => setDeleteId(item.id)} className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-border">
                             <Trash2 size={16} />
                           </Button>
                         </div>
@@ -261,10 +271,21 @@ export default function TahunAkademikClient({ initialData, userRole }: { initial
                     )}
                   </tr>
                 ))}
+                {sortedData.length === 0 && (
+                  <tr>
+                    <td colSpan={isReadOnly ? 3 : 4} className="py-12 text-center">
+                      <div className="flex flex-col items-center justify-center text-text-muted">
+                        <Calendar className="w-12 h-12 stroke-[1.2] text-text-muted/40 mb-3" />
+                        <p className="font-medium text-text-main mb-1">Tidak ada data ditemukan</p>
+                        <p className="text-sm">Cobalah mencari dengan kata kunci lain.</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

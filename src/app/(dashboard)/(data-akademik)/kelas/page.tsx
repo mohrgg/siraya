@@ -26,7 +26,7 @@ export default async function KelasPage() {
   const students: any[] = [] // Now fetched asynchronously in KelasClient via pagination
 
   return (
-    <div className="max-w-7xl mx-auto w-full">
+    <div className="max-w-[1600px] mx-auto w-full">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Kelas & Murid</h1>
         <p className="text-text-muted">Kelola data rombongan belajar dan data siswa</p>

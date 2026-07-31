@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
-import { Edit2, Plus, Building, Trash2 } from "lucide-react"
+import { Edit2, Plus, Building, Trash2, Search } from "lucide-react"
 import { tambahUnitSekolah, editUnitSekolah, hapusUnitSekolah } from "@/actions/unit-sekolah"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { Input } from "@/components/ui/Input"
@@ -21,6 +21,13 @@ export default function UnitSekolahClient({ initialData, userRole }: { initialDa
 
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  
+  const [searchTerm, setSearchTerm] = useState("")
+  
+  const filteredData = data.filter(item => 
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    item.level.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   const handleEdit = (item: any) => {
     setFormData({ id: item.id, name: item.name, level: item.level || "SD", address: item.address || "", phone: item.phone || "", isActive: item.isActive })
@@ -125,67 +132,97 @@ export default function UnitSekolahClient({ initialData, userRole }: { initialDa
         </form>
       </Modal>
 
-      <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-albas-green">Manajemen Unit Sekolah</h2>
-        </div>
+      <div className="space-y-6">
+        <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden p-6">
+          {/* Tab Navigation */}
+          <div className="flex gap-2 mb-6 border-b border-border">
+            <button className="px-6 py-3 font-semibold text-sm border-b-2 border-primary text-primary transition-colors">
+              Daftar Unit Sekolah
+            </button>
+          </div>
 
-        {!isReadOnly && (
-          <Button onClick={() => setIsAdding(true)} className="mb-6">
-            <Plus size={16} className="mr-2"/> Tambah Unit Sekolah
-          </Button>
-        )}
+          {/* Top Filter & Toolbar */}
+          <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
+            <div className="flex flex-wrap gap-3 items-center flex-1">
+              <div className="relative w-full md:w-64 flex-shrink-0">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  type="text"
+                  placeholder="Cari nama unit..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
+                />
+              </div>
+            </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider">
-                <th className="p-4 font-semibold">NAMA UNIT</th>
-                <th className="p-4 font-semibold">LEVEL</th>
-                <th className="p-4 font-semibold">TELEPON</th>
-                <th className="p-4 font-semibold">STATUS</th>
-                {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((item) => (
-                <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
-                  <td className="p-4 flex items-center gap-3">
-                    <div className="bg-primary/10 p-2 rounded-lg text-primary">
-                      <Building size={20} />
-                    </div>
-                    <span className="font-semibold text-text-main">{item.name}</span>
-                  </td>
-                  <td className="p-4 text-text-main font-medium">{item.level}</td>
-                  <td className="p-4 text-text-muted">{item.phone || "-"}</td>
-                  <td className="p-4">
-                    <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                      {item.isActive ? "Aktif" : "Nonaktif"}
-                    </span>
-                  </td>
-                  {!isReadOnly && (
+            {!isReadOnly && (
+              <div className="flex-shrink-0">
+                <Button onClick={() => setIsAdding(true)} className="flex items-center bg-primary text-white hover:bg-primary/90 shadow-sm">
+                  <Plus size={16} className="mr-1.5" />
+                  <span>Tambah Unit Sekolah</span>
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left">
+              <thead className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
+                <tr>
+                  <th className="p-4 font-semibold text-center w-12">NO</th>
+                  <th className="p-4 font-semibold">NAMA UNIT</th>
+                  <th className="p-4 font-semibold">LEVEL</th>
+                  <th className="p-4 font-semibold">TELEPON</th>
+                  <th className="p-4 font-semibold">STATUS</th>
+                  {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border text-sm">
+                {filteredData.map((item, idx) => (
+                  <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
+                    <td className="p-4 text-center font-medium text-text-muted">{idx + 1}</td>
+                    <td className="p-4 flex items-center gap-3">
+                      <div className="bg-primary/10 p-2 rounded-lg text-primary">
+                        <Building size={20} />
+                      </div>
+                      <span className="font-semibold text-text-main">{item.name}</span>
+                    </td>
+                    <td className="p-4 text-text-main font-medium">{item.level}</td>
+                    <td className="p-4 text-text-muted">{item.phone || "-"}</td>
                     <td className="p-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
-                          <Edit2 size={16} />
-                        </Button>
-                        <Button variant="danger" size="sm" onClick={() => setDeleteId(item.id)}>
-                          <Trash2 size={16} />
-                        </Button>
+                      <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        {item.isActive ? "Aktif" : "Nonaktif"}
+                      </span>
+                    </td>
+                    {!isReadOnly && (
+                      <td className="p-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
+                            <Edit2 size={16} />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => setDeleteId(item.id)} className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-border">
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+                {filteredData.length === 0 && (
+                  <tr>
+                    <td colSpan={isReadOnly ? 5 : 6} className="py-12 text-center">
+                      <div className="flex flex-col items-center justify-center text-text-muted">
+                        <Building className="w-12 h-12 stroke-[1.2] text-text-muted/40 mb-3" />
+                        <p className="font-medium text-text-main mb-1">Tidak ada data ditemukan</p>
+                        <p className="text-sm">Cobalah mencari dengan kata kunci lain.</p>
                       </div>
                     </td>
-                  )}
-                </tr>
-              ))}
-              {data.length === 0 && (
-                <tr>
-                  <td colSpan={isReadOnly ? 4 : 5} className="p-8 text-center text-text-muted">
-                    Belum ada data Unit Sekolah.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

@@ -133,7 +133,7 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
   }
 
   return (
-    <div className="max-w-7xl mx-auto w-full">
+    <div className="max-w-[1600px] mx-auto w-full">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Kas Masuk (Penerimaan)</h1>
         <p className="text-text-muted">Kelola data penerimaan kas dan pendapatan Yayasan</p>
