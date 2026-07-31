@@ -377,22 +377,28 @@ export default function PembayaranTagihanClient({
                             return (
                               <td key={col.id} className="p-4">
                                 {tagihan ? (
-                                  <label className={`
-                                    flex items-center justify-center gap-2 p-2 rounded-lg cursor-pointer border select-none transition-all
-                                    ${row.selectedItems[tagihan.id] 
-                                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700' 
-                                      : 'border-border bg-white hover:bg-gray-50 text-text-main'}
-                                  `}>
-                                    <input 
-                                      type="checkbox"
-                                      className="w-4 h-4 text-emerald-500 rounded border-gray-300 focus:ring-emerald-500"
-                                      checked={row.selectedItems[tagihan.id] || false}
-                                      onChange={(e) => handleCheckboxChange(row.id, tagihan.id, e.target.checked)}
-                                    />
-                                    <span className="text-sm font-bold">
-                                      Rp {formatRupiah(tagihan.sisaTagihan)}
-                                    </span>
-                                  </label>
+                                  tagihan.sisaTagihan <= 0 ? (
+                                    <div className="flex items-center justify-center p-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition-all select-none">
+                                      <span className="text-sm font-bold opacity-70">Rp 0</span>
+                                    </div>
+                                  ) : (
+                                    <label className={`
+                                      flex items-center justify-center gap-2 p-2 rounded-lg cursor-pointer border select-none transition-all
+                                      ${row.selectedItems[tagihan.id] 
+                                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700' 
+                                        : 'border-border bg-white hover:bg-gray-50 text-text-main'}
+                                    `}>
+                                      <input 
+                                        type="checkbox"
+                                        className="w-4 h-4 text-emerald-500 rounded border-gray-300 focus:ring-emerald-500"
+                                        checked={row.selectedItems[tagihan.id] || false}
+                                        onChange={(e) => handleCheckboxChange(row.id, tagihan.id, e.target.checked)}
+                                      />
+                                      <span className="text-sm font-bold">
+                                        Rp {formatRupiah(tagihan.sisaTagihan)}
+                                      </span>
+                                    </label>
+                                  )
                                 ) : (
                                   <div className="text-center text-xs text-text-muted/50 p-2 bg-gray-50 rounded-lg">
                                     -

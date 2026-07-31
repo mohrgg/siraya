@@ -51,7 +51,7 @@ export default function ModalPembayaranTagihan({
       }
       setTanggal(format(new Date(), 'yyyy-MM-dd'))
       setDeskripsi(`Pembayaran Tagihan Siswa: ${muridName}`)
-      setNoReferensi("")
+      setNoReferensi(`INV-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`)
     }
   }, [isOpen, akunKasBankList, muridName])
 
@@ -131,7 +131,7 @@ export default function ModalPembayaranTagihan({
               </div>
 
               <div>
-                <label className="text-xs font-bold text-text-main block mb-1.5">No. Referensi (Opsional)</label>
+                <label className="text-xs font-bold text-text-main block mb-1.5">No. Referensi</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <div className="w-5 h-5 bg-emerald-100 text-emerald-600 rounded flex items-center justify-center">
@@ -140,10 +140,9 @@ export default function ModalPembayaranTagihan({
                   </div>
                   <input
                     type="text"
-                    placeholder="Auto Generated"
-                    className="w-full pl-10 pr-3 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-sm font-medium"
+                    readOnly
+                    className="w-full pl-10 pr-3 py-2 bg-gray-50 border border-border rounded-xl text-sm font-medium text-text-muted cursor-not-allowed"
                     value={noReferensi}
-                    onChange={(e) => setNoReferensi(e.target.value)}
                   />
                 </div>
               </div>

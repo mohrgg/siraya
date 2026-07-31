@@ -23,6 +23,7 @@ type GridRow = {
   nisn: string
   formNo: string
   tagihanMap: Record<string, number> // akunId -> jumlah
+  lockedMap: Record<string, boolean> // akunId -> is locked (sudah dibayar/dicicil)
   isDirty: boolean
 }
 
@@ -130,8 +131,10 @@ export default function PembuatanTagihanClient({
     // Pass 2: Build grid rows
     const rows: GridRow[] = muridList.map(murid => {
       const tMap: Record<string, number> = {}
+      const lMap: Record<string, boolean> = {}
       murid.tagihan?.forEach((t: any) => {
         tMap[t.akunId] = t.jumlah
+        lMap[t.akunId] = t.sisaTagihan < t.jumlah // locked if even 1 rupiah is paid
       })
       return {
         id: murid.id,
@@ -139,6 +142,7 @@ export default function PembuatanTagihanClient({
         nisn: murid.nisn || "-",
         formNo: murid.formNo || "-",
         tagihanMap: tMap,
+        lockedMap: lMap,
         isDirty: false
       }
     })
@@ -464,20 +468,30 @@ export default function PembuatanTagihanClient({
                           <p className="text-xs text-text-muted mt-0.5">{row.nisn} • {row.formNo}</p>
                         </td>
                         
-                        {akunColumns.map(col => (
-                          <td key={col.id} className="p-4">
-                            <div className="relative group/input">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/50 text-xs font-semibold">Rp.</span>
-                              <input 
-                                type="text"
-                                className="w-full min-w-[130px] pl-9 pr-3 py-1.5 bg-bg border border-border/60 hover:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary focus:bg-white text-sm font-semibold text-right transition-all"
-                                value={row.tagihanMap[col.id] === undefined ? "" : formatRupiah(row.tagihanMap[col.id])}
-                                onChange={(e) => handleInputChange(row.id, col.id, e.target.value)}
-                                placeholder="0"
-                              />
-                            </div>
-                          </td>
-                        ))}
+                        {akunColumns.map(col => {
+                          const isLocked = row.lockedMap && row.lockedMap[col.id]
+                          return (
+                            <td key={col.id} className="p-4 relative">
+                              {isLocked ? (
+                                <div className="flex items-center justify-between px-3 py-1.5 w-full min-w-[130px] rounded-lg bg-emerald-100/50 border border-emerald-200 text-emerald-700 font-bold select-none">
+                                  <span className="text-xs opacity-70">Rp.</span>
+                                  <span className="text-sm">0</span>
+                                </div>
+                              ) : (
+                                <div className="relative group/input">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/50 text-xs font-semibold z-10">Rp.</span>
+                                  <input 
+                                    type="text"
+                                    className="w-full min-w-[130px] pl-9 pr-3 py-1.5 bg-bg border border-border/60 hover:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary focus:bg-white text-sm font-semibold text-right transition-all text-text-main"
+                                    value={row.tagihanMap[col.id] === undefined ? "" : formatRupiah(row.tagihanMap[col.id])}
+                                    onChange={(e) => handleInputChange(row.id, col.id, e.target.value)}
+                                    placeholder="0"
+                                  />
+                                </div>
+                              )}
+                            </td>
+                          )
+                        })}
                         
                         <td className="p-4 text-right font-bold text-text-main whitespace-nowrap bg-bg/30 group-hover:bg-bg/50">
                           Rp. {formatRupiah(rowTotal)}

@@ -58,10 +58,7 @@ export async function getMuridWithTagihanUnpaid(filters: {
         formNo: true,
         tagihan: {
           where: {
-            tahunAkademikId: filters.tahunAkademikId,
-            sisaTagihan: {
-              gt: 0
-            }
+            tahunAkademikId: filters.tahunAkademikId
           },
           select: {
             id: true,
