@@ -20,8 +20,10 @@ import {
   BadgeCheck,
   UploadCloud,
   User,
-  X
+  X,
+  Eye
 } from "lucide-react"
+import Link from "next/link"
 import { tambahGuru, editGuru, hapusGuru, hapusGuruMassal } from "@/actions/guru"
 import toast from "react-hot-toast"
 import GuruFormModal from "@/components/modals/GuruFormModal"
@@ -406,35 +408,21 @@ export default function GuruClient({
           <table className="w-full text-left border-collapse">
             <thead className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
               <tr>
-                {!isReadOnly && (
-                  <th className="p-4 font-semibold text-center w-12">
-                    <input 
-                      type="checkbox" 
-                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                      checked={paginatedData.length > 0 && selectedGurus.length === paginatedData.length}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedGurus(paginatedData.map(d => d.id))
-                        } else {
-                          setSelectedGurus([])
-                        }
-                      }}
-                    />
-                  </th>
-                )}
+
                 <th className="p-4 font-semibold text-center w-12">NO</th>
                 <th className="p-4 font-semibold text-left">NIP / NUPTK / NIK</th>
-                <th className="p-4 font-semibold text-left">NAMA LENGKAP & GELAR</th>
+                <th className="p-4 font-semibold text-left">NAMA LENGKAP</th>
+                <th className="p-4 font-semibold text-left">PENDIDIKAN</th>
                 <th className="p-4 font-semibold text-left">UNIT SEKOLAH</th>
-                <th className="p-4 font-semibold text-left">STATUS & TUGAS</th>
-                <th className="p-4 font-semibold text-left">KONTAK WHATSAPP</th>
+                <th className="p-4 font-semibold text-left">STATUS PEGAWAI</th>
+                <th className="p-4 font-semibold text-left">BIDANG STUDI</th>
                 {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-sm">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={isReadOnly ? 6 : 8} className="py-12 text-center">
+                  <td colSpan={isReadOnly ? 7 : 8} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center text-text-muted">
                       <GraduationCap className="w-12 h-12 stroke-[1.2] text-text-muted/40 mb-3" />
                       <p className="font-medium text-text-main">Belum Ada Data Guru</p>
@@ -448,76 +436,51 @@ export default function GuruClient({
                   const waUrl = formatWhatsAppUrl(item.phone)
                   return (
                     <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                      {!isReadOnly && (
-                        <td className="p-4 text-center">
-                          <input 
-                            type="checkbox" 
-                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                            checked={selectedGurus.includes(item.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedGurus([...selectedGurus, item.id])
-                              } else {
-                                setSelectedGurus(selectedGurus.filter(id => id !== item.id))
-                              }
-                            }}
-                          />
-                        </td>
-                      )}
+
                       <td className="p-4 text-center text-text-main">{absoluteIdx}</td>
                       <td className="p-4">
                         <div className="font-mono text-sm text-text-main font-semibold">
                           {item.nip || "-"}
                         </div>
-                        <div className="text-xs text-text-muted mt-0.5 opacity-60">Non-NIP</div>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gray-100 flex-shrink-0 border border-border overflow-hidden flex items-center justify-center">
                             <User size={16} className="text-gray-400" />
                           </div>
-                          <div>
-                            <div className="font-bold text-text-main">{item.name}</div>
-                            <div className="text-xs text-text-muted mt-0.5">{item.pendidikan || "-"}</div>
+                          <div className="font-bold text-text-main">
+                            {item.name}
                           </div>
                         </div>
+                      </td>
+                      <td className="p-4 text-sm font-medium text-text-muted">
+                        {item.pendidikan || "-"}
                       </td>
                       <td className="p-4 font-medium text-text-main">
                         {item.unitSekolah?.name || "-"}
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="flex flex-col gap-0.5">
-                          <span className={`inline-flex items-center w-fit px-2 py-0.5 rounded text-[11px] font-semibold ${
-                            item.statusKepegawaian === "GTY" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                            item.statusKepegawaian === "PNS" ? "bg-purple-50 text-purple-700 border border-purple-200" :
-                            "bg-blue-50 text-blue-700 border border-blue-200"
-                          }`}>
-                            {item.statusKepegawaian}
-                          </span>
-                          <span className="text-xs text-text-muted truncate max-w-[150px]" title={item.bidangStudi || ""}>
-                            {item.bidangStudi || "-"}
-                          </span>
-                        </div>
+                        <span className={`inline-flex items-center w-fit px-2 py-0.5 rounded text-[11px] font-semibold ${
+                          item.statusKepegawaian === "GTY" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                          item.statusKepegawaian === "PNS" ? "bg-purple-50 text-purple-700 border border-purple-200" :
+                          "bg-blue-50 text-blue-700 border border-blue-200"
+                        }`}>
+                          {item.statusKepegawaian}
+                        </span>
                       </td>
-                      <td className="p-4">
-                        {item.phone ? (
-                          <a
-                            href={waUrl || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 transition-colors text-xs font-medium"
-                            title="Chat via WhatsApp"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5 fill-emerald-500 text-white" />
-                            <span>{item.phone}</span>
-                          </a>
-                        ) : (
-                          <span className="text-xs text-text-muted/60 italic">Belum dicantumkan</span>
-                        )}
+                      <td className="p-4 text-sm font-medium text-text-muted truncate max-w-[200px]" title={item.bidangStudi || ""}>
+                        {item.bidangStudi || "-"}
                       </td>
                       {!isReadOnly && (
                         <td className="p-4">
                           <div className="flex items-center justify-end gap-2">
+                            <Link
+                              href={`/guru/${item.id}`}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors"
+                              title="Detail"
+                            >
+                              <Eye size={16} />
+                            </Link>
                             <button
                               onClick={() => handleEdit(item)}
                               className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg border border-green-200 hover:border-green-600 transition-colors"
@@ -585,38 +548,7 @@ export default function GuruClient({
         )}
       </div>
 
-      {/* Floating Action Bar (Bulk Actions) */}
-      {selectedGurus.length > 0 && !isReadOnly && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-border px-4 py-3 flex items-center justify-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-300 z-50 w-max max-w-[98vw] overflow-x-auto hide-scrollbar text-sm">
-          {/* Info Section */}
-          <div className="flex items-center gap-2 font-semibold shrink-0">
-            <span className="text-primary font-bold">{selectedGurus.length}</span>
-            <span className="hidden sm:inline">Guru</span> Dipilih
-          </div>
-          
-          <div className="h-6 w-px bg-border shrink-0"></div>
-          
-          <div className="flex items-center gap-2 shrink-0">
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="text-red-600 border-red-200 hover:bg-red-50 text-xs py-1.5 px-3 shrink-0"
-              onClick={() => setShowBulkDeleteModal(true)}
-            >
-              Hapus
-            </Button>
-            
-            {/* Cancel */}
-            <button 
-              onClick={() => setSelectedGurus([])}
-              className="text-gray-400 hover:text-gray-600 p-1.5 ml-1 bg-gray-100 rounded-full shrink-0"
-              title="Batal pilih semua"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-      )}
+
 
       {/* Modular 4-Tab Guru Form Modal */}
       <GuruFormModal
@@ -647,18 +579,6 @@ export default function GuruClient({
         confirmText="Ya, Hapus"
         cancelText="Batal"
         isLoading={isDeleting}
-      />
-
-      {/* Bulk Delete Confirmation Modal */}
-      <ConfirmModal
-        isOpen={showBulkDeleteModal}
-        onCancel={() => setShowBulkDeleteModal(false)}
-        onConfirm={handleBulkDeleteConfirm}
-        title="Hapus Data Massal"
-        message={`Apakah Anda yakin ingin menghapus ${selectedGurus.length} data guru yang dipilih? Guru yang dihapus tidak akan muncul lagi pada pilihan Wali Kelas.`}
-        confirmText="Ya, Hapus Massal"
-        cancelText="Batal"
-        isLoading={isDeletingBulk}
       />
     </div>
   )

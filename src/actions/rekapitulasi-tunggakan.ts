@@ -1,0 +1,107 @@
+"use server"
+
+import prisma from "@/lib/prisma"
+
+export async function getRekapitulasiTunggakan(unitSekolahId: string, tahunAkademikId: string) {
+  try {
+    // 1. Get all SubKelas in the given unit
+    const subKelasList = await prisma.subKelas.findMany({
+      where: { unitSekolahId },
+      select: {
+        id: true,
+        name: true,
+        riwayatKelas: {
+          where: { tahunAkademikId },
+          select: {
+            muridId: true
+          }
+        }
+      },
+      orderBy: { name: 'asc' }
+    });
+
+    // 2. Get all tagihan for those students in the active academic year
+    const tagihanList = await prisma.tagihan.findMany({
+      where: {
+        tahunAkademikId,
+        murid: {
+          unitSekolahId
+        }
+      },
+      select: {
+        muridId: true,
+        akunId: true,
+        jumlah: true,
+        sisaTagihan: true,
+        akun: {
+          select: {
+            id: true,
+            nama: true,
+            kode: true
+          }
+        }
+      }
+    });
+
+    const akunMap = new Map<string, { id: string, nama: string, kode: string }>();
+
+    // Process data to map each murid to their subKelas
+    const muridToSubKelas = new Map<string, string>();
+    subKelasList.forEach(sk => {
+      sk.riwayatKelas.forEach(rk => {
+        muridToSubKelas.set(rk.muridId, sk.id);
+      });
+    });
+
+    // Grouping
+    const rekap = subKelasList.map(sk => ({
+      subKelasId: sk.id,
+      subKelasName: sk.name,
+      totalTagihan: 0,
+      totalDibayar: 0,
+      totalTunggakan: 0,
+      detailKomponen: {} as Record<string, { tagihan: number, dibayar: number, tunggakan: number }>
+    }));
+
+    const rekapMap = new Map(rekap.map(r => [r.subKelasId, r]));
+
+    tagihanList.forEach(t => {
+      const subKelasId = muridToSubKelas.get(t.muridId);
+      if (!subKelasId) return; // Murid doesn't have an active class in this year
+
+      const r = rekapMap.get(subKelasId);
+      if (r) {
+        if (!akunMap.has(t.akunId)) {
+          akunMap.set(t.akunId, t.akun);
+        }
+
+        const dibayar = t.jumlah - Math.max(0, t.sisaTagihan);
+        const tunggakan = Math.max(0, t.sisaTagihan);
+
+        r.totalTagihan += t.jumlah;
+        r.totalDibayar += dibayar;
+        r.totalTunggakan += tunggakan;
+
+        if (!r.detailKomponen[t.akunId]) {
+          r.detailKomponen[t.akunId] = { tagihan: 0, dibayar: 0, tunggakan: 0 };
+        }
+        r.detailKomponen[t.akunId].tagihan += t.jumlah;
+        r.detailKomponen[t.akunId].dibayar += dibayar;
+        r.detailKomponen[t.akunId].tunggakan += tunggakan;
+      }
+    });
+
+    return {
+      success: true,
+      data: rekap,
+      akunList: Array.from(akunMap.values()).sort((a, b) => a.kode.localeCompare(b.kode))
+    };
+
+  } catch (error: any) {
+    console.error("Error getRekapitulasiTunggakan:", error);
+    return {
+      success: false,
+      message: error.message
+    }
+  }
+}

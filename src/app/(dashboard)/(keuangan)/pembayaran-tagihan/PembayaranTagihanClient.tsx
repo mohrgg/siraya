@@ -249,8 +249,8 @@ export default function PembayaranTagihanClient({
         </div>
 
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
-            <div className="relative w-full sm:w-64">
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:flex-1">
+            <div className="relative w-full flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
               <input 
                 type="text" 
