@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { getLaporanTunggakanSiswa } from "@/actions/laporan"
-import { ArrowLeft, Search, Download, Printer, RefreshCw } from "lucide-react"
+import { ArrowLeft, Search, Download, Printer, RefreshCw, FileText, FileSpreadsheet } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { useRouter } from "next/navigation"
@@ -53,41 +53,51 @@ export default function LaporanTunggakanClient() {
   }
 
   return (
-    <div className="p-6 bg-gray-50/50 min-h-screen animate-in fade-in duration-500">
+    <div className="max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
       
-      {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 print:hidden">
-        <Button 
-          variant="outline" 
-          onClick={() => router.push("/laporan")}
-          className="gap-2 self-start font-bold bg-white text-gray-700 hover:bg-gray-100 shadow-sm"
-        >
-          <ArrowLeft size={16} /> Kembali
-        </Button>
-
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
+        <div>
+          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Laporan Tunggakan Siswa</h1>
+          <p className="text-text-muted">Menampilkan daftar rincian sisa tunggakan per murid</p>
+        </div>
         <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
-            onClick={() => toast.error("Fitur Ekspor Excel belum tersedia")}
-            className="gap-1.5 text-xs font-semibold bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50 shadow-sm"
+            onClick={() => router.push("/laporan")}
+            className="gap-2 font-bold bg-surface text-text-main hover:bg-surface-hover shadow-sm"
           >
-            <Download size={15} /> Excel
+            <ArrowLeft size={16} /> Kembali
+          </Button>
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={() => toast.success("Fitur Ekspor Excel akan segera hadir")}
+            className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm"
+          >
+            <FileSpreadsheet size={16} className="mr-1.5" /> Excel
+          </Button>
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={() => toast.success("Fitur Ekspor PDF akan segera hadir")}
+            className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm"
+          >
+            <FileText size={16} className="mr-1.5" /> PDF
           </Button>
           <Button 
             variant="outline" 
+            size="sm"
             onClick={handlePrint}
-            className="gap-2 text-xs font-semibold bg-white hover:bg-gray-100 shadow-sm"
+            className="font-semibold bg-surface hover:bg-surface-hover shadow-sm"
           >
-            <Printer size={15} /> Cetak Laporan
+            <Printer size={16} className="mr-1.5" /> Cetak
           </Button>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-border p-6 print:shadow-none print:border-none print:p-0">
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 print:shadow-none print:border-none print:p-0">
         
         <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4 print:hidden">
-          <h1 className="text-xl font-bold text-gray-800">Laporan Tunggakan Siswa</h1>
-          
           <div className="relative w-full md:w-64">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search size={16} className="text-gray-400" />

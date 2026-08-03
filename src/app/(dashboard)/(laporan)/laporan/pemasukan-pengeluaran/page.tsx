@@ -8,5 +8,8 @@ export default async function LaporanPemasukanPage() {
   const session = await auth()
   if (!session?.user) redirect("/login")
   
-  return <LaporanPemasukanClient />
+  const user = session.user as any
+  const unitName = user?.unitSekolahName || "SEMUA UNIT"
+  
+  return <LaporanPemasukanClient initialUnitName={unitName} />
 }

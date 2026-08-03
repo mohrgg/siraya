@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { getLaporanPemasukanPengeluaran } from "@/actions/laporan"
-import { Calendar as CalendarIcon, Share2, Printer, Search, RefreshCw, Download } from "lucide-react"
+import { Calendar as CalendarIcon, Share2, Printer, Search, RefreshCw, Download, ArrowLeft, FileText, FileSpreadsheet } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
-import { useSession } from "next-auth/react"
 
-export default function LaporanPemasukanClient() {
-  const { data: session } = useSession()
-  const user = session?.user as any
-  const unitName = user?.unitSekolahName || "SEMUA UNIT"
+export default function LaporanPemasukanClient({ initialUnitName }: { initialUnitName: string }) {
+  const router = useRouter()
+  const unitName = initialUnitName
 
   const [isLoading, setIsLoading] = useState(false)
   const [data, setData] = useState<{
@@ -80,18 +79,50 @@ export default function LaporanPemasukanClient() {
   }
 
   return (
-    <div className="p-6 bg-gray-50/50 min-h-screen animate-in fade-in duration-500">
+    <div className="max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
       
-      {/* Header */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-border mb-6 flex items-center gap-3">
-        <div className="p-2 bg-gray-100 rounded-lg text-gray-700 shrink-0">
-          <CalendarIcon size={20} />
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
+        <div>
+          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Pemasukan & Pengeluaran</h1>
+          <p className="text-text-muted">Laporan Laba/Rugi sekolah dalam rentang waktu tertentu</p>
         </div>
-        <h1 className="text-xl font-bold text-gray-800">Laporan Pemasukan dan Pengeluaran</h1>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => router.push("/laporan")}
+            className="gap-2 font-bold bg-surface text-text-main hover:bg-surface-hover shadow-sm"
+          >
+            <ArrowLeft size={16} /> Kembali
+          </Button>
+          <Button 
+            variant="outline"
+            size="sm" 
+            onClick={() => toast.success("Fitur Ekspor Excel akan segera hadir")} 
+            className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm"
+          >
+            <FileSpreadsheet size={16} className="mr-1.5" /> Excel
+          </Button>
+          <Button 
+            variant="outline"
+            size="sm" 
+            onClick={() => toast.success("Fitur Ekspor PDF akan segera hadir")} 
+            className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm"
+          >
+            <FileText size={16} className="mr-1.5" /> PDF
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handlePrint} 
+            className="font-semibold bg-surface shadow-sm border-gray-200 text-gray-700 hover:bg-gray-50"
+          >
+            <Printer size={16} className="mr-1.5" /> Cetak
+          </Button>
+        </div>
       </div>
 
       {/* Filter Card */}
-      <div className="bg-white p-5 rounded-xl shadow-sm border border-border mb-6">
+      <div className="bg-surface p-5 rounded-2xl shadow-sm border border-border mb-6">
         <div className="text-sm font-semibold text-gray-600 mb-2">Tanggal</div>
         <div className="flex flex-col md:flex-row items-center gap-4">
           <div className="flex items-center w-full md:w-auto border border-border rounded-lg overflow-hidden bg-gray-50 flex-1 max-w-md">
@@ -135,18 +166,8 @@ export default function LaporanPemasukanClient() {
         </div>
       </div>
 
-      {/* Report Actions */}
-      <div className="flex justify-end mb-4 print:hidden gap-2">
-        <Button variant="outline" size="sm" onClick={handlePrint} className="bg-white shadow-sm border-blue-200 text-blue-600 hover:bg-blue-50">
-          <Share2 size={15} className="mr-2" /> Bagikan
-        </Button>
-        <Button variant="outline" size="sm" onClick={handlePrint} className="bg-white shadow-sm border-gray-200 text-gray-700 hover:bg-gray-50">
-          <Printer size={15} className="mr-2" /> Cetak Laporan
-        </Button>
-      </div>
-
       {/* Report Document */}
-      <div className="bg-white rounded-xl shadow-sm border border-border p-8 print:shadow-none print:border-none print:p-0">
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-8 print:shadow-none print:border-none print:p-0">
         
         {/* Document Header */}
         <div className="text-center mb-10">
