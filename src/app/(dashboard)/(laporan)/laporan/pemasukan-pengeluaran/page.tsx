@@ -2,6 +2,8 @@ import LaporanPemasukanClient from "./Client"
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 
+import { getPengaturan } from "@/actions/pengaturan"
+
 export const dynamic = 'force-dynamic'
 
 export default async function LaporanPemasukanPage() {
@@ -10,6 +12,7 @@ export default async function LaporanPemasukanPage() {
   
   const user = session.user as any
   const unitName = user?.unitSekolahName || "SEMUA UNIT"
+  const pengaturan = await getPengaturan()
   
-  return <LaporanPemasukanClient initialUnitName={unitName} />
+  return <LaporanPemasukanClient initialUnitName={unitName} pengaturan={pengaturan} />
 }

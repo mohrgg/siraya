@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/Input"
 import { useRouter } from "next/navigation"
 import toast from "react-hot-toast"
 
-export default function LaporanTunggakanClient() {
+export default function LaporanTunggakanClient({ initialUnitName, pengaturan }: { initialUnitName?: string, pengaturan?: any }) {
   const router = useRouter()
   const [data, setData] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -97,6 +97,30 @@ export default function LaporanTunggakanClient() {
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 print:shadow-none print:border-none print:p-0">
         
+        {/* KOP SURAT (Hanya Print) */}
+        {pengaturan && (
+          <div className="hidden print:flex border-b-2 border-black pb-4 mb-6 items-center gap-4">
+            {pengaturan.logoUrl && (
+              <img src={pengaturan.logoUrl} alt="Logo" className="w-20 h-20 object-contain" />
+            )}
+            <div className="text-center flex-1">
+              <h1 className="text-2xl font-bold uppercase">{pengaturan.namaYayasan || "NAMA YAYASAN"}</h1>
+              <p className="text-sm">{pengaturan.alamat}</p>
+              <p className="text-sm">
+                {pengaturan.telepon && `Telp: ${pengaturan.telepon}`} 
+                {pengaturan.email && ` | Email: ${pengaturan.email}`} 
+                {pengaturan.website && ` | Web: ${pengaturan.website}`}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Document Header untuk Print */}
+        <div className="hidden print:block text-center mb-6">
+          <h2 className="text-xl font-bold text-black uppercase mb-1">LAPORAN TUNGGAKAN SISWA</h2>
+          <div className="text-sm font-medium text-gray-800">Data {initialUnitName || "SEMUA UNIT"}</div>
+        </div>
+
         <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4 print:hidden">
           <div className="relative w-full md:w-64">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -164,6 +188,22 @@ export default function LaporanTunggakanClient() {
                 </tbody>
               </table>
             </div>
+
+            {/* Tanda Tangan (Hanya Print) */}
+            {pengaturan && (
+              <div className="hidden print:flex justify-between mt-16 pt-8">
+                <div className="text-center w-64">
+                  <p className="mb-16">Mengetahui,</p>
+                  <p className="font-bold underline">{pengaturan.namaKepalaTU || "____________________"}</p>
+                  <p className="text-sm">Kepala Tata Usaha</p>
+                </div>
+                <div className="text-center w-64">
+                  <p className="mb-16">Depok, {new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  <p className="font-bold underline">{pengaturan.namaBendahara || "____________________"}</p>
+                  <p className="text-sm">Bendahara Yayasan</p>
+                </div>
+              </div>
+            )}
 
             {/* Pagination Controls */}
             {totalPages > 0 && (

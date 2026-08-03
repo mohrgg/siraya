@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 
-export default function LaporanPemasukanClient({ initialUnitName }: { initialUnitName: string }) {
+export default function LaporanPemasukanClient({ initialUnitName, pengaturan }: { initialUnitName: string, pengaturan?: any }) {
   const router = useRouter()
   const unitName = initialUnitName
 
@@ -169,11 +169,29 @@ export default function LaporanPemasukanClient({ initialUnitName }: { initialUni
       {/* Report Document */}
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-8 print:shadow-none print:border-none print:p-0">
         
+        {/* KOP SURAT (Hanya Print) */}
+        {pengaturan && (
+          <div className="hidden print:flex border-b-2 border-black pb-4 mb-6 items-center gap-4">
+            {pengaturan.logoUrl && (
+              <img src={pengaturan.logoUrl} alt="Logo" className="w-20 h-20 object-contain" />
+            )}
+            <div className="text-center flex-1">
+              <h1 className="text-2xl font-bold uppercase">{pengaturan.namaYayasan || "NAMA YAYASAN"}</h1>
+              <p className="text-sm">{pengaturan.alamat}</p>
+              <p className="text-sm">
+                {pengaturan.telepon && `Telp: ${pengaturan.telepon}`} 
+                {pengaturan.email && ` | Email: ${pengaturan.email}`} 
+                {pengaturan.website && ` | Web: ${pengaturan.website}`}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Document Header */}
         <div className="text-center mb-10">
           <div className="text-sm font-semibold text-gray-600 uppercase tracking-widest mb-1">Data {unitName}</div>
-          <h2 className="text-xl font-bold text-blue-600 uppercase mb-1">LAPORAN PEMASUKAN DAN PENGELUARAN</h2>
-          <div className="text-sm font-medium text-rose-500">per {startDate} - {endDate}</div>
+          <h2 className="text-xl font-bold text-blue-600 print:text-black uppercase mb-1">LAPORAN PEMASUKAN DAN PENGELUARAN</h2>
+          <div className="text-sm font-medium text-rose-500 print:text-gray-800">per {startDate} - {endDate}</div>
         </div>
 
         {/* Column Header */}
@@ -301,6 +319,22 @@ export default function LaporanPemasukanClient({ initialUnitName }: { initialUni
 
           </div>
         ) : null}
+
+        {/* Tanda Tangan (Hanya Print) */}
+        {data && pengaturan && (
+          <div className="hidden print:flex justify-between mt-16 pt-8">
+            <div className="text-center w-64">
+              <p className="mb-16">Mengetahui,</p>
+              <p className="font-bold underline">{pengaturan.namaKepalaTU || "____________________"}</p>
+              <p className="text-sm">Kepala Tata Usaha</p>
+            </div>
+            <div className="text-center w-64">
+              <p className="mb-16">Depok, {new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p className="font-bold underline">{pengaturan.namaBendahara || "____________________"}</p>
+              <p className="text-sm">Bendahara Yayasan</p>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

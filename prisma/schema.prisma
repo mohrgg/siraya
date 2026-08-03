@@ -377,3 +377,30 @@ model PembayaranTagihanDetail {
   tagihan          Tagihan    @relation(fields: [tagihanId], references: [id], onDelete: Cascade)
   transaksi        Transaksi  @relation(fields: [transaksiId], references: [id], onDelete: Cascade)
 }
+
+// ========== PENGATURAN & IDENTITAS YAYASAN ==========
+model Pengaturan {
+  id              String   @id @default("GLOBAL")
+  
+  // Identitas & Kop Surat
+  namaYayasan     String   @db.VarChar(150)
+  alamat          String   @db.Text
+  telepon         String?  @db.VarChar(50)
+  email           String?  @db.VarChar(100)
+  website         String?  @db.VarChar(100)
+  logoUrl         String?  @db.VarChar(255)
+  
+  // Penandatangan & Footer
+  namaKepalaTU    String?  @db.VarChar(150)
+  namaBendahara   String?  @db.VarChar(150)
+  catatanKwitansi String?  @db.Text
+  
+  // Pengaturan Rekening Bank (disimpan format JSON String)
+  rekeningBank    String?  @db.Text
+  
+  // Format Penomoran
+  prefixKasMasuk  String   @default("KM") @db.VarChar(10)
+  prefixKasKeluar String   @default("KK") @db.VarChar(10)
+  
+  updatedAt       DateTime @updatedAt
+}
