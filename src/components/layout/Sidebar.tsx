@@ -9,7 +9,7 @@ import {
   Users2, Landmark, GraduationCap,
   Settings, LogOut, ChevronLeft, ChevronRight, Key,
   ArrowDownToLine, ArrowUpFromLine, Calendar, Users,
-  FilePlus
+  FilePlus, PieChart
 } from "lucide-react"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import ChangePasswordModal from "@/components/modals/ChangePasswordModal"
@@ -45,6 +45,12 @@ const menuGroups = [
       { href: "/pembuatan-tagihan", label: "Pembuatan Tagihan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
       { href: "/pembayaran-tagihan", label: "Pembayaran Tagihan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
       { href: "/rekapitulasi-tunggakan", label: "Rekap. Tagihan & Tunggakan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+    ]
+  },
+  {
+    title: "LAPORAN",
+    items: [
+      { href: "/laporan", label: "Laporan Keuangan", icon: PieChart, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"], isGlobal: true },
     ]
   },
   {
