@@ -22,6 +22,7 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
   const [isDeleting, setIsDeleting] = useState(false)
   const [isExportingExcel, setIsExportingExcel] = useState(false)
   const [isExportingPDF, setIsExportingPDF] = useState(false)
+  const isReadOnly = userRole === "KEPALA_SEKOLAH"
   
   const [filterBy, setFilterBy] = useState<'tanggal_transaksi' | 'tanggal_pembuatan'>('tanggal_transaksi')
   const [timeRange, setTimeRange] = useState<'hari' | 'minggu' | 'bulan' | 'custom'>('bulan')
@@ -241,11 +242,13 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
               {isExportingPDF ? "Mengekspor..." : "PDF"}
             </Button>
             
-            <Link href="/kas-masuk/tambah">
-              <Button>
-                <Plus size={16} className="mr-1.5" /> Tambah Kas Masuk
-              </Button>
-            </Link>
+            {isReadOnly ? null : (
+              <Link href="/kas-masuk/tambah">
+                <Button>
+                  <Plus size={16} className="mr-1.5" /> Tambah Kas Masuk
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -321,19 +324,23 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
                           >
                             <Eye size={14} className="mr-2 text-text-muted" /> Jurnal
                           </DropdownMenu.Item>
-                          <DropdownMenu.Item 
-                            className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-bg/50 transition-colors flex items-center cursor-pointer outline-none"
-                            onClick={() => router.push(`/kas-masuk/${item.id}/edit`)}
-                          >
-                            <Edit size={14} className="mr-2 text-blue-500" /> Ubah
-                          </DropdownMenu.Item>
-                          <DropdownMenu.Separator className="h-px bg-border my-1" />
-                          <DropdownMenu.Item 
-                            className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors flex items-center cursor-pointer outline-none"
-                            onClick={() => setDeleteId(item.id)}
-                          >
-                            <Trash2 size={14} className="mr-2" /> Hapus
-                          </DropdownMenu.Item>
+                          {isReadOnly ? null : (
+                            <>
+                              <DropdownMenu.Item 
+                                className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-bg/50 transition-colors flex items-center cursor-pointer outline-none"
+                                onClick={() => router.push(`/kas-masuk/${item.id}/edit`)}
+                              >
+                                <Edit size={14} className="mr-2 text-blue-500" /> Ubah
+                              </DropdownMenu.Item>
+                              <DropdownMenu.Separator className="h-px bg-border my-1" />
+                              <DropdownMenu.Item 
+                                className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors flex items-center cursor-pointer outline-none"
+                                onClick={() => setDeleteId(item.id)}
+                              >
+                                <Trash2 size={14} className="mr-2" /> Hapus
+                              </DropdownMenu.Item>
+                            </>
+                          )}
                         </DropdownMenu.Content>
                       </DropdownMenu.Portal>
                     </DropdownMenu.Root>

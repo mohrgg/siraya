@@ -40,6 +40,8 @@ export default function PembuatanTagihanClient({
   akunPendapatanList: any[]
   user: any
 }) {
+  const isReadOnly = user.role === "KEPALA_SEKOLAH"
+
   // Filter States
   const [kelasList, setKelasList] = useState<any[]>([])
   const [kelasId, setKelasId] = useState("")
@@ -359,7 +361,7 @@ export default function PembuatanTagihanClient({
           </div>
 
           <div className="flex gap-2 flex-wrap items-center">
-            {gridData.length > 0 && (
+            {!isReadOnly && gridData.length > 0 && (
               <Button 
                 onClick={() => setIsModalOpen(true)}
                 className="bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm whitespace-nowrap"
@@ -386,15 +388,17 @@ export default function PembuatanTagihanClient({
                           <div>
                             {col.nama} <br/><span className="text-[10px] opacity-70">[{col.kode}]</span>
                           </div>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveMenuColId(activeMenuColId === col.id ? null : col.id)
-                            }}
-                            className="p-1 rounded text-text-muted hover:bg-black/5 transition-colors"
-                          >
-                            <MoreVertical size={16} />
-                          </button>
+                          {!isReadOnly && (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuColId(activeMenuColId === col.id ? null : col.id)
+                              }}
+                              className="p-1 rounded text-text-muted hover:bg-black/5 transition-colors"
+                            >
+                              <MoreVertical size={16} />
+                            </button>
+                          )}
                         </div>
 
                         {/* Dropdown Menu */}
@@ -431,7 +435,7 @@ export default function PembuatanTagihanClient({
                     ))}
                     
                     <th className="p-4 font-semibold text-right min-w-[150px]">TAGIHAN BERJALAN (TOTAL)</th>
-                    <th className="p-4 font-semibold text-center w-24 sticky right-0 bg-bg z-20 shadow-[-1px_0_0_0_#e2e8f0]">AKSI</th>
+                    {!isReadOnly && <th className="p-4 font-semibold text-center w-24 sticky right-0 bg-bg z-20 shadow-[-1px_0_0_0_#e2e8f0]">AKSI</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -472,7 +476,8 @@ export default function PembuatanTagihanClient({
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/50 text-xs font-semibold z-10">Rp.</span>
                                     <input 
                                       type="text"
-                                      className="w-full min-w-[130px] pl-9 pr-3 py-1.5 bg-bg border border-border/60 hover:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary focus:bg-white text-sm font-semibold text-right transition-all text-text-main"
+                                      disabled={isReadOnly}
+                                      className="w-full min-w-[130px] pl-9 pr-3 py-1.5 bg-bg border border-border/60 hover:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary focus:bg-white text-sm font-semibold text-right transition-all text-text-main disabled:opacity-70 disabled:bg-gray-50"
                                       value={row.tagihanMap[col.id] === undefined ? "" : formatRupiah(row.tagihanMap[col.id])}
                                       onChange={(e) => handleInputChange(row.id, col.id, e.target.value)}
                                       placeholder="0"
@@ -486,21 +491,23 @@ export default function PembuatanTagihanClient({
                           <td className="p-4 text-right font-bold text-text-main whitespace-nowrap bg-bg/30 group-hover:bg-bg/50">
                             Rp. {formatRupiah(rowTotal)}
                           </td>
-                          <td className="p-4 text-center sticky right-0 bg-white z-10 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
-                            <Button 
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleSimpanBaris(row)}
-                              disabled={!row.isDirty || savingRowId === row.id}
-                              className={`px-3 py-1.5 h-auto text-xs font-semibold transition-all shadow-sm ${row.isDirty ? 'bg-primary text-white border-primary hover:bg-primary/90' : ''}`}
-                            >
-                              {savingRowId === row.id ? (
-                                <Loader2 size={14} className="animate-spin" />
-                              ) : (
-                                <><Save size={14} className="mr-1" /> Simpan</>
-                              )}
-                            </Button>
-                          </td>
+                          {!isReadOnly && (
+                            <td className="p-4 text-center sticky right-0 bg-white z-10 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                              <Button 
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleSimpanBaris(row)}
+                                disabled={!row.isDirty || savingRowId === row.id}
+                                className={`px-3 py-1.5 h-auto text-xs font-semibold transition-all shadow-sm ${row.isDirty ? 'bg-primary text-white border-primary hover:bg-primary/90' : ''}`}
+                              >
+                                {savingRowId === row.id ? (
+                                  <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                  <><Save size={14} className="mr-1" /> Simpan</>
+                                )}
+                              </Button>
+                            </td>
+                          )}
                         </tr>
                       )
                     })

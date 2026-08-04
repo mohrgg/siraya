@@ -20,7 +20,7 @@ export async function getKasKeluar(params?: {
   }
 
   // Role based filtering (unitSekolahId)
-  if (user.role === "TATA_USAHA" && user.unitSekolahId) {
+  if (user.role !== "ADMIN" && user.unitSekolahId) {
     whereClause.unitSekolahId = user.unitSekolahId
   }
 
@@ -77,7 +77,7 @@ export async function getKasBankAccounts() {
     }
   }
 
-  if (user.role === "TATA_USAHA" && user.unitSekolahId) {
+  if (user.role !== "ADMIN" && user.unitSekolahId) {
     whereClause.OR = [
       { unitSekolahId: null },
       { unitSekolahId: user.unitSekolahId }
@@ -111,7 +111,7 @@ export async function getPengeluaranAccounts() {
     }
   }
 
-  if (user.role === "TATA_USAHA" && user.unitSekolahId) {
+  if (user.role !== "ADMIN" && user.unitSekolahId) {
     whereClause.OR = [
       { unitSekolahId: null },
       { unitSekolahId: user.unitSekolahId }

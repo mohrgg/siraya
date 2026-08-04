@@ -45,12 +45,22 @@ export default function UserModal({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-text-main">Akses Unit Sekolah</label>
-          <select className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium" value={formUser.unitSekolahId} onChange={e => setFormUser({...formUser, unitSekolahId: e.target.value})}>
-            <option value="">-- AKSES GLOBAL (SEMUA UNIT) --</option>
+          <label className="text-sm font-semibold text-text-main">
+            Akses Unit Sekolah
+            {formUser.role !== "ADMIN" && <span className="text-red-500"> *</span>}
+          </label>
+          <select 
+            className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium" 
+            value={formUser.unitSekolahId} 
+            onChange={e => setFormUser({...formUser, unitSekolahId: e.target.value})}
+            required={formUser.role !== "ADMIN"}
+          >
+            <option value="">-- {formUser.role === "ADMIN" ? "AKSES GLOBAL (SEMUA UNIT)" : "Pilih Unit Sekolah"} --</option>
             {units.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
-          <p className="text-xs text-text-muted">Pilih unit jika staf hanya boleh mengurus 1 sekolah.</p>
+          <p className="text-xs text-text-muted">
+            {formUser.role !== "ADMIN" ? "Wajib diisi untuk membatasi hak akses data." : "Kosongkan jika ingin memberi akses semua sekolah."}
+          </p>
         </div>
 
         <div className="flex flex-col gap-1.5">

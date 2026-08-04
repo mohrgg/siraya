@@ -12,7 +12,7 @@ export async function getTingkatan(unitSekolahId?: string) {
   return prisma.tingkat.findMany({
     where: {
       isDeleted: false,
-      ...(unitSekolahId ? { unitSekolahId } : {})
+      ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId ? { unitSekolahId } : {}))
     },
     include: { unitSekolah: true },
     orderBy: { order: "asc" }
@@ -50,7 +50,10 @@ export async function getJurusan() {
   if (!session) throw new Error("Unauthorized")
 
   return prisma.jurusan.findMany({
-    where: { isDeleted: false },
+    where: { 
+      isDeleted: false,
+      ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : {})
+    },
     include: { unitSekolah: true },
     orderBy: [
       { unitSekolah: { name: "asc" } },
@@ -99,7 +102,7 @@ export async function getKelas(unitSekolahId?: string, tahunAkademikId?: string)
   return prisma.subKelas.findMany({
     where: {
       isDeleted: false,
-      ...(unitSekolahId ? { unitSekolahId } : {}),
+      ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId ? { unitSekolahId } : {})),
       ...(tahunAkademikId ? { tahunAkademikId } : {})
     },
     include: {

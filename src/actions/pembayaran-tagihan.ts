@@ -3,6 +3,8 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 
+import { auth } from "@/lib/auth"
+
 export async function getAkunKasBankList(unitSekolahId?: string) {
   try {
     const data = await prisma.akunDetail.findMany({
@@ -99,6 +101,11 @@ export async function prosesPembayaranTagihan(data: {
   deskripsi: string,
   items: { tagihanId: string, jumlahBayar: number, akunPendapatanId: string }[]
 }) {
+  const session = await auth()
+  if (!session?.user || !["ADMIN", "TATA_USAHA"].includes((session.user as any).role)) {
+    throw new Error("Akses ditolak.")
+  }
+
   try {
     const totalBayar = data.items.reduce((sum, item) => sum + item.jumlahBayar, 0)
     if (totalBayar <= 0) {

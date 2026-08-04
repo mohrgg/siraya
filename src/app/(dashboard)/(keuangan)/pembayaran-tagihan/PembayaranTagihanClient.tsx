@@ -47,6 +47,8 @@ export default function PembayaranTagihanClient({
   akunKasBankList: any[]
   user: any
 }) {
+  const isReadOnly = user.role === "KEPALA_SEKOLAH"
+
   // Filter States
   const [kelasList, setKelasList] = useState<any[]>([])
   const [kelasId, setKelasId] = useState("")
@@ -334,7 +336,7 @@ export default function PembayaranTagihanClient({
                   ))}
                   
                   <th className="p-4 font-bold text-right min-w-[150px]">TOTAL BERJALAN</th>
-                  <th className="p-4 font-bold text-center w-24 sticky right-0 bg-emerald-500 z-20 shadow-[-1px_0_0_0_#10b981]">PROSES</th>
+                  {!isReadOnly && <th className="p-4 font-bold text-center w-24 sticky right-0 bg-emerald-500 z-20 shadow-[-1px_0_0_0_#10b981]">PROSES</th>}
                 </tr>
               </thead>
               <tbody>
@@ -386,7 +388,8 @@ export default function PembayaranTagihanClient({
                                   `}>
                                     <input 
                                       type="checkbox"
-                                      className="w-4 h-4 text-emerald-500 rounded border-gray-300 focus:ring-emerald-500"
+                                      disabled={isReadOnly}
+                                      className={`w-4 h-4 text-emerald-500 rounded border-gray-300 focus:ring-emerald-500 ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
                                       checked={row.selectedItems[tagihan.id] || false}
                                       onChange={(e) => handleCheckboxChange(row.id, tagihan.id, e.target.checked)}
                                     />
@@ -412,16 +415,18 @@ export default function PembayaranTagihanClient({
                             Total Seluruh: Rp {formatRupiah(totalTagihanSiswa)}
                           </div>
                         </td>
-                        <td className="p-4 text-center sticky right-0 bg-white z-10 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
-                          <Button 
-                            size="sm"
-                            disabled={totalBerjalan === 0}
-                            onClick={() => handleBayarClick(row)}
-                            className="px-4 py-2 font-bold rounded-lg text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-200"
-                          >
-                            Bayar
-                          </Button>
-                        </td>
+                        {!isReadOnly && (
+                          <td className="p-4 text-center sticky right-0 bg-white z-10 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
+                            <Button 
+                              size="sm"
+                              disabled={totalBerjalan === 0}
+                              onClick={() => handleBayarClick(row)}
+                              className="px-4 py-2 font-bold rounded-lg text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-200"
+                            >
+                              Bayar
+                            </Button>
+                          </td>
+                        )}
                       </tr>
                     )
                   })

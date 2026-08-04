@@ -9,7 +9,9 @@ export async function getGuruList(unitSekolahId?: string) {
   if (!session) throw new Error("Unauthorized")
 
   const where: any = { isDeleted: false, isActive: true }
-  if (unitSekolahId) {
+  if (session.user.role !== "ADMIN" && session.user.unitSekolahId) {
+    where.unitSekolahId = session.user.unitSekolahId
+  } else if (unitSekolahId) {
     where.unitSekolahId = unitSekolahId
   }
 
@@ -37,7 +39,9 @@ export async function getGuruPaginated({
   if (!session) throw new Error("Unauthorized")
 
   const where: any = { isDeleted: false }
-  if (unitSekolahId) {
+  if (session.user.role !== "ADMIN" && session.user.unitSekolahId) {
+    where.unitSekolahId = session.user.unitSekolahId
+  } else if (unitSekolahId) {
     where.unitSekolahId = unitSekolahId
   }
   if (statusFilter) {

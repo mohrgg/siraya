@@ -11,7 +11,7 @@ export async function getSiswa(unitSekolahId?: string, subKelasId?: string) {
   return prisma.murid.findMany({
     where: {
       isDeleted: false,
-      ...(unitSekolahId ? { unitSekolahId } : {}),
+      ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId ? { unitSekolahId } : {})),
       ...(subKelasId ? { riwayatKelas: { some: { subKelasId } } } : {}),
     },
     include: {
@@ -49,7 +49,7 @@ export async function getSiswaPaginated(params: {
 
   const where: any = {
     isDeleted: false,
-    ...(params.unitSekolahId ? { unitSekolahId: params.unitSekolahId } : {}),
+    ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (params.unitSekolahId ? { unitSekolahId: params.unitSekolahId } : {})),
   }
   
   if (params.statusFilter && params.statusFilter !== 'SEMUA') {

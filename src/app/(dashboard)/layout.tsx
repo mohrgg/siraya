@@ -17,9 +17,15 @@ export default async function DashboardLayout({
     redirect("/login")
   }
 
-  // Fetch school units and academic years for the global header
+  const userRole = session.user.role
+  const userUnitId = (session.user as any).unitSekolahId
+
+  // Fetch school units: Admin gets all, others get only their assigned unit
   const schoolUnits = await prisma.unitSekolah.findMany({
-    where: { isActive: true },
+    where: { 
+      isActive: true,
+      ...(userRole !== "ADMIN" && userUnitId ? { id: userUnitId } : {})
+    },
     orderBy: { name: 'asc' },
     select: { id: true, name: true }
   })
@@ -31,7 +37,13 @@ export default async function DashboardLayout({
   })
 
   const cookieStore = await cookies()
-  const activeUnitId = cookieStore.get("activeUnitId")?.value || schoolUnits[0]?.id
+  
+  // Force activeUnitId for non-admins, otherwise read from cookie or default to first
+  let activeUnitId = cookieStore.get("activeUnitId")?.value || schoolUnits[0]?.id
+  if (userRole !== "ADMIN" && userUnitId) {
+    activeUnitId = userUnitId
+  }
+
   const activeYearId = cookieStore.get("activeYearId")?.value || academicYears.find((y: any) => y.isActive)?.id || academicYears[0]?.id
 
   return (

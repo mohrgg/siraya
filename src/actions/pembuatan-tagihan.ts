@@ -29,8 +29,8 @@ export async function getUnitSekolah() {
 
   const whereClause: any = { isActive: true }
   
-  // Jika TU login, lock ke unitnya
-  if (user.role === "TATA_USAHA" && user.unitSekolahId) {
+  // Jika Non-Admin login, lock ke unitnya
+  if (user.role !== "ADMIN" && user.unitSekolahId) {
     whereClause.id = user.unitSekolahId
   }
 
@@ -83,7 +83,7 @@ export async function getAkunPendapatan() {
     }
   }
 
-  if (user.role === "TATA_USAHA" && user.unitSekolahId) {
+  if (user.role !== "ADMIN" && user.unitSekolahId) {
     whereClause.OR = [
       { unitSekolahId: null },
       { unitSekolahId: user.unitSekolahId }
@@ -153,7 +153,9 @@ export async function tambahTagihanMassal(data: {
   jumlah: number
 }) {
   const session = await auth()
-  if (!session?.user) throw new Error("Unauthorized")
+  if (!session?.user || !["ADMIN", "TATA_USAHA"].includes((session.user as any).role)) {
+    throw new Error("Akses ditolak.")
+  }
 
   const { tahunAkademikId, akunId, subKelasId, jumlah } = data
 
@@ -205,7 +207,9 @@ export async function tambahTagihanMassal(data: {
  */
 export async function updateTagihanSiswa(muridId: string, tahunAkademikId: string, tagihanUpdates: { akunId: string, jumlah: number }[]) {
   const session = await auth()
-  if (!session?.user) throw new Error("Unauthorized")
+  if (!session?.user || !["ADMIN", "TATA_USAHA"].includes((session.user as any).role)) {
+    throw new Error("Akses ditolak.")
+  }
 
   await prisma.$transaction(async (tx) => {
     for (const update of tagihanUpdates) {
@@ -241,7 +245,9 @@ export async function updateTagihanSiswa(muridId: string, tahunAkademikId: strin
  */
 export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: string, akunId: string) {
   const session = await auth()
-  if (!session?.user) throw new Error("Unauthorized")
+  if (!session?.user || !["ADMIN", "TATA_USAHA"].includes((session.user as any).role)) {
+    throw new Error("Akses ditolak.")
+  }
 
   // Ambil semua muridId di subkelas
   const riwayatKelas = await prisma.riwayatKelas.findMany({
@@ -270,7 +276,9 @@ export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: st
  */
 export async function editTagihanMassal(subKelasId: string, tahunAkademikId: string, akunId: string, jumlah: number) {
   const session = await auth()
-  if (!session?.user) throw new Error("Unauthorized")
+  if (!session?.user || !["ADMIN", "TATA_USAHA"].includes((session.user as any).role)) {
+    throw new Error("Akses ditolak.")
+  }
 
   // Ambil semua muridId di subkelas
   const riwayatKelas = await prisma.riwayatKelas.findMany({
