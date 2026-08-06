@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { getLaporanPemasukanPengeluaran } from "@/actions/laporan"
-import { Calendar as CalendarIcon, Share2, Printer, Search, RefreshCw, Download, ArrowLeft, FileText, FileSpreadsheet } from "lucide-react"
+import { Calendar as CalendarIcon, Share2, Printer, Search, RefreshCw, Download, ArrowLeft, FileText, FileSpreadsheet, TrendingUp, TrendingDown, Wallet } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
+import { exportToExcel } from "@/lib/excel"
+import { exportToPdfTable } from "@/lib/pdf"
 import toast from "react-hot-toast"
 
 export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], userRole, userUnitId }: { pengaturan?: any, schoolUnits?: any[], userRole?: string, userUnitId?: string }) {
@@ -80,6 +82,103 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
     window.print()
   }
 
+  const handleExportExcel = () => {
+    if (!data) return
+    const filename = `Laporan_Arus_Kas_${unitName.replace(/\s+/g, '_')}_${startDate}`
+    
+    // Flatten data for Excel
+    const excelData: any[] = []
+    
+    data.pendapatan.forEach((p: any) => {
+      excelData.push({
+        Tipe: "Pendapatan",
+        "Kode Akun": p.kode,
+        "Nama Akun": p.nama,
+        "Nominal (Rp)": p.total
+      })
+    })
+
+    data.pengeluaran.forEach((p: any) => {
+      excelData.push({
+        Tipe: "Pengeluaran",
+        "Kode Akun": p.kode,
+        "Nama Akun": p.nama,
+        "Nominal (Rp)": p.total
+      })
+    })
+
+    // Add empty row
+    excelData.push({})
+    
+    // Add totals
+    excelData.push({
+      Tipe: "TOTAL PENDAPATAN",
+      "Nominal (Rp)": data.totalPendapatan
+    })
+    excelData.push({
+      Tipe: "TOTAL PENGELUARAN",
+      "Nominal (Rp)": data.totalPengeluaran
+    })
+    excelData.push({
+      Tipe: "SALDO BERSIH",
+      "Nominal (Rp)": data.totalPendapatan - data.totalPengeluaran
+    })
+
+    exportToExcel(excelData, filename)
+    toast.success("Excel berhasil diunduh")
+  }
+
+  const handleExportPdf = () => {
+    if (!data) return
+    
+    const filename = `Laporan_Arus_Kas_${unitName.replace(/\s+/g, '_')}_${startDate}`
+    const schoolUnitName = filterUnitId ? `UNIT ${unitName.toUpperCase()}` : (pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH")
+
+    // Construct table data
+    const tableData: any[][] = []
+    
+    // Pendapatan Section
+    tableData.push(["", "PENDAPATAN", ""])
+    data.pendapatan.forEach((p: any) => {
+      tableData.push([p.kode, p.nama, new Intl.NumberFormat("id-ID").format(p.total)])
+    })
+    tableData.push(["", "Total Pendapatan", new Intl.NumberFormat("id-ID").format(data.totalPendapatan)])
+    
+    // Spacer
+    tableData.push(["", "", ""])
+    
+    // Pengeluaran Section
+    tableData.push(["", "PENGELUARAN", ""])
+    data.pengeluaran.forEach((p: any) => {
+      tableData.push([p.kode, p.nama, new Intl.NumberFormat("id-ID").format(p.total)])
+    })
+    tableData.push(["", "Total Pengeluaran", new Intl.NumberFormat("id-ID").format(data.totalPengeluaran)])
+    
+    // Spacer
+    tableData.push(["", "", ""])
+    
+    // Saldo Bersih
+    tableData.push(["", "SALDO BERSIH", new Intl.NumberFormat("id-ID").format(data.totalPendapatan - data.totalPengeluaran)])
+
+    exportToPdfTable({
+      title: "LAPORAN PEMASUKAN DAN PENGELUARAN",
+      subtitle: `per ${startDate} - ${endDate}`,
+      headers: ["Kode", "Departemen / Akun", "Saldo (Rp)"],
+      data: tableData,
+      filename,
+      schoolUnitName,
+      unitInfo: {
+        address: pengaturan?.alamat,
+        phone: pengaturan?.telepon,
+        email: pengaturan?.email,
+        website: pengaturan?.website
+      },
+      orientation: 'portrait'
+    })
+    
+    toast.success("PDF berhasil diunduh")
+  }
+
   return (
     <div className="max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
       
@@ -99,7 +198,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
           <Button 
             variant="outline"
             size="sm" 
-            onClick={() => toast.success("Fitur Ekspor Excel akan segera hadir")} 
+            onClick={handleExportExcel}
             className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm"
           >
             <FileSpreadsheet size={16} className="mr-1.5" /> Excel
@@ -107,7 +206,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
           <Button 
             variant="outline"
             size="sm" 
-            onClick={() => toast.success("Fitur Ekspor PDF akan segera hadir")} 
+            onClick={handleExportPdf}
             className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm"
           >
             <FileText size={16} className="mr-1.5" /> PDF
@@ -179,6 +278,46 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
             {isLoading ? <RefreshCw className="animate-spin" size={16} /> : <Search size={16} />}
             Filter
           </Button>
+        </div>
+      </div>
+
+      {/* KPI Widgets */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 print:hidden">
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
+            <TrendingUp size={24} />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Pemasukan</div>
+            <div className="text-xl font-bold text-gray-800">
+              Rp {new Intl.NumberFormat("id-ID").format(data?.totalPendapatan || 0)}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center">
+            <TrendingDown size={24} />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Pengeluaran</div>
+            <div className="text-xl font-bold text-gray-800">
+              Rp {new Intl.NumberFormat("id-ID").format(data?.totalPengeluaran || 0)}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex items-center gap-4 relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-full blur-2xl -mr-10 -mt-10 opacity-60"></div>
+          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center relative z-10">
+            <Wallet size={24} />
+          </div>
+          <div className="relative z-10">
+            <div className="text-sm font-semibold text-blue-500 uppercase tracking-wider mb-1">Saldo Bersih (Laba/Rugi)</div>
+            <div className="text-2xl font-black text-blue-700">
+              Rp {new Intl.NumberFormat("id-ID").format((data?.totalPendapatan || 0) - (data?.totalPengeluaran || 0))}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { getLaporanTunggakanSiswa } from "@/actions/laporan"
-import { ArrowLeft, Search, Download, Printer, RefreshCw, FileText, FileSpreadsheet } from "lucide-react"
+import { ArrowLeft, Search, Download, Printer, RefreshCw, FileText, FileSpreadsheet, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import { exportToExcel } from "@/lib/excel"
+import { exportToPdfTable } from "@/lib/pdf"
 import { Input } from "@/components/ui/Input"
 import { useRouter } from "next/navigation"
 import toast from "react-hot-toast"
@@ -57,6 +59,90 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
     window.print()
   }
 
+  const handleExportExcel = () => {
+    if (filteredData.length === 0) return
+    const filename = `Laporan_Tunggakan_${unitName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`
+    
+    // Flatten data for Excel
+    const excelData = filteredData.map((item, idx) => ({
+      "No": idx + 1,
+      "Tanggal Buat": new Date(item.tanggalBuat).toLocaleDateString("id-ID"),
+      "NIS": item.nis || "-",
+      "Nama Siswa": item.namaSiswa,
+      "Nama Tagihan": item.namaTagihan,
+      "Unit Sekolah": item.unitSekolah,
+      "Rombel": item.rombel,
+      "Nominal (Rp)": item.nominal,
+      "Dibayar (Rp)": item.dibayar,
+      "Sisa Tunggakan (Rp)": item.sisa
+    }))
+
+    // Add totals row
+    excelData.push({} as any)
+    excelData.push({
+      "No": "",
+      "Tanggal Buat": "",
+      "NIS": "",
+      "Nama Siswa": "TOTAL KESELURUHAN",
+      "Nama Tagihan": "",
+      "Unit Sekolah": "",
+      "Rombel": "",
+      "Nominal (Rp)": filteredData.reduce((acc, curr) => acc + curr.nominal, 0),
+      "Dibayar (Rp)": filteredData.reduce((acc, curr) => acc + curr.dibayar, 0),
+      "Sisa Tunggakan (Rp)": filteredData.reduce((acc, curr) => acc + curr.sisa, 0)
+    } as any)
+
+    exportToExcel(excelData, filename)
+    toast.success("Excel berhasil diunduh")
+  }
+
+  const handleExportPdf = () => {
+    if (filteredData.length === 0) return
+    
+    const filename = `Laporan_Tunggakan_${unitName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`
+    const schoolUnitName = filterUnitId ? `UNIT ${unitName.toUpperCase()}` : (pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH")
+
+    // Construct table data
+    const tableData = filteredData.map((item, idx) => [
+      (idx + 1).toString(),
+      new Date(item.tanggalBuat).toLocaleDateString("id-ID"),
+      item.nis || "-",
+      item.namaSiswa,
+      item.namaTagihan,
+      item.unitSekolah,
+      item.rombel,
+      new Intl.NumberFormat("id-ID").format(item.nominal),
+      new Intl.NumberFormat("id-ID").format(item.dibayar),
+      new Intl.NumberFormat("id-ID").format(item.sisa)
+    ])
+
+    // Add totals row
+    tableData.push([
+      "", "", "", "TOTAL KESELURUHAN", "", "", "",
+      new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.nominal, 0)),
+      new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.dibayar, 0)),
+      new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.sisa, 0))
+    ])
+
+    exportToPdfTable({
+      title: "LAPORAN TUNGGAKAN SISWA",
+      subtitle: `Per Tanggal: ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+      headers: ["No", "Tanggal", "NIS", "Nama Siswa", "Tagihan", "Unit", "Rombel", "Nominal (Rp)", "Dibayar (Rp)", "Sisa (Rp)"],
+      data: tableData,
+      filename,
+      schoolUnitName,
+      unitInfo: {
+        address: pengaturan?.alamat,
+        phone: pengaturan?.telepon,
+        email: pengaturan?.email,
+        website: pengaturan?.website
+      },
+      orientation: 'landscape'
+    })
+    
+    toast.success("PDF berhasil diunduh")
+  }
+
   return (
     <div className="max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
       
@@ -75,16 +161,16 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
           </Button>
           <Button 
             variant="outline"
-            size="sm"
-            onClick={() => toast.success("Fitur Ekspor Excel akan segera hadir")}
+            size="sm" 
+            onClick={handleExportExcel}
             className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm"
           >
             <FileSpreadsheet size={16} className="mr-1.5" /> Excel
           </Button>
           <Button 
             variant="outline"
-            size="sm"
-            onClick={() => toast.success("Fitur Ekspor PDF akan segera hadir")}
+            size="sm" 
+            onClick={handleExportPdf}
             className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm"
           >
             <FileText size={16} className="mr-1.5" /> PDF
@@ -150,6 +236,46 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
         </div>
       </div>
 
+      {/* KPI Widgets */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 print:hidden">
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
+            <FileText size={24} />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Tagihan</div>
+            <div className="text-xl font-bold text-gray-800">
+              Rp {new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.nominal, 0))}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
+            <FileSpreadsheet size={24} />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Dibayar</div>
+            <div className="text-xl font-bold text-gray-800">
+              Rp {new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.dibayar, 0))}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex items-center gap-4 relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-24 h-24 bg-rose-50 rounded-full blur-2xl -mr-10 -mt-10 opacity-60"></div>
+          <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center relative z-10">
+            <BarChart3 size={24} />
+          </div>
+          <div className="relative z-10">
+            <div className="text-sm font-semibold text-rose-500 uppercase tracking-wider mb-1">Sisa Tunggakan</div>
+            <div className="text-2xl font-black text-rose-700">
+              Rp {new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.sisa, 0))}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 print:shadow-none print:border-none print:p-0">
         
         {/* KOP SURAT (Hanya Print) */}
@@ -173,7 +299,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
         {/* Document Header untuk Print */}
         <div className="hidden print:block text-center mb-6">
           <h2 className="text-xl font-bold text-black uppercase mb-1">LAPORAN TUNGGAKAN SISWA</h2>
-          <div className="text-sm font-medium text-gray-800">Data {initialUnitName || "SEMUA UNIT"}</div>
+          <div className="text-sm font-medium text-gray-800">Data {unitName}</div>
         </div>
 
         <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4 print:hidden">
