@@ -51,6 +51,10 @@ type UnitSekolah = {
   id: string
   name: string
   level?: string
+  address?: string | null
+  phone?: string | null
+  email?: string | null
+  website?: string | null
 }
 
 export default function GuruClient({
@@ -292,6 +296,12 @@ export default function GuruClient({
         data: pdfRows,
         filename: `Daftar_Guru_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
         schoolUnitName,
+        unitInfo: unitObj ? {
+          address: unitObj.address,
+          phone: unitObj.phone,
+          email: unitObj.email,
+          website: unitObj.website
+        } : undefined,
         orientation: 'landscape'
       })
       toast.success("Berhasil mengunduh PDF Daftar Guru")

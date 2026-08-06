@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 
 import { getPengaturan } from "@/actions/pengaturan"
+import { getUnitSekolah } from "@/actions/unit-sekolah"
 
 export const dynamic = 'force-dynamic'
 
@@ -11,8 +12,13 @@ export default async function LaporanPemasukanPage() {
   if (!session?.user) redirect("/login")
   
   const user = session.user as any
-  const unitName = user?.unitSekolahName || "SEMUA UNIT"
   const pengaturan = await getPengaturan()
+  const schoolUnits = await getUnitSekolah()
   
-  return <LaporanPemasukanClient initialUnitName={unitName} pengaturan={pengaturan} />
+  return <LaporanPemasukanClient 
+    pengaturan={pengaturan} 
+    schoolUnits={schoolUnits}
+    userRole={user.role}
+    userUnitId={user.unitSekolahId}
+  />
 }

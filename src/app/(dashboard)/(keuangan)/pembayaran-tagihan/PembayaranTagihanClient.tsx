@@ -8,12 +8,15 @@ import {
 } from "@/actions/pembuatan-tagihan"
 import { 
   getMuridWithTagihanUnpaid,
-  prosesPembayaranTagihan 
+  prosesPembayaranTagihan,
+  getRiwayatTransaksiByTagihan
 } from "@/actions/pembayaran-tagihan"
 import { Search, Filter, Loader2, CheckSquare } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 import ModalPembayaranTagihan, { TagihanItem } from "./ModalPembayaranTagihan"
+import ModalResiPembayaran, { ReceiptData } from "./ModalResiPembayaran"
+import ModalPilihRiwayatTransaksi from "./ModalPilihRiwayatTransaksi"
 
 type TagihanData = {
   id: string
@@ -71,6 +74,14 @@ export default function PembayaranTagihanClient({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeMurid, setActiveMurid] = useState<{id: string, name: string} | null>(null)
   const [modalItems, setModalItems] = useState<TagihanItem[]>([])
+  
+  // Receipt State
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
+  
+  // Riwayat State
+  const [riwayatTransaksi, setRiwayatTransaksi] = useState<any[]>([])
+  const [isModalRiwayatOpen, setIsModalRiwayatOpen] = useState(false)
+  const [isLoadingRiwayat, setIsLoadingRiwayat] = useState<string | null>(null)
 
   useEffect(() => {
     if (!activeUnitId) {
@@ -228,11 +239,48 @@ export default function PembayaranTagihanClient({
     if (res.success) {
       toast.success("Pembayaran berhasil diproses")
       setIsModalOpen(false)
+      
+      // Calculate total
+      const totalBayar = payload.items.reduce((sum: number, item: any) => sum + item.jumlahBayar, 0)
+      
+      // Open receipt
+      setReceiptData({
+        noReferensi: res.data?.noReferensi || payload.noReferensi || `INV-${new Date().getTime()}`,
+        tanggal: payload.tanggal,
+        muridName: payload.muridName,
+        items: payload.items,
+        total: totalBayar
+      })
+      
       handleTampilkan() // refresh data
     } else {
       toast.error(res.message || "Gagal memproses pembayaran")
     }
     setIsSubmitting(false)
+  }
+
+  const handlePrintTagihan = async (tagihanId: string) => {
+    setIsLoadingRiwayat(tagihanId)
+    try {
+      const riwayat = await getRiwayatTransaksiByTagihan(tagihanId)
+      if (riwayat.length === 0) {
+        toast.error("Riwayat pembayaran tidak ditemukan")
+      } else if (riwayat.length === 1) {
+        setReceiptData(riwayat[0])
+      } else {
+        setRiwayatTransaksi(riwayat)
+        setIsModalRiwayatOpen(true)
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Gagal mengambil riwayat pembayaran")
+    } finally {
+      setIsLoadingRiwayat(null)
+    }
+  }
+
+  const handlePilihRiwayat = (data: ReceiptData) => {
+    setIsModalRiwayatOpen(false)
+    setReceiptData(data)
   }
 
   return (
@@ -376,9 +424,23 @@ export default function PembayaranTagihanClient({
                             <td key={col.id} className="p-4">
                               {tagihan ? (
                                 tagihan.sisaTagihan <= 0 ? (
-                                  <div className="flex items-center justify-center p-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition-all select-none">
-                                    <span className="text-sm font-bold opacity-70">Rp 0</span>
-                                  </div>
+                                  <button 
+                                    onClick={() => handlePrintTagihan(tagihan.id)}
+                                    disabled={isLoadingRiwayat === tagihan.id}
+                                    className="flex w-full items-center justify-center p-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition-all hover:bg-emerald-100 hover:shadow-sm group/btn"
+                                    title="Cetak Ulang Resi"
+                                  >
+                                    {isLoadingRiwayat === tagihan.id ? (
+                                      <Loader2 size={16} className="animate-spin" />
+                                    ) : (
+                                      <>
+                                        <span className="text-sm font-bold opacity-70 group-hover/btn:hidden">Rp 0</span>
+                                        <span className="text-sm font-bold hidden group-hover/btn:inline-flex items-center gap-1">
+                                          Cetak Resi
+                                        </span>
+                                      </>
+                                    )}
+                                  </button>
                                 ) : (
                                   <label className={`
                                     flex items-center justify-center gap-2 p-2 rounded-lg cursor-pointer border select-none transition-all
@@ -481,6 +543,19 @@ export default function PembayaranTagihanClient({
         muridName={activeMurid?.name || ""}
         items={modalItems}
         akunKasBankList={akunKasBankList}
+      />
+      
+      <ModalResiPembayaran
+        isOpen={!!receiptData}
+        onClose={() => setReceiptData(null)}
+        data={receiptData}
+      />
+      
+      <ModalPilihRiwayatTransaksi
+        isOpen={isModalRiwayatOpen}
+        onClose={() => setIsModalRiwayatOpen(false)}
+        riwayat={riwayatTransaksi}
+        onSelect={handlePilihRiwayat}
       />
     </div>
   )

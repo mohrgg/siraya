@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
 import { getTahunAkademikAktif } from "@/actions/pembuatan-tagihan"
+import { getPengaturan } from "@/actions/pengaturan"
+import { getUnitSekolah } from "@/actions/unit-sekolah"
 import RekapitulasiTunggakanClient from "./RekapitulasiTunggakanClient"
 
 export const metadata = {
@@ -17,6 +19,8 @@ export default async function RekapitulasiTunggakanPage() {
   const activeUnitId = cookieStore.get("activeUnitId")?.value || (user.unitSekolahId ? user.unitSekolahId : "")
   
   const tahunAkademikAktif = await getTahunAkademikAktif()
+  const pengaturan = await getPengaturan()
+  const units = await getUnitSekolah()
   
   let activeTahunAkademikId = tahunAkademikAktif ? tahunAkademikAktif.id : ""
   let activeTahunAkademikName = "Tidak Ada Tahun Aktif"
@@ -25,11 +29,17 @@ export default async function RekapitulasiTunggakanPage() {
     activeTahunAkademikName = tahunAkademikAktif.name
   }
 
+  const activeUnit = units.find(u => u.id === activeUnitId)
+  const activeUnitName = activeUnit ? activeUnit.name : "SEMUA UNIT"
+
   return (
     <RekapitulasiTunggakanClient 
       activeUnitId={activeUnitId}
+      activeUnitName={activeUnitName}
       activeTahunAkademikId={activeTahunAkademikId}
       activeTahunAkademikName={activeTahunAkademikName}
+      pengaturan={pengaturan}
+      unitInfo={activeUnit}
     />
   )
 }

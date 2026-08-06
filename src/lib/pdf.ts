@@ -8,6 +8,12 @@ export interface PdfTableOptions {
   data: (string | number)[][]
   filename: string
   schoolUnitName?: string
+  unitInfo?: {
+    address?: string | null
+    phone?: string | null
+    email?: string | null
+    website?: string | null
+  }
   orientation?: 'portrait' | 'landscape'
 }
 
@@ -23,6 +29,7 @@ export function exportToPdfTable({
   data,
   filename,
   schoolUnitName = "SISTEM INFORMASI SIRAYA (SIRAYA)",
+  unitInfo,
   orientation = 'landscape'
 }: PdfTableOptions) {
   if (!data || data.length === 0) {
@@ -56,7 +63,21 @@ export function exportToPdfTable({
     docInstance.setFont("helvetica", "normal")
     docInstance.setFontSize(8.5)
     docInstance.setTextColor(71, 85, 105) // Slate-600
-    docInstance.text("Jl. Pendidikan Nusantara No. 123, Bandung, Jawa Barat • Telp: (022) 1234567 • Email: info@siraya.edu", pageWidth / 2, 23, { align: "center" })
+    
+    // Gunakan unitInfo jika ada, jika tidak gunakan default string
+    let kopSubtitle = "Jl. Pendidikan Nusantara No. 123, Bandung, Jawa Barat • Telp: (022) 1234567 • Email: info@siraya.edu"
+    if (unitInfo) {
+      const parts = []
+      if (unitInfo.address) parts.push(unitInfo.address)
+      if (unitInfo.phone) parts.push(`Telp: ${unitInfo.phone}`)
+      if (unitInfo.email) parts.push(`Email: ${unitInfo.email}`)
+      if (unitInfo.website) parts.push(`Web: ${unitInfo.website}`)
+      if (parts.length > 0) {
+        kopSubtitle = parts.join(' • ')
+      }
+    }
+    
+    docInstance.text(kopSubtitle, pageWidth / 2, 23, { align: "center" })
 
     // Garis Pembatas Kop Surat (Garis tebal + garis tipis)
     docInstance.setLineWidth(0.8)
@@ -144,4 +165,150 @@ export function exportToPdfTable({
 
   // 7. Simpan file PDF
   doc.save(`${filename}.pdf`)
+}
+
+export interface PdfResiOptions {
+  noReferensi: string
+  tanggal: Date
+  muridName: string
+  unitSekolahName?: string
+  namaYayasan?: string
+  items: { namaAkun: string, jumlahBayar: number }[]
+  total: number
+  catatanKwitansi?: string
+  namaBendahara?: string
+}
+
+/**
+ * Ekspor Resi/Kwitansi Pembayaran Tagihan ke format PDF resmi (A5 Landscape).
+ */
+export function exportResiPdf(data: PdfResiOptions) {
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a5' // 210 x 148.5 mm
+  })
+  
+  const pageWidth = doc.internal.pageSize.getWidth()
+  
+  // 1. KOP SURAT
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(14)
+  doc.setTextColor(15, 23, 42)
+  doc.text(data.namaYayasan || "YAYASAN AL BASYARIAH", 15, 20)
+  
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(10)
+  doc.setTextColor(71, 85, 105)
+  doc.text(data.unitSekolahName || "BUKTI PEMBAYARAN", 15, 26)
+  
+  // 2. TANGGAL & NO REF (Kanan Atas)
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(9)
+  const dateStr = data.tanggal.toLocaleDateString('id-ID', {
+    day: '2-digit', month: 'long', year: 'numeric'
+  })
+  doc.text(`Tanggal: ${dateStr}`, pageWidth - 15, 20, { align: "right" })
+  doc.text(`No. Ref: ${data.noReferensi}`, pageWidth - 15, 25, { align: "right" })
+  
+  // Garis Pembatas Kop
+  doc.setLineWidth(0.8)
+  doc.line(15, 32, pageWidth - 15, 32)
+  doc.setLineWidth(0.3)
+  doc.line(15, 33.5, pageWidth - 15, 33.5)
+  
+  // 3. JUDUL KWITANSI
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(14)
+  doc.setTextColor(15, 23, 42)
+  doc.text("KWITANSI PEMBAYARAN", pageWidth / 2, 45, { align: "center" })
+  // underline
+  const titleWidth = doc.getTextWidth("KWITANSI PEMBAYARAN")
+  doc.setLineWidth(0.3)
+  doc.line((pageWidth - titleWidth) / 2, 46.5, (pageWidth + titleWidth) / 2, 46.5)
+  
+  // 4. IDENTITAS
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(10)
+  doc.text("Telah terima dari", 15, 58)
+  doc.text(":", 45, 58)
+  doc.setFont("helvetica", "bold")
+  doc.text(data.muridName, 48, 58)
+  
+  // 5. TABEL RINCIAN
+  const formatRp = (val: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val)
+  }
+  
+  const tableData = data.items.map((item, index) => [
+    (index + 1).toString(),
+    item.namaAkun,
+    formatRp(item.jumlahBayar)
+  ])
+  
+  // Baris Total
+  tableData.push(["", "TOTAL PEMBAYARAN", formatRp(data.total)])
+
+  autoTable(doc, {
+    startY: 65,
+    head: [["No", "Keterangan Pembayaran", "Nominal"]],
+    body: tableData,
+    theme: 'grid',
+    styles: {
+      font: 'helvetica',
+      fontSize: 9,
+      cellPadding: 4,
+      textColor: [30, 41, 59],
+      lineColor: [226, 232, 240]
+    },
+    headStyles: {
+      fillColor: [241, 245, 249],
+      textColor: [30, 41, 59],
+      fontStyle: 'bold',
+      halign: 'center'
+    },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 15 },
+      2: { halign: 'right', cellWidth: 50, fontStyle: 'bold' }
+    },
+    didParseCell: (dataHook) => {
+      // Bold Total Row
+      if (dataHook.row.index === tableData.length - 1) {
+        dataHook.cell.styles.fontStyle = 'bold'
+        dataHook.cell.styles.fillColor = [248, 250, 252]
+        if (dataHook.column.index === 1) {
+          dataHook.cell.styles.halign = 'right'
+        }
+      }
+    }
+  })
+
+  // 6. AREA TANDA TANGAN (Footer)
+  // Menentukan Y dari akhir tabel
+  const finalY = (doc as any).lastAutoTable.finalY + 15
+  
+  doc.setFontSize(9)
+  doc.setFont("helvetica", "normal")
+  
+  // Kiri: Penyetor
+  doc.text("Penyetor / Wali Murid,", 35, finalY, { align: "center" })
+  doc.text("( ______________________ )", 35, finalY + 20, { align: "center" })
+  doc.text(data.muridName, 35, finalY + 25, { align: "center" })
+  
+  // Kanan: Bendahara
+  doc.text(`Bandung, ${dateStr}`, pageWidth - 35, finalY, { align: "center" })
+  doc.text("Bendahara Penerima,", pageWidth - 35, finalY + 5, { align: "center" })
+  
+  doc.text("( ______________________ )", pageWidth - 35, finalY + 20, { align: "center" })
+  const bendahara = data.namaBendahara || "Staf Keuangan"
+  doc.text(bendahara, pageWidth - 35, finalY + 25, { align: "center" })
+
+  // Catatan Kwitansi
+  doc.setFontSize(8)
+  doc.setFont("helvetica", "italic")
+  doc.setTextColor(148, 163, 184)
+  const catatan = data.catatanKwitansi || "Terima kasih atas pembayaran Anda. Simpan kwitansi ini sebagai bukti pembayaran yang sah."
+  doc.text(catatan, pageWidth / 2, 140, { align: "center" })
+
+  doc.save(`Kwitansi_${data.noReferensi}.pdf`)
 }

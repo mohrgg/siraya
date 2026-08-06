@@ -4,54 +4,84 @@ import Link from "next/link"
 import { 
   BarChart3, 
   LineChart,
+  ArrowRight,
+  TrendingUp,
+  CreditCard,
   PieChart
 } from "lucide-react"
 
 export default function LaporanMenuClient() {
   return (
-    <div className="min-h-screen bg-gray-50/30 p-6 animate-in fade-in duration-500">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          Laporan Keuangan
+    <div className="max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
+      <div className="mb-8">
+        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
+          Pusat Laporan
         </h1>
-        <p className="text-gray-500 text-sm mt-1">Pilih jenis laporan yang ingin Anda lihat</p>
+        <p className="text-text-muted text-base max-w-2xl">
+          Pantau dan analisis kesehatan finansial serta kepatuhan administrasi sekolah melalui berbagai modul laporan terpadu.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         
         {/* Card 1: Pemasukan dan Pengeluaran */}
-        <Link href="/laporan/pemasukan-pengeluaran" className="group bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex flex-col justify-between min-h-[160px]">
-          <div>
-            <div className="text-xs font-semibold text-gray-500 tracking-wider uppercase mb-1">
-              LAPORAN
-            </div>
-            <h3 className="text-xl font-bold text-blue-600 group-hover:text-blue-700 transition-colors">
-              Pemasukan dan Pengeluaran
-            </h3>
+        <Link href="/laporan/pemasukan-pengeluaran" className="group relative bg-surface rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between min-h-[220px]">
+          <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-5 transition-opacity duration-500 transform translate-x-4 -translate-y-4 group-hover:translate-x-0 group-hover:translate-y-0">
+            <LineChart size={120} />
           </div>
-          <div className="mt-6 flex justify-start">
-            <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center group-hover:bg-blue-100 group-hover:scale-110 transition-all">
-              <LineChart size={20} />
+          
+          <div>
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-5 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300">
+              <TrendingUp size={24} />
             </div>
+            <h3 className="text-xl font-bold text-text-main mb-2">
+              Laporan Arus Kas
+            </h3>
+            <p className="text-sm text-text-muted">
+              Pantau total pemasukan dan pengeluaran (Laba/Rugi) secara komprehensif berdasarkan rentang waktu tertentu.
+            </p>
+          </div>
+          
+          <div className="mt-6 flex items-center text-sm font-semibold text-emerald-600 group-hover:text-emerald-700">
+            Buka Laporan <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
           </div>
         </Link>
 
         {/* Card 2: Tunggakan Siswa */}
-        <Link href="/laporan/tunggakan-siswa" className="group bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex flex-col justify-between min-h-[160px]">
-          <div>
-            <div className="text-xs font-semibold text-gray-500 tracking-wider uppercase mb-1">
-              LAPORAN
-            </div>
-            <h3 className="text-xl font-bold text-blue-600 group-hover:text-blue-700 transition-colors">
-              Tunggakan Siswa
-            </h3>
+        <Link href="/laporan/tunggakan-siswa" className="group relative bg-surface rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between min-h-[220px]">
+          <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-5 transition-opacity duration-500 transform translate-x-4 -translate-y-4 group-hover:translate-x-0 group-hover:translate-y-0">
+            <BarChart3 size={120} />
           </div>
-          <div className="mt-6 flex justify-start">
-            <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center group-hover:bg-blue-100 group-hover:scale-110 transition-all">
-              <BarChart3 size={20} />
+          
+          <div>
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-5 group-hover:bg-rose-500 group-hover:text-white transition-colors duration-300">
+              <CreditCard size={24} />
             </div>
+            <h3 className="text-xl font-bold text-text-main mb-2">
+              Laporan Tunggakan
+            </h3>
+            <p className="text-sm text-text-muted">
+              Analisis sisa tagihan siswa yang belum lunas. Dapat difilter berdasarkan Tingkat dan Rombongan Belajar.
+            </p>
+          </div>
+          
+          <div className="mt-6 flex items-center text-sm font-semibold text-rose-600 group-hover:text-rose-700">
+            Buka Laporan <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
           </div>
         </Link>
+
+        {/* Card 3: Coming Soon (Optional) */}
+        <div className="relative bg-surface/50 rounded-2xl border border-border border-dashed p-6 flex flex-col justify-center items-center text-center min-h-[220px]">
+          <div className="w-12 h-12 rounded-2xl bg-gray-100 text-gray-400 flex items-center justify-center mb-4">
+            <PieChart size={24} />
+          </div>
+          <h3 className="text-lg font-bold text-gray-400 mb-1">
+            Laporan Kustom
+          </h3>
+          <p className="text-sm text-gray-400 max-w-[200px]">
+            Modul laporan tambahan akan segera hadir di sini.
+          </p>
+        </div>
 
       </div>
     </div>

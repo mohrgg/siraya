@@ -50,6 +50,10 @@ model UnitSekolah {
   level     String   @db.VarChar(50) // "SD", "SMP", "SMK", "MA", dll
   address   String?  @db.Text
   phone     String?  @db.VarChar(20)
+  email     String?  @db.VarChar(100)
+  website   String?  @db.VarChar(100)
+  namaKepalaSekolah String? @db.VarChar(150)
+  nipKepalaSekolah  String? @db.VarChar(50)
   logo      String?  @db.VarChar(255)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())

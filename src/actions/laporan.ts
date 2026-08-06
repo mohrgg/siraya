@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 
-export async function getLaporanPemasukanPengeluaran(startDate: string, endDate: string) {
+export async function getLaporanPemasukanPengeluaran(startDate: string, endDate: string, filterUnitId?: string) {
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
   
@@ -13,7 +13,8 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
   end.setHours(23, 59, 59, 999)
 
   const user = session.user as any
-  const unitSekolahId = user.unitSekolahId
+  const restrictedUnitId = user.unitSekolahId
+  const finalUnitId = restrictedUnitId || filterUnitId
 
   const whereClause: any = {
     tanggal: {
@@ -23,8 +24,8 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
     status: "POSTED"
   }
 
-  if (unitSekolahId) {
-    whereClause.unitSekolahId = unitSekolahId
+  if (finalUnitId) {
+    whereClause.unitSekolahId = finalUnitId
   }
 
   const transaksiDetails = await prisma.transaksiDetail.findMany({
@@ -75,19 +76,27 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
   }
 }
 
-export async function getLaporanTunggakanSiswa() {
+export async function getLaporanTunggakanSiswa(filterUnitId?: string, filterTingkatId?: string, filterSubKelasId?: string) {
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
   
   const user = session.user as any
-  const unitSekolahId = user.unitSekolahId
+  const restrictedUnitId = user.unitSekolahId
+  const finalUnitId = restrictedUnitId || filterUnitId
 
-  const whereClause: any = {
+  const tagihanWhereClause: any = {
     sisaTagihan: { gt: 0 }
   }
 
+  const muridWhereClause: any = {}
+  if (finalUnitId) muridWhereClause.unitSekolahId = finalUnitId
+
+  if (Object.keys(muridWhereClause).length > 0) {
+    tagihanWhereClause.murid = muridWhereClause
+  }
+
   const tagihanList = await prisma.tagihan.findMany({
-    where: whereClause,
+    where: tagihanWhereClause,
     include: {
       murid: {
         include: {
@@ -104,10 +113,15 @@ export async function getLaporanTunggakanSiswa() {
     orderBy: { createdAt: 'desc' }
   })
 
-  // Filter out students not in the user's unitSekolah if restricted
-  const filteredTagihan = unitSekolahId 
-    ? tagihanList.filter(t => t.murid.unitSekolahId === unitSekolahId)
-    : tagihanList
+  let filteredTagihan = tagihanList
+  
+  if (filterTingkatId) {
+    filteredTagihan = filteredTagihan.filter(t => t.murid.riwayatKelas?.[0]?.subKelas?.tingkatId === filterTingkatId)
+  }
+  
+  if (filterSubKelasId) {
+    filteredTagihan = filteredTagihan.filter(t => t.murid.riwayatKelas?.[0]?.subKelasId === filterSubKelasId)
+  }
 
   return filteredTagihan.map(t => ({
     id: t.id,

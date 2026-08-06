@@ -1,22 +1,42 @@
 "use client"
 
 import { useState } from "react"
-import { Building2, Landmark, Database, Save, Plus, Trash2, Download } from "lucide-react"
+import { Building2, Landmark, Database, Save, Plus, Trash2, Download, Info } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 import { upsertPengaturan } from "@/actions/pengaturan"
 
-export default function PengaturanClient({ initialSettings }: { initialSettings: any }) {
+export default function PengaturanClient({ initialSettings, units = [] }: { initialSettings: any, units?: any[] }) {
   const [activeTab, setActiveTab] = useState<"profil" | "rekening" | "backup">("profil")
+  const [activeUnitTab, setActiveUnitTab] = useState<string>("GLOBAL")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     ...initialSettings,
     rekeningBank: initialSettings.rekeningBank ? JSON.parse(initialSettings.rekeningBank) : []
   })
+  
+  // State per unit
+  const [unitData, setUnitData] = useState<Record<string, any>>(() => {
+    const initialState: Record<string, any> = {}
+    units.forEach(u => {
+      initialState[u.id] = { ...u }
+    })
+    return initialState
+  })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData((prev: any) => ({ ...prev, [name]: value }))
+    if (activeTab === "profil" && activeUnitTab !== "GLOBAL") {
+      setUnitData(prev => ({
+        ...prev,
+        [activeUnitTab]: {
+          ...prev[activeUnitTab],
+          [name]: value
+        }
+      }))
+    } else {
+      setFormData((prev: any) => ({ ...prev, [name]: value }))
+    }
   }
 
   const handleAddRekening = () => {
@@ -44,6 +64,18 @@ export default function PengaturanClient({ initialSettings }: { initialSettings:
     const toastId = toast.loading("Menyimpan pengaturan...")
     
     try {
+      if (activeTab === "profil" && activeUnitTab !== "GLOBAL") {
+        const { updateUnitSekolahKop } = await import("@/actions/pengaturan")
+        const currentUnit = unitData[activeUnitTab]
+        const result = await updateUnitSekolahKop(activeUnitTab, currentUnit)
+        if (result.success) {
+          toast.success(`Pengaturan kop surat unit berhasil disimpan!`, { id: toastId })
+        } else {
+          throw new Error(result.error)
+        }
+        return
+      }
+
       const payload = {
         ...formData,
         rekeningBank: JSON.stringify(formData.rekeningBank)
@@ -109,10 +141,50 @@ export default function PengaturanClient({ initialSettings }: { initialSettings:
         
         {/* TAB 1: IDENTITAS */}
         {activeTab === "profil" && (
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-lg font-bold text-text-main mb-4 border-b border-border pb-2">Kop Surat Yayasan</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            
+            {/* SUB-TABS UNTUK UNIT SEKOLAH */}
+            <div className="flex gap-2 flex-wrap mb-4">
+              <button
+                onClick={() => setActiveUnitTab("GLOBAL")}
+                className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                  activeUnitTab === "GLOBAL" 
+                  ? "bg-primary text-white shadow-sm" 
+                  : "bg-surface border border-border text-text-muted hover:bg-gray-50"
+                }`}
+              >
+                YAYASAN (GLOBAL)
+              </button>
+              {units.map((unit: any) => (
+                <button
+                  key={unit.id}
+                  onClick={() => setActiveUnitTab(unit.id)}
+                  className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                    activeUnitTab === unit.id 
+                    ? "bg-blue-600 text-white shadow-sm" 
+                    : "bg-surface border border-border text-text-muted hover:bg-gray-50"
+                  }`}
+                >
+                  KOP: {unit.name}
+                </button>
+              ))}
+            </div>
+
+            {activeUnitTab === "GLOBAL" ? (
+              <div className="space-y-8 animate-in fade-in duration-300">
+                <div>
+                  <div className="flex items-center gap-2 mb-4 border-b border-border pb-2">
+                    <h2 className="text-lg font-bold text-text-main">Kop Surat Yayasan</h2>
+                  </div>
+                  
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex gap-3 text-blue-800 text-sm">
+                    <Info size={20} className="shrink-0 mt-0.5 text-blue-600" />
+                    <p>
+                      <strong>Informasi Penggunaan:</strong> Data Identitas Yayasan ini bertindak sebagai <b>Kop Utama (Baris Teratas)</b> untuk semua dokumen cetak sistem, termasuk tabel Laporan Keuangan, Data Siswa, dan Header Kwitansi Pembayaran.
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Yayasan/Lembaga</label>
                   <input type="text" name="namaYayasan" value={formData.namaYayasan} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Contoh: Yayasan Pendidikan Al Basyariah" />
@@ -142,6 +214,12 @@ export default function PengaturanClient({ initialSettings }: { initialSettings:
 
             <div>
               <h2 className="text-lg font-bold text-text-main mb-4 border-b border-border pb-2">Footer & Penandatangan Cetak</h2>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 flex gap-3 text-slate-700 text-sm">
+                <Info size={20} className="shrink-0 mt-0.5 text-slate-500" />
+                <p>
+                  <strong>Catatan Cetak:</strong> Nama Bendahara akan secara otomatis dibubuhkan pada bagian bawah kanan (kolom tanda tangan) pada dokumen cetak <b>Kwitansi Pembayaran Resi</b>.
+                </p>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Kepala TU</label>
@@ -157,6 +235,45 @@ export default function PengaturanClient({ initialSettings }: { initialSettings:
                 </div>
               </div>
             </div>
+          </div>
+          ) : (
+            <div className="space-y-8 animate-in fade-in duration-300">
+              <div>
+                <h2 className="text-lg font-bold text-text-main mb-4 border-b border-border pb-2">Identitas Unit: {unitData[activeUnitTab]?.name}</h2>
+                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-6 flex gap-3 text-emerald-800 text-sm">
+                  <Info size={20} className="shrink-0 mt-0.5 text-emerald-600" />
+                  <p>
+                    <strong>Informasi Penggunaan:</strong> Data spesifik unit ini akan muncul sebagai <b>Sub-Header (Baris Kedua)</b> pada laporan dan kwitansi untuk membedakan asal transaksi (misal: membedakan resi SPP SD dan SMP).
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Alamat Lengkap Unit</label>
+                    <textarea name="address" value={unitData[activeUnitTab]?.address || ""} onChange={handleChange} rows={2} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Alamat lengkap unit sekolah..."></textarea>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Nomor Telepon Unit</label>
+                    <input type="text" name="phone" value={unitData[activeUnitTab]?.phone || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="No Telp..." />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Email / Website Unit</label>
+                    <div className="flex gap-2">
+                      <input type="text" name="email" value={unitData[activeUnitTab]?.email || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Email" />
+                      <input type="text" name="website" value={unitData[activeUnitTab]?.website || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Website" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Kepala Sekolah</label>
+                    <input type="text" name="namaKepalaSekolah" value={unitData[activeUnitTab]?.namaKepalaSekolah || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Nama Kepala Sekolah" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">NIP Kepala Sekolah</label>
+                    <input type="text" name="nipKepalaSekolah" value={unitData[activeUnitTab]?.nipKepalaSekolah || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="NIP (Kosongkan jika tidak ada)" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           </div>
         )}
 

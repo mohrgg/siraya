@@ -138,9 +138,6 @@ export default function Sidebar({ user }: { user: any }) {
                     >
                       <Icon size={20} className={isActive ? "text-white" : "text-white/80"} />
                       {!isCollapsed && <span className="truncate">{item.label}</span>}
-                      {!isCollapsed && item.isGlobal && (
-                        <span className="ml-auto text-[9px] uppercase tracking-wider font-bold bg-white/20 text-white/90 px-1.5 py-0.5 rounded shadow-sm border border-white/10 shrink-0">Global</span>
-                      )}
                     </Link>
                   )
                 })}

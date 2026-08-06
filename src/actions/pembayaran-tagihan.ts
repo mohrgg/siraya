@@ -233,3 +233,58 @@ export async function prosesPembayaranTagihan(data: {
     return { success: false, message: error.message || "Gagal memproses pembayaran" }
   }
 }
+
+export async function getRiwayatTransaksiByTagihan(tagihanId: string) {
+  try {
+    const details = await prisma.pembayaranTagihanDetail.findMany({
+      where: { tagihanId },
+      include: {
+        transaksi: {
+          include: {
+            pembayaranTagihan: {
+              include: {
+                tagihan: {
+                  include: { akun: true }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    })
+
+    // Map this to a structured format for UI
+    const mapped = details.map(d => {
+      const tx = d.transaksi
+      // The items in the transaction:
+      const items = tx.pembayaranTagihan.map(ptd => ({
+        namaAkun: ptd.tagihan.akun.nama,
+        jumlahBayar: ptd.jumlahDibayar
+      }))
+
+      return {
+        transaksiId: tx.id,
+        noReferensi: tx.noReferensi,
+        tanggal: tx.tanggal,
+        muridName: tx.namaPihakKetiga || "Unknown",
+        items,
+        total: tx.totalNilai
+      }
+    })
+
+    // Because a single transaction might have multiple PembayaranTagihanDetail records (e.g. paying 2 months of SPP in 1 transaction),
+    // and both records are returned if the query was for tagihanId, we should deduplicate by transaksiId
+    const uniqueMap = new Map<string, any>()
+    mapped.forEach(m => {
+      if (!uniqueMap.has(m.transaksiId)) {
+        uniqueMap.set(m.transaksiId, m)
+      }
+    })
+
+    return Array.from(uniqueMap.values())
+  } catch (error: any) {
+    console.error("Error getRiwayatTransaksiByTagihan:", error)
+    return []
+  }
+}

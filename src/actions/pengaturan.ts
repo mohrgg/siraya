@@ -97,3 +97,43 @@ export async function upsertPengaturan(data: any) {
     return { success: false, error: error.message || "Gagal menyimpan pengaturan" }
   }
 }
+
+// Ambil list unit sekolah untuk tab kop surat
+export async function getUnitSekolahList() {
+  const session = await auth()
+  if (!session?.user) throw new Error("Unauthorized")
+  
+  return prisma.unitSekolah.findMany({
+    where: { isActive: true },
+    orderBy: { name: 'asc' }
+  })
+}
+
+// Simpan kop surat spesifik per unit
+export async function updateUnitSekolahKop(id: string, data: any) {
+  const session = await auth()
+  if (!session?.user) throw new Error("Unauthorized")
+  if (session.user.role !== "ADMIN") {
+    throw new Error("Hanya Admin yang dapat mengubah pengaturan unit")
+  }
+
+  try {
+    const updated = await prisma.unitSekolah.update({
+      where: { id },
+      data: {
+        address: data.address,
+        phone: data.phone,
+        email: data.email,
+        website: data.website,
+        namaKepalaSekolah: data.namaKepalaSekolah,
+        nipKepalaSekolah: data.nipKepalaSekolah,
+        // logo: data.logo // if handling image later
+      }
+    })
+    revalidatePath("/pengaturan")
+    return { success: true, data: updated }
+  } catch (error: any) {
+    console.error("Gagal update unit sekolah kop:", error)
+    return { success: false, error: error.message || "Gagal update kop surat unit" }
+  }
+}

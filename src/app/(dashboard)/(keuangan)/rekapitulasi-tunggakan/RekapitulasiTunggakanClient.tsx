@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Search, Loader2, FileDown, FileSpreadsheet, FileText, RefreshCw } from "lucide-react"
+import { Search, Loader2, FileSpreadsheet, FileIcon as FilePdf, RefreshCw } from "lucide-react"
 import { toast } from "react-hot-toast"
 import { Button } from "@/components/ui/Button"
 import { getRekapitulasiTunggakan } from "@/actions/rekapitulasi-tunggakan"
+import { exportToPdfTable } from "@/lib/pdf"
+import { exportToExcel } from "@/lib/excel"
 
 interface Akun {
   id: string
@@ -23,14 +25,20 @@ interface RekapItem {
 
 interface Props {
   activeUnitId: string
+  activeUnitName?: string
   activeTahunAkademikId: string
   activeTahunAkademikName: string
+  pengaturan?: any
+  unitInfo?: any
 }
 
 export default function RekapitulasiTunggakanClient({
   activeUnitId,
+  activeUnitName = "SEMUA UNIT",
   activeTahunAkademikId,
-  activeTahunAkademikName
+  activeTahunAkademikName,
+  pengaturan,
+  unitInfo
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
   const [rekapData, setRekapData] = useState<RekapItem[]>([])
@@ -77,6 +85,111 @@ export default function RekapitulasiTunggakanClient({
     )
   }, [rekapData, searchTerm2])
 
+  const handleExportPdfRingkasan = () => {
+    if (filteredData1.length === 0) return toast.error("Tidak ada data untuk diekspor")
+    
+    const headers = ["NO", "KELAS", "TOTAL TAGIHAN", "TOTAL DIBAYAR", "TOTAL TUNGGAKAN BERJALAN", "TOTAL TUNGGAKAN KESELURUHAN"]
+    const data = filteredData1.map((r, i) => [
+      (i + 1).toString(),
+      r.subKelasName.toUpperCase(),
+      `Rp ${formatRupiah(r.totalTagihan)}`,
+      `Rp ${formatRupiah(r.totalDibayar)}`,
+      `Rp ${formatRupiah(r.totalTunggakan)}`,
+      `Rp ${formatRupiah(r.totalTunggakan)}`
+    ])
+    
+    // Add total row
+    data.push([
+      "",
+      "TOTAL KESELURUHAN",
+      `Rp ${formatRupiah(filteredData1.reduce((acc, r) => acc + r.totalTagihan, 0))}`,
+      `Rp ${formatRupiah(filteredData1.reduce((acc, r) => acc + r.totalDibayar, 0))}`,
+      `Rp ${formatRupiah(filteredData1.reduce((acc, r) => acc + r.totalTunggakan, 0))}`,
+      `Rp ${formatRupiah(filteredData1.reduce((acc, r) => acc + r.totalTunggakan, 0))}`
+    ])
+
+    exportToPdfTable({
+      title: "RINGKASAN TAGIHAN & TUNGGAKAN",
+      subtitle: `Unit: ${activeUnitName} • Tahun Akademik: ${activeTahunAkademikName}`,
+      headers,
+      data,
+      filename: `Ringkasan_Tunggakan_${activeUnitName}`,
+      schoolUnitName: activeUnitName !== "SEMUA UNIT" ? `UNIT ${activeUnitName.toUpperCase()} SIRAYA` : (pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH"),
+      unitInfo: unitInfo || pengaturan,
+      orientation: 'landscape'
+    })
+  }
+
+  const handleExportExcelRingkasan = () => {
+    if (filteredData1.length === 0) return toast.error("Tidak ada data untuk diekspor")
+    
+    const data = filteredData1.map((r, i) => ({
+      "NO": i + 1,
+      "UNIT": activeUnitName,
+      "KELAS": r.subKelasName.toUpperCase(),
+      "TOTAL TAGIHAN": r.totalTagihan,
+      "TOTAL DIBAYAR": r.totalDibayar,
+      "TOTAL TUNGGAKAN": r.totalTunggakan
+    }))
+    
+    exportToExcel(data, `Ringkasan_Tunggakan_${activeUnitName}`)
+  }
+
+  const handleExportPdfDetail = () => {
+    if (filteredData2.length === 0) return toast.error("Tidak ada data untuk diekspor")
+    
+    const headers = ["NO", "KELAS", ...akunList.map(a => a.nama.toUpperCase())]
+    const data = filteredData2.map((r, i) => {
+      const rowData = [
+        (i + 1).toString(),
+        r.subKelasName.toUpperCase(),
+      ]
+      akunList.forEach(akun => {
+        const val = r.detailKomponen[akun.id]?.tunggakan || 0
+        rowData.push(`Rp ${formatRupiah(val)}`)
+      })
+      return rowData
+    })
+    
+    // Add total row
+    const totalRow = ["", "TOTAL KESELURUHAN"]
+    akunList.forEach(akun => {
+      const colTotal = filteredData2.reduce((acc, r) => acc + (r.detailKomponen[akun.id]?.tunggakan || 0), 0)
+      totalRow.push(`Rp ${formatRupiah(colTotal)}`)
+    })
+    data.push(totalRow)
+
+    exportToPdfTable({
+      title: "DETAIL TUNGGAKAN PER KOMPONEN",
+      subtitle: `Unit: ${activeUnitName} • Tahun Akademik: ${activeTahunAkademikName}`,
+      headers,
+      data,
+      filename: `Detail_Tunggakan_${activeUnitName}`,
+      schoolUnitName: activeUnitName !== "SEMUA UNIT" ? `UNIT ${activeUnitName.toUpperCase()} SIRAYA` : (pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH"),
+      unitInfo: unitInfo || pengaturan,
+      orientation: 'landscape'
+    })
+  }
+
+  const handleExportExcelDetail = () => {
+    if (filteredData2.length === 0) return toast.error("Tidak ada data untuk diekspor")
+    
+    const data = filteredData2.map((r, i) => {
+      const rowData: any = {
+        "NO": i + 1,
+        "UNIT": activeUnitName,
+        "KELAS": r.subKelasName.toUpperCase(),
+      }
+      akunList.forEach(akun => {
+        const val = r.detailKomponen[akun.id]?.tunggakan || 0
+        rowData[akun.nama.toUpperCase()] = val
+      })
+      return rowData
+    })
+    
+    exportToExcel(data, `Detail_Tunggakan_${activeUnitName}`)
+  }
+
   return (
     <div className="max-w-[1600px] mx-auto w-full">
       <div className="mb-6">
@@ -111,31 +224,30 @@ export default function RekapitulasiTunggakanClient({
                 />
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-9 w-10 p-0 rounded-lg text-emerald-700 border-emerald-600 hover:bg-emerald-50 shrink-0"
-                  title="Refresh"
                   onClick={loadData}
+                  title="Refresh Data"
                 >
                   <RefreshCw size={16} />
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-9 px-3 rounded-lg text-emerald-700 border-emerald-600 hover:bg-emerald-50 flex items-center gap-2 bg-white"
-                  onClick={() => toast.success("Fitur Ekspor Excel akan segera hadir")}
+                  className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800"
+                  onClick={handleExportExcelRingkasan}
                 >
-                  <FileSpreadsheet size={16} /> <span className="font-medium">Excel</span>
+                  <FileSpreadsheet size={16} className="mr-1.5" /> Excel
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-9 px-3 rounded-lg text-rose-600 border-rose-300 hover:bg-rose-50 flex items-center gap-2 bg-white"
-                  onClick={() => toast.success("Fitur Ekspor PDF akan segera hadir")}
+                  className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800"
+                  onClick={handleExportPdfRingkasan}
                 >
-                  <FileText size={16} /> <span className="font-medium">PDF</span>
+                  <FilePdf size={16} className="mr-1.5" /> PDF
                 </Button>
               </div>
             </div>
@@ -222,31 +334,30 @@ export default function RekapitulasiTunggakanClient({
                 />
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-9 w-10 p-0 rounded-lg text-emerald-700 border-emerald-600 hover:bg-emerald-50 shrink-0"
-                  title="Refresh"
                   onClick={loadData}
+                  title="Refresh Data"
                 >
                   <RefreshCw size={16} />
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-9 px-3 rounded-lg text-emerald-700 border-emerald-600 hover:bg-emerald-50 flex items-center gap-2 bg-white"
-                  onClick={() => toast.success("Fitur Ekspor Excel akan segera hadir")}
+                  className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800"
+                  onClick={handleExportExcelDetail}
                 >
-                  <FileSpreadsheet size={16} /> <span className="font-medium">Excel</span>
+                  <FileSpreadsheet size={16} className="mr-1.5" /> Excel
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-9 px-3 rounded-lg text-rose-600 border-rose-300 hover:bg-rose-50 flex items-center gap-2 bg-white"
-                  onClick={() => toast.success("Fitur Ekspor PDF akan segera hadir")}
+                  className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800"
+                  onClick={handleExportPdfDetail}
                 >
-                  <FileText size={16} /> <span className="font-medium">PDF</span>
+                  <FilePdf size={16} className="mr-1.5" /> PDF
                 </Button>
               </div>
             </div>
