@@ -92,9 +92,10 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
       "Sisa Tunggakan (Rp)": filteredData.reduce((acc, curr) => acc + curr.sisa, 0)
     } as any)
 
+    const unitObjForKop = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
     exportToExcel(excelData, filename, {
       title: "Laporan Tunggakan Siswa",
-      unitInfo: {
+      unitInfo: unitObjForKop || {
         name: unitName !== "YAYASAN" ? unitName : "Yayasan Siraya"
       }
     })
@@ -136,7 +137,8 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
       data: tableData,
       filename,
       schoolUnitName,
-      unitInfo: {
+      unitInfo: filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : {
+        name: pengaturan?.namaYayasan || "Yayasan Al Basyariah",
         address: pengaturan?.alamat,
         phone: pengaturan?.telepon,
         email: pengaturan?.email,

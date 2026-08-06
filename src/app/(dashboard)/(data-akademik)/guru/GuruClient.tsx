@@ -255,13 +255,12 @@ export default function GuruClient({
         "No. Rekening": g.bankAccount || "-",
         "Atas Nama": g.bankAccountName || "-"
       }))
-      const unitName = activeUnitId ? schoolUnits.find(u => u.id === activeUnitId)?.name || "Unit" : "Semua_Unit"
+      const unitObj = activeUnitId ? schoolUnits.find(u => u.id === activeUnitId) : undefined
+      const unitName = unitObj?.name || "Semua_Unit"
       const dateStr = new Date().toISOString().split('T')[0]
       exportToExcel(mappedData, `Data_Guru_${unitName}_${dateStr}`.replace(/\s+/g, '_'), {
         title: "Daftar Data Guru",
-        unitInfo: {
-          name: unitName
-        }
+        unitInfo: unitObj || { name: "Yayasan Siraya" }
       })
       toast.success("Berhasil mengunduh Excel Data Guru")
     } catch (err: any) {

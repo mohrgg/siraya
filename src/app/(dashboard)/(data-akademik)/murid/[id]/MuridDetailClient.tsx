@@ -87,7 +87,7 @@ export default function MuridDetailClient({
       const dateStr = new Date().toISOString().split('T')[0]
       exportToExcel(dataToExport, `Profil_Siswa_${murid.name}_${dateStr}`.replace(/\s+/g, '_'), {
         title: `Profil Detail Siswa: ${murid.name}`,
-        unitInfo: { name: murid.unitSekolah?.name || "Yayasan Siraya" }
+        unitInfo: murid.unitSekolah || { name: "Yayasan Siraya" }
       })
       toast.success("Berhasil mengunduh Excel Profil Siswa")
     } catch (err: any) {
@@ -127,6 +127,7 @@ export default function MuridDetailClient({
         data: pdfRows,
         filename: `Profil_Siswa_${murid.name}_${dateStr}`.replace(/\s+/g, '_'),
         schoolUnitName,
+        unitInfo: murid.unitSekolah || undefined,
         orientation: 'portrait'
       })
       toast.success("Berhasil mengunduh PDF Profil Siswa")

@@ -124,9 +124,10 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
       "Nominal (Rp)": data.totalPendapatan - data.totalPengeluaran
     })
 
+    const unitObjForKop = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
     exportToExcel(excelData, filename, {
       title: "Laporan Pemasukan & Pengeluaran",
-      unitInfo: {
+      unitInfo: unitObjForKop || {
         name: unitName !== "YAYASAN" ? unitName : "Yayasan Siraya"
       }
     })
@@ -145,7 +146,8 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
       data: data,
       filename,
       schoolUnitName,
-      unitInfo: {
+      unitInfo: filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : {
+        name: pengaturan?.namaYayasan || "Yayasan Al Basyariah",
         address: pengaturan?.alamat,
         phone: pengaturan?.telepon,
         email: pengaturan?.email,

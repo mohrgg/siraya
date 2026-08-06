@@ -134,9 +134,7 @@ export default function RekapitulasiTunggakanClient({
     
     exportToExcel(data, `Ringkasan_Tunggakan_${activeUnitName}`, {
       title: "Ringkasan Tagihan & Tunggakan",
-      unitInfo: {
-        name: activeUnitName !== "Semua Unit" ? activeUnitName : "Yayasan Siraya"
-      }
+      unitInfo: unitInfo || pengaturan
     })
   }
 
@@ -194,9 +192,7 @@ export default function RekapitulasiTunggakanClient({
     
     exportToExcel(data, `Detail_Tunggakan_${activeUnitName}`, {
       title: "Detail Tunggakan per Siswa",
-      unitInfo: {
-        name: activeUnitName !== "Semua Unit" ? activeUnitName : "Yayasan Siraya"
-      }
+      unitInfo: unitInfo || pengaturan
     })
   }
 
