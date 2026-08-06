@@ -3,6 +3,7 @@
 import { Building, Users, LayoutDashboard, Calendar, GraduationCap, CheckCircle2, TrendingUp, TrendingDown, BookOpen, Wallet, Award, Layers } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, Treemap } from 'recharts'
 import Link from "next/link"
+import PendapatanInteractiveChart from './PendapatanInteractiveChart'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
 
@@ -11,10 +12,15 @@ export default function KepsekDashboard(props: any) {
     activeUnit, activeYear, totalMurid, totalRombel, totalJurusan, totalGuru,
     dataQualityScore, jobData, incomeData, topCrowded, topEmpty, retentionData, 
     jenjangData, genderData, statusData, anomalyList, capacityData,
-    guruStatusData, guruPendidikanData
+    guruStatusData, guruPendidikanData,
+    // Keuangan
+    penerimaanBulanIni = 0, pengeluaranBulanIni = 0, saldoBulanIni = 0,
+    kolektibilitasData = [], alokasiPengeluaran = [], 
+    pendapatanHariIniChart = [], pendapatanMingguIniChart = [], pendapatanBulanIniChart = []
   } = props
 
-  const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num)
+  const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
+  const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
 
   // Custom Treemap Content
   const TreemapContent = (props: any) => {
@@ -115,6 +121,43 @@ export default function KepsekDashboard(props: any) {
         </div>
       </div>
 
+      {/* METRIC CARDS KEUANGAN (3 Kolom) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl border border-emerald-900/20 p-5 shadow-sm text-white hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-5 rounded-full blur-2xl"></div>
+          <div className="flex items-center gap-3 mb-3 relative z-10">
+            <div className="w-10 h-10 bg-white/20 text-white rounded-xl flex items-center justify-center backdrop-blur-sm"><Wallet size={20} /></div>
+            <div>
+              <h3 className="font-bold text-emerald-100 text-xs uppercase tracking-wider">Saldo Kas Unit</h3>
+              <p className="text-[10px] text-emerald-200">Bulan Berjalan</p>
+            </div>
+          </div>
+          <p className="text-3xl font-black relative z-10">{formatCurrency(saldoBulanIni)}</p>
+        </div>
+        
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center"><TrendingUp size={20} /></div>
+            <div>
+              <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wider">Pemasukan</h3>
+              <p className="text-[10px] text-gray-500">Bulan Berjalan</p>
+            </div>
+          </div>
+          <p className="text-3xl font-black text-gray-900">{formatCurrency(penerimaanBulanIni)}</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center"><TrendingDown size={20} /></div>
+            <div>
+              <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wider">Pengeluaran</h3>
+              <p className="text-[10px] text-gray-500">Bulan Berjalan</p>
+            </div>
+          </div>
+          <p className="text-3xl font-black text-gray-900">{formatCurrency(pengeluaranBulanIni)}</p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Treemap Latar Belakang Ortu */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm lg:col-span-2">
@@ -155,6 +198,78 @@ export default function KepsekDashboard(props: any) {
                 <Legend iconType="circle" wrapperStyle={{fontSize: '11px'}} />
               </PieChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
+        {/* Perbandingan Pendapatan Terkini (Interactive Chart) */}
+        <div className="lg:col-span-2 h-[350px]">
+          <PendapatanInteractiveChart 
+            hariIniData={pendapatanHariIniChart}
+            mingguIniData={pendapatanMingguIniChart}
+            bulanIniData={pendapatanBulanIniChart}
+          />
+        </div>
+
+        {/* Kolektibilitas Tagihan */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm lg:col-span-2">
+          <h3 className="font-bold text-gray-800 mb-1 flex items-center gap-2">
+            <CheckCircle2 size={18} className="text-emerald-500" />
+            Kolektibilitas Tagihan
+          </h3>
+          <p className="text-xs text-gray-500 mb-4">Rasio tagihan yang telah lunas vs belum lunas di unit ini.</p>
+          <div className="h-56">
+            {kolektibilitasData && kolektibilitasData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={kolektibilitasData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={5} dataKey="value">
+                    {kolektibilitasData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{borderRadius: '8px', border: 'none'}} 
+                    formatter={(value: any) => formatCurrency(Number(value))}
+                  />
+                  <Legend iconType="circle" wrapperStyle={{fontSize: '11px'}} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400 text-sm">Belum ada data tagihan.</div>
+            )}
+          </div>
+        </div>
+
+        {/* Alokasi Pengeluaran */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm lg:col-span-2">
+          <h3 className="font-bold text-gray-800 mb-1 flex items-center gap-2">
+            <TrendingDown size={18} className="text-rose-500" />
+            Alokasi Pengeluaran
+          </h3>
+          <p className="text-xs text-gray-500 mb-4">Pengeluaran berdasarkan kategori akun (Bulan Ini).</p>
+          <div className="h-56">
+            {alokasiPengeluaran && alokasiPengeluaran.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={alokasiPengeluaran} layout="vertical" margin={{ left: 10, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                  <XAxis type="number" axisLine={false} tickLine={false} tick={{fontSize: 11}} tickFormatter={(val) => `Rp${val/1000}k`} />
+                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 11}} width={120} />
+                  <Tooltip 
+                    cursor={{fill: '#f8fafc'}} 
+                    contentStyle={{borderRadius: '8px', border: 'none'}} 
+                    formatter={(value: any) => formatCurrency(Number(value))}
+                  />
+                  <Bar dataKey="value" name="Pengeluaran" radius={[0, 4, 4, 0]}>
+                    {alokasiPengeluaran.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400 text-sm">Belum ada data pengeluaran bulan ini.</div>
+            )}
           </div>
         </div>
       </div>

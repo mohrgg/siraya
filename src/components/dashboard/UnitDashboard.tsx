@@ -6,11 +6,9 @@ import {
   CheckCircle2, Clock, PlusCircle, BookOpen, ArrowRight, UserCheck, 
   HeartHandshake, Sparkles, Activity, Wallet
 } from "lucide-react"
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, Legend, ReferenceLine 
-} from 'recharts'
-import Link from "next/link"
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
+import Link from 'next/link'
+import PendapatanInteractiveChart from './PendapatanInteractiveChart'
 import toast from "react-hot-toast"
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
@@ -35,6 +33,14 @@ interface UnitDashboardProps {
   guruStatusData?: Array<{ name: string; value: number; color?: string }>
   ageData?: Array<{ ageGroup: string; name?: string; total: number }>
   unitLogs?: Array<any>
+  // Keuangan Unit
+  penerimaanBulanIni?: number
+  pengeluaranBulanIni?: number
+  totalTunggakanUnit?: number
+  tunggakanKritisList?: Array<any>
+  pendapatanHariIniChart?: any[]
+  pendapatanMingguIniChart?: any[]
+  pendapatanBulanIniChart?: any[]
 }
 
 export default function UnitDashboard(props: UnitDashboardProps) {
@@ -57,12 +63,18 @@ export default function UnitDashboard(props: UnitDashboardProps) {
     guruStatusData = [],
     ageData = [],
     unitLogs = [],
-    totalGuru = 0
+    totalGuru = 0,
+    penerimaanBulanIni = 0,
+    pengeluaranBulanIni = 0,
+    totalTunggakanUnit = 0,
+    tunggakanKritisList = [],
+    pendapatanHariIniChart = [], pendapatanMingguIniChart = [], pendapatanBulanIniChart = []
   } = props
 
-  const [activeTab, setActiveTab] = useState<'anomali' | 'mutasi'>('anomali')
+  const [activeTab, setActiveTab] = useState<'anomali' | 'mutasi' | 'tunggakan'>('anomali')
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
+  const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
 
   const handleQuickAction = (actionName: string) => {
     toast.success(`Membuka fitur: ${actionName}`)
@@ -105,7 +117,38 @@ export default function UnitDashboard(props: UnitDashboardProps) {
         )}
       </div>
 
-      {/* Row 1: Key Metrics */}
+      {/* Row 1: Keuangan (Financial Metrics) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl border border-emerald-900/20 p-5 shadow-sm text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-5 rounded-full blur-2xl"></div>
+          <div className="flex items-center justify-between mb-3 relative z-10">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">Penerimaan Bulan Ini</span>
+            <div className="w-10 h-10 bg-white/20 text-white rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <Wallet size={20} />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2 relative z-10">
+            <span className="text-3xl font-black">{formatCurrency(penerimaanBulanIni)}</span>
+          </div>
+          <p className="text-[11px] text-emerald-200 mt-2 relative z-10">Total kas masuk di unit {unitName}</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-rose-500 to-rose-700 rounded-2xl border border-rose-900/20 p-5 shadow-sm text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-5 rounded-full blur-2xl"></div>
+          <div className="flex items-center justify-between mb-3 relative z-10">
+            <span className="text-xs font-bold uppercase tracking-wider text-rose-100">Total Tunggakan Unit</span>
+            <div className="w-10 h-10 bg-white/20 text-white rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <AlertTriangle size={20} />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2 relative z-10">
+            <span className="text-3xl font-black">{formatCurrency(totalTunggakanUnit)}</span>
+          </div>
+          <p className="text-[11px] text-rose-200 mt-2 relative z-10">Total tagihan siswa yang belum dibayar</p>
+        </div>
+      </div>
+
+      {/* Row 2: Key Metrics Akademik */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-3">
@@ -162,6 +205,15 @@ export default function UnitDashboard(props: UnitDashboardProps) {
           </div>
           <p className="text-[11px] text-gray-400 mt-2">Berbasis di unit ini</p>
         </div>
+      </div>
+
+      {/* Row 1.5: Grafik Pendapatan Interaktif */}
+      <div className="w-full h-[350px]">
+        <PendapatanInteractiveChart 
+          hariIniData={pendapatanHariIniChart}
+          mingguIniData={pendapatanMingguIniChart}
+          bulanIniData={pendapatanBulanIniChart}
+        />
       </div>
 
       {/* Row 2: Kepadatan Rombel (Bar Chart with Reference Line) & Task Alert List */}
@@ -256,7 +308,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                     activeTab === 'anomali' ? 'text-primary border-b-2 border-primary' : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
-                  Anomali Data ({anomalyList.length})
+                  Anomali ({anomalyList.length})
                 </button>
                 <button
                   onClick={() => setActiveTab('mutasi')}
@@ -264,7 +316,15 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                     activeTab === 'mutasi' ? 'text-primary border-b-2 border-primary' : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
-                  Mutasi Terakhir ({mutationLogs.length})
+                  Mutasi ({mutationLogs.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('tunggakan')}
+                  className={`text-sm font-bold pb-1 transition-all ${
+                    activeTab === 'tunggakan' ? 'text-primary border-b-2 border-primary' : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  Tunggakan
                 </button>
               </div>
             </div>
@@ -298,7 +358,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                     Tidak ditemukan anomali data di unit ini!
                   </div>
                 )
-              ) : (
+              ) : activeTab === 'mutasi' ? (
                 mutationLogs.length > 0 ? (
                   mutationLogs.map((item, idx) => (
                     <div key={idx} className="p-3 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-between text-xs">
@@ -313,6 +373,33 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                   ))
                 ) : (
                   <div className="text-center py-10 text-gray-400 text-xs">Belum ada catatan mutasi siswa.</div>
+                )
+              ) : (
+                tunggakanKritisList.length > 0 ? (
+                  tunggakanKritisList.map((item, idx) => (
+                    <div key={idx} className="p-3 bg-rose-50/50 border border-rose-100 rounded-xl flex items-start justify-between gap-2 text-xs">
+                      <div>
+                        <p className="font-bold text-gray-900">{item.murid.name}</p>
+                        <p className="text-[11px] text-gray-500 font-mono">NIS: {item.murid.nis}</p>
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          <span className="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded text-[9px] font-bold">{item.akun.nama}</span>
+                          <span className="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded text-[9px] font-bold">{formatCurrency(item.sisaTagihan)}</span>
+                        </div>
+                      </div>
+                      <Link
+                        href={`/laporan/tunggakan-siswa`}
+                        className="text-primary hover:bg-primary/10 p-1.5 rounded-lg transition-colors shrink-0"
+                        title="Tindak Lanjut"
+                      >
+                        <ArrowRight size={14} />
+                      </Link>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-10 text-gray-400 text-xs">
+                    <CheckCircle2 size={24} className="text-emerald-500 mx-auto mb-2" />
+                    Tidak ada tunggakan kritis.
+                  </div>
                 )
               )}
             </div>

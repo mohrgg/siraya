@@ -32,6 +32,41 @@ export function sortSchoolClasses(a: string, b: string): number {
   return parsedA.suffix.localeCompare(parsedB.suffix, 'id', { numeric: true, sensitivity: 'base' })
 }
 
+function generateInteractiveChartData(transactions: any[], todayStart: Date, weekStart: Date, monthStart: Date) {
+  // Hari Ini (per jam)
+  const todayTx = transactions.filter(t => t.tanggal >= todayStart)
+  const hariIniMap = new Map<number, number>()
+  for (let i = 6; i <= 18; i++) hariIniMap.set(i, 0) // Jam operasional 06:00 - 18:00
+  todayTx.forEach(t => {
+    const h = t.tanggal.getHours()
+    if (h >= 6 && h <= 18) hariIniMap.set(h, (hariIniMap.get(h) || 0) + t.totalNilai)
+  })
+  const pendapatanHariIniChart = Array.from(hariIniMap.entries()).map(([k, v]) => ({ name: `${String(k).padStart(2, '0')}:00`, value: v }))
+
+  // Minggu Ini (per hari)
+  const weekTx = transactions.filter(t => t.tanggal >= weekStart)
+  const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
+  const mingguIniMap = new Map<string, number>(days.map(d => [d, 0]))
+  weekTx.forEach(t => {
+    let dayIdx = t.tanggal.getDay() // 0 = Sunday, 1 = Monday
+    const dStr = dayIdx === 0 ? 'Minggu' : days[dayIdx - 1]
+    mingguIniMap.set(dStr, (mingguIniMap.get(dStr) || 0) + t.totalNilai)
+  })
+  const pendapatanMingguIniChart = Array.from(mingguIniMap.entries()).map(([k, v]) => ({ name: k, value: v }))
+
+  // Bulan Ini (per tanggal)
+  const bulanIniMap = new Map<number, number>()
+  const daysInMonth = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0).getDate()
+  for (let i = 1; i <= daysInMonth; i++) bulanIniMap.set(i, 0)
+  transactions.forEach(t => {
+    const d = t.tanggal.getDate()
+    bulanIniMap.set(d, (bulanIniMap.get(d) || 0) + t.totalNilai)
+  })
+  const pendapatanBulanIniChart = Array.from(bulanIniMap.entries()).map(([k, v]) => ({ name: `${k}`, value: v }))
+
+  return { pendapatanHariIniChart, pendapatanMingguIniChart, pendapatanBulanIniChart }
+}
+
 // ==================== STANDAR YAYASAN (GLOBAL) ====================
 export async function getYayasanDashboardData() {
   const totalPegawai = await prisma.pengguna.count({ where: { isActive: true } })
@@ -185,6 +220,96 @@ export async function getYayasanDashboardData() {
 
   const academicYear = await prisma.tahunAkademik.findFirst({ where: { isActive: true } })
 
+  // ==================== KEUANGAN (FINANCIAL METRICS) ====================
+  // 1. Total Kas Global (Pemasukan vs Pengeluaran)
+  const kasMasuk = await prisma.transaksi.aggregate({
+    where: { jenis: 'KAS_MASUK', status: 'POSTED' },
+    _sum: { totalNilai: true }
+  })
+  const kasKeluar = await prisma.transaksi.aggregate({
+    where: { jenis: 'KAS_KELUAR', status: 'POSTED' },
+    _sum: { totalNilai: true }
+  })
+  const totalPemasukan = kasMasuk._sum.totalNilai || 0
+  const totalPengeluaran = kasKeluar._sum.totalNilai || 0
+  const totalKasGlobal = totalPemasukan - totalPengeluaran
+
+  // 2. Piutang & Kolektibilitas
+  const tagihan = await prisma.tagihan.aggregate({
+    _sum: { jumlah: true, sisaTagihan: true }
+  })
+  const totalPiutangGlobal = tagihan._sum.sisaTagihan || 0
+  const totalTagihanGlobal = tagihan._sum.jumlah || 0
+  const totalTerbayarGlobal = totalTagihanGlobal - totalPiutangGlobal
+  const kolektibilitas = totalTagihanGlobal > 0 ? Math.round((totalTerbayarGlobal / totalTagihanGlobal) * 100) : 0
+
+  // 3. Trend Arus Kas (6 Bulan Terakhir)
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
+  sixMonthsAgo.setDate(1)
+  sixMonthsAgo.setHours(0, 0, 0, 0)
+
+  const transactions = await prisma.transaksi.findMany({
+    where: { status: 'POSTED', tanggal: { gte: sixMonthsAgo } },
+    select: { jenis: true, totalNilai: true, tanggal: true }
+  })
+
+  const monthsMap = new Map<string, { month: string, pemasukan: number, pengeluaran: number }>()
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date()
+    d.setMonth(d.getMonth() - i)
+    const mStr = d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })
+    monthsMap.set(mStr, { month: mStr, pemasukan: 0, pengeluaran: 0 })
+  }
+
+  transactions.forEach(t => {
+    const mStr = t.tanggal.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })
+    if (monthsMap.has(mStr)) {
+      const data = monthsMap.get(mStr)!
+      if (t.jenis === 'KAS_MASUK') data.pemasukan += t.totalNilai
+      if (t.jenis === 'KAS_KELUAR') data.pengeluaran += t.totalNilai
+    }
+  })
+  const arusKasTrend = Array.from(monthsMap.values())
+
+  // 4. Top Unit Tunggakan
+  const tunggakanRaw = await prisma.tagihan.findMany({
+    where: { sisaTagihan: { gt: 0 } },
+    select: { sisaTagihan: true, murid: { select: { unitSekolah: { select: { name: true } } } } }
+  })
+  
+  const unitTunggakanMap = new Map<string, number>()
+  tunggakanRaw.forEach(t => {
+    const unitName = t.murid.unitSekolah?.name || 'Lainnya'
+    unitTunggakanMap.set(unitName, (unitTunggakanMap.get(unitName) || 0) + t.sisaTagihan)
+  })
+  
+  const topUnitTunggakan = Array.from(unitTunggakanMap.entries())
+    .map(([name, total]) => ({ name, total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5)
+
+  // 5. Perbandingan Pendapatan (Hari, Minggu, Bulan Ini)
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const weekStart = new Date(todayStart)
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1)) // Monday
+  const monthStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), 1)
+
+  const pendapatanHariIni = await prisma.transaksi.aggregate({
+    where: { jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: todayStart } },
+    _sum: { totalNilai: true }
+  })
+  const pendapatanMingguIni = await prisma.transaksi.aggregate({
+    where: { jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: weekStart } },
+    _sum: { totalNilai: true }
+  })
+  const rawMonthTransactions = await prisma.transaksi.findMany({
+    where: { jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: monthStart } },
+    select: { tanggal: true, totalNilai: true }
+  })
+  const interactiveChartData = generateInteractiveChartData(rawMonthTransactions, todayStart, weekStart, monthStart)
+
   return {
     usersCount: totalPegawai, totalPegawai,
     unitCount: totalUnit, totalUnit,
@@ -194,7 +319,10 @@ export async function getYayasanDashboardData() {
     units, unitDistribution, unitData: unitDistribution,
     scholarshipData, genderData,
     dataQualityIndex, incompleteData, trendData, trendSiswaDummy: trendData,
-    districtData, classEfficiency, statusDataGlobal, academicYear
+    districtData, classEfficiency, statusDataGlobal, academicYear,
+    // Keuangan Global
+    totalKasGlobal, totalPiutangGlobal, kolektibilitas, arusKasTrend, topUnitTunggakan, 
+    ...interactiveChartData
   }
 }
 
@@ -366,12 +494,58 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
     id: l.id, aksi: l.aksi, modul: l.modul, keterangan: l.keterangan, createdAt: l.createdAt.toISOString(), penggunaName: l.pengguna?.name || 'Sistem'
   }))
 
+  // 11. KEUANGAN UNIT (Bulan Ini)
+  const today = new Date()
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59)
+
+  const kasMasukUnit = await prisma.transaksi.aggregate({
+    where: { unitSekolahId: unitId, jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } },
+    _sum: { totalNilai: true }
+  })
+  const penerimaanBulanIni = kasMasukUnit._sum.totalNilai || 0
+
+  const kasKeluarUnit = await prisma.transaksi.aggregate({
+    where: { unitSekolahId: unitId, jenis: 'KAS_KELUAR', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } },
+    _sum: { totalNilai: true }
+  })
+  const pengeluaranBulanIni = kasKeluarUnit._sum.totalNilai || 0
+
+  const tagihanUnit = await prisma.tagihan.aggregate({
+    where: { murid: { unitSekolahId: unitId } },
+    _sum: { sisaTagihan: true }
+  })
+  const totalTunggakanUnit = tagihanUnit._sum.sisaTagihan || 0
+
+  const tunggakanKritisList = await prisma.tagihan.findMany({
+    where: { murid: { unitSekolahId: unitId }, sisaTagihan: { gt: 0 } },
+    orderBy: { sisaTagihan: 'desc' },
+    take: 5,
+    select: { id: true, jumlah: true, sisaTagihan: true, keterangan: true, murid: { select: { id: true, name: true, nis: true, nisn: true } }, akun: { select: { nama: true } } }
+  })
+
+  // Perbandingan Pendapatan (Hari, Minggu, Bulan Ini)
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const weekStart = new Date(todayStart)
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1)) // Monday
+
+  const monthStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), 1)
+  const rawMonthTransactionsU = await prisma.transaksi.findMany({
+    where: { unitSekolahId: unitId, jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: monthStart } },
+    select: { tanggal: true, totalNilai: true }
+  })
+  const interactiveChartDataU = generateInteractiveChartData(rawMonthTransactionsU, todayStart, weekStart, monthStart)
+
   return {
     totalMurid, totalRombel, totalSubKelas: totalRombel, totalJurusan, totalGuru,
     rombelData, statusData, paralelData, tingkatDistribution, capacityWarnings,
     genderData, parentData, scholarshipData, incomeData, ageData,
     guruStatusData, guruPendidikanData,
-    anomalyList, missingParent, mutationLogs, unitLogs
+    anomalyList, missingParent, mutationLogs, unitLogs,
+    // Ekstra Keuangan Unit
+    penerimaanBulanIni, pengeluaranBulanIni, totalTunggakanUnit, tunggakanKritisList, 
+    ...interactiveChartDataU
   }
 }
 
@@ -626,5 +800,73 @@ export async function getKepsekData(unitId: string, yearId?: string) {
     target: Math.floor(totalMurid * 1.1) || 100 // Example logic
   }
 
-  return { totalMurid, totalRombel, totalJurusan, totalGuru, guruStatusData, guruPendidikanData, dataQualityScore, jobData, incomeData, topCrowded, topEmpty, retentionData, jenjangData, genderData, statusData, anomalyList, capacityData }
+  // ==================== KEUANGAN (FINANCIAL METRICS) ====================
+  const today = new Date()
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59)
+
+  const kasMasukUnit = await prisma.transaksi.aggregate({
+    where: { unitSekolahId: unitId, jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } },
+    _sum: { totalNilai: true }
+  })
+  const penerimaanBulanIni = kasMasukUnit._sum.totalNilai || 0
+
+  const kasKeluarUnit = await prisma.transaksi.aggregate({
+    where: { unitSekolahId: unitId, jenis: 'KAS_KELUAR', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } },
+    _sum: { totalNilai: true }
+  })
+  const pengeluaranBulanIni = kasKeluarUnit._sum.totalNilai || 0
+  const saldoBulanIni = penerimaanBulanIni - pengeluaranBulanIni
+
+  // Kolektibilitas
+  const tagihanUnitAgg = await prisma.tagihan.aggregate({
+    where: { murid: { unitSekolahId: unitId } },
+    _sum: { jumlah: true, sisaTagihan: true }
+  })
+  const totalTagihanUnit = tagihanUnitAgg._sum.jumlah || 0
+  const totalSisaTagihanUnit = tagihanUnitAgg._sum.sisaTagihan || 0
+  const totalLunasUnit = totalTagihanUnit - totalSisaTagihanUnit
+  const kolektibilitasData = [
+    { name: 'Lunas', value: totalLunasUnit, color: '#10b981' }, // emerald
+    { name: 'Belum Lunas', value: totalSisaTagihanUnit, color: '#f43f5e' } // rose
+  ]
+
+  // Alokasi Pengeluaran
+  const pengeluaranDetailRaw = await prisma.transaksiDetail.findMany({
+    where: {
+      transaksi: { unitSekolahId: unitId, jenis: 'KAS_KELUAR', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } }
+    },
+    select: { nilai: true, akun: { select: { nama: true } } }
+  })
+  const alokasiMap = new Map<string, number>()
+  pengeluaranDetailRaw.forEach(d => {
+    const akunName = d.akun?.nama || 'Lainnya'
+    alokasiMap.set(akunName, (alokasiMap.get(akunName) || 0) + d.nilai)
+  })
+  const alokasiPengeluaran = Array.from(alokasiMap.entries())
+    .map(([name, value], idx) => ({ name, value, color: ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#64748b'][idx % 6] }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5)
+
+  // Perbandingan Pendapatan
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const weekStart = new Date(todayStart)
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1)) // Monday
+
+  const monthStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), 1)
+  const rawMonthTransactionsK = await prisma.transaksi.findMany({
+    where: { unitSekolahId: unitId, jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: monthStart } },
+    select: { tanggal: true, totalNilai: true }
+  })
+  const interactiveChartDataK = generateInteractiveChartData(rawMonthTransactionsK, todayStart, weekStart, monthStart)
+
+  return { 
+    totalMurid, totalRombel, totalJurusan, totalGuru, guruStatusData, guruPendidikanData, 
+    dataQualityScore, jobData, incomeData, topCrowded, topEmpty, retentionData, 
+    jenjangData, genderData, statusData, anomalyList, capacityData,
+    // Keuangan
+    penerimaanBulanIni, pengeluaranBulanIni, saldoBulanIni, kolektibilitasData, alokasiPengeluaran, 
+    ...interactiveChartDataK
+  }
 }
