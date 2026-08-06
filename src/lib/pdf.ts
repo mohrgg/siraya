@@ -77,38 +77,54 @@ export function exportToPdfTable({
       }
     }
     
-    docInstance.text(kopSubtitle, pageWidth / 2, 23, { align: "center" })
+    // Pecah teks jika terlalu panjang agar tidak merembes melewati batas lebar kertas
+    const maxSubtitleWidth = pageWidth - 30 // Margin kiri kanan 15mm
+    const splitSubtitle = docInstance.splitTextToSize(kopSubtitle, maxSubtitleWidth)
+    
+    // Tulis subtitle, iterasi per baris jika ada banyak baris
+    let startSubY = 23
+    splitSubtitle.forEach((line: string) => {
+      docInstance.text(line, pageWidth / 2, startSubY, { align: "center" })
+      startSubY += 4 // Jarak antar baris
+    })
 
     // Garis Pembatas Kop Surat (Garis tebal + garis tipis)
+    const lineY = startSubY + 1
     docInstance.setLineWidth(0.8)
     docInstance.setDrawColor(15, 23, 42)
-    docInstance.line(14, 26, pageWidth - 14, 26)
+    docInstance.line(14, lineY, pageWidth - 14, lineY)
 
     docInstance.setLineWidth(0.2)
-    docInstance.line(14, 27.5, pageWidth - 14, 27.5)
+    docInstance.line(14, lineY + 1.5, pageWidth - 14, lineY + 1.5)
+    
+    return lineY + 1.5 // Mengembalikan posisi Y terakhir setelah kop
   }
 
   // Gambar Kop di halaman pertama
-  drawHeader(doc)
+  let currentY = drawHeader(doc) + 8
 
   // 3. Judul & Subjudul Dokumen
   doc.setFont("helvetica", "bold")
   doc.setFontSize(13)
-  doc.setTextColor(30, 58, 138) // Blue-900 / Primary
-  doc.text(title.toUpperCase(), pageWidth / 2, 36, { align: "center" })
+  doc.setTextColor(5, 150, 105) // Emerald-600
+  doc.text(title.toUpperCase(), pageWidth / 2, currentY, { align: "center" })
+  currentY += 6
 
-  let startY = 42
   if (subtitle) {
     doc.setFont("helvetica", "normal")
     doc.setFontSize(9.5)
     doc.setTextColor(71, 85, 105)
-    doc.text(subtitle, pageWidth / 2, startY, { align: "center" })
-    startY += 6
+    const splitReportSubtitle = doc.splitTextToSize(subtitle, pageWidth - 30)
+    splitReportSubtitle.forEach((line: string) => {
+      doc.text(line, pageWidth / 2, currentY, { align: "center" })
+      currentY += 5
+    })
+    currentY += 2
   }
 
   // 4. Render Tabel Vektor dengan AutoTable
   autoTable(doc, {
-    startY: startY,
+    startY: currentY,
     head: [headers],
     body: data,
     styles: {
@@ -121,7 +137,7 @@ export function exportToPdfTable({
       lineWidth: 0.2
     },
     headStyles: {
-      fillColor: [30, 58, 138], // Blue-900 / Deep Indigo Theme
+      fillColor: [5, 150, 105], // Emerald-600 Theme
       textColor: [255, 255, 255],
       fontStyle: 'bold',
       halign: 'center',
@@ -163,7 +179,28 @@ export function exportToPdfTable({
     doc.putTotalPages(totalPagesExp)
   }
 
-  // 7. Simpan file PDF
+  // 7. Area Tanda Tangan (Mengetahui)
+  const finalY = (doc as any).lastAutoTable.finalY + 15
+  
+  // Periksa apakah halaman masih cukup untuk tanda tangan, jika tidak buat halaman baru
+  if (finalY + 30 > pageHeight - 20) {
+    doc.addPage()
+    doc.setFontSize(9)
+    doc.setFont("helvetica", "normal")
+    doc.setTextColor(71, 85, 105)
+    doc.text("Bandung, ................................", pageWidth - 20, 30, { align: "right" })
+    doc.text("Mengetahui,", pageWidth - 20, 36, { align: "right" })
+    doc.text("__________________________", pageWidth - 20, 60, { align: "right" })
+  } else {
+    doc.setFontSize(9)
+    doc.setFont("helvetica", "normal")
+    doc.setTextColor(71, 85, 105)
+    doc.text("Bandung, ................................", pageWidth - 20, finalY, { align: "right" })
+    doc.text("Mengetahui,", pageWidth - 20, finalY + 6, { align: "right" })
+    doc.text("__________________________", pageWidth - 20, finalY + 30, { align: "right" })
+  }
+
+  // 8. Simpan file PDF
   doc.save(`${filename}.pdf`)
 }
 
@@ -200,7 +237,15 @@ export function exportResiPdf(data: PdfResiOptions) {
   doc.setFont("helvetica", "normal")
   doc.setFontSize(10)
   doc.setTextColor(71, 85, 105)
-  doc.text(data.unitSekolahName || "BUKTI PEMBAYARAN", 15, 26)
+  const unitText = data.unitSekolahName || "BUKTI PEMBAYARAN"
+  
+  // Word wrap unitText jika panjang
+  const splitUnitText = doc.splitTextToSize(unitText, pageWidth / 2 - 20)
+  let currentY = 26
+  splitUnitText.forEach((line: string) => {
+    doc.text(line, 15, currentY)
+    currentY += 4
+  })
   
   // 2. TANGGAL & NO REF (Kanan Atas)
   doc.setFont("helvetica", "normal")
@@ -212,28 +257,31 @@ export function exportResiPdf(data: PdfResiOptions) {
   doc.text(`No. Ref: ${data.noReferensi}`, pageWidth - 15, 25, { align: "right" })
   
   // Garis Pembatas Kop
+  const lineY = Math.max(currentY + 2, 32)
   doc.setLineWidth(0.8)
-  doc.line(15, 32, pageWidth - 15, 32)
+  doc.line(15, lineY, pageWidth - 15, lineY)
   doc.setLineWidth(0.3)
-  doc.line(15, 33.5, pageWidth - 15, 33.5)
+  doc.line(15, lineY + 1.5, pageWidth - 15, lineY + 1.5)
   
   // 3. JUDUL KWITANSI
+  const titleY = lineY + 13
   doc.setFont("helvetica", "bold")
   doc.setFontSize(14)
   doc.setTextColor(15, 23, 42)
-  doc.text("KWITANSI PEMBAYARAN", pageWidth / 2, 45, { align: "center" })
+  doc.text("KWITANSI PEMBAYARAN", pageWidth / 2, titleY, { align: "center" })
   // underline
   const titleWidth = doc.getTextWidth("KWITANSI PEMBAYARAN")
   doc.setLineWidth(0.3)
-  doc.line((pageWidth - titleWidth) / 2, 46.5, (pageWidth + titleWidth) / 2, 46.5)
+  doc.line((pageWidth - titleWidth) / 2, titleY + 1.5, (pageWidth + titleWidth) / 2, titleY + 1.5)
   
   // 4. IDENTITAS
+  const identityY = titleY + 13
   doc.setFont("helvetica", "normal")
   doc.setFontSize(10)
-  doc.text("Telah terima dari", 15, 58)
-  doc.text(":", 45, 58)
+  doc.text("Telah terima dari", 15, identityY)
+  doc.text(":", 45, identityY)
   doc.setFont("helvetica", "bold")
-  doc.text(data.muridName, 48, 58)
+  doc.text(data.muridName, 48, identityY)
   
   // 5. TABEL RINCIAN
   const formatRp = (val: number) => {
@@ -250,7 +298,7 @@ export function exportResiPdf(data: PdfResiOptions) {
   tableData.push(["", "TOTAL PEMBAYARAN", formatRp(data.total)])
 
   autoTable(doc, {
-    startY: 65,
+    startY: identityY + 7,
     head: [["No", "Keterangan Pembayaran", "Nominal"]],
     body: tableData,
     theme: 'grid',
@@ -376,24 +424,33 @@ export function exportIncomeStatementPdf({
       kopSubtitle = parts.join(' • ')
     }
   }
-  doc.text(kopSubtitle, pageWidth / 2, 23, { align: "center" })
 
+  // Word wrap untuk alamat
+  const splitSubtitle = doc.splitTextToSize(kopSubtitle, pageWidth - 30)
+  let currentY = 23
+  splitSubtitle.forEach((line: string) => {
+    doc.text(line, pageWidth / 2, currentY, { align: "center" })
+    currentY += 4
+  })
+
+  const lineY = currentY + 1
   doc.setLineWidth(0.8)
   doc.setDrawColor(15, 23, 42)
-  doc.line(14, 26, pageWidth - 14, 26)
+  doc.line(14, lineY, pageWidth - 14, lineY)
   doc.setLineWidth(0.2)
-  doc.line(14, 27.5, pageWidth - 14, 27.5)
+  doc.line(14, lineY + 1.5, pageWidth - 14, lineY + 1.5)
 
   // 2. JUDUL
+  const titleY = lineY + 10
   doc.setFont("helvetica", "bold")
   doc.setFontSize(12)
-  doc.setTextColor(37, 99, 235) // Blue
-  doc.text("LAPORAN PEMASUKAN DAN PENGELUARAN", pageWidth / 2, 36, { align: "center" })
+  doc.setTextColor(5, 150, 105) // Emerald-600
+  doc.text("LAPORAN PEMASUKAN DAN PENGELUARAN", pageWidth / 2, titleY, { align: "center" })
   
   doc.setFont("helvetica", "normal")
   doc.setFontSize(9)
   doc.setTextColor(225, 29, 72) // Rose
-  doc.text(`per ${startDate} - ${endDate}`, pageWidth / 2, 41, { align: "center" })
+  doc.text(`per ${startDate} - ${endDate}`, pageWidth / 2, titleY + 5, { align: "center" })
 
   // 3. TABEL LABA RUGI (Custom AutoTable)
   const formatRp = (val: number) => {
@@ -488,7 +545,7 @@ export function exportIncomeStatementPdf({
   ])
 
   autoTable(doc, {
-    startY: 48,
+    startY: titleY + 12,
     head: [[
       { content: 'Semua Departemen', colSpan: 2, styles: { halign: 'left', textColor: [100, 116, 139] } },
       { content: 'SALDO', colSpan: 2, styles: { halign: 'right', textColor: [244, 63, 94] } }
@@ -504,7 +561,7 @@ export function exportIncomeStatementPdf({
     headStyles: {
       fillColor: [255, 255, 255],
       fontStyle: 'bold',
-      lineColor: [254, 226, 226], // Rose-200
+      lineColor: [5, 150, 105], // Emerald-600
       lineWidth: { top: 0, right: 0, bottom: 0.5, left: 0 }
     },
     columnStyles: {

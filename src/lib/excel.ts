@@ -8,22 +8,67 @@ import * as XLSX from 'xlsx';
  * @param fileName Nama file (tanpa ekstensi .xlsx)
  * @param sheetName Nama sheet di dalam file Excel (opsional)
  */
-export function exportToExcel(data: any[], fileName: string, sheetName: string = 'Sheet1') {
+export interface ExcelExportOptions {
+  title?: string;
+  unitInfo?: { name: string; address?: string; phone?: string };
+  sheetName?: string;
+}
+
+export function exportToExcel(data: any[], fileName: string, options?: ExcelExportOptions) {
   if (!data || data.length === 0) {
     console.warn('Data kosong, tidak ada yang diekspor');
     return;
   }
 
-  // 1. Buat worksheet dari data JSON
-  const worksheet = XLSX.utils.json_to_sheet(data);
+  const sheetName = options?.sheetName || 'Sheet1';
+  let worksheet: XLSX.WorkSheet;
 
-  // 2. Buat workbook kosong
+  if (options?.title || options?.unitInfo) {
+    // Mode dengan Kop Surat & Judul
+    const wsData: any[][] = [];
+    
+    // 1. Kop Surat
+    if (options.unitInfo?.name) {
+      wsData.push([options.unitInfo.name.toUpperCase()]);
+    } else {
+      wsData.push(["YAYASAN SIRAYA"]);
+    }
+    
+    // 2. Judul
+    if (options.title) {
+      wsData.push([options.title.toUpperCase()]);
+    }
+    
+    // 3. Tanggal Cetak
+    const dateStr = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    wsData.push([`Dicetak pada: ${dateStr}`]);
+    wsData.push([]); // Baris Kosong
+
+    // 4. Header Tabel
+    const headers = Object.keys(data[0]);
+    wsData.push(headers);
+
+    // 5. Data Tabel
+    data.forEach(row => {
+      wsData.push(headers.map(h => row[h]));
+    });
+
+    worksheet = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Styling & Column Width (estimasi lebar kolom berdasarkan panjang string)
+    const colWidths = headers.map(h => ({ wch: Math.max(h.length, 15) }));
+    worksheet['!cols'] = colWidths;
+    
+  } else {
+    // Mode Grid Biasa
+    worksheet = XLSX.utils.json_to_sheet(data);
+    const headers = Object.keys(data[0]);
+    const colWidths = headers.map(h => ({ wch: Math.max(h.length, 15) }));
+    worksheet['!cols'] = colWidths;
+  }
+
   const workbook = XLSX.utils.book_new();
-
-  // 3. Masukkan worksheet ke dalam workbook
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-
-  // 4. Unduh file (otomatis memicu fitur download di browser)
   XLSX.writeFile(workbook, `${fileName}.xlsx`);
 }
 

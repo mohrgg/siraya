@@ -124,7 +124,12 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
       "Nominal (Rp)": data.totalPendapatan - data.totalPengeluaran
     })
 
-    exportToExcel(excelData, filename)
+    exportToExcel(excelData, filename, {
+      title: "Laporan Pemasukan & Pengeluaran",
+      unitInfo: {
+        name: unitName !== "YAYASAN" ? unitName : "Yayasan Siraya"
+      }
+    })
     toast.success("Excel berhasil diunduh")
   }
 

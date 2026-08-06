@@ -99,7 +99,10 @@ export default function SubKelasDetailDrawer({
         "No. HP Orang Tua": s.parentPhone || "-"
       }))
       const dateStr = new Date().toISOString().split('T')[0]
-      exportToExcel(mappedData, `Roster_Siswa_${subKelas.name}_${dateStr}`.replace(/\s+/g, '_'))
+      exportToExcel(mappedData, `Roster_Siswa_${subKelas.name}_${dateStr}`.replace(/\s+/g, '_'), {
+        title: `Daftar Siswa Kelas ${subKelas.name}`,
+        unitInfo: { name: subKelas.unitSekolah?.name || "Yayasan Siraya" }
+      })
       toast.success("Berhasil mengunduh Excel Daftar Siswa")
     } catch (err: any) {
       toast.error("Gagal ekspor Excel: " + err.message)

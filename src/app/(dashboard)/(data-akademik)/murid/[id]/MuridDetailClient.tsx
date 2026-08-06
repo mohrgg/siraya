@@ -85,7 +85,10 @@ export default function MuridDetailClient({
         "Asal Sekolah": murid.previousSchool || "-"
       }]
       const dateStr = new Date().toISOString().split('T')[0]
-      exportToExcel(dataToExport, `Profil_Siswa_${murid.name}_${dateStr}`.replace(/\s+/g, '_'))
+      exportToExcel(dataToExport, `Profil_Siswa_${murid.name}_${dateStr}`.replace(/\s+/g, '_'), {
+        title: `Profil Detail Siswa: ${murid.name}`,
+        unitInfo: { name: murid.unitSekolah?.name || "Yayasan Siraya" }
+      })
       toast.success("Berhasil mengunduh Excel Profil Siswa")
     } catch (err: any) {
       toast.error("Gagal ekspor Excel: " + err.message)

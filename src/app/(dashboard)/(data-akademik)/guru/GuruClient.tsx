@@ -257,7 +257,12 @@ export default function GuruClient({
       }))
       const unitName = activeUnitId ? schoolUnits.find(u => u.id === activeUnitId)?.name || "Unit" : "Semua_Unit"
       const dateStr = new Date().toISOString().split('T')[0]
-      exportToExcel(mappedData, `Data_Guru_${unitName}_${dateStr}`.replace(/\s+/g, '_'))
+      exportToExcel(mappedData, `Data_Guru_${unitName}_${dateStr}`.replace(/\s+/g, '_'), {
+        title: "Daftar Data Guru",
+        unitInfo: {
+          name: unitName
+        }
+      })
       toast.success("Berhasil mengunduh Excel Data Guru")
     } catch (err: any) {
       toast.error("Gagal ekspor Excel: " + err.message)

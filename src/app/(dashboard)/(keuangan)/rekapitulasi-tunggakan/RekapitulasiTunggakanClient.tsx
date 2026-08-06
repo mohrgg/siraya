@@ -132,7 +132,12 @@ export default function RekapitulasiTunggakanClient({
       "TOTAL TUNGGAKAN": r.totalTunggakan
     }))
     
-    exportToExcel(data, `Ringkasan_Tunggakan_${activeUnitName}`)
+    exportToExcel(data, `Ringkasan_Tunggakan_${activeUnitName}`, {
+      title: "Ringkasan Tagihan & Tunggakan",
+      unitInfo: {
+        name: activeUnitName !== "Semua Unit" ? activeUnitName : "Yayasan Siraya"
+      }
+    })
   }
 
   const handleExportPdfDetail = () => {
@@ -187,7 +192,12 @@ export default function RekapitulasiTunggakanClient({
       return rowData
     })
     
-    exportToExcel(data, `Detail_Tunggakan_${activeUnitName}`)
+    exportToExcel(data, `Detail_Tunggakan_${activeUnitName}`, {
+      title: "Detail Tunggakan per Siswa",
+      unitInfo: {
+        name: activeUnitName !== "Semua Unit" ? activeUnitName : "Yayasan Siraya"
+      }
+    })
   }
 
   return (

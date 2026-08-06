@@ -92,7 +92,12 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
       "Sisa Tunggakan (Rp)": filteredData.reduce((acc, curr) => acc + curr.sisa, 0)
     } as any)
 
-    exportToExcel(excelData, filename)
+    exportToExcel(excelData, filename, {
+      title: "Laporan Tunggakan Siswa",
+      unitInfo: {
+        name: unitName !== "YAYASAN" ? unitName : "Yayasan Siraya"
+      }
+    })
     toast.success("Excel berhasil diunduh")
   }
 

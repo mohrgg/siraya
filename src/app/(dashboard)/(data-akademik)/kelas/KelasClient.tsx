@@ -84,7 +84,10 @@ export default function KelasClient({
           "Tahun Akademik": c.tahunAkademik?.name || "-",
           "Wali Kelas": c.waliKelas || "Belum ditentukan"
         }))
-        exportToExcel(mappedData, `Rombel_${unitName}_${dateStr}`.replace(/\s+/g, '_'))
+        exportToExcel(mappedData, `Rombel_${unitName}_${dateStr}`.replace(/\s+/g, '_'), {
+          title: "Daftar Rombel / Kelas",
+          unitInfo: { name: unitName }
+        })
         toast.success("Berhasil mengekspor data rombel (Excel)")
         return
       }
@@ -140,7 +143,10 @@ export default function KelasClient({
       const statusName = data.activeTab === "murid" ? "Aktif" : (data.filterAlumniStatus || "SemuaStatus")
       const finalFileName = `Siswa_${unitName}_${statusName}${filterTags}_${dateStr}`.replace(/\s+/g, '_')
 
-      exportToExcel(mappedData, finalFileName)
+      exportToExcel(mappedData, finalFileName, {
+        title: "Daftar Data Siswa",
+        unitInfo: { name: unitName }
+      })
       toast.success("Berhasil mengekspor data (Excel)")
     } catch (error) {
       console.error(error)
