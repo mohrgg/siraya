@@ -41,6 +41,8 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
     })
   }
   
+  const isUnitLocked = schoolUnits.length <= 1;
+
   return (
     <header className="h-[80px] px-6 bg-surface border-b border-border flex items-center justify-between shadow-sm shrink-0">
       <div className="flex items-center gap-6">
@@ -48,10 +50,14 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
           <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-1">Unit Sekolah</label>
           <div className="relative">
             <select 
-              className="appearance-none bg-surface border border-border shadow-sm hover:shadow-md transition-shadow text-sm font-semibold text-text-main py-2 pl-4 pr-10 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-[180px]" 
+              className={`appearance-none bg-surface border border-border text-sm font-semibold text-text-main py-2 pl-4 pr-10 rounded-xl focus:outline-none min-w-[180px] ${
+                isUnitLocked 
+                  ? "cursor-default bg-gray-50/50 text-gray-500 border-gray-100" 
+                  : "cursor-pointer shadow-sm hover:shadow-md transition-shadow focus:ring-2 focus:ring-primary/30"
+              }`}
               value={unit} 
               onChange={(e) => handleChange("unit", e.target.value)}
-              disabled={isPending}
+              disabled={isPending || isUnitLocked}
             >
               {schoolUnits.map(u => (
                 <option key={u.id} value={u.id}>{u.name}</option>
