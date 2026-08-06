@@ -85,3 +85,39 @@ export function downloadSiswaTemplate(schoolUnits: any[] = [], classrooms: any[]
 
   XLSX.writeFile(workbook, "Template_Impor_Siswa_Siraya.xlsx");
 }
+
+/**
+ * Menerima object mapping berupa nama Sheet dan datanya, 
+ * kemudian mengekspornya menjadi satu file Excel (.xlsx) dengan banyak sheet.
+ * Dijalankan di sisi Client (Browser).
+ * 
+ * @param dataMap Record<string, any[]> di mana key adalah nama sheet, value adalah array of objects
+ * @param fileName Nama file (tanpa ekstensi .xlsx)
+ */
+export function exportMultiSheetExcel(dataMap: Record<string, any[]>, fileName: string) {
+  if (!dataMap || Object.keys(dataMap).length === 0) {
+    console.warn('Data kosong, tidak ada yang diekspor');
+    return;
+  }
+
+  // 1. Buat workbook kosong
+  const workbook = XLSX.utils.book_new();
+
+  // 2. Loop melalui setiap sheet dan data
+  for (const [sheetName, data] of Object.entries(dataMap)) {
+    if (data && data.length > 0) {
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      // Nama sheet di Excel maksimal 31 karakter
+      const validSheetName = sheetName.substring(0, 31);
+      XLSX.utils.book_append_sheet(workbook, worksheet, validSheetName);
+    } else {
+      // Jika data kosong, buat sheet kosong dengan pesan
+      const worksheet = XLSX.utils.json_to_sheet([{ Info: "Tidak ada data untuk modul ini" }]);
+      const validSheetName = sheetName.substring(0, 31);
+      XLSX.utils.book_append_sheet(workbook, worksheet, validSheetName);
+    }
+  }
+
+  // 3. Unduh file
+  XLSX.writeFile(workbook, `${fileName}.xlsx`);
+}

@@ -24,6 +24,11 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
     return initialState
   })
 
+  // State untuk Backup
+  const [backupUnitId, setBackupUnitId] = useState<string>("GLOBAL")
+  const [selectedModules, setSelectedModules] = useState<string[]>([])
+  const [isBackingUp, setIsBackingUp] = useState(false)
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     if (activeTab === "profil" && activeUnitTab !== "GLOBAL") {
@@ -95,8 +100,51 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
     }
   }
 
-  const handleBackup = () => {
-    toast.success("Fitur backup database akan segera hadir!")
+  const handleBackup = async () => {
+    if (selectedModules.length === 0) {
+      toast.error("Pilih minimal satu modul untuk dicadangkan!")
+      return
+    }
+
+    setIsBackingUp(true)
+    const toastId = toast.loading("Sedang menarik data dari database...")
+
+    try {
+      const { generateBackupData } = await import("@/actions/backup")
+      const result = await generateBackupData(selectedModules, backupUnitId)
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error)
+      }
+
+      toast.loading("Mempersiapkan file Excel...", { id: toastId })
+      const { exportMultiSheetExcel } = await import("@/lib/excel")
+      
+      const dateStr = new Date().toISOString().replace(/[:.]/g, '-').split('T').join('_').substring(0, 15)
+      const unitStr = backupUnitId === "GLOBAL" ? "YAYASAN" : units.find(u => u.id === backupUnitId)?.name?.replace(/\\s+/g, '_') || "UNIT"
+      
+      exportMultiSheetExcel(result.data, `Backup_Siraya_${unitStr}_${dateStr}`)
+
+      toast.success("Backup berhasil diunduh!", { id: toastId })
+    } catch (error: any) {
+      toast.error(error.message || "Gagal melakukan pencadangan data.", { id: toastId })
+    } finally {
+      setIsBackingUp(false)
+    }
+  }
+
+  const toggleModule = (mod: string) => {
+    setSelectedModules(prev => 
+      prev.includes(mod) ? prev.filter(m => m !== mod) : [...prev, mod]
+    )
+  }
+
+  const toggleAllModules = () => {
+    if (selectedModules.length === 5) {
+      setSelectedModules([])
+    } else {
+      setSelectedModules(["akademik", "keuangan", "arus_kas", "tagihan", "sistem"])
+    }
   }
 
   return (
@@ -341,17 +389,136 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
 
         {/* TAB 3: BACKUP DATA */}
         {activeTab === "backup" && (
-          <div className="py-8 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4">
-              <Database size={32} />
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
+              <div>
+                <h2 className="text-xl font-bold text-text-main mb-1">Pencadangan Database Server</h2>
+                <p className="text-text-muted text-sm">Unduh data krusial sistem ke format Excel (Multi-Sheet).</p>
+              </div>
+              <Button onClick={handleBackup} disabled={isBackingUp || selectedModules.length === 0} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all">
+                {isBackingUp ? <span className="animate-pulse">Memproses...</span> : <><Download size={18} className="mr-2" /> Unduh Backup</>}
+              </Button>
             </div>
-            <h2 className="text-xl font-bold text-text-main mb-2">Pencadangan Database Server</h2>
-            <p className="text-text-muted max-w-md mx-auto mb-6">
-              Unduh seluruh data krusial sistem (Data Master, Transaksi, Laporan, Tagihan) ke dalam satu file Excel/JSON agar Anda memiliki cadangan mandiri jika terjadi hal yang tidak diinginkan.
-            </p>
-            <Button onClick={handleBackup} className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Download size={18} className="mr-2" /> Unduh Backup Sekarang
-            </Button>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* KOLOM KIRI: SETTINGS */}
+              <div className="lg:col-span-1 space-y-6">
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
+                  <div className="flex items-center gap-2 text-blue-800 font-bold mb-3">
+                    <Building2 size={18} /> Cakupan Data (Filter)
+                  </div>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Pilih apakah ingin mem-backup seluruh data Yayasan atau spesifik per Unit Sekolah.
+                  </p>
+                  <select 
+                    value={backupUnitId}
+                    onChange={(e) => setBackupUnitId(e.target.value)}
+                    className="w-full bg-white border border-blue-200 text-blue-900 rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="GLOBAL">Seluruh Yayasan (Semua Unit)</option>
+                    {units.map((u: any) => (
+                      <option key={u.id} value={u.id}>Unit: {u.name}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
+                  <h3 className="font-bold text-text-main mb-2 flex items-center gap-2">
+                    <Info size={16} className="text-primary" /> Informasi Privasi
+                  </h3>
+                  <p className="text-xs text-text-muted leading-relaxed">
+                    Data kredensial pengguna seperti <b>Password</b> tidak akan pernah disertakan dalam hasil unduhan demi alasan keamanan.<br/><br/>
+                    Gunakan file backup ini secara bijak dan simpan di tempat yang aman (hindari komputer publik).
+                  </p>
+                </div>
+              </div>
+
+              {/* KOLOM KANAN: MODULES */}
+              <div className="lg:col-span-2">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-text-main">Pilih Modul Data yang Ingin Di-backup</h3>
+                  <button 
+                    onClick={toggleAllModules} 
+                    className="text-sm font-semibold text-primary hover:text-primary-hover transition-colors"
+                  >
+                    {selectedModules.length === 5 ? "Batalkan Semua" : "Pilih Semua Modul"}
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Modul 1 */}
+                  <div 
+                    onClick={() => toggleModule("akademik")}
+                    className={`cursor-pointer rounded-xl border p-4 transition-all flex items-start gap-4 ${selectedModules.includes("akademik") ? "bg-emerald-50 border-emerald-200 shadow-sm" : "bg-surface border-border hover:border-gray-300"}`}
+                  >
+                    <div className={`mt-1 w-5 h-5 rounded flex items-center justify-center shrink-0 border ${selectedModules.includes("akademik") ? "bg-emerald-500 border-emerald-500 text-white" : "border-gray-300 bg-white"}`}>
+                      {selectedModules.includes("akademik") && <span className="text-xs">✓</span>}
+                    </div>
+                    <div>
+                      <h4 className={`font-bold text-sm ${selectedModules.includes("akademik") ? "text-emerald-800" : "text-text-main"}`}>Data Master Akademik</h4>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Siswa, Guru, Daftar Kelas (Rombel), Jurusan, dan Tingkat.</p>
+                    </div>
+                  </div>
+
+                  {/* Modul 2 */}
+                  <div 
+                    onClick={() => toggleModule("keuangan")}
+                    className={`cursor-pointer rounded-xl border p-4 transition-all flex items-start gap-4 ${selectedModules.includes("keuangan") ? "bg-emerald-50 border-emerald-200 shadow-sm" : "bg-surface border-border hover:border-gray-300"}`}
+                  >
+                    <div className={`mt-1 w-5 h-5 rounded flex items-center justify-center shrink-0 border ${selectedModules.includes("keuangan") ? "bg-emerald-500 border-emerald-500 text-white" : "border-gray-300 bg-white"}`}>
+                      {selectedModules.includes("keuangan") && <span className="text-xs">✓</span>}
+                    </div>
+                    <div>
+                      <h4 className={`font-bold text-sm ${selectedModules.includes("keuangan") ? "text-emerald-800" : "text-text-main"}`}>Data Master Keuangan</h4>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Klasifikasi Akun, Sub-Klasifikasi, dan Bagan Akun Standar (COA).</p>
+                    </div>
+                  </div>
+
+                  {/* Modul 3 */}
+                  <div 
+                    onClick={() => toggleModule("arus_kas")}
+                    className={`cursor-pointer rounded-xl border p-4 transition-all flex items-start gap-4 ${selectedModules.includes("arus_kas") ? "bg-emerald-50 border-emerald-200 shadow-sm" : "bg-surface border-border hover:border-gray-300"}`}
+                  >
+                    <div className={`mt-1 w-5 h-5 rounded flex items-center justify-center shrink-0 border ${selectedModules.includes("arus_kas") ? "bg-emerald-500 border-emerald-500 text-white" : "border-gray-300 bg-white"}`}>
+                      {selectedModules.includes("arus_kas") && <span className="text-xs">✓</span>}
+                    </div>
+                    <div>
+                      <h4 className={`font-bold text-sm ${selectedModules.includes("arus_kas") ? "text-emerald-800" : "text-text-main"}`}>Transaksi & Arus Kas</h4>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Buku Jurnal, Kas Masuk, Kas Keluar, dan Detail Transaksi.</p>
+                    </div>
+                  </div>
+
+                  {/* Modul 4 */}
+                  <div 
+                    onClick={() => toggleModule("tagihan")}
+                    className={`cursor-pointer rounded-xl border p-4 transition-all flex items-start gap-4 ${selectedModules.includes("tagihan") ? "bg-emerald-50 border-emerald-200 shadow-sm" : "bg-surface border-border hover:border-gray-300"}`}
+                  >
+                    <div className={`mt-1 w-5 h-5 rounded flex items-center justify-center shrink-0 border ${selectedModules.includes("tagihan") ? "bg-emerald-500 border-emerald-500 text-white" : "border-gray-300 bg-white"}`}>
+                      {selectedModules.includes("tagihan") && <span className="text-xs">✓</span>}
+                    </div>
+                    <div>
+                      <h4 className={`font-bold text-sm ${selectedModules.includes("tagihan") ? "text-emerald-800" : "text-text-main"}`}>Tagihan & Pembayaran</h4>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Daftar Tagihan (SPP, DSP) dan Histori Pembayaran Siswa.</p>
+                    </div>
+                  </div>
+
+                  {/* Modul 5 */}
+                  <div 
+                    onClick={() => toggleModule("sistem")}
+                    className={`cursor-pointer rounded-xl border p-4 transition-all flex items-start gap-4 ${selectedModules.includes("sistem") ? "bg-emerald-50 border-emerald-200 shadow-sm" : "bg-surface border-border hover:border-gray-300"}`}
+                  >
+                    <div className={`mt-1 w-5 h-5 rounded flex items-center justify-center shrink-0 border ${selectedModules.includes("sistem") ? "bg-emerald-500 border-emerald-500 text-white" : "border-gray-300 bg-white"}`}>
+                      {selectedModules.includes("sistem") && <span className="text-xs">✓</span>}
+                    </div>
+                    <div>
+                      <h4 className={`font-bold text-sm ${selectedModules.includes("sistem") ? "text-emerald-800" : "text-text-main"}`}>Sistem & Akses (Global)</h4>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Manajemen User (Operator), Role, Divisi, dan Unit Sekolah.</p>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
