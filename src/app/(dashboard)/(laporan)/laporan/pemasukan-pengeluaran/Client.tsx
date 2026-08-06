@@ -6,7 +6,7 @@ import { Calendar as CalendarIcon, Share2, Printer, Search, RefreshCw, Download,
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
 import { exportToExcel } from "@/lib/excel"
-import { exportToPdfTable } from "@/lib/pdf"
+import { exportIncomeStatementPdf } from "@/lib/pdf"
 import toast from "react-hot-toast"
 
 export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], userRole, userUnitId }: { pengaturan?: any, schoolUnits?: any[], userRole?: string, userUnitId?: string }) {
@@ -134,37 +134,10 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
     const filename = `Laporan_Arus_Kas_${unitName.replace(/\s+/g, '_')}_${startDate}`
     const schoolUnitName = filterUnitId ? `UNIT ${unitName.toUpperCase()}` : (pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH")
 
-    // Construct table data
-    const tableData: any[][] = []
-    
-    // Pendapatan Section
-    tableData.push(["", "PENDAPATAN", ""])
-    data.pendapatan.forEach((p: any) => {
-      tableData.push([p.kode, p.nama, new Intl.NumberFormat("id-ID").format(p.total)])
-    })
-    tableData.push(["", "Total Pendapatan", new Intl.NumberFormat("id-ID").format(data.totalPendapatan)])
-    
-    // Spacer
-    tableData.push(["", "", ""])
-    
-    // Pengeluaran Section
-    tableData.push(["", "PENGELUARAN", ""])
-    data.pengeluaran.forEach((p: any) => {
-      tableData.push([p.kode, p.nama, new Intl.NumberFormat("id-ID").format(p.total)])
-    })
-    tableData.push(["", "Total Pengeluaran", new Intl.NumberFormat("id-ID").format(data.totalPengeluaran)])
-    
-    // Spacer
-    tableData.push(["", "", ""])
-    
-    // Saldo Bersih
-    tableData.push(["", "SALDO BERSIH", new Intl.NumberFormat("id-ID").format(data.totalPendapatan - data.totalPengeluaran)])
-
-    exportToPdfTable({
-      title: "LAPORAN PEMASUKAN DAN PENGELUARAN",
-      subtitle: `per ${startDate} - ${endDate}`,
-      headers: ["Kode", "Departemen / Akun", "Saldo (Rp)"],
-      data: tableData,
+    exportIncomeStatementPdf({
+      startDate: startDate || "",
+      endDate: endDate || "",
+      data: data,
       filename,
       schoolUnitName,
       unitInfo: {
@@ -172,8 +145,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
         phone: pengaturan?.telepon,
         email: pengaturan?.email,
         website: pengaturan?.website
-      },
-      orientation: 'portrait'
+      }
     })
     
     toast.success("PDF berhasil diunduh")

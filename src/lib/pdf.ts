@@ -312,3 +312,208 @@ export function exportResiPdf(data: PdfResiOptions) {
 
   doc.save(`Kwitansi_${data.noReferensi}.pdf`)
 }
+
+export interface IncomeStatementPdfOptions {
+  startDate: string
+  endDate: string
+  data: {
+    pendapatan: any[]
+    totalPendapatan: number
+    pengeluaran: any[]
+    totalPengeluaran: number
+  }
+  filename: string
+  schoolUnitName?: string
+  unitInfo?: {
+    address?: string | null
+    phone?: string | null
+    email?: string | null
+    website?: string | null
+  }
+}
+
+/**
+ * Ekspor Laporan Pemasukan & Pengeluaran ke format Laba/Rugi (Income Statement) profesional.
+ */
+export function exportIncomeStatementPdf({
+  startDate,
+  endDate,
+  data,
+  filename,
+  schoolUnitName = "YAYASAN AL BASYARIAH",
+  unitInfo
+}: IncomeStatementPdfOptions) {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  })
+  
+  const pageWidth = doc.internal.pageSize.getWidth()
+  
+  // 1. KOP SURAT
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(10)
+  doc.setTextColor(100, 116, 139)
+  doc.text("YAYASAN AL-BASYARIAH / SIRAYA EDUCATION", pageWidth / 2, 12, { align: "center" })
+
+  doc.setFontSize(15)
+  doc.setTextColor(15, 23, 42)
+  doc.text(schoolUnitName.toUpperCase(), pageWidth / 2, 18, { align: "center" })
+
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(8.5)
+  doc.setTextColor(71, 85, 105)
+  
+  let kopSubtitle = "Jl. Pendidikan Nusantara No. 123, Bandung, Jawa Barat • Telp: (022) 1234567 • Email: info@siraya.edu"
+  if (unitInfo) {
+    const parts = []
+    if (unitInfo.address) parts.push(unitInfo.address)
+    if (unitInfo.phone) parts.push(`Telp: ${unitInfo.phone}`)
+    if (unitInfo.email) parts.push(`Email: ${unitInfo.email}`)
+    if (unitInfo.website) parts.push(`Web: ${unitInfo.website}`)
+    if (parts.length > 0) {
+      kopSubtitle = parts.join(' • ')
+    }
+  }
+  doc.text(kopSubtitle, pageWidth / 2, 23, { align: "center" })
+
+  doc.setLineWidth(0.8)
+  doc.setDrawColor(15, 23, 42)
+  doc.line(14, 26, pageWidth - 14, 26)
+  doc.setLineWidth(0.2)
+  doc.line(14, 27.5, pageWidth - 14, 27.5)
+
+  // 2. JUDUL
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(12)
+  doc.setTextColor(37, 99, 235) // Blue
+  doc.text("LAPORAN PEMASUKAN DAN PENGELUARAN", pageWidth / 2, 36, { align: "center" })
+  
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(9)
+  doc.setTextColor(225, 29, 72) // Rose
+  doc.text(`per ${startDate} - ${endDate}`, pageWidth / 2, 41, { align: "center" })
+
+  // 3. TABEL LABA RUGI (Custom AutoTable)
+  const formatRp = (val: number) => {
+    return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(val)
+  }
+
+  const tableData: any[] = []
+
+  // --- PENDAPATAN ---
+  tableData.push([
+    { content: 'PENDAPATAN', colSpan: 2, styles: { textColor: [37, 99, 235], fontStyle: 'bold', fontSize: 9 } },
+    { content: `Rp.`, styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } },
+    { content: formatRp(data.totalPendapatan), styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } }
+  ])
+  tableData.push([
+    { content: '  PENDAPATAN', colSpan: 4, styles: { textColor: [16, 185, 129], fontStyle: 'bold', fontSize: 8 } }
+  ])
+  
+  if (data.pendapatan.length === 0) {
+    tableData.push([
+      { content: '    Tidak ada data pendapatan', colSpan: 4, styles: { textColor: [156, 163, 175], fontStyle: 'italic' } }
+    ])
+  } else {
+    data.pendapatan.forEach(p => {
+      tableData.push([
+        { content: `    ${p.kode}`, styles: { textColor: [59, 130, 246] } },
+        { content: p.nama, styles: { textColor: [75, 85, 99] } },
+        { content: `Rp.`, styles: { textColor: [75, 85, 99], halign: 'right' } },
+        { content: formatRp(p.total), styles: { textColor: [75, 85, 99], halign: 'right' } }
+      ])
+    })
+  }
+
+  tableData.push([
+    { content: 'Total PENDAPATAN', colSpan: 2, styles: { textColor: [16, 185, 129], fontStyle: 'bold' } },
+    { content: `Rp.`, styles: { textColor: [16, 185, 129], fontStyle: 'bold', halign: 'right' } },
+    { content: formatRp(data.totalPendapatan), styles: { textColor: [16, 185, 129], fontStyle: 'bold', halign: 'right' } }
+  ])
+  tableData.push([
+    { content: 'Total PENDAPATAN', colSpan: 2, styles: { textColor: [37, 99, 235], fontStyle: 'bold' } },
+    { content: `Rp.`, styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } },
+    { content: formatRp(data.totalPendapatan), styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } }
+  ])
+  
+  // Spacer
+  tableData.push([{ content: '', colSpan: 4, styles: { cellPadding: 2 } }])
+
+  // --- BIAYA BEBAN ---
+  tableData.push([
+    { content: 'BIAYA BEBAN', colSpan: 2, styles: { textColor: [37, 99, 235], fontStyle: 'bold', fontSize: 9 } },
+    { content: `Rp.`, styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } },
+    { content: formatRp(data.totalPengeluaran), styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } }
+  ])
+  tableData.push([
+    { content: '  PENGELUARAN', colSpan: 4, styles: { textColor: [16, 185, 129], fontStyle: 'bold', fontSize: 8 } }
+  ])
+  
+  if (data.pengeluaran.length === 0) {
+    tableData.push([
+      { content: '    Tidak ada data pengeluaran', colSpan: 4, styles: { textColor: [156, 163, 175], fontStyle: 'italic' } }
+    ])
+  } else {
+    data.pengeluaran.forEach(p => {
+      tableData.push([
+        { content: `    ${p.kode}`, styles: { textColor: [59, 130, 246] } },
+        { content: p.nama, styles: { textColor: [75, 85, 99] } },
+        { content: `Rp.`, styles: { textColor: [75, 85, 99], halign: 'right' } },
+        { content: formatRp(p.total), styles: { textColor: [75, 85, 99], halign: 'right' } }
+      ])
+    })
+  }
+
+  tableData.push([
+    { content: 'Total PENGELUARAN', colSpan: 2, styles: { textColor: [16, 185, 129], fontStyle: 'bold' } },
+    { content: `Rp.`, styles: { textColor: [16, 185, 129], fontStyle: 'bold', halign: 'right' } },
+    { content: formatRp(data.totalPengeluaran), styles: { textColor: [16, 185, 129], fontStyle: 'bold', halign: 'right' } }
+  ])
+  tableData.push([
+    { content: 'Total BIAYA BEBAN', colSpan: 2, styles: { textColor: [37, 99, 235], fontStyle: 'bold' } },
+    { content: `Rp.`, styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } },
+    { content: formatRp(data.totalPengeluaran), styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } }
+  ])
+
+  // Spacer
+  tableData.push([{ content: '', colSpan: 4, styles: { cellPadding: 2 } }])
+
+  // --- SALDO ---
+  tableData.push([
+    { content: 'Selisih Pemasukan dan Pengeluaran', colSpan: 2, styles: { textColor: [37, 99, 235], fontStyle: 'bold', fontSize: 9 } },
+    { content: `Rp.`, styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } },
+    { content: formatRp(data.totalPendapatan - data.totalPengeluaran), styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } }
+  ])
+
+  autoTable(doc, {
+    startY: 48,
+    head: [[
+      { content: 'Semua Departemen', colSpan: 2, styles: { halign: 'left', textColor: [100, 116, 139] } },
+      { content: 'SALDO', colSpan: 2, styles: { halign: 'right', textColor: [244, 63, 94] } }
+    ]],
+    body: tableData,
+    theme: 'plain',
+    styles: {
+      font: 'helvetica',
+      fontSize: 8,
+      cellPadding: 1.5,
+      overflow: 'linebreak'
+    },
+    headStyles: {
+      fillColor: [255, 255, 255],
+      fontStyle: 'bold',
+      lineColor: [254, 226, 226], // Rose-200
+      lineWidth: { top: 0, right: 0, bottom: 0.5, left: 0 }
+    },
+    columnStyles: {
+      0: { cellWidth: 30 },
+      1: { cellWidth: 'auto' },
+      2: { cellWidth: 10, halign: 'right' },
+      3: { cellWidth: 25, halign: 'right' }
+    }
+  })
+
+  doc.save(`${filename}.pdf`)
+}
