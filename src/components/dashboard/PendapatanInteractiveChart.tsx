@@ -57,7 +57,7 @@ export default function PendapatanInteractiveChart({ hariIniData, mingguIniData,
         </div>
       </div>
 
-      <div className="flex-1 min-h-[300px]">
+      <div className="flex-1 w-full min-h-0">
         {data && data.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>

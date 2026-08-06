@@ -6,7 +6,7 @@ import {
   CheckCircle2, Clock, PlusCircle, BookOpen, ArrowRight, UserCheck, 
   HeartHandshake, Sparkles, Activity, Wallet
 } from "lucide-react"
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine } from 'recharts'
 import Link from 'next/link'
 import PendapatanInteractiveChart from './PendapatanInteractiveChart'
 import toast from "react-hot-toast"
