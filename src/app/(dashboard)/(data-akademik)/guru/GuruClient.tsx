@@ -420,19 +420,16 @@ export default function GuruClient({
               <tr>
 
                 <th className="p-4 font-semibold text-center w-12">NO</th>
-                <th className="p-4 font-semibold text-left">NIP / NUPTK / NIK</th>
-                <th className="p-4 font-semibold text-left">NAMA LENGKAP</th>
-                <th className="p-4 font-semibold text-left">PENDIDIKAN</th>
-                <th className="p-4 font-semibold text-left">UNIT SEKOLAH</th>
-                <th className="p-4 font-semibold text-left">STATUS PEGAWAI</th>
-                <th className="p-4 font-semibold text-left">BIDANG STUDI</th>
+                <th className="p-4 font-semibold text-left">PROFIL GURU</th>
+                <th className="p-4 font-semibold text-left hidden md:table-cell">UNIT & STATUS</th>
+                <th className="p-4 font-semibold text-left hidden lg:table-cell">TUGAS & KUALIFIKASI</th>
                 {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-sm">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={isReadOnly ? 7 : 8} className="py-12 text-center">
+                  <td colSpan={isReadOnly ? 4 : 5} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center text-text-muted">
                       <GraduationCap className="w-12 h-12 stroke-[1.2] text-text-muted/40 mb-3" />
                       <p className="font-medium text-text-main">Belum Ada Data Guru</p>
@@ -449,28 +446,25 @@ export default function GuruClient({
 
                       <td className="p-4 text-center text-text-main">{absoluteIdx}</td>
                       <td className="p-4">
-                        <div className="font-mono text-sm text-text-main font-semibold">
-                          {item.nip || "-"}
-                        </div>
-                      </td>
-                      <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gray-100 flex-shrink-0 border border-border overflow-hidden flex items-center justify-center">
-                            <User size={16} className="text-gray-400" />
+                          <div className="w-10 h-10 rounded-full bg-emerald-50 flex-shrink-0 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                            <User size={18} />
                           </div>
-                          <div className="font-bold text-text-main">
-                            {item.name}
+                          <div>
+                            <div className="font-bold text-text-main">
+                              {item.name}
+                            </div>
+                            <div className="font-mono text-xs text-text-muted mt-0.5">
+                              {item.nip || "NIP Belum Diatur"}
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="p-4 text-sm font-medium text-text-muted">
-                        {item.pendidikan || "-"}
-                      </td>
-                      <td className="p-4 font-medium text-text-main">
-                        {item.unitSekolah?.name || "-"}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className={`inline-flex items-center w-fit px-2 py-0.5 rounded text-[11px] font-semibold ${
+                      <td className="p-4 hidden md:table-cell">
+                        <div className="font-medium text-text-main mb-1.5">
+                          {item.unitSekolah?.name || "-"}
+                        </div>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
                           item.statusKepegawaian === "GTY" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
                           item.statusKepegawaian === "PNS" ? "bg-purple-50 text-purple-700 border border-purple-200" :
                           "bg-blue-50 text-blue-700 border border-blue-200"
@@ -478,8 +472,13 @@ export default function GuruClient({
                           {item.statusKepegawaian}
                         </span>
                       </td>
-                      <td className="p-4 text-sm font-medium text-text-muted truncate max-w-[200px]" title={item.bidangStudi || ""}>
-                        {item.bidangStudi || "-"}
+                      <td className="p-4 hidden lg:table-cell">
+                        <div className="text-sm font-medium text-text-main truncate max-w-[200px]" title={item.bidangStudi || ""}>
+                          {item.bidangStudi || "Belum Ditugaskan"}
+                        </div>
+                        <div className="text-xs text-text-muted mt-1">
+                          Pend. Terakhir: <span className="font-semibold">{item.pendidikan || "-"}</span>
+                        </div>
                       </td>
                       {!isReadOnly && (
                         <td className="p-4">
@@ -487,14 +486,14 @@ export default function GuruClient({
                             <Link
                               href={`/guru/${item.id}`}
                               className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors"
-                              title="Detail"
+                              title="Detail 360°"
                             >
                               <Eye size={16} />
                             </Link>
                             <button
                               onClick={() => handleEdit(item)}
                               className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg border border-green-200 hover:border-green-600 transition-colors"
-                              title="Edit"
+                              title="Edit Data"
                             >
                               <Edit2 size={16} />
                             </button>
