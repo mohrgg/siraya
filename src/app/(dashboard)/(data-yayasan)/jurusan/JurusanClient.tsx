@@ -14,7 +14,8 @@ import toast from "react-hot-toast"
 type Major = any
 
 export default function JurusanClient({ initialData, units, userRole }: { initialData: Major[], units: any[], userRole?: string }) {
-  const isReadOnly = userRole === "KEPALA_SEKOLAH"
+  const isReadOnly = false
+  const isUnitLocked = !["ADMIN", "KEPALA_SEKOLAH"].includes(userRole || "")
   const [activeUnitId, setActiveUnitId] = useState<string>(units[0]?.id || "")
   const [data, setData] = useState<Major[]>(initialData)
   const [searchTerm, setSearchTerm] = useState("")
@@ -222,7 +223,12 @@ export default function JurusanClient({ initialData, units, userRole }: { initia
               <select
                 value={activeUnitId}
                 onChange={(e) => setActiveUnitId(e.target.value)}
-                className="px-3 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium text-text-main"
+                disabled={isUnitLocked}
+                className={`px-3 py-2 border rounded-xl focus:outline-none text-sm font-medium min-w-[180px] ${
+                  isUnitLocked 
+                    ? "cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200" 
+                    : "cursor-pointer bg-bg border-border text-text-main focus:ring-2 focus:ring-primary/50"
+                }`}
               >
                 {units.map((unit: any) => (
                   <option key={unit.id} value={unit.id}>{unit.name}</option>

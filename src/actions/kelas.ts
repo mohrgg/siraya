@@ -64,7 +64,7 @@ export async function getJurusan() {
 
 export async function tambahJurusan(data: { name: string, code: string, unitSekolahId: string }) {
   const session = await auth()
-  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+  if (!session || !["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   const existing = await prisma.jurusan.findFirst({
     where: {
@@ -176,7 +176,7 @@ export async function hapusTingkatan(id: string) {
 
 export async function editJurusan(id: string, data: { name: string, code: string, unitSekolahId: string }) {
   const session = await auth()
-  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+  if (!session || !["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"].includes(session.user.role)) throw new Error("Akses ditolak.")
 
   const existing = await prisma.jurusan.findFirst({
     where: {
@@ -206,7 +206,7 @@ export async function editJurusan(id: string, data: { name: string, code: string
 
 export async function hapusJurusan(id: string) {
   const session = await auth()
-  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+  if (!session || !["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"].includes(session.user.role)) throw new Error("Akses ditolak.")
   const existing = await prisma.jurusan.findUnique({ where: { id } })
   const result = await prisma.jurusan.update({ 
     where: { id }, 

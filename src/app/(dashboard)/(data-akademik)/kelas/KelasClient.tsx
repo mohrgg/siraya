@@ -84,9 +84,10 @@ export default function KelasClient({
           "Tahun Akademik": c.tahunAkademik?.name || "-",
           "Wali Kelas": c.waliKelas || "Belum ditentukan"
         }))
+        const unitObjForKop = schoolUnits.find((u: any) => u.id === activeUnitId) || schoolUnits[0]
         exportToExcel(mappedData, `Rombel_${unitName}_${dateStr}`.replace(/\s+/g, '_'), {
           title: "Daftar Rombel / Kelas",
-          unitInfo: { name: unitName }
+          unitInfo: unitObjForKop
         })
         toast.success("Berhasil mengekspor data rombel (Excel)")
         return
@@ -143,9 +144,10 @@ export default function KelasClient({
       const statusName = data.activeTab === "murid" ? "Aktif" : (data.filterAlumniStatus || "SemuaStatus")
       const finalFileName = `Siswa_${unitName}_${statusName}${filterTags}_${dateStr}`.replace(/\s+/g, '_')
 
+      const unitObjForKop = schoolUnits.find((u: any) => u.id === activeUnitId) || schoolUnits[0]
       exportToExcel(mappedData, finalFileName, {
         title: "Daftar Data Siswa",
-        unitInfo: { name: unitName }
+        unitInfo: unitObjForKop
       })
       toast.success("Berhasil mengekspor data (Excel)")
     } catch (error) {
@@ -186,6 +188,7 @@ export default function KelasClient({
           data: pdfRows,
           filename: `Daftar_Rombel_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
           schoolUnitName,
+          unitInfo: unitObj,
           orientation: 'portrait'
         })
       } else {
@@ -226,6 +229,7 @@ export default function KelasClient({
           data: pdfRows,
           filename: `Daftar_Murid_${unitObj?.name || "Semua"}_${statusName}_${dateStr}`.replace(/\s+/g, '_'),
           schoolUnitName,
+          unitInfo: unitObj,
           orientation: 'landscape'
         })
       }

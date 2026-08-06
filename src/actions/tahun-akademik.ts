@@ -17,7 +17,7 @@ export async function getTahunAkademik() {
 
 export async function tambahTahunAkademik(data: { name: string, isActive: boolean }) {
   const session = await auth()
-  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+  if (!session || session.user.role !== "ADMIN") throw new Error("Akses ditolak. Hanya Super Admin yang diizinkan.")
 
   // If new year is set to active, deactivate all others globally
   if (data.isActive) {
@@ -37,7 +37,7 @@ export async function tambahTahunAkademik(data: { name: string, isActive: boolea
 
 export async function editTahunAkademik(id: string, data: { name: string, isActive: boolean }) {
   const session = await auth()
-  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+  if (!session || session.user.role !== "ADMIN") throw new Error("Akses ditolak. Hanya Super Admin yang diizinkan.")
 
   const year = await prisma.tahunAkademik.findUnique({ where: { id } })
   if (!year) throw new Error("Not found")

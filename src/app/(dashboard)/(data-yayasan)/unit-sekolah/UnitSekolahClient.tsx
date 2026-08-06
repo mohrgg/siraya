@@ -13,7 +13,7 @@ type UnitSekolah = { id: string, name: string, level: string, address: string | 
 
 export default function UnitSekolahClient({ initialData, userRole }: { initialData: UnitSekolah[], userRole?: string }) {
   const router = useRouter()
-  const isReadOnly = userRole === "KEPALA_SEKOLAH"
+  const isReadOnly = userRole !== "ADMIN"
   const [data, setData] = useState<UnitSekolah[]>(initialData)
   const [isAdding, setIsAdding] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)

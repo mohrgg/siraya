@@ -14,7 +14,7 @@ type AcademicYear = any
 
 export default function TahunAkademikClient({ initialData, userRole }: { initialData: AcademicYear[], userRole?: string }) {
   const router = useRouter()
-  const isReadOnly = userRole === "KEPALA_SEKOLAH"
+  const isReadOnly = userRole !== "ADMIN"
   const [data, setData] = useState<AcademicYear[]>(initialData)
   const [searchTerm, setSearchTerm] = useState("")
   
