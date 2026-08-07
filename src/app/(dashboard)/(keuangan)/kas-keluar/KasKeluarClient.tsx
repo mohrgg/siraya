@@ -14,7 +14,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 
 type TransaksiWithRelations = any // Type will be inferred properly in real project
 
-export default function KasKeluarClient({ initialData, userRole, pengaturan }: { initialData: TransaksiWithRelations[], userRole: string, pengaturan?: any }) {
+export default function KasKeluarClient({ initialData, userRole, pengaturan, schoolUnits = [], userUnitId }: { initialData: TransaksiWithRelations[], userRole: string, pengaturan?: any, schoolUnits?: any[], userUnitId?: string }) {
   const router = useRouter()
   const [data, setData] = useState(initialData)
   const [searchTerm, setSearchTerm] = useState("")
@@ -90,9 +90,11 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan }: {
         "Revisi": item.isEdited ? "Ya" : "-"
       }))
       
+      const unitObj = userUnitId ? schoolUnits.find(u => u.id === userUnitId) : undefined
+
       exportToExcel(exportData, `Kas_Keluar_${format(new Date(), "yyyyMMdd")}`, {
         title: "Laporan Kas Keluar (Pengeluaran)",
-        unitInfo: pengaturan || { name: "Yayasan Siraya" }
+        unitInfo: unitObj || pengaturan || { name: "Yayasan Siraya" }
       })
       toast.success("Berhasil mengekspor Excel")
     } catch (error) {
@@ -120,14 +122,16 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan }: {
         item.status
       ])
 
+      const unitObj = userUnitId ? schoolUnits.find(u => u.id === userUnitId) : undefined
+
       exportToPdfTable({
         title: "Laporan Kas Keluar (Pengeluaran)",
         subtitle: `Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
         headers: tableColumn,
         data: tableRows,
         filename: `Kas_Keluar_${format(new Date(), "yyyyMMdd")}`,
-        schoolUnitName: pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH",
-        unitInfo: pengaturan,
+        schoolUnitName: unitObj ? `UNIT ${unitObj.name.toUpperCase()} SIRAYA` : (pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH"),
+        unitInfo: unitObj || pengaturan,
         orientation: 'landscape'
       })
 

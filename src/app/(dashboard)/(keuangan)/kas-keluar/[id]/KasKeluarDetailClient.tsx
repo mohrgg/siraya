@@ -49,7 +49,7 @@ export default function KasKeluarDetailClient({ transaksi }: { transaksi: any })
       const doc = new jsPDF('landscape', 'mm', 'a5') // A5 landscape for resi
       const pageWidth = doc.internal.pageSize.getWidth()
       
-      let currentY = drawKopSurat(doc, pageWidth, "YAYASAN AL BASYARIAH") + 8
+      let currentY = drawKopSurat(doc, pageWidth, transaksi.unitSekolah ? `UNIT ${transaksi.unitSekolah.name.toUpperCase()} SIRAYA` : "YAYASAN AL BASYARIAH", transaksi.unitSekolah || undefined) + 8
       
       doc.setFontSize(12)
       doc.setFont("helvetica", "bold")
@@ -116,7 +116,7 @@ export default function KasKeluarDetailClient({ transaksi }: { transaksi: any })
       const doc = new jsPDF('portrait')
       const pageWidth = doc.internal.pageSize.getWidth()
       
-      let currentY = drawKopSurat(doc, pageWidth, "YAYASAN AL BASYARIAH") + 8
+      let currentY = drawKopSurat(doc, pageWidth, transaksi.unitSekolah ? `UNIT ${transaksi.unitSekolah.name.toUpperCase()} SIRAYA` : "YAYASAN AL BASYARIAH", transaksi.unitSekolah || undefined) + 8
       
       doc.setFontSize(12)
       doc.setFont("helvetica", "bold")

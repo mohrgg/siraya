@@ -292,6 +292,7 @@ export async function getKasKeluarById(id: string) {
       pembuat: { select: { name: true } },
       divisi: { select: { name: true } },
       penerima: { select: { name: true } },
+      unitSekolah: true,
       detail: {
         include: {
           akun: {

@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getKasMasuk } from "@/actions/kas-masuk"
-import { getPengaturan } from "@/actions/pengaturan"
+import { getPengaturan, getUnitSekolahList } from "@/actions/pengaturan"
 import KasMasukClient from "./KasMasukClient"
 
 export default async function KasMasukPage() {
@@ -10,6 +10,8 @@ export default async function KasMasukPage() {
   
   const initialData = await getKasMasuk()
   const pengaturan = await getPengaturan()
+  const schoolUnits = await getUnitSekolahList()
+  const userUnitId = (session.user as any).unitSekolahId
 
-  return <KasMasukClient initialData={initialData} userRole={(session.user as any).role} pengaturan={pengaturan} />
+  return <KasMasukClient initialData={initialData} userRole={(session.user as any).role} pengaturan={pengaturan} schoolUnits={schoolUnits} userUnitId={userUnitId} />
 }

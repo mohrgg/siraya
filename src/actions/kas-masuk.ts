@@ -271,6 +271,7 @@ export async function getKasMasukById(id: string) {
     where: { id },
     include: {
       pembuat: { select: { name: true } },
+      unitSekolah: true,
       detail: {
         include: {
           akun: {
