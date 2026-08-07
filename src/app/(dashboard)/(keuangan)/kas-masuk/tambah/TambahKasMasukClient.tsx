@@ -15,7 +15,7 @@ type KasMasukLine = {
   deskripsi: string
 }
 
-export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccounts }: { kasBankAccounts: any[], pendapatanAccounts: any[] }) {
+export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccounts, schoolUnits = [], userUnitId }: { kasBankAccounts: any[], pendapatanAccounts: any[], schoolUnits?: any[], userUnitId?: string }) {
   const router = useRouter()
   
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -31,6 +31,23 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
   const [lines, setLines] = useState<KasMasukLine[]>([
     { id: crypto.randomUUID(), akunId: "", nilai: 0, deskripsi: "" }
   ])
+  
+  const [selectedUnit, setSelectedUnit] = useState<string>(userUnitId || "")
+
+  // Filter accounts based on selectedUnit
+  const filteredKasAccounts = kasBankAccounts.filter(akun => 
+    !akun.unitSekolahId || akun.unitSekolahId === selectedUnit
+  )
+  
+  const filteredPendapatanAccounts = pendapatanAccounts.filter(akun => 
+    !akun.unitSekolahId || akun.unitSekolahId === selectedUnit
+  )
+
+  // Reset selected accounts when unit changes
+  useEffect(() => {
+    setHeader(prev => ({ ...prev, akunPenerimaId: "" }))
+    setLines([{ id: crypto.randomUUID(), akunId: "", nilai: 0, deskripsi: "" }])
+  }, [selectedUnit])
 
   // Fetch / Generate No Referensi when date changes
   useEffect(() => {
@@ -74,6 +91,7 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
         noFormulir: header.noFormulir,
         namaPihakKetiga: header.namaPihakKetiga,
         deskripsi: header.deskripsi,
+        unitSekolahId: selectedUnit || undefined,
         details: lines.map(l => ({
           akunId: l.akunId,
           nilai: Number(l.nilai),
@@ -120,6 +138,30 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
             <div className="flex flex-col gap-1.5 lg:col-span-1">
+              <label className="text-sm font-semibold text-text-main">Pilih Unit Sekolah <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <select 
+                  className={`w-full pl-4 pr-10 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none text-sm font-medium ${
+                    userUnitId 
+                      ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed' 
+                      : 'bg-bg border-border text-text-main'
+                  }`}
+                  value={selectedUnit}
+                  onChange={e => setSelectedUnit(e.target.value)}
+                  disabled={!!userUnitId}
+                  required
+                >
+                  <option value="">Pusat / Yayasan (Tanpa Unit)</option>
+                  {schoolUnits.map(unit => (
+                    <option key={unit.id} value={unit.id}>{unit.name}</option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+              </div>
+              <span className="text-xs text-text-muted">Unit akan mengunci pilihan akun transaksi.</span>
+            </div>
+
+            <div className="flex flex-col gap-1.5 lg:col-span-1">
               <label className="text-sm font-semibold text-text-main">Masuk Ke Akun Kas/Bank <span className="text-red-500">*</span></label>
               <div className="relative">
                 <select 
@@ -129,7 +171,7 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
                   required
                 >
                   <option value="" disabled>-- Pilih Dompet/Rekening --</option>
-                  {kasBankAccounts.map(akun => (
+                  {filteredKasAccounts.map(akun => (
                     <option key={akun.id} value={akun.id}>{akun.kode} - {akun.nama}</option>
                   ))}
                 </select>
@@ -218,7 +260,7 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
               </thead>
               <tbody className="divide-y divide-border">
                 {lines.map((line, idx) => {
-                  const selectedAkun = pendapatanAccounts.find(a => a.id === line.akunId)
+                  const selectedAkun = filteredPendapatanAccounts.find(a => a.id === line.akunId)
                   const kodeAkun = selectedAkun ? selectedAkun.kode : ""
 
                   return (
@@ -231,7 +273,7 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
                           required
                         >
                           <option value="" disabled>Pilih Ke Akun</option>
-                          {pendapatanAccounts.map(akun => (
+                          {filteredPendapatanAccounts.map(akun => (
                             <option key={akun.id} value={akun.id}>[{akun.kode}] {akun.nama}</option>
                           ))}
                         </select>

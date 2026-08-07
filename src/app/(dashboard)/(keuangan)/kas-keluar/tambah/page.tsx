@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getKasBankAccounts, getPengeluaranAccounts, getDivisiList, getPenggunaList } from "@/actions/kas-keluar"
+import { getUnitSekolahList } from "@/actions/pengaturan"
 import TambahKasKeluarClient from "./TambahKasKeluarClient"
 
 export default async function TambahKasKeluarPage() {
@@ -11,6 +12,7 @@ export default async function TambahKasKeluarPage() {
   const pengeluaranAccounts = await getPengeluaranAccounts()
   const divisiList = await getDivisiList()
   const penggunaList = await getPenggunaList()
+  const schoolUnits = await getUnitSekolahList()
 
   return (
     <TambahKasKeluarClient 
@@ -18,6 +20,8 @@ export default async function TambahKasKeluarPage() {
       pengeluaranAccounts={pengeluaranAccounts} 
       divisiList={divisiList}
       penggunaList={penggunaList}
+      schoolUnits={schoolUnits}
+      userUnitId={(session.user as any).unitSekolahId}
     />
   )
 }

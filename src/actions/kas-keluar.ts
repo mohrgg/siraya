@@ -177,6 +177,7 @@ export type KasKeluarPayload = {
   divisiId?: string
   deskripsi: string
   sumber?: string
+  unitSekolahId?: string
   details: { // DEBIT lines (Biaya)
     akunId: string
     nilai: number
@@ -195,6 +196,8 @@ export async function createKasKeluar(data: KasKeluarPayload) {
 
   const totalNilai = data.details.reduce((sum, item) => sum + item.nilai, 0)
   
+  const unitToSave = user.role === "ADMIN" ? (data.unitSekolahId || null) : user.unitSekolahId
+
   // Start a transaction for Double Entry Bookkeeping
   const result = await prisma.$transaction(async (tx) => {
     // 1. Create the Header Transaksi
@@ -211,7 +214,7 @@ export async function createKasKeluar(data: KasKeluarPayload) {
         namaPihakKetiga: data.namaPihakKetiga,
         penerimaId: data.penerimaId || null,
         divisiId: data.divisiId,
-        unitSekolahId: user.unitSekolahId,
+        unitSekolahId: unitToSave,
         pembuatId: user.id,
       }
     })

@@ -379,14 +379,17 @@ export default function PembuatanTagihanClient({
               <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
-                    <th className="p-4 font-semibold text-center w-12 sticky left-0 bg-bg z-20 shadow-[1px_0_0_0_#e2e8f0]">NO</th>
-                    <th className="p-4 font-semibold min-w-[200px] sticky left-12 bg-bg z-20 shadow-[1px_0_0_0_#e2e8f0]">SISWA/I</th>
+                    <th className="p-4 font-semibold text-center w-12 sticky left-0 bg-bg z-30 shadow-[1px_0_0_0_#e2e8f0]">NO</th>
+                    <th className="p-4 font-semibold min-w-[200px] sticky left-12 bg-bg z-30 shadow-[1px_0_0_0_#e2e8f0]">SISWA/I</th>
                     
                     {akunColumns.map(col => (
-                      <th key={col.id} className="p-4 font-semibold text-center min-w-[150px] relative group">
+                      <th key={col.id} className={`p-4 font-semibold text-center min-w-[150px] relative group ${!isReadOnly ? 'bg-emerald-50/50 text-emerald-700 border-x border-emerald-100/50' : ''}`}>
                         <div className="flex items-center justify-center gap-2">
                           <div>
-                            {col.nama} <br/><span className="text-[10px] opacity-70">[{col.kode}]</span>
+                            <span className="flex items-center justify-center gap-1.5">
+                              {col.nama} {!isReadOnly && <Edit2 size={12} className="opacity-60" />}
+                            </span>
+                            <span className={`text-[10px] ${!isReadOnly ? 'opacity-80 text-emerald-600/80' : 'opacity-70'}`}>[{col.kode}]</span>
                           </div>
                           {!isReadOnly && (
                             <button 
@@ -435,7 +438,7 @@ export default function PembuatanTagihanClient({
                     ))}
                     
                     <th className="p-4 font-semibold text-right min-w-[150px]">TAGIHAN BERJALAN (TOTAL)</th>
-                    {!isReadOnly && <th className="p-4 font-semibold text-center w-24 sticky right-0 bg-bg z-20 shadow-[-1px_0_0_0_#e2e8f0]">AKSI</th>}
+                    {!isReadOnly && <th className="p-4 font-semibold text-center w-24 sticky right-0 bg-bg z-30 shadow-[-1px_0_0_0_#e2e8f0]">AKSI</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -454,10 +457,10 @@ export default function PembuatanTagihanClient({
                       
                       return (
                         <tr key={row.id} className={`border-b border-border/50 hover:bg-bg/50 transition-colors ${row.isDirty ? 'bg-amber-50/30' : ''}`}>
-                          <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                          <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-20 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
                             {idx + 1}.
                           </td>
-                          <td className="p-4 sticky left-12 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                          <td className="p-4 sticky left-12 bg-white z-20 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
                             <p className="font-semibold text-text-main leading-tight truncate max-w-[200px]" title={row.name}>{row.name}</p>
                             <p className="text-xs text-text-muted mt-0.5">{row.nisn} • {row.formNo}</p>
                           </td>
@@ -492,7 +495,7 @@ export default function PembuatanTagihanClient({
                             Rp. {formatRupiah(rowTotal)}
                           </td>
                           {!isReadOnly && (
-                            <td className="p-4 text-center sticky right-0 bg-white z-10 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                            <td className="p-4 text-center sticky right-0 bg-white z-20 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
                               <Button 
                                 size="sm"
                                 variant="outline"
