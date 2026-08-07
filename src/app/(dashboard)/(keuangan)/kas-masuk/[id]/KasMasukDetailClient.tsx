@@ -44,25 +44,27 @@ export default function KasMasukDetailClient({ transaksi }: { transaksi: any }) 
     try {
       const { jsPDF } = await import("jspdf")
       const autoTable = (await import("jspdf-autotable")).default
+      const { drawKopSurat } = await import("@/lib/pdf")
       
-      const doc = new jsPDF('portrait')
+      const doc = new jsPDF('landscape', 'mm', 'a5') // A5 landscape for resi
+      const pageWidth = doc.internal.pageSize.getWidth()
       
-      // Header
-      doc.setFontSize(16)
-      doc.setFont("helvetica", "bold")
-      doc.text("YAYASAN AL BASYARIAH", 14, 20)
+      let currentY = drawKopSurat(doc, pageWidth, "YAYASAN AL BASYARIAH") + 8
+      
       doc.setFontSize(12)
-      doc.setFont("helvetica", "normal")
-      doc.text("RESI BUKTI PENERIMAAN KAS", 14, 28)
-      doc.setLineWidth(0.5)
-      doc.line(14, 32, 196, 32)
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(5, 150, 105)
+      doc.text("BUKTI PENERIMAAN KAS", pageWidth / 2, currentY, { align: "center" })
+      currentY += 8
       
       // Info
+      doc.setTextColor(15, 23, 42)
+      doc.setFont("helvetica", "normal")
       doc.setFontSize(10)
-      doc.text(`No Referensi : ${transaksi.noReferensi}`, 14, 42)
-      doc.text(`Tanggal      : ${format(new Date(transaksi.tanggal), "dd-MM-yyyy")}`, 14, 48)
-      doc.text(`Terima Dari  : ${transaksi.namaPihakKetiga || "-"}`, 120, 42)
-      doc.text(`Ke Akun      : ${detailDebit[0]?.akun?.nama || "-"}`, 120, 48)
+      doc.text(`No Referensi : ${transaksi.noReferensi}`, 14, currentY)
+      doc.text(`Tanggal      : ${format(new Date(transaksi.tanggal), "dd-MM-yyyy")}`, 14, currentY + 6)
+      doc.text(`Terima Dari  : ${transaksi.namaPihakKetiga || "-"}`, 120, currentY)
+      doc.text(`Ke Akun      : ${detailDebit[0]?.akun?.nama || "-"}`, 120, currentY + 6)
 
       const tableColumn = ["No", "Akun / Keterangan", "Deskripsi", "Jumlah"]
       const tableRows = detailKredit.map((d: any, idx: number) => [
@@ -75,7 +77,7 @@ export default function KasMasukDetailClient({ transaksi }: { transaksi: any }) 
       autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
-        startY: 55,
+        startY: currentY + 16,
         theme: 'grid',
         styles: { fontSize: 9 },
         headStyles: { fillColor: [46, 125, 50] } // Albas Green
@@ -109,24 +111,26 @@ export default function KasMasukDetailClient({ transaksi }: { transaksi: any }) 
     try {
       const { jsPDF } = await import("jspdf")
       const autoTable = (await import("jspdf-autotable")).default
+      const { drawKopSurat } = await import("@/lib/pdf")
       
       const doc = new jsPDF('portrait')
+      const pageWidth = doc.internal.pageSize.getWidth()
       
-      // Header
-      doc.setFontSize(16)
-      doc.setFont("helvetica", "bold")
-      doc.text("YAYASAN AL BASYARIAH", 14, 20)
+      let currentY = drawKopSurat(doc, pageWidth, "YAYASAN AL BASYARIAH") + 8
+      
       doc.setFontSize(12)
-      doc.setFont("helvetica", "normal")
-      doc.text("JURNAL TRANSAKSI KAS MASUK", 14, 28)
-      doc.setLineWidth(0.5)
-      doc.line(14, 32, 196, 32)
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(5, 150, 105)
+      doc.text("JURNAL TRANSAKSI KAS MASUK", pageWidth / 2, currentY, { align: "center" })
+      currentY += 8
       
       // Info
+      doc.setTextColor(15, 23, 42)
+      doc.setFont("helvetica", "normal")
       doc.setFontSize(10)
-      doc.text(`No Referensi : ${transaksi.noReferensi}`, 14, 42)
-      doc.text(`Tanggal      : ${format(new Date(transaksi.tanggal), "dd-MM-yyyy")}`, 14, 48)
-      doc.text(`Deskripsi    : ${transaksi.deskripsi || "-"}`, 14, 54)
+      doc.text(`No Referensi : ${transaksi.noReferensi}`, 14, currentY)
+      doc.text(`Tanggal      : ${format(new Date(transaksi.tanggal), "dd-MM-yyyy")}`, 14, currentY + 6)
+      doc.text(`Deskripsi    : ${transaksi.deskripsi || "-"}`, 14, currentY + 12)
 
       const tableColumn = ["Kode Akun", "Nama Akun", "Debit", "Kredit"]
       const tableRows = transaksi.detail.map((d: any) => [

@@ -574,3 +574,54 @@ export function exportIncomeStatementPdf({
 
   doc.save(`${filename}.pdf`)
 }
+
+
+export const drawKopSurat = (
+  docInstance: any,
+  pageWidth: number,
+  schoolUnitName: string,
+  unitInfo?: any,
+  startY: number = 12
+) => {
+  docInstance.setFont("helvetica", "bold")
+  docInstance.setFontSize(10)
+  docInstance.setTextColor(100, 116, 139)
+  docInstance.text("YAYASAN AL-BASYARIAH / SIRAYA EDUCATION", pageWidth / 2, startY, { align: "center" })
+
+  docInstance.setFontSize(15)
+  docInstance.setTextColor(15, 23, 42)
+  docInstance.text((schoolUnitName || "YAYASAN AL BASYARIAH").toUpperCase(), pageWidth / 2, startY + 6, { align: "center" })
+
+  docInstance.setFont("helvetica", "normal")
+  docInstance.setFontSize(8.5)
+  docInstance.setTextColor(71, 85, 105)
+  
+  let kopSubtitle = "Jl. Pendidikan Nusantara No. 123, Bandung, Jawa Barat • Telp: (022) 1234567 • Email: info@siraya.edu"
+  if (unitInfo) {
+    const parts = []
+    if (unitInfo.address) parts.push(unitInfo.address)
+    if (unitInfo.phone) parts.push(`Telp: ${unitInfo.phone}`)
+    if (unitInfo.email) parts.push(`Email: ${unitInfo.email}`)
+    if (unitInfo.website) parts.push(`Web: ${unitInfo.website}`)
+    if (parts.length > 0) {
+      kopSubtitle = parts.join(' • ')
+    }
+  }
+  
+  const splitSubtitle = docInstance.splitTextToSize(kopSubtitle, pageWidth - 30)
+  let startSubY = startY + 11
+  splitSubtitle.forEach((line: string) => {
+    docInstance.text(line, pageWidth / 2, startSubY, { align: "center" })
+    startSubY += 4
+  })
+
+  const lineY = startSubY + 1
+  docInstance.setLineWidth(0.8)
+  docInstance.setDrawColor(15, 23, 42)
+  docInstance.line(14, lineY, pageWidth - 14, lineY)
+
+  docInstance.setLineWidth(0.2)
+  docInstance.line(14, lineY + 1.5, pageWidth - 14, lineY + 1.5)
+  
+  return lineY + 1.5
+}

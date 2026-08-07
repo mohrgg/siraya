@@ -44,25 +44,27 @@ export default function KasKeluarDetailClient({ transaksi }: { transaksi: any })
     try {
       const { jsPDF } = await import("jspdf")
       const autoTable = (await import("jspdf-autotable")).default
+      const { drawKopSurat } = await import("@/lib/pdf")
       
-      const doc = new jsPDF('portrait')
+      const doc = new jsPDF('landscape', 'mm', 'a5') // A5 landscape for resi
+      const pageWidth = doc.internal.pageSize.getWidth()
       
-      // Header
-      doc.setFontSize(16)
-      doc.setFont("helvetica", "bold")
-      doc.text("YAYASAN AL BASYARIAH", 14, 20)
+      let currentY = drawKopSurat(doc, pageWidth, "YAYASAN AL BASYARIAH") + 8
+      
       doc.setFontSize(12)
-      doc.setFont("helvetica", "normal")
-      doc.text("RESI BUKTI PENGELUARAN KAS", 14, 28)
-      doc.setLineWidth(0.5)
-      doc.line(14, 32, 196, 32)
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(5, 150, 105)
+      doc.text("BUKTI PENGELUARAN KAS", pageWidth / 2, currentY, { align: "center" })
+      currentY += 8
       
       // Info
+      doc.setTextColor(15, 23, 42)
+      doc.setFont("helvetica", "normal")
       doc.setFontSize(10)
-      doc.text(`No Referensi : ${transaksi.noReferensi}`, 14, 42)
-      doc.text(`Tanggal      : ${format(new Date(transaksi.tanggal), "dd-MM-yyyy")}`, 14, 48)
-      doc.text(`Kepada       : ${transaksi.penerima?.name || transaksi.namaPihakKetiga || "-"}`, 120, 42)
-      doc.text(`Dari Akun    : ${detailKredit[0]?.akun?.nama || "-"}`, 120, 48)
+      doc.text(`No Referensi : ${transaksi.noReferensi}`, 14, currentY)
+      doc.text(`Tanggal      : ${format(new Date(transaksi.tanggal), "dd-MM-yyyy")}`, 14, currentY + 6)
+      doc.text(`Kepada       : ${transaksi.penerima?.name || transaksi.namaPihakKetiga || "-"}`, 120, currentY)
+      doc.text(`Dari Akun    : ${detailKredit[0]?.akun?.nama || "-"}`, 120, currentY + 6)
 
       const tableColumn = ["No", "Akun / Keterangan", "Deskripsi", "Jumlah"]
       const tableRows = detailDebit.map((d: any, idx: number) => [
@@ -75,7 +77,7 @@ export default function KasKeluarDetailClient({ transaksi }: { transaksi: any })
       autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
-        startY: 55,
+        startY: currentY + 10,
         theme: 'grid',
         styles: { fontSize: 9 },
         headStyles: { fillColor: [46, 125, 50] } // Albas Green
@@ -109,24 +111,26 @@ export default function KasKeluarDetailClient({ transaksi }: { transaksi: any })
     try {
       const { jsPDF } = await import("jspdf")
       const autoTable = (await import("jspdf-autotable")).default
+      const { drawKopSurat } = await import("@/lib/pdf")
       
       const doc = new jsPDF('portrait')
+      const pageWidth = doc.internal.pageSize.getWidth()
       
-      // Header
-      doc.setFontSize(16)
-      doc.setFont("helvetica", "bold")
-      doc.text("YAYASAN AL BASYARIAH", 14, 20)
+      let currentY = drawKopSurat(doc, pageWidth, "YAYASAN AL BASYARIAH") + 8
+      
       doc.setFontSize(12)
-      doc.setFont("helvetica", "normal")
-      doc.text("JURNAL PENGELUARAN KAS", 14, 28)
-      doc.setLineWidth(0.5)
-      doc.line(14, 32, 196, 32)
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(5, 150, 105)
+      doc.text("JURNAL TRANSAKSI KAS KELUAR", pageWidth / 2, currentY, { align: "center" })
+      currentY += 8
       
       // Info
+      doc.setTextColor(15, 23, 42)
+      doc.setFont("helvetica", "normal")
       doc.setFontSize(10)
-      doc.text(`No Referensi : ${transaksi.noReferensi}`, 14, 42)
-      doc.text(`Tanggal      : ${format(new Date(transaksi.tanggal), "dd-MM-yyyy")}`, 14, 48)
-      doc.text(`Deskripsi    : ${transaksi.deskripsi || "-"}`, 14, 54)
+      doc.text(`No Referensi : ${transaksi.noReferensi}`, 14, currentY)
+      doc.text(`Tanggal      : ${format(new Date(transaksi.tanggal), "dd-MM-yyyy")}`, 14, currentY + 6)
+      doc.text(`Deskripsi    : ${transaksi.deskripsi || "-"}`, 14, currentY + 12)
 
       const tableColumn = ["Kode Akun", "Nama Akun", "Debit", "Kredit"]
       const tableRows = transaksi.detail.map((d: any) => [
@@ -139,7 +143,7 @@ export default function KasKeluarDetailClient({ transaksi }: { transaksi: any })
       autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
-        startY: 65,
+        startY: currentY + 16,
         theme: 'grid',
         styles: { fontSize: 9 },
         headStyles: { fillColor: [46, 125, 50] }

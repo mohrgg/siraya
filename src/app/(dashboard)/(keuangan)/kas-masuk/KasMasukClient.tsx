@@ -14,7 +14,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 
 type TransaksiWithRelations = any // Type will be inferred properly in real project
 
-export default function KasMasukClient({ initialData, userRole }: { initialData: TransaksiWithRelations[], userRole: string }) {
+export default function KasMasukClient({ initialData, userRole, pengaturan }: { initialData: TransaksiWithRelations[], userRole: string, pengaturan?: any }) {
   const router = useRouter()
   const [data, setData] = useState(initialData)
   const [searchTerm, setSearchTerm] = useState("")
@@ -75,7 +75,7 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
   const handleExportExcel = async () => {
     setIsExportingExcel(true)
     try {
-      const XLSX = await import("xlsx")
+      const { exportToExcel } = await import("@/lib/excel")
       const exportData = filteredData.map((item: any, index: number) => ({
         No: index + 1,
         "Tgl Transaksi": format(new Date(item.tanggal), "dd/MM/yyyy"),
@@ -89,10 +89,11 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
         "Status": item.status,
         "Revisi": item.isEdited ? "Ya" : "-"
       }))
-      const worksheet = XLSX.utils.json_to_sheet(exportData)
-      const workbook = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Kas Masuk")
-      XLSX.writeFile(workbook, `Kas_Masuk_${format(new Date(), "yyyyMMdd")}.xlsx`)
+      
+      exportToExcel(exportData, `Kas_Masuk_${format(new Date(), "yyyyMMdd")}`, {
+        title: "Laporan Kas Masuk (Penerimaan)",
+        unitInfo: pengaturan || { name: "Yayasan Siraya" }
+      })
       toast.success("Berhasil mengekspor Excel")
     } catch (error) {
       console.error(error)
@@ -105,18 +106,8 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
   const handleExportPDF = async () => {
     setIsExportingPDF(true)
     try {
-      const { jsPDF } = await import("jspdf")
-      const autoTable = (await import("jspdf-autotable")).default
+      const { exportToPdfTable } = await import("@/lib/pdf")
       
-      const doc = new jsPDF('landscape')
-      doc.setFontSize(16)
-      doc.setFont("helvetica", "bold")
-      doc.text("YAYASAN AL BASYARIAH", 14, 20)
-      doc.setFontSize(11)
-      doc.setFont("helvetica", "normal")
-      doc.text("Laporan Kas Masuk (Penerimaan)", 14, 27)
-      doc.text(`Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 33)
-
       const tableColumn = ["No", "Tgl Transaksi", "No Referensi", "Penyetor", "Deskripsi", "Total Nilai", "Pembuat", "Status"]
       const tableRows = filteredData.map((item: any, index: number) => [
         index + 1,
@@ -129,16 +120,17 @@ export default function KasMasukClient({ initialData, userRole }: { initialData:
         item.status
       ])
 
-      autoTable(doc, {
-        head: [tableColumn],
-        body: tableRows,
-        startY: 40,
-        theme: 'grid',
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [46, 125, 50] }
+      exportToPdfTable({
+        title: "Laporan Kas Masuk (Penerimaan)",
+        subtitle: `Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
+        headers: tableColumn,
+        data: tableRows,
+        filename: `Kas_Masuk_${format(new Date(), "yyyyMMdd")}`,
+        schoolUnitName: pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH",
+        unitInfo: pengaturan,
+        orientation: 'landscape'
       })
 
-      doc.save(`Kas_Masuk_${format(new Date(), "yyyyMMdd")}.pdf`)
       toast.success("Berhasil mengekspor PDF")
     } catch (error) {
       console.error(error)
