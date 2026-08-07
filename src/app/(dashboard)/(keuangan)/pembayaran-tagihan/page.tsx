@@ -1,10 +1,11 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import prisma from "@/lib/prisma"
 import PembayaranTagihanClient from "./PembayaranTagihanClient"
 import { cookies } from "next/headers"
 import { getAkunKasBankList } from "@/actions/pembayaran-tagihan"
-import { getTahunAkademikAktif, getTahunAkademikList } from "@/actions/pembuatan-tagihan"
+import { getTahunAkademikAktif } from "@/actions/pembuatan-tagihan"
+import { getPengaturan } from "@/actions/pengaturan"
+import { getUnitSekolah } from "@/actions/unit-sekolah"
 
 export const metadata = {
   title: "Pembayaran Tagihan | Sistem Informasi Sekolah",
@@ -29,6 +30,11 @@ export default async function PembayaranTagihanPage() {
 
   // Get available kas/bank accounts for payment modal
   const akunKasBankList = await getAkunKasBankList(activeUnitId)
+  
+  // Get pengaturan and unitInfo for Receipt/PDF
+  const pengaturan = await getPengaturan()
+  const schoolUnits = await getUnitSekolah()
+  const unitInfo = schoolUnits.find((u: any) => u.id === activeUnitId) || null
 
   return (
     <PembayaranTagihanClient 
@@ -37,6 +43,8 @@ export default async function PembayaranTagihanPage() {
       activeTahunAkademikName={activeTahunAkademikName}
       akunKasBankList={akunKasBankList}
       user={user}
+      pengaturan={pengaturan}
+      unitInfo={unitInfo}
     />
   )
 }

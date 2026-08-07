@@ -19,13 +19,17 @@ interface ModalResiPembayaranProps {
   onClose: () => void
   data: ReceiptData | null
   pengaturan?: any
+  unitInfo?: any
+  currentUser?: any
 }
 
 export default function ModalResiPembayaran({
   isOpen,
   onClose,
   data,
-  pengaturan
+  pengaturan,
+  unitInfo,
+  currentUser
 }: ModalResiPembayaranProps) {
   if (!isOpen || !data) return null
 
@@ -43,7 +47,10 @@ export default function ModalResiPembayaran({
         namaYayasan: pengaturan?.namaYayasan,
         items: data.items,
         total: data.total,
-        catatanKwitansi: pengaturan?.catatanKwitansi
+        catatanKwitansi: pengaturan?.catatanKwitansi,
+        namaBendahara: currentUser?.name || pengaturan?.namaBendahara || "Staf Keuangan",
+        pengaturan,
+        unitInfo
       })
       toast.success("Berhasil mengunduh Bukti Pembayaran (PDF)")
     } catch (err: any) {
@@ -99,14 +106,22 @@ export default function ModalResiPembayaran({
         <div className="print-receipt w-full bg-white text-slate-900 overflow-y-auto p-8 sm:p-10 shrink">
           
           {/* Kop Kwitansi */}
-          <div className="flex justify-between items-start border-b-[3px] border-double border-slate-800 pb-4 mb-6">
-            <div>
-              <h3 className="font-extrabold text-xl tracking-tight text-slate-900">{pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH"}</h3>
-              <p className="text-sm font-medium text-slate-600 mt-1">{data.unitSekolahName || "BUKTI PEMBAYARAN"}</p>
-            </div>
-            <div className="text-right text-sm text-slate-600 space-y-1">
-              <div><span className="font-medium">Tanggal:</span> {format(new Date(data.tanggal), 'dd MMMM yyyy', { locale: idLocale })}</div>
-              <div><span className="font-medium">No. Ref:</span> {data.noReferensi}</div>
+          <div className="text-center border-b-[3px] border-double border-slate-800 pb-4 mb-6 relative">
+            <h3 className="font-bold text-sm tracking-tight text-slate-500 uppercase">{pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH / SIRAYA EDUCATION"}</h3>
+            <h2 className="font-black text-2xl tracking-tight text-slate-900 uppercase mt-1">{(data.unitSekolahName || unitInfo?.name || pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH").toUpperCase()}</h2>
+            
+            <p className="text-xs font-medium text-slate-600 mt-2 max-w-2xl mx-auto">
+              {[
+                unitInfo?.address || pengaturan?.alamat,
+                (unitInfo?.phone || pengaturan?.telepon) && `Telp: ${unitInfo?.phone || pengaturan?.telepon}`,
+                (unitInfo?.email || pengaturan?.email) && `Email: ${unitInfo?.email || pengaturan?.email}`,
+                (unitInfo?.website || pengaturan?.website) && `Web: ${unitInfo?.website || pengaturan?.website}`
+              ].filter(Boolean).join(' • ') || "Jl. Pendidikan Nusantara No. 123, Bandung, Jawa Barat • Telp: (022) 1234567 • Email: info@siraya.edu"}
+            </p>
+            
+            <div className="absolute right-0 top-0 text-right text-xs text-slate-600 space-y-1 bg-slate-50 p-2 border border-slate-200 rounded-lg shadow-sm print:shadow-none print:border-none print:bg-transparent">
+              <div><span className="font-semibold">Tanggal:</span> {format(new Date(data.tanggal), 'dd MMMM yyyy', { locale: idLocale })}</div>
+              <div><span className="font-semibold">No. Ref:</span> {data.noReferensi}</div>
             </div>
           </div>
 
@@ -160,7 +175,7 @@ export default function ModalResiPembayaran({
             <div className="text-center w-64">
               <p className="mb-1">Bandung, {format(new Date(data.tanggal), 'dd MMMM yyyy', { locale: idLocale })}</p>
               <p className="mb-16">Bendahara Penerima,</p>
-              <p className="font-bold underline underline-offset-4 decoration-slate-300">{pengaturan?.namaBendahara || "Staf Keuangan"}</p>
+              <p className="font-bold underline underline-offset-4 decoration-slate-300">{currentUser?.name || pengaturan?.namaBendahara || "Staf Keuangan"}</p>
             </div>
           </div>
 

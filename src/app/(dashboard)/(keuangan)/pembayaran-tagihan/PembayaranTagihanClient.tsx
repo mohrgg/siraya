@@ -42,13 +42,17 @@ export default function PembayaranTagihanClient({
   activeTahunAkademikId,
   activeTahunAkademikName,
   akunKasBankList,
-  user
+  user,
+  pengaturan,
+  unitInfo
 }: {
   activeUnitId: string
   activeTahunAkademikId: string
   activeTahunAkademikName: string
   akunKasBankList: any[]
   user: any
+  pengaturan?: any
+  unitInfo?: any
 }) {
   const isReadOnly = user.role === "KEPALA_SEKOLAH"
 
@@ -549,6 +553,9 @@ export default function PembayaranTagihanClient({
         isOpen={!!receiptData}
         onClose={() => setReceiptData(null)}
         data={receiptData}
+        pengaturan={pengaturan}
+        unitInfo={unitInfo}
+        currentUser={user}
       />
       
       <ModalPilihRiwayatTransaksi

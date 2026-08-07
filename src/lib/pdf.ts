@@ -214,6 +214,8 @@ export interface PdfResiOptions {
   total: number
   catatanKwitansi?: string
   namaBendahara?: string
+  pengaturan?: any
+  unitInfo?: any
 }
 
 /**
@@ -229,50 +231,32 @@ export function exportResiPdf(data: PdfResiOptions) {
   const pageWidth = doc.internal.pageSize.getWidth()
   
   // 1. KOP SURAT
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(14)
-  doc.setTextColor(15, 23, 42)
-  doc.text(data.namaYayasan || "YAYASAN AL BASYARIAH", 15, 20)
+  const lineY = drawKopSurat(doc, pageWidth, data.unitSekolahName || data.unitInfo?.name || "BUKTI PEMBAYARAN", data.unitInfo, 15, data.pengaturan)
   
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(10)
-  doc.setTextColor(71, 85, 105)
-  const unitText = data.unitSekolahName || "BUKTI PEMBAYARAN"
-  
-  // Word wrap unitText jika panjang
-  const splitUnitText = doc.splitTextToSize(unitText, pageWidth / 2 - 20)
-  let currentY = 26
-  splitUnitText.forEach((line: string) => {
-    doc.text(line, 15, currentY)
-    currentY += 4
-  })
-  
-  // 2. TANGGAL & NO REF (Kanan Atas)
+  // 2. TANGGAL & NO REF (Kanan Atas sejajar dengan Judul)
   doc.setFont("helvetica", "normal")
   doc.setFontSize(9)
   const dateStr = data.tanggal.toLocaleDateString('id-ID', {
     day: '2-digit', month: 'long', year: 'numeric'
   })
-  doc.text(`Tanggal: ${dateStr}`, pageWidth - 15, 20, { align: "right" })
-  doc.text(`No. Ref: ${data.noReferensi}`, pageWidth - 15, 25, { align: "right" })
-  
-  // Garis Pembatas Kop
-  const lineY = Math.max(currentY + 2, 32)
-  doc.setLineWidth(0.8)
-  doc.line(15, lineY, pageWidth - 15, lineY)
-  doc.setLineWidth(0.3)
-  doc.line(15, lineY + 1.5, pageWidth - 15, lineY + 1.5)
   
   // 3. JUDUL KWITANSI
-  const titleY = lineY + 13
+  const titleY = lineY + 12
   doc.setFont("helvetica", "bold")
   doc.setFontSize(14)
   doc.setTextColor(15, 23, 42)
   doc.text("KWITANSI PEMBAYARAN", pageWidth / 2, titleY, { align: "center" })
-  // underline
+  
+  // underline judul
   const titleWidth = doc.getTextWidth("KWITANSI PEMBAYARAN")
   doc.setLineWidth(0.3)
   doc.line((pageWidth - titleWidth) / 2, titleY + 1.5, (pageWidth + titleWidth) / 2, titleY + 1.5)
+
+  // Tanggal & No ref diletakkan di kanan atas
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(9)
+  doc.text(`Tanggal: ${dateStr}`, pageWidth - 15, titleY - 4, { align: "right" })
+  doc.text(`No. Ref: ${data.noReferensi}`, pageWidth - 15, titleY + 1, { align: "right" })
   
   // 4. IDENTITAS
   const identityY = titleY + 13
@@ -331,32 +315,37 @@ export function exportResiPdf(data: PdfResiOptions) {
     }
   })
 
-  // 6. AREA TANDA TANGAN (Footer)
-  // Menentukan Y dari akhir tabel
+  // 6. TANDA TANGAN
   const finalY = (doc as any).lastAutoTable.finalY + 15
   
-  doc.setFontSize(9)
   doc.setFont("helvetica", "normal")
+  doc.setFontSize(10)
   
   // Kiri: Penyetor
   doc.text("Penyetor / Wali Murid,", 35, finalY, { align: "center" })
-  doc.text("( ______________________ )", 35, finalY + 20, { align: "center" })
-  doc.text(data.muridName, 35, finalY + 25, { align: "center" })
+  doc.setFont("helvetica", "bold")
+  doc.text(data.muridName, 35, finalY + 20, { align: "center" })
+  doc.setLineWidth(0.3)
+  const muridWidth = doc.getTextWidth(data.muridName)
+  doc.line(35 - (muridWidth/2), finalY + 20.5, 35 + (muridWidth/2), finalY + 20.5)
   
   // Kanan: Bendahara
-  doc.text(`Bandung, ${dateStr}`, pageWidth - 35, finalY, { align: "center" })
-  doc.text("Bendahara Penerima,", pageWidth - 35, finalY + 5, { align: "center" })
+  doc.setFont("helvetica", "normal")
+  doc.text(`Bandung, ${dateStr}`, pageWidth - 45, finalY - 5, { align: "center" })
+  doc.text("Bendahara Penerima,", pageWidth - 45, finalY, { align: "center" })
+  doc.setFont("helvetica", "bold")
+  const signName = data.namaBendahara || data.pengaturan?.namaBendahara || "Staf Keuangan"
+  doc.text(signName, pageWidth - 45, finalY + 20, { align: "center" })
+  const signWidth = doc.getTextWidth(signName)
+  doc.line(pageWidth - 45 - (signWidth/2), finalY + 20.5, pageWidth - 45 + (signWidth/2), finalY + 20.5)
   
-  doc.text("( ______________________ )", pageWidth - 35, finalY + 20, { align: "center" })
-  const bendahara = data.namaBendahara || "Staf Keuangan"
-  doc.text(bendahara, pageWidth - 35, finalY + 25, { align: "center" })
-
-  // Catatan Kwitansi
-  doc.setFontSize(8)
+  // 7. CATATAN FOOTER
+  const footerY = finalY + 30
   doc.setFont("helvetica", "italic")
-  doc.setTextColor(148, 163, 184)
-  const catatan = data.catatanKwitansi || "Terima kasih atas pembayaran Anda. Simpan kwitansi ini sebagai bukti pembayaran yang sah."
-  doc.text(catatan, pageWidth / 2, 140, { align: "center" })
+  doc.setFontSize(8)
+  doc.setTextColor(100, 116, 139)
+  const catatan = data.catatanKwitansi || data.pengaturan?.catatanKwitansi || "Terima kasih atas pembayaran Anda. Simpan kwitansi ini sebagai bukti pembayaran yang sah."
+  doc.text(catatan, pageWidth / 2, footerY, { align: "center" })
 
   doc.save(`Kwitansi_${data.noReferensi}.pdf`)
 }
@@ -581,31 +570,41 @@ export const drawKopSurat = (
   pageWidth: number,
   schoolUnitName: string,
   unitInfo?: any,
-  startY: number = 12
+  startY: number = 12,
+  pengaturan?: any
 ) => {
   docInstance.setFont("helvetica", "bold")
   docInstance.setFontSize(10)
   docInstance.setTextColor(100, 116, 139)
-  docInstance.text("YAYASAN AL-BASYARIAH / SIRAYA EDUCATION", pageWidth / 2, startY, { align: "center" })
+  docInstance.text(pengaturan?.namaYayasan || "YAYASAN AL-BASYARIAH / SIRAYA EDUCATION", pageWidth / 2, startY, { align: "center" })
 
   docInstance.setFontSize(15)
   docInstance.setTextColor(15, 23, 42)
-  docInstance.text((schoolUnitName || "YAYASAN AL BASYARIAH").toUpperCase(), pageWidth / 2, startY + 6, { align: "center" })
+  docInstance.text((schoolUnitName || pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH").toUpperCase(), pageWidth / 2, startY + 6, { align: "center" })
 
   docInstance.setFont("helvetica", "normal")
   docInstance.setFontSize(8.5)
   docInstance.setTextColor(71, 85, 105)
   
-  let kopSubtitle = "Jl. Pendidikan Nusantara No. 123, Bandung, Jawa Barat • Telp: (022) 1234567 • Email: info@siraya.edu"
-  if (unitInfo) {
+  let kopSubtitle = ""
+  if (unitInfo && (unitInfo.address || unitInfo.phone)) {
     const parts = []
     if (unitInfo.address) parts.push(unitInfo.address)
     if (unitInfo.phone) parts.push(`Telp: ${unitInfo.phone}`)
     if (unitInfo.email) parts.push(`Email: ${unitInfo.email}`)
     if (unitInfo.website) parts.push(`Web: ${unitInfo.website}`)
-    if (parts.length > 0) {
-      kopSubtitle = parts.join(' • ')
-    }
+    kopSubtitle = parts.join(' • ')
+  } else if (pengaturan) {
+    const parts = []
+    if (pengaturan.alamat) parts.push(pengaturan.alamat)
+    if (pengaturan.telepon) parts.push(`Telp: ${pengaturan.telepon}`)
+    if (pengaturan.email) parts.push(`Email: ${pengaturan.email}`)
+    if (pengaturan.website) parts.push(`Web: ${pengaturan.website}`)
+    kopSubtitle = parts.join(' • ')
+  }
+  
+  if (!kopSubtitle) {
+    kopSubtitle = "Jl. Pendidikan Nusantara No. 123, Bandung, Jawa Barat • Telp: (022) 1234567 • Email: info@siraya.edu"
   }
   
   const splitSubtitle = docInstance.splitTextToSize(kopSubtitle, pageWidth - 30)
