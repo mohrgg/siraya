@@ -30,6 +30,13 @@ export async function getRekapitulasiTunggakan(unitSekolahId: string, tahunAkade
       },
       select: {
         muridId: true,
+        murid: {
+          select: {
+            id: true,
+            name: true,
+            nisn: true
+          }
+        },
         akunId: true,
         jumlah: true,
         sisaTagihan: true,
@@ -60,7 +67,16 @@ export async function getRekapitulasiTunggakan(unitSekolahId: string, tahunAkade
       totalTagihan: 0,
       totalDibayar: 0,
       totalTunggakan: 0,
-      detailKomponen: {} as Record<string, { tagihan: number, dibayar: number, tunggakan: number }>
+      detailKomponen: {} as Record<string, { tagihan: number, dibayar: number, tunggakan: number }>,
+      students: {} as Record<string, {
+        id: string,
+        name: string,
+        nisn: string,
+        totalTagihan: number,
+        totalDibayar: number,
+        totalTunggakan: number,
+        detailKomponen: Record<string, { tagihan: number, dibayar: number, tunggakan: number }>
+      }>
     }));
 
     const rekapMap = new Map(rekap.map(r => [r.subKelasId, r]));
@@ -88,12 +104,45 @@ export async function getRekapitulasiTunggakan(unitSekolahId: string, tahunAkade
         r.detailKomponen[t.akunId].tagihan += t.jumlah;
         r.detailKomponen[t.akunId].dibayar += dibayar;
         r.detailKomponen[t.akunId].tunggakan += tunggakan;
+
+        // Populate student detail
+        if (!r.students[t.muridId]) {
+          r.students[t.muridId] = {
+            id: t.muridId,
+            name: t.murid.name,
+            nisn: t.murid.nisn || "-",
+            totalTagihan: 0,
+            totalDibayar: 0,
+            totalTunggakan: 0,
+            detailKomponen: {}
+          };
+        }
+        
+        const s = r.students[t.muridId];
+        s.totalTagihan += t.jumlah;
+        s.totalDibayar += dibayar;
+        s.totalTunggakan += tunggakan;
+        
+        if (!s.detailKomponen[t.akunId]) {
+          s.detailKomponen[t.akunId] = { tagihan: 0, dibayar: 0, tunggakan: 0 };
+        }
+        s.detailKomponen[t.akunId].tagihan += t.jumlah;
+        s.detailKomponen[t.akunId].dibayar += dibayar;
+        s.detailKomponen[t.akunId].tunggakan += tunggakan;
       }
     });
 
+    const finalRekap = rekap.map(r => {
+      const { students, ...rest } = r;
+      return {
+        ...rest,
+        studentsList: Object.values(students).sort((a, b) => a.name.localeCompare(b.name))
+      }
+    })
+
     return {
       success: true,
-      data: rekap,
+      data: finalRekap,
       akunList: Array.from(akunMap.values()).sort((a, b) => a.kode.localeCompare(b.kode))
     };
 
