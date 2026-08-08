@@ -13,5 +13,5 @@ export default async function KasMasukPage() {
   const schoolUnits = await getUnitSekolahList()
   const userUnitId = (session.user as any).unitSekolahId
 
-  return <KasMasukClient initialData={initialData} userRole={(session.user as any).role} pengaturan={pengaturan} schoolUnits={schoolUnits} userUnitId={userUnitId} />
+  return <KasMasukClient initialData={initialData} userRole={(session.user as any).role} pengaturan={pengaturan} schoolUnits={schoolUnits} userUnitId={userUnitId} userName={session.user.name || undefined} />
 }

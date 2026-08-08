@@ -14,7 +14,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 
 type TransaksiWithRelations = any // Type will be inferred properly in real project
 
-export default function KasKeluarClient({ initialData, userRole, pengaturan, schoolUnits = [], userUnitId }: { initialData: TransaksiWithRelations[], userRole: string, pengaturan?: any, schoolUnits?: any[], userUnitId?: string }) {
+export default function KasKeluarClient({ initialData, userRole, pengaturan, schoolUnits = [], userUnitId, userName }: { initialData: TransaksiWithRelations[], userRole: string, pengaturan?: any, schoolUnits?: any[], userUnitId?: string, userName?: string }) {
   const router = useRouter()
   const [data, setData] = useState(initialData)
   const [searchTerm, setSearchTerm] = useState("")
@@ -132,7 +132,9 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
         headers: tableColumn,
         data: tableRows,
         filename: `Kas_Keluar_${format(new Date(), "yyyyMMdd")}`,
-        config: { orientation: 'landscape' }
+        config: { orientation: 'landscape' },
+        penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+        penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
       })
 
       toast.success("Berhasil mengekspor PDF")

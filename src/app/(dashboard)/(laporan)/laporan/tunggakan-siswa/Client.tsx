@@ -14,7 +14,7 @@ import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
 import PrintFooter from "@/components/shared/print/PrintFooter"
 
-export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], grades = [], classrooms = [], userRole, userUnitId }: { pengaturan?: any, schoolUnits?: any[], grades?: any[], classrooms?: any[], userRole?: string, userUnitId?: string }) {
+export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], grades = [], classrooms = [], userRole, userUnitId, userName }: { pengaturan?: any, schoolUnits?: any[], grades?: any[], classrooms?: any[], userRole?: string, userUnitId?: string, userName?: string }) {
   const router = useRouter()
   const [data, setData] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -140,7 +140,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
       filename,
       config: { orientation: 'landscape' },
       penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
-      penandatanganKanan: { jabatan: "Bendahara,", nama: pengaturan?.namaBendahara || "____________________" }
+      penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
     })
     
     toast.success("PDF berhasil diunduh")
@@ -369,7 +369,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
                   tipe="ganda"
                   tanggal={new Date()}
                   kiri={{ jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" }}
-                  kanan={{ jabatan: "Bendahara Yayasan,", nama: pengaturan?.namaBendahara || "____________________" }}
+                  kanan={{ jabatan: "Petugas,", nama: userName || "____________________" }}
                 />
                 <PrintFooter pengaturan={pengaturan} />
               </>

@@ -13,7 +13,7 @@ import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
 import PrintFooter from "@/components/shared/print/PrintFooter"
 
-export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], userRole, userUnitId }: { pengaturan?: any, schoolUnits?: any[], userRole?: string, userUnitId?: string }) {
+export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], userRole, userUnitId, userName }: { pengaturan?: any, schoolUnits?: any[], userRole?: string, userUnitId?: string, userName?: string }) {
   const router = useRouter()
   
   const [filterUnitId, setFilterUnitId] = useState(userUnitId || "")
@@ -149,7 +149,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
       data: data,
       filename,
       penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
-      penandatanganKanan: { jabatan: "Bendahara,", nama: pengaturan?.namaBendahara || "____________________" }
+      penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
     })
     
     toast.success("PDF berhasil diunduh")
@@ -447,7 +447,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
             tipe="ganda"
             tanggal={new Date()}
             kiri={{ jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" }}
-            kanan={{ jabatan: "Bendahara Yayasan,", nama: pengaturan?.namaBendahara || "____________________" }}
+            kanan={{ jabatan: "Petugas,", nama: userName || "____________________" }}
           />
         )}
         

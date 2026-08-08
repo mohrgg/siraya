@@ -231,8 +231,8 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                       : (formData.namaKepalaTU || "____________________")
                   }}
                   kanan={{
-                    jabatan: "Bendahara",
-                    nama: formData.namaBendahara || "____________________"
+                    jabatan: "Petugas",
+                    nama: "(Nama User yang Login)"
                   }}
                   className="flex"
                 />

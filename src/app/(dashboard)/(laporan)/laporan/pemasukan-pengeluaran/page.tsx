@@ -20,5 +20,6 @@ export default async function LaporanPemasukanPage() {
     schoolUnits={schoolUnits}
     userRole={user.role}
     userUnitId={user.unitSekolahId}
+    userName={user.name}
   />
 }

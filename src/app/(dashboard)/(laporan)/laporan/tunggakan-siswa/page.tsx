@@ -25,5 +25,6 @@ export default async function LaporanTunggakanPage() {
     classrooms={classrooms}
     userRole={user.role}
     userUnitId={user.unitSekolahId}
+    userName={user.name}
   />
 }

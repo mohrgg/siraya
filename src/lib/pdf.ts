@@ -49,7 +49,7 @@ export function drawTandaTangan(
   const tempatTanggal = `${kota}, ${dateStr}`
 
   // Kanan
-  const defKanan = kanan || { jabatan: "Mengetahui,", nama: "__________________________" }
+  const defKanan = kanan || { jabatan: "Petugas,", nama: "__________________________" }
   doc.text(tempatTanggal, pageWidth - 20, startY, { align: "right" })
   doc.text(defKanan.jabatan, pageWidth - 20, startY + 6, { align: "right" })
   doc.setFont("helvetica", "bold")
