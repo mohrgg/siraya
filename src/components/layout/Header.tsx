@@ -65,6 +65,9 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
               onChange={(e) => handleChange("unit", e.target.value)}
               disabled={isPending || isUnitLocked}
             >
+              {user.role === "ADMIN" && (
+                <option value="all">Semua Unit</option>
+              )}
               {schoolUnits.map(u => (
                 <option key={u.id} value={u.id}>{u.name}</option>
               ))}

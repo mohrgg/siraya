@@ -24,7 +24,14 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
     const schoolUnits = await prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } })
     const allAcademicYears = await prisma.tahunAkademik.findMany({ orderBy: { createdAt: 'desc' } })
     const cookieStore = await cookies()
-    const activeUnitId = cookieStore.get("activeUnitId")?.value || schoolUnits[0]?.id
+    
+    let activeUnitId = cookieStore.get("activeUnitId")?.value
+    if (role === "ADMIN" && !activeUnitId) {
+      activeUnitId = "all"
+    } else if (!activeUnitId) {
+      activeUnitId = schoolUnits[0]?.id
+    }
+    
     const activeYearId = cookieStore.get("activeYearId")?.value || allAcademicYears.find(y => y.isActive)?.id || allAcademicYears[0]?.id
 
     return {
@@ -37,35 +44,45 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
 
   // ==================== SUPERADMIN (ADMIN) ====================
   if (role === "ADMIN") {
-    const { schoolUnits, activeYearId } = await getActiveContext()
+    const { schoolUnits, activeYearId, activeUnitId } = await getActiveContext()
 
     if (activeTab === "yayasan") {
       const data = await getYayasanDashboardData()
       return (
         <div className="max-w-[1600px] mx-auto w-full">
-          <DashboardNavTabs role="ADMIN" units={schoolUnits} />
+          <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
           <YayasanDashboard role="ADMIN" {...data} />
         </div>
       )
     }
 
     if (activeTab === "unit") {
-      const selectedUnitId = searchParams?.unitId || schoolUnits[0]?.id
-      const selectedUnit = schoolUnits.find(u => u.id === selectedUnitId)
-
-      if (!selectedUnitId) {
+      // Jika tab=unit terakses saat mode Semua Unit, arahkan kembali (fallback) ke Yayasan
+      if (activeUnitId === "all") {
+        const data = await getYayasanDashboardData()
         return (
           <div className="max-w-[1600px] mx-auto w-full">
-            <DashboardNavTabs role="ADMIN" units={schoolUnits} />
+            <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
+            <YayasanDashboard role="ADMIN" {...data} />
+          </div>
+        )
+      }
+
+      const selectedUnit = schoolUnits.find(u => u.id === activeUnitId)
+
+      if (!activeUnitId) {
+        return (
+          <div className="max-w-[1600px] mx-auto w-full">
+            <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
             <div className="flex items-center justify-center h-64 text-text-muted font-medium">Belum ada unit sekolah terdaftar.</div>
           </div>
         )
       }
 
-      const data = await getUnitDashboardData(selectedUnitId, activeYearId)
+      const data = await getUnitDashboardData(activeUnitId, activeYearId)
       return (
         <div className="max-w-[1600px] mx-auto w-full">
-          <DashboardNavTabs role="ADMIN" units={schoolUnits} />
+          <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
           <UnitDashboard role="ADMIN" unitName={selectedUnit?.name || 'Unit'} {...data} />
         </div>
       )
@@ -75,7 +92,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
       const data = await getAdminOperasionalData()
       return (
         <div className="max-w-[1600px] mx-auto w-full">
-          <DashboardNavTabs role="ADMIN" units={schoolUnits} />
+          <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
           <OperasionalDashboard {...data} />
         </div>
       )
@@ -85,7 +102,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
     const data = await getYayasanDashboardData()
     return (
       <div className="max-w-[1600px] mx-auto w-full">
-        <DashboardNavTabs role="ADMIN" units={schoolUnits} />
+        <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
         <YayasanDashboard role="ADMIN" {...data} />
       </div>
     )

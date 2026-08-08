@@ -38,8 +38,15 @@ export default async function DashboardLayout({
 
   const cookieStore = await cookies()
   
-  // Force activeUnitId for non-admins, otherwise read from cookie or default to first
-  let activeUnitId = cookieStore.get("activeUnitId")?.value || schoolUnits[0]?.id
+  // Force activeUnitId for non-admins, otherwise read from cookie or default to "all" for Admin
+  let activeUnitId = cookieStore.get("activeUnitId")?.value
+  
+  if (userRole === "ADMIN" && !activeUnitId) {
+    activeUnitId = "all"
+  } else if (!activeUnitId) {
+    activeUnitId = schoolUnits[0]?.id
+  }
+
   if (userRole !== "ADMIN" && userUnitId) {
     activeUnitId = userUnitId
   }

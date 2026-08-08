@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
+import { getTenantContext } from "@/lib/tenant"
 
 // ==========================================
 // 1. KLASIFIKASI AKUN (Level 1)
@@ -85,10 +86,19 @@ export async function hapusSubKlasifikasi(id: string) {
 // 3. AKUN DETAIL (Level 3)
 // ==========================================
 export async function getAkunDetail() {
-  const session = await auth()
-  if (!session) throw new Error("Unauthorized")
+  const tenant = await getTenantContext()
+
+  const where = tenant.isGlobal
+    ? {}
+    : {
+        OR: [
+          { unitSekolahId: tenant.unitId },
+          { unitSekolahId: null }
+        ]
+      }
 
   return prisma.akunDetail.findMany({
+    where,
     include: {
       subKlasifikasi: {
         include: {
@@ -102,8 +112,14 @@ export async function getAkunDetail() {
 }
 
 export async function tambahAkunDetail(data: { kode: string, nama: string, subKlasifikasiAkunId: string, unitSekolahId?: string | null, isKasBank: boolean, isActive: boolean }) {
-  const session = await auth()
-  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+  const tenant = await getTenantContext()
+  if (!["ADMIN", "TATA_USAHA"].includes(tenant.role)) throw new Error("Akses ditolak.")
+
+  if (tenant.role === "TATA_USAHA") {
+    if (data.unitSekolahId !== tenant.unitId) {
+      throw new Error("Anda hanya dapat membuat akun untuk unit Anda sendiri.")
+    }
+  }
 
   const existing = await prisma.akunDetail.findUnique({ where: { kode: data.kode } })
   if (existing) throw new Error("Kode akun sudah digunakan.")
@@ -114,8 +130,17 @@ export async function tambahAkunDetail(data: { kode: string, nama: string, subKl
 }
 
 export async function editAkunDetail(id: string, data: { kode?: string, nama?: string, subKlasifikasiAkunId?: string, unitSekolahId?: string | null, isKasBank?: boolean, isActive?: boolean }) {
-  const session = await auth()
-  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+  const tenant = await getTenantContext()
+  if (!["ADMIN", "TATA_USAHA"].includes(tenant.role)) throw new Error("Akses ditolak.")
+
+  const current = await prisma.akunDetail.findUnique({ where: { id } })
+  if (!current) throw new Error("Akun tidak ditemukan")
+
+  if (tenant.role === "TATA_USAHA") {
+    if (current.unitSekolahId !== tenant.unitId || (data.unitSekolahId !== undefined && data.unitSekolahId !== tenant.unitId)) {
+      throw new Error("Anda hanya dapat mengedit akun milik unit Anda sendiri.")
+    }
+  }
 
   if (data.kode) {
     const existing = await prisma.akunDetail.findFirst({ where: { kode: data.kode, id: { not: id } } })
@@ -131,8 +156,15 @@ export async function editAkunDetail(id: string, data: { kode?: string, nama?: s
 }
 
 export async function hapusAkunDetail(id: string) {
-  const session = await auth()
-  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+  const tenant = await getTenantContext()
+  if (!["ADMIN", "TATA_USAHA"].includes(tenant.role)) throw new Error("Akses ditolak.")
+
+  const current = await prisma.akunDetail.findUnique({ where: { id } })
+  if (!current) throw new Error("Akun tidak ditemukan")
+
+  if (tenant.role === "TATA_USAHA" && current.unitSekolahId !== tenant.unitId) {
+    throw new Error("Anda hanya dapat menghapus akun milik unit Anda sendiri.")
+  }
 
   const result = await prisma.akunDetail.delete({
     where: { id }

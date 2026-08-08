@@ -8,16 +8,16 @@ import { Building2, Layers, Activity, School, LayoutDashboard, ChevronDown } fro
 interface DashboardNavTabsProps {
   role: string
   units?: { id: string; name: string }[]
+  activeUnitId?: string
 }
 
-export default function DashboardNavTabs({ role, units = [] }: DashboardNavTabsProps) {
+export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }: DashboardNavTabsProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   
   // Menentukan default tab berdasarkan role
   const defaultTab = role === 'KEPALA_SEKOLAH' ? 'kepsek' : 'yayasan'
   const activeTab = searchParams.get('tab') || defaultTab
-  const activeUnitId = searchParams.get('unitId') || (units[0]?.id || '')
 
   // Pemetaan daftar tab sesuai role sistem
   const getTabsForRole = (currentRole: string) => {
@@ -25,7 +25,7 @@ export default function DashboardNavTabs({ role, units = [] }: DashboardNavTabsP
       case 'ADMIN':
         return [
           { id: 'yayasan', label: 'Yayasan', icon: Building2 },
-          { id: 'unit', label: 'Unit Sekolah', icon: Layers },
+          ...(activeUnitId !== 'all' ? [{ id: 'unit', label: 'Unit Sekolah', icon: Layers }] : []),
           { id: 'operasional', label: 'Operasional', icon: Activity },
         ]
       case 'TATA_USAHA':
@@ -71,21 +71,6 @@ export default function DashboardNavTabs({ role, units = [] }: DashboardNavTabsP
         })}
       </div>
 
-      {/* Dropdown Selector Unit Khusus Superadmin pada Tab Unit */}
-      {role === 'ADMIN' && activeTab === 'unit' && units.length > 0 && (
-        <div className="relative w-full sm:w-auto">
-          <select
-            value={activeUnitId}
-            onChange={(e) => router.push(`/?tab=unit&unitId=${e.target.value}`)}
-            className="appearance-none w-full sm:w-auto bg-white border border-gray-200 text-gray-800 font-bold text-sm rounded-xl px-4 py-2.5 pr-10 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
-          >
-            {units.map((u) => (
-              <option key={u.id} value={u.id}>{u.name}</option>
-            ))}
-          </select>
-          <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-        </div>
-      )}
     </div>
   )
 }
