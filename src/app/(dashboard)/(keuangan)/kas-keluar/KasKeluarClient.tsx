@@ -108,7 +108,8 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
   const handleExportPDF = async () => {
     setIsExportingPDF(true)
     try {
-      const { exportToPdfTable } = await import("@/lib/pdf")
+      const { exportTablePdf } = await import("@/lib/pdf")
+      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
       
       const tableColumn = ["No", "Tgl Transaksi", "No Referensi", "Penerima", "Deskripsi", "Total Nilai", "Pembuat", "Status"]
       const tableRows = filteredData.map((item: any, index: number) => [
@@ -122,17 +123,16 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
         item.status
       ])
 
-      const unitObj = userUnitId ? schoolUnits.find(u => u.id === userUnitId) : undefined
+      const unitObj = userUnitId ? schoolUnits.find((u: any) => u.id === userUnitId) : undefined
 
-      exportToPdfTable({
+      exportTablePdf({
+        institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
         title: "Laporan Kas Keluar (Pengeluaran)",
         subtitle: `Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
         headers: tableColumn,
         data: tableRows,
         filename: `Kas_Keluar_${format(new Date(), "yyyyMMdd")}`,
-        schoolUnitName: unitObj ? `UNIT ${unitObj.name.toUpperCase()} SIRAYA` : (pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH"),
-        unitInfo: unitObj || pengaturan,
-        orientation: 'landscape'
+        config: { orientation: 'landscape' }
       })
 
       toast.success("Berhasil mengekspor PDF")

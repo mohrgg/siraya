@@ -5,7 +5,8 @@ import { Search, Loader2, FileSpreadsheet, FileIcon as FilePdf, RefreshCw } from
 import { toast } from "react-hot-toast"
 import { Button } from "@/components/ui/Button"
 import { getRekapitulasiTunggakan } from "@/actions/rekapitulasi-tunggakan"
-import { exportToPdfTable } from "@/lib/pdf"
+import { exportTablePdf } from "@/lib/pdf"
+import { buildInstitutionInfo } from "@/lib/pdf-helpers"
 import { exportToExcel } from "@/lib/excel"
 
 interface Akun {
@@ -128,16 +129,14 @@ export default function RekapitulasiTunggakanClient({
       `Rp ${formatRupiah(filteredData1.reduce((acc, r) => acc + r.totalTunggakan, 0))}`
     ])
 
-    exportToPdfTable({
+    exportTablePdf({
+      institutionInfo: buildInstitutionInfo(pengaturan, unitInfo),
       title: "RINGKASAN TAGIHAN & TUNGGAKAN",
       subtitle: `Unit: ${activeUnitName} • Tahun Akademik: ${activeTahunAkademikName}`,
       headers,
       data,
       filename: `Ringkasan_Tunggakan_${activeUnitName}`,
-      schoolUnitName: unitInfo?.name || (activeUnitName !== "SEMUA UNIT" ? activeUnitName : undefined),
-      unitInfo: unitInfo,
-      pengaturan,
-      orientation: 'landscape'
+      config: { orientation: 'landscape' }
     })
   }
 
@@ -183,16 +182,14 @@ export default function RekapitulasiTunggakanClient({
     })
     data.push(totalRow)
 
-    exportToPdfTable({
+    exportTablePdf({
+      institutionInfo: buildInstitutionInfo(pengaturan, unitInfo),
       title: "DETAIL TUNGGAKAN PER KOMPONEN",
       subtitle: `Unit: ${activeUnitName} • Tahun Akademik: ${activeTahunAkademikName}`,
       headers,
       data,
       filename: `Detail_Tunggakan_${activeUnitName}`,
-      schoolUnitName: unitInfo?.name || (activeUnitName !== "SEMUA UNIT" ? activeUnitName : undefined),
-      unitInfo: unitInfo,
-      pengaturan,
-      orientation: 'landscape'
+      config: { orientation: 'landscape' }
     })
   }
 
@@ -241,16 +238,14 @@ export default function RekapitulasiTunggakanClient({
       `Rp ${formatRupiah(selectedKelasData.studentsList.reduce((acc, r) => acc + r.totalTunggakan, 0))}`
     ])
 
-    exportToPdfTable({
+    exportTablePdf({
+      institutionInfo: buildInstitutionInfo(pengaturan, unitInfo),
       title: `DETAIL TUNGGAKAN KELAS ${selectedKelasData.subKelasName.toUpperCase()}`,
       subtitle: `Unit: ${activeUnitName} • Tahun Akademik: ${activeTahunAkademikName}`,
       headers,
       data,
       filename: `Tunggakan_Kelas_${selectedKelasData.subKelasName}_${activeUnitName}`,
-      schoolUnitName: unitInfo?.name || (activeUnitName !== "SEMUA UNIT" ? activeUnitName : undefined),
-      unitInfo: unitInfo,
-      pengaturan,
-      orientation: 'portrait'
+      config: { orientation: 'portrait' }
     })
   }
 

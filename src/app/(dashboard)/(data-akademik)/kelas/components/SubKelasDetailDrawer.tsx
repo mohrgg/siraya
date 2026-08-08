@@ -118,28 +118,27 @@ export default function SubKelasDetailDrawer({
     }
     setIsExportingPDF(true)
     try {
-      const { exportToPdfTable } = await import("@/lib/pdf")
-      const schoolUnitName = subKelas.unitSekolah?.name ? `UNIT ${subKelas.unitSekolah.name.toUpperCase()} SIRAYA` : "YAYASAN AL-BASYARIAH SIRAYA"
-      const dateStr = new Date().toISOString().split('T')[0]
-      const headers = ["No", "NISN / NIS", "Nama Siswa", "L/P", "Status", "Nama Orang Tua", "No. HP Orang Tua"]
-      const pdfRows = students.map((s, idx) => [
-        idx + 1,
-        `${s.nisn || "-"}\n${s.nis || "-"}`,
-        s.name,
-        s.gender?.toLowerCase().includes("laki") ? "L" : "P",
-        s.status || "AKTIF",
-        s.parentName || "-",
-        s.parentPhone || "-"
+      const { exportTablePdf } = await import("@/lib/pdf")
+      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
+      
+      const tableColumn = ["No", "NIS", "NISN", "Nama", "L/P", "Status"]
+      const tableRows = students.map((s: any, index: number) => [
+        index + 1,
+        s.nis || "-",
+        s.nisn || "-",
+        s.nama || s.name,
+        s.jenisKelamin || s.gender,
+        s.status || "AKTIF"
       ])
-      exportToPdfTable({
-        title: `Daftar Siswa (Roster) - Kelas ${subKelas.name}`,
-        subtitle: `Tingkat: ${subKelas.tingkat?.name || "-"} • Tahun Ajaran: ${subKelas.tahunAkademik?.year || "-"} • Wali Kelas: ${subKelas.waliKelasGuru?.name || subKelas.waliKelas || "Belum ditentukan"}`,
-        headers,
-        data: pdfRows,
-        filename: `Roster_Siswa_${subKelas.name}_${dateStr}`.replace(/\s+/g, '_'),
-        schoolUnitName,
-        unitInfo: subKelas.unitSekolah || undefined,
-        orientation: 'portrait'
+
+      exportTablePdf({
+        institutionInfo: buildInstitutionInfo(undefined, subKelas.unitSekolah),
+        title: `Daftar Murid Kelas ${subKelas.nama}`,
+        subtitle: `Tingkat: ${subKelas.tingkat.name} • Tahun Akademik: ${subKelas.tahunAkademik.name}`,
+        headers: tableColumn,
+        data: tableRows,
+        filename: `Murid_Kelas_${subKelas.nama.replace(/\s+/g, '_')}`,
+        config: { orientation: 'portrait' }
       })
       toast.success("Berhasil mengunduh PDF Daftar Siswa")
     } catch (err: any) {

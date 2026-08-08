@@ -42,18 +42,22 @@ export default function ModalResiPembayaran({
 
   const handlePrint = async () => {
     try {
+      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
+      
       exportResiPdf({
+        institutionInfo: buildInstitutionInfo(pengaturan, unitInfo),
         noReferensi: data.noReferensi,
         tanggal: data.tanggal,
-        muridName: data.muridName,
-        unitSekolahName: data.unitSekolahName,
-        namaYayasan: pengaturan?.namaYayasan,
-        items: data.items,
+        penerimaDari: data.muridName,
+        items: data.items.map(item => ({
+          keterangan: item.namaAkun,
+          nominal: item.jumlahBayar
+        })),
         total: data.total,
-        catatanKwitansi: pengaturan?.catatanKwitansi,
-        namaBendahara: currentUser?.name || pengaturan?.namaBendahara || "Staf Keuangan",
-        pengaturan,
-        unitInfo
+        catatan: pengaturan?.catatanKwitansi,
+        penandatanganKiri: { jabatan: "Penyetor / Wali Murid,", nama: data.muridName },
+        penandatanganKanan: { jabatan: "Bendahara Penerima,", nama: currentUser?.name || pengaturan?.namaBendahara || "Staf Keuangan" },
+        filename: `Kwitansi_${data.noReferensi}`
       })
       toast.success("Berhasil mengunduh Bukti Pembayaran (PDF)")
     } catch (err: any) {

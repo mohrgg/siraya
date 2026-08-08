@@ -161,12 +161,15 @@ export default function KelasClient({
   const handleExportPDF = async () => {
     if (data.activeTab !== "murid" && data.activeTab !== "alumni" && data.activeTab !== "sub-kelas") return
     setIsExportingPDF(true)
-    const unitObj = schoolUnits.find((u: any) => u.id === activeUnitId) || schoolUnits[0]
-    const schoolUnitName = unitObj ? `UNIT ${unitObj.name.toUpperCase()} SIRAYA` : "YAYASAN AL-BASYARIAH SIRAYA"
     const dateStr = new Date().toISOString().split('T')[0]
+    const activeTahunAkademikId = activeYearId || 'ALL'
+    const activeTahunAkademik = academicYears.find((y: any) => y.id === activeYearId)
 
     try {
-      const { exportToPdfTable } = await import("@/lib/pdf")
+      const { exportTablePdf } = await import("@/lib/pdf")
+      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
+      const unitObj = activeUnitId === 'ALL' ? undefined : schoolUnits.find((u: any) => u.id === activeUnitId)
+      
       if (data.activeTab === "sub-kelas") {
         if (!data.classrooms || data.classrooms.length === 0) {
           toast.error("Tidak ada data rombel untuk diekspor")
@@ -181,15 +184,14 @@ export default function KelasClient({
           c.tahunAkademik?.name || "-",
           c.waliKelas || "Belum ditentukan"
         ])
-        exportToPdfTable({
-          title: "Daftar Rombongan Belajar (Sub Kelas)",
-          subtitle: `Unit: ${unitObj?.name || "Semua Unit"} • Tahun Ajaran: ${academicYears.find((y: any) => y.id === activeYearId)?.name || "Aktif"}`,
+        exportTablePdf({
+          institutionInfo: buildInstitutionInfo(undefined, unitObj),
+          title: "Daftar Rekapitulasi Rombel",
+          subtitle: `Tahun Akademik: ${activeTahunAkademikId === 'ALL' ? 'Semua' : activeTahunAkademik?.name} • Unit: ${unitObj?.name || "Semua Unit"}`,
           headers,
           data: pdfRows,
           filename: `Daftar_Rombel_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
-          schoolUnitName,
-          unitInfo: unitObj,
-          orientation: 'portrait'
+          config: { orientation: 'landscape' }
         })
       } else {
         const { getSiswaPaginated } = await import("@/actions/siswa")
@@ -222,15 +224,14 @@ export default function KelasClient({
         ])
 
         const statusName = data.activeTab === "murid" ? "Aktif" : (data.filterAlumniStatus || "Semua Status")
-        exportToPdfTable({
+        exportTablePdf({
+          institutionInfo: buildInstitutionInfo(undefined, unitObj),
           title: `Daftar Murid (${statusName})`,
           subtitle: `Unit: ${unitObj?.name || "Semua Unit"} • Total: ${res.data.length} Siswa`,
           headers,
           data: pdfRows,
           filename: `Daftar_Murid_${unitObj?.name || "Semua"}_${statusName}_${dateStr}`.replace(/\s+/g, '_'),
-          schoolUnitName,
-          unitInfo: unitObj,
-          orientation: 'landscape'
+          config: { orientation: 'landscape' }
         })
       }
       toast.success("Berhasil mengekspor dokumen PDF resmi")

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
 import { exportToExcel } from "@/lib/excel"
 import { exportIncomeStatementPdf } from "@/lib/pdf"
+import { buildInstitutionInfo } from "@/lib/pdf-helpers"
 import toast from "react-hot-toast"
 import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
@@ -142,13 +143,13 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
     const unitObj = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
 
     exportIncomeStatementPdf({
+      institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
       startDate: startDate || "",
       endDate: endDate || "",
       data: data,
       filename,
-      schoolUnitName: unitObj?.name,
-      unitInfo: unitObj,
-      pengaturan
+      penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+      penandatanganKanan: { jabatan: "Bendahara,", nama: pengaturan?.namaBendahara || "____________________" }
     })
     
     toast.success("PDF berhasil diunduh")

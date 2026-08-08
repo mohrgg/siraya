@@ -103,10 +103,11 @@ export default function MuridDetailClient({
   const handleExportPDF = async () => {
     setIsExportingPDF(true)
     try {
-      const { exportToPdfTable } = await import("@/lib/pdf")
+      const { exportTablePdf } = await import("@/lib/pdf")
+      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
+      
       const unitName = murid.unitSekolah?.name || "Unit Sekolah"
       const currentRombel = murid.riwayatKelas?.[0]?.subKelas?.name || murid.subKelas?.name || "Belum ada kelas"
-      const schoolUnitName = murid.unitSekolah?.name
       const dateStr = new Date().toISOString().split('T')[0]
 
       const headers = ["Keterangan / Field", "Informasi Siswa"]
@@ -123,15 +124,14 @@ export default function MuridDetailClient({
         ["Asal Sekolah Sebelumnya", murid.previousSchool || "-"]
       ]
 
-      exportToPdfTable({
-        title: `Profil Siswa 360° - ${murid.name}`,
-        subtitle: `NISN: ${murid.nisn || "-"} • Unit: ${unitName} • Rombel: ${currentRombel}`,
+      exportTablePdf({
+        institutionInfo: buildInstitutionInfo(pengaturan, murid.unitSekolah),
+        title: `Data Profil Murid: ${murid.nama}`,
+        subtitle: `Kelas: ${currentRombel} • Unit: ${unitName}`,
         headers,
         data: pdfRows,
-        filename: `Profil_Siswa_${murid.name}_${dateStr}`.replace(/\s+/g, '_'),
-        schoolUnitName,
-        unitInfo: murid.unitSekolah || undefined,
-        orientation: 'portrait'
+        filename: `Data_Murid_${murid.nis}_${dateStr}`.replace(/\s+/g, '_'),
+        config: { orientation: 'portrait' }
       })
       toast.success("Berhasil mengunduh PDF Profil Siswa")
     } catch (err: any) {

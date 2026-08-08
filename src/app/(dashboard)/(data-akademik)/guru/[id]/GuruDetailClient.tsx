@@ -112,7 +112,8 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
   const handleExportPDF = async () => {
     setIsExportingPDF(true)
     try {
-      const { exportToPdfTable } = await import("@/lib/pdf")
+      const { exportTablePdf } = await import("@/lib/pdf")
+      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
       const dateStr = new Date().toISOString().split('T')[0]
       const headers = ["Keterangan / Field", "Informasi Guru"]
       const pdfRows = [
@@ -128,16 +129,14 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
         ["Bank / Rekening", `${initialData.bankName || "-"} / ${initialData.bankAccount || "-"}`],
         ["Wali Kelas", initialData.rombelWali?.map(r => r.name).join(", ") || "-"]
       ]
-      exportToPdfTable({
+      exportTablePdf({
+        institutionInfo: buildInstitutionInfo(pengaturan, initialData.unitSekolah),
         title: `Profil Guru - ${initialData.name}`,
         subtitle: `NIP: ${initialData.nip || "-"} • Unit: ${initialData.unitSekolah?.name || "-"}`,
         headers,
         data: pdfRows,
         filename: `Profil_Guru_${initialData.name}_${dateStr}`.replace(/\s+/g, '_'),
-        schoolUnitName: initialData.unitSekolah?.name,
-        unitInfo: initialData.unitSekolah || undefined,
-        pengaturan,
-        orientation: 'portrait'
+        config: { orientation: 'portrait' }
       })
       toast.success("Berhasil mengunduh PDF Profil Guru")
     } catch (err: any) {

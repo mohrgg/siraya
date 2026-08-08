@@ -279,9 +279,9 @@ export default function GuruClient({
     }
     setIsExportingPDF(true)
     try {
-      const { exportToPdfTable } = await import("@/lib/pdf")
-      const unitObj = schoolUnits.find(u => u.id === activeUnitId)
-      const schoolUnitName = unitObj ? `UNIT ${unitObj.name.toUpperCase()} SIRAYA` : "YAYASAN AL-BASYARIAH SIRAYA"
+      const { exportTablePdf } = await import("@/lib/pdf")
+      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
+      const unitObj = schoolUnits.find((u: any) => u.id === activeUnitId)
       const dateStr = new Date().toISOString().split('T')[0]
 
       const headers = ["No", "NIP / NIK", "Nama Lengkap & Gelar", "Unit", "Status", "Pendidikan", "No. WA"]
@@ -295,16 +295,14 @@ export default function GuruClient({
         g.phone || "-"
       ])
 
-      exportToPdfTable({
+      exportTablePdf({
+        institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
         title: "Daftar Guru & Staf Kepegawaian",
         subtitle: `Unit: ${unitObj?.name || "Semua Unit"} • Total: ${filteredData.length} Orang`,
         headers,
         data: pdfRows,
         filename: `Daftar_Guru_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
-        schoolUnitName: unitObj?.name,
-        unitInfo: unitObj,
-        pengaturan,
-        orientation: 'landscape'
+        config: { orientation: 'landscape' }
       })
       toast.success("Berhasil mengunduh PDF Daftar Guru")
     } catch (err: any) {

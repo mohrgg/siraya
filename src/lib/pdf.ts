@@ -1,27 +1,19 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import {
+  PdfInstitutionInfo,
+  PdfSignatory,
+  ExportTablePdfOptions,
+  ExportResiPdfOptions,
+  ExportJurnalPdfOptions,
+  ExportIncomeStatementPdfOptions
+} from './pdf-types'
 
-export interface PdfTableOptions {
-  title: string
-  subtitle?: string
-  headers: string[]
-  data: (string | number)[][]
-  filename: string
-  schoolUnitName?: string
-  unitInfo?: {
-    name?: string | null
-    address?: string | null
-    phone?: string | null
-    email?: string | null
-    website?: string | null
-    kotaPenandatangan?: string | null
-    [key: string]: any
-  }
-  pengaturan?: any
-  orientation?: 'portrait' | 'landscape'
-  tanggalCetak?: Date
-  penandatanganKiri?: { jabatan: string, nama: string }
-  penandatanganKanan?: { jabatan: string, nama: string }
+/**
+ * Format nominal Rupiah
+ */
+const formatRp = (val: number) => {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val)
 }
 
 /**
@@ -32,11 +24,10 @@ export function drawTandaTangan(
   pageWidth: number, 
   pageHeight: number, 
   finalY: number, 
-  pengaturan?: any,
-  unitInfo?: any,
+  institutionInfo: PdfInstitutionInfo,
   tanggalCetak?: Date | string,
-  kiri?: { jabatan: string, nama: string },
-  kanan?: { jabatan: string, nama: string }
+  kiri?: PdfSignatory,
+  kanan?: PdfSignatory
 ) {
   let startY = finalY + 15
   
@@ -54,7 +45,7 @@ export function drawTandaTangan(
     day: '2-digit', month: 'long', year: 'numeric'
   })
   
-  const kota = unitInfo?.kotaPenandatangan || pengaturan?.kotaPenandatangan || "Bandung"
+  const kota = institutionInfo.kotaPenandatangan || "Bandung"
   const tempatTanggal = `${kota}, ${dateStr}`
 
   // Kanan
@@ -74,96 +65,123 @@ export function drawTandaTangan(
 }
 
 /**
- * Helper universal untuk mengekspor data tabel menjadi dokumen PDF resmi.
- * Dilengkapi dengan Kop Surat Sekolah, styling vektor berkualitas tinggi,
- * penomoran halaman otomatis, dan footer resmi.
+ * Helper Menggambar Kop Surat
  */
-export function exportToPdfTable({
+export const drawKopSurat = (
+  docInstance: jsPDF,
+  pageWidth: number,
+  institutionInfo: PdfInstitutionInfo,
+  startY: number = 12
+) => {
+  let startSubY = startY + 11
+
+  if (institutionInfo.namaUnit) {
+    // Skema 1: Kop Unit
+    docInstance.setFont("helvetica", "bold")
+    docInstance.setFontSize(10)
+    docInstance.setTextColor(30, 41, 59) // slate-800
+    docInstance.text(institutionInfo.namaYayasan.toUpperCase(), pageWidth / 2, startY, { align: "center", charSpace: 1.5 })
+
+    docInstance.setFont("helvetica", "bold")
+    docInstance.setFontSize(18)
+    docInstance.setTextColor(15, 23, 42) // slate-900
+    docInstance.text(institutionInfo.namaUnit.toUpperCase(), pageWidth / 2, startY + 7, { align: "center", charSpace: 1 })
+    
+    startSubY = startY + 12
+  } else {
+    // Skema 2: Kop Yayasan
+    docInstance.setFont("helvetica", "bold")
+    docInstance.setFontSize(18)
+    docInstance.setTextColor(15, 23, 42)
+    docInstance.text(institutionInfo.namaYayasan.toUpperCase(), pageWidth / 2, startY + 4, { align: "center", charSpace: 1 })
+    
+    startSubY = startY + 10
+  }
+
+  docInstance.setFont("helvetica", "normal")
+  docInstance.setFontSize(9)
+  docInstance.setTextColor(51, 65, 85) // slate-700
+  
+  const parts = []
+  if (institutionInfo.alamat) parts.push(institutionInfo.alamat)
+  if (institutionInfo.telepon) parts.push(`Telp: ${institutionInfo.telepon}`)
+  if (institutionInfo.email) parts.push(`Email: ${institutionInfo.email}`)
+  if (institutionInfo.website) parts.push(`Web: ${institutionInfo.website}`)
+  
+  const kopSubtitle = parts.join(' • ')
+  
+  if (kopSubtitle) {
+    const splitSubtitle = docInstance.splitTextToSize(kopSubtitle, pageWidth - 30)
+    splitSubtitle.forEach((line: string) => {
+      docInstance.text(line, pageWidth / 2, startSubY, { align: "center" })
+      startSubY += 4
+    })
+  }
+
+  const lineY = startSubY + 1
+  docInstance.setLineWidth(0.8)
+  docInstance.setDrawColor(15, 23, 42)
+  docInstance.line(14, lineY, pageWidth - 14, lineY)
+
+  docInstance.setLineWidth(0.2)
+  docInstance.line(14, lineY + 1.5, pageWidth - 14, lineY + 1.5)
+  
+  return lineY + 1.5
+}
+
+/**
+ * Helper menggambar Footer
+ */
+const drawFooter = (docInstance: jsPDF, pageWidth: number, pageHeight: number, pageNumber: number, totalPagesExp: string) => {
+  const footerY = pageHeight - 12
+  docInstance.setFont("helvetica", "italic")
+  docInstance.setFontSize(7.5)
+  docInstance.setTextColor(148, 163, 184) // Slate-400
+
+  const dateStr = new Date().toLocaleDateString('id-ID', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  })
+  docInstance.text(`Dicetak melalui Sistem Informasi Siraya pada ${dateStr}`, 14, footerY)
+
+  const pageStr = `Halaman ${pageNumber} dari ${totalPagesExp}`
+  docInstance.text(pageStr, pageWidth - 14, footerY, { align: "right" })
+}
+
+/**
+ * Helper universal untuk mengekspor data tabel menjadi dokumen PDF resmi.
+ */
+export function exportTablePdf({
+  institutionInfo,
   title,
   subtitle = "",
   headers,
   data,
   filename,
-  schoolUnitName = "SISTEM INFORMASI SIRAYA (SIRAYA)",
-  unitInfo,
-  pengaturan,
-  orientation = 'landscape',
+  config,
   tanggalCetak = new Date(),
   penandatanganKiri,
   penandatanganKanan
-}: PdfTableOptions) {
+}: ExportTablePdfOptions) {
   if (!data || data.length === 0) {
     console.warn("Data kosong, tidak ada yang diekspor ke PDF")
     return
   }
 
-  // 1. Inisialisasi jsPDF
   const doc = new jsPDF({
-    orientation: orientation,
+    orientation: config?.orientation || 'landscape',
     unit: 'mm',
-    format: 'a4'
+    format: config?.format || 'a4'
   })
 
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
   const totalPagesExp = '{total_pages_count_string}'
 
-  // 2. Fungsi Menggambar Kop Surat (Header Resmi)
-  const drawHeader = (docInstance: jsPDF) => {
-    // Teks Kop Surat
-    docInstance.setFont("helvetica", "bold")
-    docInstance.setFontSize(10)
-    docInstance.setTextColor(100, 116, 139) // Slate-500
-    docInstance.text("YAYASAN AL-BASYARIAH / SIRAYA EDUCATION", pageWidth / 2, 12, { align: "center" })
-
-    docInstance.setFontSize(15)
-    docInstance.setTextColor(15, 23, 42) // Slate-900 (Black/Dark)
-    docInstance.text(schoolUnitName.toUpperCase(), pageWidth / 2, 18, { align: "center" })
-
-    docInstance.setFont("helvetica", "normal")
-    docInstance.setFontSize(8.5)
-    docInstance.setTextColor(71, 85, 105) // Slate-600
-    
-    // Gunakan unitInfo jika ada, jika tidak gunakan default string
-    let kopSubtitle = "Jl. Pendidikan Nusantara No. 123, Bandung, Jawa Barat • Telp: (022) 1234567 • Email: info@siraya.edu"
-    if (unitInfo) {
-      const parts = []
-      if (unitInfo.address) parts.push(unitInfo.address)
-      if (unitInfo.phone) parts.push(`Telp: ${unitInfo.phone}`)
-      if (unitInfo.email) parts.push(`Email: ${unitInfo.email}`)
-      if (unitInfo.website) parts.push(`Web: ${unitInfo.website}`)
-      if (parts.length > 0) {
-        kopSubtitle = parts.join(' • ')
-      }
-    }
-    
-    // Pecah teks jika terlalu panjang agar tidak merembes melewati batas lebar kertas
-    const maxSubtitleWidth = pageWidth - 30 // Margin kiri kanan 15mm
-    const splitSubtitle = docInstance.splitTextToSize(kopSubtitle, maxSubtitleWidth)
-    
-    // Tulis subtitle, iterasi per baris jika ada banyak baris
-    let startSubY = 23
-    splitSubtitle.forEach((line: string) => {
-      docInstance.text(line, pageWidth / 2, startSubY, { align: "center" })
-      startSubY += 4 // Jarak antar baris
-    })
-
-    // Garis Pembatas Kop Surat (Garis tebal + garis tipis)
-    const lineY = startSubY + 1
-    docInstance.setLineWidth(0.8)
-    docInstance.setDrawColor(15, 23, 42)
-    docInstance.line(14, lineY, pageWidth - 14, lineY)
-
-    docInstance.setLineWidth(0.2)
-    docInstance.line(14, lineY + 1.5, pageWidth - 14, lineY + 1.5)
-    
-    return lineY + 1.5 // Mengembalikan posisi Y terakhir setelah kop
-  }
-
   // Gambar Kop di halaman pertama
-  let currentY = drawHeader(doc) + 8
+  let currentY = drawKopSurat(doc, pageWidth, institutionInfo, 12) + 8
 
-  // 3. Judul & Subjudul Dokumen
+  // Judul & Subjudul Dokumen
   doc.setFont("helvetica", "bold")
   doc.setFontSize(13)
   doc.setTextColor(5, 150, 105) // Emerald-600
@@ -182,7 +200,7 @@ export function exportToPdfTable({
     currentY += 2
   }
 
-  // 4. Render Tabel Vektor dengan AutoTable
+  // Render Tabel Vektor dengan AutoTable
   autoTable(doc, {
     startY: currentY,
     head: [headers],
@@ -197,7 +215,7 @@ export function exportToPdfTable({
       lineWidth: 0.2
     },
     headStyles: {
-      fillColor: [5, 150, 105], // Emerald-600 Theme
+      fillColor: [30, 41, 59], // Slate-800 Theme
       textColor: [255, 255, 255],
       fontStyle: 'bold',
       halign: 'center',
@@ -206,75 +224,38 @@ export function exportToPdfTable({
     alternateRowStyles: {
       fillColor: [248, 250, 252] // Slate-50
     },
-    margin: { top: 32, left: 14, right: 14, bottom: 20 },
+    margin: config?.margin || { top: 32, left: 14, right: 14, bottom: 20 },
     didDrawPage: (dataHook) => {
-      // Gambar Kop Surat jika halaman baru (di atas halaman 1)
       if (dataHook.pageNumber > 1) {
-        drawHeader(doc)
+        drawKopSurat(doc, pageWidth, institutionInfo, 12)
       }
-
-      // 5. Gambar Footer Resmi di setiap halaman
-      const footerY = pageHeight - 12
-      doc.setFont("helvetica", "italic")
-      doc.setFontSize(7.5)
-      doc.setTextColor(148, 163, 184) // Slate-400
-
-      const dateStr = new Date().toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-      doc.text(`Dicetak melalui Sistem Informasi Siraya pada ${dateStr}`, 14, footerY)
-
-      // Penomoran Halaman (Halaman X dari {total_pages_count_string})
-      const pageStr = `Halaman ${dataHook.pageNumber} dari ${totalPagesExp}`
-      doc.text(pageStr, pageWidth - 14, footerY, { align: "right" })
+      drawFooter(doc, pageWidth, pageHeight, dataHook.pageNumber, totalPagesExp)
     }
   })
 
-  // 6. Ganti placeholder total halaman dengan angka sebenarnya
   if (typeof doc.putTotalPages === 'function') {
     doc.putTotalPages(totalPagesExp)
   }
 
-  // 7. Area Tanda Tangan
   const finalY = (doc as any).lastAutoTable.finalY
   drawTandaTangan(
     doc, 
     pageWidth, 
     pageHeight, 
     finalY, 
-    pengaturan, 
-    unitInfo, 
+    institutionInfo,
     tanggalCetak, 
     penandatanganKiri, 
     penandatanganKanan
   )
 
-  // 8. Simpan file PDF
   doc.save(`${filename}.pdf`)
-}
-
-export interface PdfResiOptions {
-  noReferensi: string
-  tanggal: Date
-  muridName: string
-  unitSekolahName?: string
-  namaYayasan?: string
-  items: { namaAkun: string, jumlahBayar: number }[]
-  total: number
-  catatanKwitansi?: string
-  namaBendahara?: string
-  pengaturan?: any
-  unitInfo?: any
 }
 
 /**
  * Ekspor Resi/Kwitansi Pembayaran Tagihan ke format PDF resmi (A5 Landscape).
  */
-export function exportResiPdf(data: PdfResiOptions) {
+export function exportResiPdf(data: ExportResiPdfOptions) {
   const doc = new jsPDF({
     orientation: 'landscape',
     unit: 'mm',
@@ -285,12 +266,14 @@ export function exportResiPdf(data: PdfResiOptions) {
   const pageHeight = doc.internal.pageSize.getHeight()
   
   // 1. KOP SURAT
-  const lineY = drawKopSurat(doc, pageWidth, data.unitSekolahName || data.unitInfo?.name || "BUKTI PEMBAYARAN", data.unitInfo, 15, data.pengaturan)
+  const lineY = drawKopSurat(doc, pageWidth, data.institutionInfo, 12)
   
   // 2. TANGGAL & NO REF (Kanan Atas sejajar dengan Judul)
   doc.setFont("helvetica", "normal")
   doc.setFontSize(9)
-  const dateStr = data.tanggal.toLocaleDateString('id-ID', {
+  
+  const dateObj = typeof data.tanggal === 'string' ? new Date(data.tanggal) : (data.tanggal || new Date())
+  const dateStr = dateObj.toLocaleDateString('id-ID', {
     day: '2-digit', month: 'long', year: 'numeric'
   })
   
@@ -299,10 +282,10 @@ export function exportResiPdf(data: PdfResiOptions) {
   doc.setFont("helvetica", "bold")
   doc.setFontSize(14)
   doc.setTextColor(15, 23, 42)
-  doc.text("KWITANSI PEMBAYARAN", pageWidth / 2, titleY, { align: "center" })
+  doc.text("BUKTI PEMBAYARAN / KWITANSI", pageWidth / 2, titleY, { align: "center" })
   
   // underline judul
-  const titleWidth = doc.getTextWidth("KWITANSI PEMBAYARAN")
+  const titleWidth = doc.getTextWidth("BUKTI PEMBAYARAN / KWITANSI")
   doc.setLineWidth(0.3)
   doc.line((pageWidth - titleWidth) / 2, titleY + 1.5, (pageWidth + titleWidth) / 2, titleY + 1.5)
 
@@ -319,17 +302,13 @@ export function exportResiPdf(data: PdfResiOptions) {
   doc.text("Telah terima dari", 15, identityY)
   doc.text(":", 45, identityY)
   doc.setFont("helvetica", "bold")
-  doc.text(data.muridName, 48, identityY)
+  doc.text(data.penerimaDari, 48, identityY)
   
   // 5. TABEL RINCIAN
-  const formatRp = (val: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val)
-  }
-  
   const tableData = data.items.map((item, index) => [
     (index + 1).toString(),
-    item.namaAkun,
-    formatRp(item.jumlahBayar)
+    item.keterangan,
+    formatRp(item.nominal)
   ])
   
   // Baris Total
@@ -348,8 +327,8 @@ export function exportResiPdf(data: PdfResiOptions) {
       lineColor: [226, 232, 240]
     },
     headStyles: {
-      fillColor: [241, 245, 249],
-      textColor: [30, 41, 59],
+      fillColor: [30, 41, 59],
+      textColor: [255, 255, 255],
       fontStyle: 'bold',
       halign: 'center'
     },
@@ -371,18 +350,16 @@ export function exportResiPdf(data: PdfResiOptions) {
 
   // 6. TANDA TANGAN
   const finalY = (doc as any).lastAutoTable.finalY - 5
-  const signName = data.namaBendahara || data.pengaturan?.namaBendahara || "Staf Keuangan"
 
   drawTandaTangan(
     doc,
     pageWidth,
     pageHeight,
     finalY,
-    data.pengaturan,
-    data.unitInfo,
+    data.institutionInfo,
     data.tanggal,
-    { jabatan: "Penyetor / Wali Murid,", nama: data.muridName },
-    { jabatan: "Bendahara Penerima,", nama: signName }
+    data.penandatanganKiri || { jabatan: "Penyetor / Wali Murid,", nama: data.penerimaDari },
+    data.penandatanganKanan || { jabatan: "Bendahara Penerima,", nama: "Staf Keuangan" }
   )
   
   // 7. CATATAN FOOTER
@@ -390,52 +367,89 @@ export function exportResiPdf(data: PdfResiOptions) {
   doc.setFont("helvetica", "italic")
   doc.setFontSize(8)
   doc.setTextColor(100, 116, 139)
-  const catatan = data.catatanKwitansi || data.pengaturan?.catatanKwitansi || "Terima kasih atas pembayaran Anda. Simpan kwitansi ini sebagai bukti pembayaran yang sah."
+  const catatan = data.catatan || "Terima kasih atas pembayaran Anda. Simpan kwitansi ini sebagai bukti pembayaran yang sah."
   doc.text(catatan, pageWidth / 2, footerY, { align: "center" })
 
-  doc.save(`Kwitansi_${data.noReferensi}.pdf`)
-}
-
-export interface IncomeStatementPdfOptions {
-  startDate: string
-  endDate: string
-  data: {
-    pendapatan: any[]
-    totalPendapatan: number
-    pengeluaran: any[]
-    totalPengeluaran: number
-  }
-  filename: string
-  schoolUnitName?: string
-  unitInfo?: {
-    name?: string | null
-    address?: string | null
-    phone?: string | null
-    email?: string | null
-    website?: string | null
-    [key: string]: any
-  }
-  pengaturan?: any
-  tanggalCetak?: Date | string
-  penandatanganKiri?: { jabatan: string, nama: string }
-  penandatanganKanan?: { jabatan: string, nama: string }
+  doc.save(data.filename || `Kwitansi_${data.noReferensi}.pdf`)
 }
 
 /**
- * Ekspor Laporan Pemasukan & Pengeluaran ke format Laba/Rugi (Income Statement) profesional.
+ * Ekspor Jurnal Kas (A4 Portrait).
+ */
+export function exportJurnalPdf(data: ExportJurnalPdfOptions) {
+  const doc = new jsPDF('portrait')
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
+  
+  let currentY = drawKopSurat(doc, pageWidth, data.institutionInfo, 12) + 8
+  
+  doc.setFontSize(12)
+  doc.setFont("helvetica", "bold")
+  doc.setTextColor(30, 41, 59)
+  doc.text(data.judulJurnal.toUpperCase(), pageWidth / 2, currentY, { align: "center" })
+  currentY += 8
+  
+  // Info
+  doc.setTextColor(15, 23, 42)
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(10)
+
+  const dateObj = typeof data.tanggal === 'string' ? new Date(data.tanggal) : (data.tanggal || new Date())
+  const dateStr = dateObj.toLocaleDateString('id-ID', {
+    day: '2-digit', month: 'long', year: 'numeric'
+  })
+
+  doc.text(`No Referensi : ${data.noReferensi}`, 14, currentY)
+  doc.text(`Tanggal      : ${dateStr}`, 14, currentY + 6)
+  doc.text(`Deskripsi    : ${data.deskripsi || "-"}`, 14, currentY + 12)
+
+  const tableColumn = ["Kode Akun", "Nama Akun", "Debit", "Kredit"]
+  const tableRows = data.detail.map((d) => [
+    d.kodeAkun,
+    d.namaAkun,
+    d.debit > 0 ? formatRp(d.debit) : "-",
+    d.kredit > 0 ? formatRp(d.kredit) : "-"
+  ])
+
+  autoTable(doc, {
+    head: [tableColumn],
+    body: tableRows,
+    startY: currentY + 18,
+    theme: 'grid',
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [30, 41, 59] } // Slate 800
+  })
+
+  const finalY = (doc as any).lastAutoTable.finalY || 70
+  
+  // Signatures
+  drawTandaTangan(
+    doc,
+    pageWidth,
+    pageHeight,
+    finalY,
+    data.institutionInfo,
+    data.tanggal,
+    data.penandatanganKiri || { jabatan: "Dibuat Oleh,", nama: "........................" },
+    data.penandatanganKanan || { jabatan: "Disetujui Oleh,", nama: "........................" }
+  )
+
+  doc.save(data.filename || `Jurnal_${data.noReferensi}.pdf`)
+}
+
+/**
+ * Ekspor Laporan Pemasukan & Pengeluaran (Income Statement).
  */
 export function exportIncomeStatementPdf({
+  institutionInfo,
   startDate,
   endDate,
   data,
   filename,
-  schoolUnitName = "YAYASAN AL BASYARIAH",
-  unitInfo,
-  pengaturan,
   tanggalCetak,
   penandatanganKiri,
   penandatanganKanan
-}: IncomeStatementPdfOptions) {
+}: ExportIncomeStatementPdfOptions) {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -446,27 +460,23 @@ export function exportIncomeStatementPdf({
   const pageHeight = doc.internal.pageSize.getHeight()
   
   // 1. KOP SURAT
-  const headerY = drawKopSurat(doc, pageWidth, schoolUnitName, unitInfo, 12, pengaturan)
+  const headerY = drawKopSurat(doc, pageWidth, institutionInfo, 12)
   
   // 2. JUDUL LAPORAN
   let currentY = headerY + 10
   doc.setFont("helvetica", "bold")
   doc.setFontSize(12)
-  doc.setTextColor(37, 99, 235) // Blue-600
+  doc.setTextColor(30, 41, 59)
   doc.text("LAPORAN PEMASUKAN DAN PENGELUARAN", pageWidth / 2, currentY, { align: "center" })
   
   currentY += 6
   doc.setFont("helvetica", "normal")
   doc.setFontSize(10)
-  doc.setTextColor(244, 63, 94) // Rose-500
+  doc.setTextColor(71, 85, 105)
   doc.text(`Periode: ${startDate} - ${endDate}`, pageWidth / 2, currentY, { align: "center" })
   
   // 3. DATA TABEL
   const titleY = currentY + 10
-  
-  const formatRp = (val: number) => {
-    return val.toLocaleString('id-ID', { minimumFractionDigits: 0 })
-  }
 
   const tableData: any[] = []
 
@@ -482,10 +492,10 @@ export function exportIncomeStatementPdf({
   } else {
     data.pendapatan.forEach(p => {
       tableData.push([
-        { content: `    ${p.kode}`, styles: { textColor: [59, 130, 246] } },
-        { content: p.nama, styles: { textColor: [75, 85, 99] } },
-        { content: `Rp.`, styles: { textColor: [75, 85, 99], halign: 'right' } },
-        { content: formatRp(p.total), styles: { textColor: [75, 85, 99], halign: 'right' } }
+        { content: `    ${p.kode}`, styles: { textColor: [30, 41, 59] } },
+        { content: p.nama, styles: { textColor: [71, 85, 105] } },
+        { content: `Rp.`, styles: { textColor: [71, 85, 105], halign: 'right' } },
+        { content: p.total.toLocaleString('id-ID'), styles: { textColor: [71, 85, 105], halign: 'right' } }
       ])
     })
   }
@@ -493,12 +503,7 @@ export function exportIncomeStatementPdf({
   tableData.push([
     { content: 'Total PENDAPATAN', colSpan: 2, styles: { textColor: [16, 185, 129], fontStyle: 'bold' } },
     { content: `Rp.`, styles: { textColor: [16, 185, 129], fontStyle: 'bold', halign: 'right' } },
-    { content: formatRp(data.totalPendapatan), styles: { textColor: [16, 185, 129], fontStyle: 'bold', halign: 'right' } }
-  ])
-  tableData.push([
-    { content: 'Total PENDAPATAN', colSpan: 2, styles: { textColor: [37, 99, 235], fontStyle: 'bold' } },
-    { content: `Rp.`, styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } },
-    { content: formatRp(data.totalPendapatan), styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } }
+    { content: data.totalPendapatan.toLocaleString('id-ID'), styles: { textColor: [16, 185, 129], fontStyle: 'bold', halign: 'right' } }
   ])
   
   // Spacer
@@ -506,12 +511,12 @@ export function exportIncomeStatementPdf({
 
   // --- BIAYA BEBAN ---
   tableData.push([
-    { content: 'BIAYA BEBAN', colSpan: 2, styles: { textColor: [37, 99, 235], fontStyle: 'bold', fontSize: 9 } },
-    { content: `Rp.`, styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } },
-    { content: formatRp(data.totalPengeluaran), styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } }
+    { content: 'BIAYA BEBAN', colSpan: 2, styles: { textColor: [30, 41, 59], fontStyle: 'bold', fontSize: 9 } },
+    { content: `Rp.`, styles: { textColor: [30, 41, 59], fontStyle: 'bold', halign: 'right' } },
+    { content: data.totalPengeluaran.toLocaleString('id-ID'), styles: { textColor: [30, 41, 59], fontStyle: 'bold', halign: 'right' } }
   ])
   tableData.push([
-    { content: '  PENGELUARAN', colSpan: 4, styles: { textColor: [16, 185, 129], fontStyle: 'bold', fontSize: 8 } }
+    { content: '  PENGELUARAN', colSpan: 4, styles: { textColor: [225, 29, 72], fontStyle: 'bold', fontSize: 8 } }
   ])
   
   if (data.pengeluaran.length === 0) {
@@ -521,23 +526,18 @@ export function exportIncomeStatementPdf({
   } else {
     data.pengeluaran.forEach(p => {
       tableData.push([
-        { content: `    ${p.kode}`, styles: { textColor: [59, 130, 246] } },
-        { content: p.nama, styles: { textColor: [75, 85, 99] } },
-        { content: `Rp.`, styles: { textColor: [75, 85, 99], halign: 'right' } },
-        { content: formatRp(p.total), styles: { textColor: [75, 85, 99], halign: 'right' } }
+        { content: `    ${p.kode}`, styles: { textColor: [30, 41, 59] } },
+        { content: p.nama, styles: { textColor: [71, 85, 105] } },
+        { content: `Rp.`, styles: { textColor: [71, 85, 105], halign: 'right' } },
+        { content: p.total.toLocaleString('id-ID'), styles: { textColor: [71, 85, 105], halign: 'right' } }
       ])
     })
   }
 
   tableData.push([
-    { content: 'Total PENGELUARAN', colSpan: 2, styles: { textColor: [16, 185, 129], fontStyle: 'bold' } },
-    { content: `Rp.`, styles: { textColor: [16, 185, 129], fontStyle: 'bold', halign: 'right' } },
-    { content: formatRp(data.totalPengeluaran), styles: { textColor: [16, 185, 129], fontStyle: 'bold', halign: 'right' } }
-  ])
-  tableData.push([
-    { content: 'Total BIAYA BEBAN', colSpan: 2, styles: { textColor: [37, 99, 235], fontStyle: 'bold' } },
-    { content: `Rp.`, styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } },
-    { content: formatRp(data.totalPengeluaran), styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } }
+    { content: 'Total PENGELUARAN', colSpan: 2, styles: { textColor: [225, 29, 72], fontStyle: 'bold' } },
+    { content: `Rp.`, styles: { textColor: [225, 29, 72], fontStyle: 'bold', halign: 'right' } },
+    { content: data.totalPengeluaran.toLocaleString('id-ID'), styles: { textColor: [225, 29, 72], fontStyle: 'bold', halign: 'right' } }
   ])
 
   // Spacer
@@ -545,16 +545,16 @@ export function exportIncomeStatementPdf({
 
   // --- SALDO ---
   tableData.push([
-    { content: 'Selisih Pemasukan dan Pengeluaran', colSpan: 2, styles: { textColor: [37, 99, 235], fontStyle: 'bold', fontSize: 9 } },
-    { content: `Rp.`, styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } },
-    { content: formatRp(data.totalPendapatan - data.totalPengeluaran), styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } }
+    { content: 'Selisih Pemasukan dan Pengeluaran', colSpan: 2, styles: { textColor: [30, 41, 59], fontStyle: 'bold', fontSize: 9 } },
+    { content: `Rp.`, styles: { textColor: [30, 41, 59], fontStyle: 'bold', halign: 'right' } },
+    { content: (data.totalPendapatan - data.totalPengeluaran).toLocaleString('id-ID'), styles: { textColor: [30, 41, 59], fontStyle: 'bold', halign: 'right' } }
   ])
 
   autoTable(doc, {
     startY: titleY + 12,
     head: [[
-      { content: 'Semua Departemen', colSpan: 2, styles: { halign: 'left', textColor: [100, 116, 139] } },
-      { content: 'SALDO', colSpan: 2, styles: { halign: 'right', textColor: [244, 63, 94] } }
+      { content: 'Keterangan', colSpan: 2, styles: { halign: 'left', textColor: [100, 116, 139] } },
+      { content: 'SALDO', colSpan: 2, styles: { halign: 'right', textColor: [30, 41, 59] } }
     ]],
     body: tableData,
     theme: 'plain',
@@ -567,92 +567,41 @@ export function exportIncomeStatementPdf({
     headStyles: {
       fillColor: [255, 255, 255],
       fontStyle: 'bold',
-      lineColor: [5, 150, 105], // Emerald-600
+      lineColor: [30, 41, 59], // Slate-800
       lineWidth: { top: 0, right: 0, bottom: 0.5, left: 0 }
     },
     columnStyles: {
       0: { cellWidth: 30 },
       1: { cellWidth: 'auto' },
       2: { cellWidth: 10, halign: 'right' },
-      3: { cellWidth: 25, halign: 'right' }
+      3: { cellWidth: 30, halign: 'right' }
     }
   })
+  
+  const totalPagesExp = '{total_pages_count_string}'
+  
+  if (typeof doc.putTotalPages === 'function') {
+    doc.putTotalPages(totalPagesExp)
+  }
+
+  // Footer for Income Statement
+  const pageCount = (doc.internal as any).getNumberOfPages()
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i)
+    drawFooter(doc, pageWidth, pageHeight, i, totalPagesExp)
+  }
+
+  const finalY = (doc as any).lastAutoTable.finalY
+  drawTandaTangan(
+    doc, 
+    pageWidth, 
+    pageHeight, 
+    finalY, 
+    institutionInfo, 
+    tanggalCetak, 
+    penandatanganKiri, 
+    penandatanganKanan
+  )
 
   doc.save(`${filename}.pdf`)
-}
-
-
-export const drawKopSurat = (
-  docInstance: any,
-  pageWidth: number,
-  schoolUnitName: string,
-  unitInfo?: any,
-  startY: number = 12,
-  pengaturan?: any
-) => {
-  let startSubY = startY + 11
-
-  if (unitInfo || schoolUnitName) {
-    // Skema 1: Kop Unit
-    docInstance.setFont("helvetica", "bold")
-    docInstance.setFontSize(10)
-    docInstance.setTextColor(30, 41, 59) // slate-800
-    docInstance.text((pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH").toUpperCase(), pageWidth / 2, startY, { align: "center", charSpace: 1.5 })
-
-    docInstance.setFont("helvetica", "bold")
-    docInstance.setFontSize(18)
-    docInstance.setTextColor(15, 23, 42) // slate-900
-    docInstance.text((unitInfo?.name || schoolUnitName).toUpperCase(), pageWidth / 2, startY + 7, { align: "center", charSpace: 1 })
-    
-    startSubY = startY + 12
-  } else {
-    // Skema 2: Kop Yayasan
-    docInstance.setFont("helvetica", "bold")
-    docInstance.setFontSize(18)
-    docInstance.setTextColor(15, 23, 42)
-    docInstance.text((pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH").toUpperCase(), pageWidth / 2, startY + 4, { align: "center", charSpace: 1 })
-    
-    startSubY = startY + 10
-  }
-
-  docInstance.setFont("helvetica", "normal")
-  docInstance.setFontSize(9)
-  docInstance.setTextColor(51, 65, 85) // slate-700
-  
-  let kopSubtitle = ""
-  if (unitInfo && (unitInfo.address || unitInfo.phone)) {
-    const parts = []
-    if (unitInfo.address) parts.push(unitInfo.address)
-    if (unitInfo.phone) parts.push(`Telp: ${unitInfo.phone}`)
-    if (unitInfo.email) parts.push(`Email: ${unitInfo.email}`)
-    if (unitInfo.website) parts.push(`Web: ${unitInfo.website}`)
-    kopSubtitle = parts.join(' • ')
-  } else if (pengaturan) {
-    const parts = []
-    if (pengaturan.alamat) parts.push(pengaturan.alamat)
-    if (pengaturan.telepon) parts.push(`Telp: ${pengaturan.telepon}`)
-    if (pengaturan.email) parts.push(`Email: ${pengaturan.email}`)
-    if (pengaturan.website) parts.push(`Web: ${pengaturan.website}`)
-    kopSubtitle = parts.join(' • ')
-  }
-  
-  if (!kopSubtitle) {
-    kopSubtitle = "Jl. Pendidikan Nusantara No. 123, Bandung, Jawa Barat • Telp: (022) 1234567 • Email: info@siraya.edu"
-  }
-  
-  const splitSubtitle = docInstance.splitTextToSize(kopSubtitle, pageWidth - 30)
-  splitSubtitle.forEach((line: string) => {
-    docInstance.text(line, pageWidth / 2, startSubY, { align: "center" })
-    startSubY += 4
-  })
-
-  const lineY = startSubY + 1
-  docInstance.setLineWidth(0.8)
-  docInstance.setDrawColor(15, 23, 42)
-  docInstance.line(14, lineY, pageWidth - 14, lineY)
-
-  docInstance.setLineWidth(0.2)
-  docInstance.line(14, lineY + 1.5, pageWidth - 14, lineY + 1.5)
-  
-  return lineY + 1.5
 }

@@ -5,7 +5,8 @@ import { getLaporanTunggakanSiswa } from "@/actions/laporan"
 import { ArrowLeft, Search, Download, Printer, RefreshCw, FileText, FileSpreadsheet, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { exportToExcel } from "@/lib/excel"
-import { exportToPdfTable } from "@/lib/pdf"
+import { exportTablePdf } from "@/lib/pdf"
+import { buildInstitutionInfo } from "@/lib/pdf-helpers"
 import { Input } from "@/components/ui/Input"
 import { useRouter } from "next/navigation"
 import toast from "react-hot-toast"
@@ -131,16 +132,14 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
       new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.sisa, 0))
     ])
 
-    exportToPdfTable({
+    exportTablePdf({
+      institutionInfo: buildInstitutionInfo(pengaturan, filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined),
       title: "LAPORAN TUNGGAKAN SISWA",
       subtitle: `Per Tanggal: ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}`,
       headers: ["No", "Tanggal", "NIS", "Nama Siswa", "Tagihan", "Unit", "Rombel", "Nominal (Rp)", "Dibayar (Rp)", "Sisa (Rp)"],
       data: tableData,
       filename,
-      schoolUnitName,
-      unitInfo: filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined,
-      pengaturan,
-      orientation: 'landscape',
+      config: { orientation: 'landscape' },
       penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
       penandatanganKanan: { jabatan: "Bendahara,", nama: pengaturan?.namaBendahara || "____________________" }
     })

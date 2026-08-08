@@ -5,6 +5,7 @@ import { Building2, Landmark, Database, Save, Plus, Trash2, Download, Info } fro
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 import { upsertPengaturan } from "@/actions/pengaturan"
+import PrintHeader from "@/components/shared/print/PrintHeader"
 
 export default function PengaturanClient({ initialSettings, units = [] }: { initialSettings: any, units?: any[] }) {
   const [activeTab, setActiveTab] = useState<"profil" | "rekening" | "backup">("profil")
@@ -191,134 +192,142 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
         {activeTab === "profil" && (
           <div className="space-y-6">
             
-            {/* SUB-TABS UNTUK UNIT SEKOLAH */}
-            <div className="flex gap-2 flex-wrap mb-4">
+            {/* Live Preview Kop Surat */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 left-0 bg-slate-200 text-slate-500 text-[10px] font-bold px-3 py-1 rounded-br-lg uppercase tracking-wider">
+                Live Preview Kop Surat
+              </div>
+              <div className="mt-4 bg-white p-6 shadow-sm border border-slate-100 min-h-[150px]">
+                <PrintHeader 
+                  pengaturan={formData} 
+                  unitInfo={activeUnitTab === "GLOBAL" ? undefined : unitData[activeUnitTab]} 
+                />
+              </div>
+              <p className="text-xs text-slate-500 mt-4 text-center">Tampilan di atas adalah simulasi kop surat yang akan muncul pada dokumen PDF dan Cetak.</p>
+            </div>
+
+            {/* Pilihan Mode Edit */}
+            <div className="bg-surface border border-border rounded-xl p-2 flex gap-2 flex-wrap items-center">
+              <span className="text-sm font-semibold text-text-muted ml-2 mr-2">Sedang Mengedit:</span>
               <button
                 onClick={() => setActiveUnitTab("GLOBAL")}
-                className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                   activeUnitTab === "GLOBAL" 
                   ? "bg-primary text-white shadow-sm" 
-                  : "bg-surface border border-border text-text-muted hover:bg-gray-50"
+                  : "bg-transparent text-text-muted hover:bg-gray-50"
                 }`}
               >
-                YAYASAN (GLOBAL)
+                Informasi Yayasan (Utama)
               </button>
+              <div className="h-6 w-px bg-border mx-1 hidden sm:block"></div>
               {units.map((unit: any) => (
                 <button
                   key={unit.id}
                   onClick={() => setActiveUnitTab(unit.id)}
-                  className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                     activeUnitTab === unit.id 
                     ? "bg-blue-600 text-white shadow-sm" 
-                    : "bg-surface border border-border text-text-muted hover:bg-gray-50"
+                    : "bg-transparent text-text-muted hover:bg-gray-50"
                   }`}
                 >
-                  KOP: {unit.name}
+                  Unit: {unit.name}
                 </button>
               ))}
             </div>
 
             {activeUnitTab === "GLOBAL" ? (
-              <div className="space-y-8 animate-in fade-in duration-300">
-                <div>
-                  <div className="flex items-center gap-2 mb-4 border-b border-border pb-2">
-                    <h2 className="text-lg font-bold text-text-main">Kop Surat Yayasan</h2>
+              <div className="space-y-8 animate-in fade-in duration-300 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  <div className="md:col-span-2">
+                    <h3 className="text-lg font-bold text-text-main border-b border-border pb-2 mb-4">1. Identitas Utama Yayasan</h3>
                   </div>
-                  
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex gap-3 text-blue-800 text-sm">
-                    <Info size={20} className="shrink-0 mt-0.5 text-blue-600" />
-                    <p>
-                      <strong>Informasi Penggunaan:</strong> Data Identitas Yayasan ini bertindak sebagai <b>Kop Utama (Baris Teratas)</b> untuk semua dokumen cetak sistem, termasuk tabel Laporan Keuangan, Data Siswa, dan Header Kwitansi Pembayaran.
-                    </p>
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Yayasan/Lembaga</label>
+                    <input type="text" name="namaYayasan" value={formData.namaYayasan} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Contoh: Yayasan Pendidikan Al Basyariah" />
+                    <p className="text-xs text-text-muted mt-1">Dicetak tebal pada baris pertama kop surat.</p>
                   </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Yayasan/Lembaga</label>
-                  <input type="text" name="namaYayasan" value={formData.namaYayasan} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Contoh: Yayasan Pendidikan Al Basyariah" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-text-main mb-1.5">URL Logo</label>
-                  <input type="text" name="logoUrl" value={formData.logoUrl || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="/logo.png atau URL eksternal" />
-                  <p className="text-xs text-text-muted mt-1">Digunakan untuk kop surat cetak PDF & Kwitansi.</p>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-text-main mb-1.5">Alamat Lengkap</label>
-                  <textarea name="alamat" value={formData.alamat} onChange={handleChange} rows={2} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Alamat lengkap yayasan..."></textarea>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-text-main mb-1.5">Nomor Telepon</label>
-                  <input type="text" name="telepon" value={formData.telepon || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-text-main mb-1.5">Email / Website</label>
-                  <div className="flex gap-2">
-                    <input type="text" name="email" value={formData.email || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Email" />
-                    <input type="text" name="website" value={formData.website || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Website" />
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">URL Logo Yayasan</label>
+                    <input type="text" name="logoUrl" value={formData.logoUrl || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="/logo.png atau URL eksternal" />
+                    <p className="text-xs text-text-muted mt-1">Logo akan ditampilkan di sebelah kiri kop surat.</p>
                   </div>
-                </div>
-              </div>
-            </div>
 
-            <div>
-              <h2 className="text-lg font-bold text-text-main mb-4 border-b border-border pb-2">Footer & Penandatangan Cetak</h2>
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 flex gap-3 text-slate-700 text-sm">
-                <Info size={20} className="shrink-0 mt-0.5 text-slate-500" />
-                <p>
-                  <strong>Catatan Cetak:</strong> Nama Bendahara akan secara otomatis dibubuhkan pada bagian bawah kanan (kolom tanda tangan) pada dokumen cetak <b>Kwitansi Pembayaran Resi</b>.
-                </p>
+                  <div className="md:col-span-2 mt-4">
+                    <h3 className="text-lg font-bold text-text-main border-b border-border pb-2 mb-4">2. Kontak & Alamat Yayasan</h3>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Alamat Lengkap</label>
+                    <textarea name="alamat" value={formData.alamat} onChange={handleChange} rows={2} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Alamat lengkap yayasan..."></textarea>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Nomor Telepon</label>
+                    <input type="text" name="telepon" value={formData.telepon || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Email & Website</label>
+                    <div className="flex gap-2">
+                      <input type="text" name="email" value={formData.email || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Email" />
+                      <input type="text" name="website" value={formData.website || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Website" />
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2 mt-4">
+                    <h3 className="text-lg font-bold text-text-main border-b border-border pb-2 mb-4">3. Penandatangan & Footer Dokumen</h3>
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 text-amber-800 text-sm">
+                      <p>Pengaturan ini digunakan untuk mencetak nama pejabat di bawah dokumen laporan dan kwitansi tingkat yayasan.</p>
+                    </div>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Kota Tempat Tanda Tangan</label>
+                    <input type="text" name="kotaPenandatangan" value={formData.kotaPenandatangan || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50 md:w-1/2" placeholder="Contoh: Bandung, Depok, Jakarta" />
+                    <p className="text-xs text-text-muted mt-1">Misal: "Bandung, 12 Agustus 2026"</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Kepala TU</label>
+                    <input type="text" name="namaKepalaTU" value={formData.namaKepalaTU || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Nama Pejabat TU" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Bendahara Yayasan</label>
+                    <input type="text" name="namaBendahara" value={formData.namaBendahara || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Nama Bendahara" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Catatan/Footer Kwitansi Global</label>
+                    <textarea name="catatanKwitansi" value={formData.catatanKwitansi || ""} onChange={handleChange} rows={2} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Catatan tambahan di bagian bawah kwitansi..."></textarea>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-text-main mb-1.5">Kota Tempat Tanda Tangan</label>
-                  <input type="text" name="kotaPenandatangan" value={formData.kotaPenandatangan || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Contoh: Bandung, Depok, Jakarta" />
-                  <p className="text-xs text-text-muted mt-1">Akan ditampilkan pada bagian atas tanda tangan laporan global.</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Kepala TU</label>
-                  <input type="text" name="namaKepalaTU" value={formData.namaKepalaTU || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Nama pejabat tata usaha" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Bendahara</label>
-                  <input type="text" name="namaBendahara" value={formData.namaBendahara || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Nama bendahara yayasan" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-text-main mb-1.5">Catatan di Kwitansi</label>
-                  <textarea name="catatanKwitansi" value={formData.catatanKwitansi || ""} onChange={handleChange} rows={2} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Contoh: Pembayaran yang sudah dilakukan tidak dapat ditarik kembali..."></textarea>
-                </div>
-              </div>
-            </div>
-          </div>
-          ) : (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <div>
-                <h2 className="text-lg font-bold text-text-main mb-4 border-b border-border pb-2">Identitas Unit: {unitData[activeUnitTab]?.name}</h2>
-                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-6 flex gap-3 text-emerald-800 text-sm">
-                  <Info size={20} className="shrink-0 mt-0.5 text-emerald-600" />
-                  <p>
-                    <strong>Informasi Penggunaan:</strong> Data spesifik unit ini akan muncul sebagai <b>Sub-Header (Baris Kedua)</b> pada laporan dan kwitansi untuk membedakan asal transaksi (misal: membedakan resi SPP SD dan SMP).
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            ) : (
+              <div className="space-y-8 animate-in fade-in duration-300 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  <div className="md:col-span-2">
+                    <h3 className="text-lg font-bold text-text-main border-b border-border pb-2 mb-4">Informasi Spesifik Unit: {unitData[activeUnitTab]?.name}</h3>
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-blue-800 text-sm">
+                      <p>Data unit akan menimpa data Yayasan pada baris kedua kop surat (Sub-Header) serta kontak dan penandatangan jika dokumen dicetak spesifik untuk unit ini.</p>
+                    </div>
+                  </div>
+                  
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-text-main mb-1.5">Alamat Lengkap Unit</label>
                     <textarea name="address" value={unitData[activeUnitTab]?.address || ""} onChange={handleChange} rows={2} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Alamat lengkap unit sekolah..."></textarea>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-text-main mb-1.5">Nomor Telepon Unit</label>
-                    <input type="text" name="phone" value={unitData[activeUnitTab]?.phone || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="No Telp..." />
+                    <input type="text" name="phone" value={unitData[activeUnitTab]?.phone || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="No Telp Unit..." />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-text-main mb-1.5">Email / Website Unit</label>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Email & Website Unit</label>
                     <div className="flex gap-2">
                       <input type="text" name="email" value={unitData[activeUnitTab]?.email || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Email" />
                       <input type="text" name="website" value={unitData[activeUnitTab]?.website || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Website" />
                     </div>
                   </div>
+                  
+                  <div className="md:col-span-2 mt-4">
+                    <h3 className="text-lg font-bold text-text-main border-b border-border pb-2 mb-4">Penandatangan Unit</h3>
+                  </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-text-main mb-1.5">Kota Tempat Tanda Tangan Unit</label>
-                    <input type="text" name="kotaPenandatangan" value={unitData[activeUnitTab]?.kotaPenandatangan || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Contoh: Bandung, Depok, Jakarta" />
-                    <p className="text-xs text-text-muted mt-1">Akan ditampilkan pada bagian atas tanda tangan dokumen khusus unit ini.</p>
+                    <input type="text" name="kotaPenandatangan" value={unitData[activeUnitTab]?.kotaPenandatangan || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50 md:w-1/2" placeholder="Contoh: Bandung, Depok, Jakarta" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Kepala Sekolah</label>
@@ -330,8 +339,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
           </div>
         )}
 

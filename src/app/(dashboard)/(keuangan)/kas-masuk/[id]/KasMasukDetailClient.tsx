@@ -42,67 +42,25 @@ export default function KasMasukDetailClient({ transaksi, pengaturan }: { transa
   const handleExportResiPDF = async () => {
     setIsExportingPDF(true)
     try {
-      const { jsPDF } = await import("jspdf")
-      const autoTable = (await import("jspdf-autotable")).default
-      const { drawKopSurat, drawTandaTangan } = await import("@/lib/pdf")
-      
-      const doc = new jsPDF('landscape', 'mm', 'a5') // A5 landscape for resi
-      const pageWidth = doc.internal.pageSize.getWidth()
-      const pageHeight = doc.internal.pageSize.getHeight()
-      
-      let currentY = drawKopSurat(doc, pageWidth, transaksi.unitSekolah?.name || pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH", transaksi.unitSekolah || undefined, 15, pengaturan) + 8
-      
-      doc.setFontSize(12)
-      doc.setFont("helvetica", "bold")
-      doc.setTextColor(5, 150, 105)
-      doc.text("BUKTI PENERIMAAN KAS", pageWidth / 2, currentY, { align: "center" })
-      currentY += 8
-      
-      // Info
-      doc.setTextColor(15, 23, 42)
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(10)
-      doc.text(`No Referensi : ${transaksi.noReferensi}`, 14, currentY)
-      doc.text(`Tanggal      : ${format(new Date(transaksi.tanggal), "dd-MM-yyyy")}`, 14, currentY + 6)
-      doc.text(`Terima Dari  : ${transaksi.namaPihakKetiga || "-"}`, 120, currentY)
-      doc.text(`Ke Akun      : ${detailDebit[0]?.akun?.nama || "-"}`, 120, currentY + 6)
+      const { exportResiPdf } = await import("@/lib/pdf")
+      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
 
-      const tableColumn = ["No", "Akun / Keterangan", "Deskripsi", "Jumlah"]
-      const tableRows = detailKredit.map((d: any, idx: number) => [
-        idx + 1,
-        `${d.akun.kode} - ${d.akun.nama}`,
-        d.deskripsi || "-",
-        `Rp ${d.nilai.toLocaleString('id-ID')}`
-      ])
+      const items = detailKredit.map((d: any) => ({
+        keterangan: `${d.akun.kode} - ${d.akun.nama} ${d.deskripsi ? `(${d.deskripsi})` : ''}`,
+        nominal: d.nilai
+      }))
 
-      autoTable(doc, {
-        head: [tableColumn],
-        body: tableRows,
-        startY: currentY + 16,
-        theme: 'grid',
-        styles: { fontSize: 9 },
-        headStyles: { fillColor: [46, 125, 50] } // Albas Green
+      exportResiPdf({
+        institutionInfo: buildInstitutionInfo(pengaturan, transaksi.unitSekolah),
+        noReferensi: transaksi.noReferensi,
+        tanggal: transaksi.tanggal,
+        penerimaDari: transaksi.namaPihakKetiga || "-",
+        items,
+        total: transaksi.totalNilai,
+        penandatanganKiri: { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "........................" },
+        penandatanganKanan: { jabatan: "Diterima Oleh,", nama: "........................" },
+        filename: `Resi_KasMasuk_${transaksi.noReferensi}`
       })
-
-      const finalY = (doc as any).lastAutoTable.finalY || 60
-      
-      doc.setFont("helvetica", "bold")
-      doc.text(`Total Penerimaan: Rp ${transaksi.totalNilai.toLocaleString('id-ID')}`, 14, finalY + 10)
-      
-      // Signatures
-      drawTandaTangan(
-        doc,
-        pageWidth,
-        pageHeight,
-        finalY,
-        pengaturan,
-        transaksi.unitSekolah,
-        new Date(transaksi.tanggal),
-        { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "........................" },
-        { jabatan: "Diterima Oleh,", nama: "........................" }
-      )
-
-      doc.save(`Resi_KasMasuk_${transaksi.noReferensi}.pdf`)
       toast.success("Berhasil mencetak Resi")
     } catch (error) {
       console.error(error)
@@ -115,63 +73,27 @@ export default function KasMasukDetailClient({ transaksi, pengaturan }: { transa
   const handleExportJurnalPDF = async () => {
     setIsExportingPDF(true)
     try {
-      const { jsPDF } = await import("jspdf")
-      const autoTable = (await import("jspdf-autotable")).default
-      const { drawKopSurat, drawTandaTangan } = await import("@/lib/pdf")
-      
-      const doc = new jsPDF('portrait')
-      const pageWidth = doc.internal.pageSize.getWidth()
-      const pageHeight = doc.internal.pageSize.getHeight()
-      
-      let currentY = drawKopSurat(doc, pageWidth, transaksi.unitSekolah?.name || pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH", transaksi.unitSekolah || undefined, 12, pengaturan) + 8
-      
-      doc.setFontSize(12)
-      doc.setFont("helvetica", "bold")
-      doc.setTextColor(5, 150, 105)
-      doc.text("JURNAL TRANSAKSI KAS MASUK", pageWidth / 2, currentY, { align: "center" })
-      currentY += 8
-      
-      // Info
-      doc.setTextColor(15, 23, 42)
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(10)
-      doc.text(`No Referensi : ${transaksi.noReferensi}`, 14, currentY)
-      doc.text(`Tanggal      : ${format(new Date(transaksi.tanggal), "dd-MM-yyyy")}`, 14, currentY + 6)
-      doc.text(`Deskripsi    : ${transaksi.deskripsi || "-"}`, 14, currentY + 12)
+      const { exportJurnalPdf } = await import("@/lib/pdf")
+      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
 
-      const tableColumn = ["Kode Akun", "Nama Akun", "Debit", "Kredit"]
-      const tableRows = transaksi.detail.map((d: any) => [
-        d.akun.kode,
-        d.akun.nama,
-        d.posisi === "DEBIT" ? `Rp ${d.nilai.toLocaleString('id-ID')}` : "-",
-        d.posisi === "KREDIT" ? `Rp ${d.nilai.toLocaleString('id-ID')}` : "-"
-      ])
+      const detail = transaksi.detail.map((d: any) => ({
+        kodeAkun: d.akun.kode,
+        namaAkun: d.akun.nama,
+        debit: d.posisi === "DEBIT" ? d.nilai : 0,
+        kredit: d.posisi === "KREDIT" ? d.nilai : 0
+      }))
 
-      autoTable(doc, {
-        head: [tableColumn],
-        body: tableRows,
-        startY: currentY + 18,
-        theme: 'grid',
-        styles: { fontSize: 9 },
-        headStyles: { fillColor: [30, 41, 59] } // Slate 800
+      exportJurnalPdf({
+        institutionInfo: buildInstitutionInfo(pengaturan, transaksi.unitSekolah),
+        judulJurnal: "JURNAL TRANSAKSI KAS MASUK",
+        noReferensi: transaksi.noReferensi,
+        tanggal: transaksi.tanggal,
+        deskripsi: transaksi.deskripsi || "-",
+        detail,
+        penandatanganKiri: { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "........................" },
+        penandatanganKanan: { jabatan: "Disetujui Oleh,", nama: "........................" },
+        filename: `Jurnal_KasMasuk_${transaksi.noReferensi}`
       })
-
-      const finalY = (doc as any).lastAutoTable.finalY || 70
-      
-      // Signatures
-      drawTandaTangan(
-        doc,
-        pageWidth,
-        pageHeight,
-        finalY,
-        pengaturan,
-        transaksi.unitSekolah,
-        new Date(transaksi.tanggal),
-        { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "........................" },
-        { jabatan: "Disetujui Oleh,", nama: "........................" }
-      )
-
-      doc.save(`Jurnal_KasMasuk_${transaksi.noReferensi}.pdf`)
       toast.success("Berhasil mencetak Jurnal")
     } catch (error) {
       console.error(error)
