@@ -24,6 +24,7 @@ export async function getPengaturan() {
       email: "",
       website: "",
       logoUrl: "",
+      kotaPenandatangan: "Bandung",
       namaKepalaTU: "",
       namaBendahara: "",
       catatanKwitansi: "",
@@ -56,6 +57,7 @@ export async function upsertPengaturan(data: any) {
         email: data.email,
         website: data.website,
         logoUrl: data.logoUrl,
+        kotaPenandatangan: data.kotaPenandatangan,
         namaKepalaTU: data.namaKepalaTU,
         namaBendahara: data.namaBendahara,
         catatanKwitansi: data.catatanKwitansi,
@@ -71,6 +73,7 @@ export async function upsertPengaturan(data: any) {
         email: data.email,
         website: data.website,
         logoUrl: data.logoUrl,
+        kotaPenandatangan: data.kotaPenandatangan,
         namaKepalaTU: data.namaKepalaTU,
         namaBendahara: data.namaBendahara,
         catatanKwitansi: data.catatanKwitansi,
@@ -127,6 +130,7 @@ export async function updateUnitSekolahKop(id: string, data: any) {
         website: data.website,
         namaKepalaSekolah: data.namaKepalaSekolah,
         nipKepalaSekolah: data.nipKepalaSekolah,
+        kotaPenandatangan: data.kotaPenandatangan,
         // logo: data.logo // if handling image later
       }
     })

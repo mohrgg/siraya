@@ -10,7 +10,7 @@ import * as XLSX from 'xlsx';
  */
 export interface ExcelExportOptions {
   title?: string;
-  unitInfo?: { name: string; address?: string; phone?: string };
+  unitInfo?: { name: string; address?: string | null; phone?: string | null };
   sheetName?: string;
 }
 

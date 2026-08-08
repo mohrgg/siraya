@@ -13,8 +13,62 @@ export interface PdfTableOptions {
     phone?: string | null
     email?: string | null
     website?: string | null
+    kotaPenandatangan?: string | null
   }
+  pengaturan?: any
   orientation?: 'portrait' | 'landscape'
+  tanggalCetak?: Date
+  penandatanganKiri?: { jabatan: string, nama: string }
+  penandatanganKanan?: { jabatan: string, nama: string }
+}
+
+/**
+ * Helper menggambar Tanda Tangan
+ */
+export function drawTandaTangan(
+  doc: jsPDF, 
+  pageWidth: number, 
+  pageHeight: number, 
+  finalY: number, 
+  pengaturan?: any,
+  unitInfo?: any,
+  tanggalCetak?: Date | string,
+  kiri?: { jabatan: string, nama: string },
+  kanan?: { jabatan: string, nama: string }
+) {
+  let startY = finalY + 15
+  
+  if (startY + 30 > pageHeight - 20) {
+    doc.addPage()
+    startY = 30
+  }
+
+  doc.setFontSize(9)
+  doc.setFont("helvetica", "normal")
+  doc.setTextColor(71, 85, 105)
+
+  const dateObj = typeof tanggalCetak === 'string' ? new Date(tanggalCetak) : (tanggalCetak || new Date())
+  const dateStr = dateObj.toLocaleDateString('id-ID', {
+    day: '2-digit', month: 'long', year: 'numeric'
+  })
+  
+  const kota = unitInfo?.kotaPenandatangan || pengaturan?.kotaPenandatangan || "Bandung"
+  const tempatTanggal = `${kota}, ${dateStr}`
+
+  // Kanan
+  const defKanan = kanan || { jabatan: "Mengetahui,", nama: "__________________________" }
+  doc.text(tempatTanggal, pageWidth - 20, startY, { align: "right" })
+  doc.text(defKanan.jabatan, pageWidth - 20, startY + 6, { align: "right" })
+  doc.setFont("helvetica", "bold")
+  doc.text(defKanan.nama, pageWidth - 20, startY + 30, { align: "right" })
+
+  // Kiri
+  if (kiri) {
+    doc.setFont("helvetica", "normal")
+    doc.text(kiri.jabatan, 20, startY + 6, { align: "left" })
+    doc.setFont("helvetica", "bold")
+    doc.text(kiri.nama, 20, startY + 30, { align: "left" })
+  }
 }
 
 /**
@@ -30,7 +84,11 @@ export function exportToPdfTable({
   filename,
   schoolUnitName = "SISTEM INFORMASI SIRAYA (SIRAYA)",
   unitInfo,
-  orientation = 'landscape'
+  pengaturan,
+  orientation = 'landscape',
+  tanggalCetak = new Date(),
+  penandatanganKiri,
+  penandatanganKanan
 }: PdfTableOptions) {
   if (!data || data.length === 0) {
     console.warn("Data kosong, tidak ada yang diekspor ke PDF")
@@ -179,26 +237,19 @@ export function exportToPdfTable({
     doc.putTotalPages(totalPagesExp)
   }
 
-  // 7. Area Tanda Tangan (Mengetahui)
-  const finalY = (doc as any).lastAutoTable.finalY + 15
-  
-  // Periksa apakah halaman masih cukup untuk tanda tangan, jika tidak buat halaman baru
-  if (finalY + 30 > pageHeight - 20) {
-    doc.addPage()
-    doc.setFontSize(9)
-    doc.setFont("helvetica", "normal")
-    doc.setTextColor(71, 85, 105)
-    doc.text("Bandung, ................................", pageWidth - 20, 30, { align: "right" })
-    doc.text("Mengetahui,", pageWidth - 20, 36, { align: "right" })
-    doc.text("__________________________", pageWidth - 20, 60, { align: "right" })
-  } else {
-    doc.setFontSize(9)
-    doc.setFont("helvetica", "normal")
-    doc.setTextColor(71, 85, 105)
-    doc.text("Bandung, ................................", pageWidth - 20, finalY, { align: "right" })
-    doc.text("Mengetahui,", pageWidth - 20, finalY + 6, { align: "right" })
-    doc.text("__________________________", pageWidth - 20, finalY + 30, { align: "right" })
-  }
+  // 7. Area Tanda Tangan
+  const finalY = (doc as any).lastAutoTable.finalY
+  drawTandaTangan(
+    doc, 
+    pageWidth, 
+    pageHeight, 
+    finalY, 
+    pengaturan, 
+    unitInfo, 
+    tanggalCetak, 
+    penandatanganKiri, 
+    penandatanganKanan
+  )
 
   // 8. Simpan file PDF
   doc.save(`${filename}.pdf`)
@@ -229,6 +280,7 @@ export function exportResiPdf(data: PdfResiOptions) {
   })
   
   const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
   
   // 1. KOP SURAT
   const lineY = drawKopSurat(doc, pageWidth, data.unitSekolahName || data.unitInfo?.name || "BUKTI PEMBAYARAN", data.unitInfo, 15, data.pengaturan)
@@ -241,7 +293,7 @@ export function exportResiPdf(data: PdfResiOptions) {
   })
   
   // 3. JUDUL KWITANSI
-  const titleY = lineY + 12
+  const titleY = lineY + 9
   doc.setFont("helvetica", "bold")
   doc.setFontSize(14)
   doc.setTextColor(15, 23, 42)
@@ -259,7 +311,7 @@ export function exportResiPdf(data: PdfResiOptions) {
   doc.text(`No. Ref: ${data.noReferensi}`, pageWidth - 15, titleY + 1, { align: "right" })
   
   // 4. IDENTITAS
-  const identityY = titleY + 13
+  const identityY = titleY + 10
   doc.setFont("helvetica", "normal")
   doc.setFontSize(10)
   doc.text("Telah terima dari", 15, identityY)
@@ -282,14 +334,14 @@ export function exportResiPdf(data: PdfResiOptions) {
   tableData.push(["", "TOTAL PEMBAYARAN", formatRp(data.total)])
 
   autoTable(doc, {
-    startY: identityY + 7,
+    startY: identityY + 5,
     head: [["No", "Keterangan Pembayaran", "Nominal"]],
     body: tableData,
     theme: 'grid',
     styles: {
       font: 'helvetica',
       fontSize: 9,
-      cellPadding: 4,
+      cellPadding: 3,
       textColor: [30, 41, 59],
       lineColor: [226, 232, 240]
     },
@@ -316,31 +368,23 @@ export function exportResiPdf(data: PdfResiOptions) {
   })
 
   // 6. TANDA TANGAN
-  const finalY = (doc as any).lastAutoTable.finalY + 15
-  
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(10)
-  
-  // Kiri: Penyetor
-  doc.text("Penyetor / Wali Murid,", 35, finalY, { align: "center" })
-  doc.setFont("helvetica", "bold")
-  doc.text(data.muridName, 35, finalY + 20, { align: "center" })
-  doc.setLineWidth(0.3)
-  const muridWidth = doc.getTextWidth(data.muridName)
-  doc.line(35 - (muridWidth/2), finalY + 20.5, 35 + (muridWidth/2), finalY + 20.5)
-  
-  // Kanan: Bendahara
-  doc.setFont("helvetica", "normal")
-  doc.text(`Bandung, ${dateStr}`, pageWidth - 45, finalY - 5, { align: "center" })
-  doc.text("Bendahara Penerima,", pageWidth - 45, finalY, { align: "center" })
-  doc.setFont("helvetica", "bold")
+  const finalY = (doc as any).lastAutoTable.finalY - 5
   const signName = data.namaBendahara || data.pengaturan?.namaBendahara || "Staf Keuangan"
-  doc.text(signName, pageWidth - 45, finalY + 20, { align: "center" })
-  const signWidth = doc.getTextWidth(signName)
-  doc.line(pageWidth - 45 - (signWidth/2), finalY + 20.5, pageWidth - 45 + (signWidth/2), finalY + 20.5)
+
+  drawTandaTangan(
+    doc,
+    pageWidth,
+    pageHeight,
+    finalY,
+    data.pengaturan,
+    data.unitInfo,
+    data.tanggal,
+    { jabatan: "Penyetor / Wali Murid,", nama: data.muridName },
+    { jabatan: "Bendahara Penerima,", nama: signName }
+  )
   
   // 7. CATATAN FOOTER
-  const footerY = finalY + 30
+  const footerY = finalY + 26
   doc.setFont("helvetica", "italic")
   doc.setFontSize(8)
   doc.setTextColor(100, 116, 139)
@@ -367,6 +411,10 @@ export interface IncomeStatementPdfOptions {
     email?: string | null
     website?: string | null
   }
+  pengaturan?: any
+  tanggalCetak?: Date | string
+  penandatanganKiri?: { jabatan: string, nama: string }
+  penandatanganKanan?: { jabatan: string, nama: string }
 }
 
 /**
@@ -378,7 +426,11 @@ export function exportIncomeStatementPdf({
   data,
   filename,
   schoolUnitName = "YAYASAN AL BASYARIAH",
-  unitInfo
+  unitInfo,
+  pengaturan,
+  tanggalCetak,
+  penandatanganKiri,
+  penandatanganKanan
 }: IncomeStatementPdfOptions) {
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -387,75 +439,36 @@ export function exportIncomeStatementPdf({
   })
   
   const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
   
   // 1. KOP SURAT
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(10)
-  doc.setTextColor(100, 116, 139)
-  doc.text("YAYASAN AL-BASYARIAH / SIRAYA EDUCATION", pageWidth / 2, 12, { align: "center" })
-
-  doc.setFontSize(15)
-  doc.setTextColor(15, 23, 42)
-  doc.text(schoolUnitName.toUpperCase(), pageWidth / 2, 18, { align: "center" })
-
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(8.5)
-  doc.setTextColor(71, 85, 105)
+  const headerY = drawKopSurat(doc, pageWidth, schoolUnitName, unitInfo, 12, pengaturan)
   
-  let kopSubtitle = "Jl. Pendidikan Nusantara No. 123, Bandung, Jawa Barat • Telp: (022) 1234567 • Email: info@siraya.edu"
-  if (unitInfo) {
-    const parts = []
-    if (unitInfo.address) parts.push(unitInfo.address)
-    if (unitInfo.phone) parts.push(`Telp: ${unitInfo.phone}`)
-    if (unitInfo.email) parts.push(`Email: ${unitInfo.email}`)
-    if (unitInfo.website) parts.push(`Web: ${unitInfo.website}`)
-    if (parts.length > 0) {
-      kopSubtitle = parts.join(' • ')
-    }
-  }
-
-  // Word wrap untuk alamat
-  const splitSubtitle = doc.splitTextToSize(kopSubtitle, pageWidth - 30)
-  let currentY = 23
-  splitSubtitle.forEach((line: string) => {
-    doc.text(line, pageWidth / 2, currentY, { align: "center" })
-    currentY += 4
-  })
-
-  const lineY = currentY + 1
-  doc.setLineWidth(0.8)
-  doc.setDrawColor(15, 23, 42)
-  doc.line(14, lineY, pageWidth - 14, lineY)
-  doc.setLineWidth(0.2)
-  doc.line(14, lineY + 1.5, pageWidth - 14, lineY + 1.5)
-
-  // 2. JUDUL
-  const titleY = lineY + 10
+  // 2. JUDUL LAPORAN
+  let currentY = headerY + 10
   doc.setFont("helvetica", "bold")
   doc.setFontSize(12)
-  doc.setTextColor(5, 150, 105) // Emerald-600
-  doc.text("LAPORAN PEMASUKAN DAN PENGELUARAN", pageWidth / 2, titleY, { align: "center" })
+  doc.setTextColor(37, 99, 235) // Blue-600
+  doc.text("LAPORAN PEMASUKAN DAN PENGELUARAN", pageWidth / 2, currentY, { align: "center" })
   
+  currentY += 6
   doc.setFont("helvetica", "normal")
-  doc.setFontSize(9)
-  doc.setTextColor(225, 29, 72) // Rose
-  doc.text(`per ${startDate} - ${endDate}`, pageWidth / 2, titleY + 5, { align: "center" })
-
-  // 3. TABEL LABA RUGI (Custom AutoTable)
+  doc.setFontSize(10)
+  doc.setTextColor(244, 63, 94) // Rose-500
+  doc.text(`Periode: ${startDate} - ${endDate}`, pageWidth / 2, currentY, { align: "center" })
+  
+  // 3. DATA TABEL
+  const titleY = currentY + 10
+  
   const formatRp = (val: number) => {
-    return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(val)
+    return val.toLocaleString('id-ID', { minimumFractionDigits: 0 })
   }
 
   const tableData: any[] = []
 
   // --- PENDAPATAN ---
   tableData.push([
-    { content: 'PENDAPATAN', colSpan: 2, styles: { textColor: [37, 99, 235], fontStyle: 'bold', fontSize: 9 } },
-    { content: `Rp.`, styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } },
-    { content: formatRp(data.totalPendapatan), styles: { textColor: [37, 99, 235], fontStyle: 'bold', halign: 'right' } }
-  ])
-  tableData.push([
-    { content: '  PENDAPATAN', colSpan: 4, styles: { textColor: [16, 185, 129], fontStyle: 'bold', fontSize: 8 } }
+    { content: '  PEMASUKAN', colSpan: 4, styles: { textColor: [16, 185, 129], fontStyle: 'bold', fontSize: 8 } }
   ])
   
   if (data.pendapatan.length === 0) {

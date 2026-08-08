@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/Button"
 import { exportToExcel } from "@/lib/excel"
 import { exportIncomeStatementPdf } from "@/lib/pdf"
 import toast from "react-hot-toast"
+import PrintHeader from "@/components/shared/print/PrintHeader"
+import PrintSignature from "@/components/shared/print/PrintSignature"
+import PrintFooter from "@/components/shared/print/PrintFooter"
 
 export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], userRole, userUnitId }: { pengaturan?: any, schoolUnits?: any[], userRole?: string, userUnitId?: string }) {
   const router = useRouter()
@@ -304,22 +307,10 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-8 print:shadow-none print:border-none print:p-0">
         
         {/* KOP SURAT (Hanya Print) */}
-        {pengaturan && (
-          <div className="hidden print:flex border-b-2 border-black pb-4 mb-6 items-center gap-4">
-            {pengaturan.logoUrl && (
-              <img src={pengaturan.logoUrl} alt="Logo" className="w-20 h-20 object-contain" />
-            )}
-            <div className="text-center flex-1">
-              <h1 className="text-2xl font-bold uppercase">{pengaturan.namaYayasan || "NAMA YAYASAN"}</h1>
-              <p className="text-sm">{pengaturan.alamat}</p>
-              <p className="text-sm">
-                {pengaturan.telepon && `Telp: ${pengaturan.telepon}`} 
-                {pengaturan.email && ` | Email: ${pengaturan.email}`} 
-                {pengaturan.website && ` | Web: ${pengaturan.website}`}
-              </p>
-            </div>
-          </div>
-        )}
+        <PrintHeader 
+          pengaturan={pengaturan}
+          unitInfo={filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined} 
+        />
 
         {/* Document Header */}
         <div className="text-center mb-10">
@@ -455,20 +446,18 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
         ) : null}
 
         {/* Tanda Tangan (Hanya Print) */}
-        {data && pengaturan && (
-          <div className="hidden print:flex justify-between mt-16 pt-8">
-            <div className="text-center w-64">
-              <p className="mb-16">Mengetahui,</p>
-              <p className="font-bold underline">{pengaturan.namaKepalaTU || "____________________"}</p>
-              <p className="text-sm">Kepala Tata Usaha</p>
-            </div>
-            <div className="text-center w-64">
-              <p className="mb-16">Depok, {new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-              <p className="font-bold underline">{pengaturan.namaBendahara || "____________________"}</p>
-              <p className="text-sm">Bendahara Yayasan</p>
-            </div>
-          </div>
+        {data && (
+          <PrintSignature
+            pengaturan={pengaturan}
+            unitInfo={filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined}
+            tipe="ganda"
+            tanggal={new Date()}
+            kiri={{ jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" }}
+            kanan={{ jabatan: "Bendahara Yayasan,", nama: pengaturan?.namaBendahara || "____________________" }}
+          />
         )}
+        
+        <PrintFooter pengaturan={pengaturan} />
 
       </div>
     </div>

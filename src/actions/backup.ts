@@ -21,27 +21,39 @@ export async function generateBackupData(selectedModules: string[], unitId: stri
         where: unitFilter,
         include: {
           unitSekolah: true,
-          tingkat: true,
-          jurusan: true,
-          rombel: true
+          riwayatKelas: {
+            include: {
+              subKelas: {
+                include: {
+                  tingkat: true,
+                  jurusan: true
+                }
+              }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 1
+          }
         }
       })
-      backupData["Data_Murid"] = muridData.map((m: any) => ({
-        NIS: m.nis || "-",
-        NISN: m.nisn || "-",
-        Nama_Siswa: m.name,
-        Jenis_Kelamin: m.gender || "-",
-        Agama: m.agama || "-",
-        Tempat_Lahir: m.tempatLahir || "-",
-        Tanggal_Lahir: m.tanggalLahir ? m.tanggalLahir.toISOString().split('T')[0] : "-",
-        Unit_Sekolah: m.unitSekolah?.name || "-",
-        Tingkat: m.tingkat?.name || "-",
-        Jurusan: m.jurusan?.name || "-",
-        Rombel: m.rombel?.name || "-",
-        Alamat: m.address || "-",
-        No_Telp_Ortu: m.parentPhone || "-",
-        Status: m.status
-      }))
+      backupData["Data_Murid"] = muridData.map((m: any) => {
+        const subKelas = m.riwayatKelas?.[0]?.subKelas
+        return {
+          NIS: m.nis || "-",
+          NISN: m.nisn || "-",
+          Nama_Siswa: m.name,
+          Jenis_Kelamin: m.gender || "-",
+          Agama: m.religion || "-",
+          Tempat_Lahir: m.birthPlace || "-",
+          Tanggal_Lahir: m.birthDate ? m.birthDate.toISOString().split('T')[0] : "-",
+          Unit_Sekolah: m.unitSekolah?.name || "-",
+          Tingkat: subKelas?.tingkat?.name || "-",
+          Jurusan: subKelas?.jurusan?.name || "-",
+          Rombel: subKelas?.name || "-",
+          Alamat: m.address || "-",
+          No_Telp_Ortu: m.parentPhone || "-",
+          Status: m.status
+        }
+      })
 
       // Guru
       const guruData = await prisma.guru.findMany({
@@ -99,29 +111,29 @@ export async function generateBackupData(selectedModules: string[], unitId: stri
         where: unitFilter,
         include: {
           unitSekolah: true,
-          details: {
+          detail: {
             include: { akun: true }
           },
-          user: true
+          pembuat: true
         },
-        orderBy: { date: 'asc' }
+        orderBy: { tanggal: 'asc' }
       })
       
       // Flatten data to make it readable in Excel
       const transaksiExcel: any[] = []
       transaksiData.forEach((t: any) => {
-        t.details.forEach((d: any) => {
+        t.detail.forEach((d: any) => {
           transaksiExcel.push({
-            No_Referensi: t.referenceNo,
-            Tanggal: t.date.toISOString().split('T')[0],
-            Jenis_Transaksi: t.type === "IN" ? "Kas Masuk" : "Kas Keluar",
-            Keterangan: t.description,
-            Kode_Akun: d.akun?.code || "-",
-            Nama_Akun: d.akun?.name || "-",
-            Debit_Rp: d.debit,
-            Kredit_Rp: d.credit,
+            No_Referensi: t.noReferensi,
+            Tanggal: t.tanggal.toISOString().split('T')[0],
+            Jenis_Transaksi: t.jenis === "KAS_MASUK" ? "Kas Masuk" : "Kas Keluar",
+            Keterangan: t.deskripsi,
+            Kode_Akun: d.akun?.kode || "-",
+            Nama_Akun: d.akun?.nama || "-",
+            Debit_Rp: d.posisi === "DEBIT" ? d.nilai : 0,
+            Kredit_Rp: d.posisi === "KREDIT" ? d.nilai : 0,
             Unit_Sekolah: t.unitSekolah?.name || "Global",
-            Operator: t.user?.name || "-"
+            Operator: t.pembuat?.name || "-"
           })
         })
       })
@@ -131,48 +143,41 @@ export async function generateBackupData(selectedModules: string[], unitId: stri
     // 4. DATA TAGIHAN & PEMBAYARAN
     if (selectedModules.includes("tagihan")) {
       const tagihanData = await prisma.tagihan.findMany({
-        where: unitFilter,
+        where: isGlobal ? {} : { murid: { unitSekolahId: unitId } },
         include: {
-          unitSekolah: true,
-          tingkat: true,
-          jurusan: true,
-          murid: true,
-          akunDetail: true
+          murid: { include: { unitSekolah: true } },
+          akun: true,
+          tahunAkademik: true
         }
       })
       backupData["Daftar_Tagihan"] = tagihanData.map((t: any) => ({
-        Nama_Tagihan: t.nama,
-        Jenis: t.jenis,
-        Tipe: t.isBulanan ? "Bulanan" : "Bebas",
-        Nominal_Rp: t.nominal,
-        Akun_Tujuan: t.akunDetail?.name || "-",
-        Unit_Sekolah: t.unitSekolah?.name || "-",
-        Status: t.isActive ? "Aktif" : "Non-Aktif"
+        Nama_Tagihan: t.akun?.nama || "-",
+        Siswa: t.murid?.name || "-",
+        Nominal_Rp: t.jumlah,
+        Sisa_Rp: t.sisaTagihan,
+        Akun_Tujuan: t.akun?.nama || "-",
+        Unit_Sekolah: t.murid?.unitSekolah?.name || "-",
+        Status: t.status
       }))
 
       // Detail Pembayaran Siswa
       const pembayaranData = await prisma.pembayaranTagihanDetail.findMany({
-        where: {
-          tagihan: unitFilter
-        },
+        where: isGlobal ? {} : { transaksi: { unitSekolahId: unitId } },
         include: {
-          tagihan: { include: { unitSekolah: true } },
-          murid: true,
-          user: true
+          tagihan: { include: { akun: true, murid: { include: { unitSekolah: true } } } },
+          transaksi: { include: { pembuat: true } }
         },
         orderBy: { createdAt: 'asc' }
       })
       backupData["Histori_Pembayaran"] = pembayaranData.map((p: any) => ({
-        No_Referensi: p.referenceNo || "-",
+        No_Referensi: p.transaksi?.noReferensi || "-",
         Tanggal_Bayar: p.createdAt.toISOString().split('T')[0],
-        NIS_Siswa: p.murid?.nis || "-",
-        Nama_Siswa: p.murid?.name || "-",
-        Tagihan: p.tagihan?.nama || "-",
-        Bulan: p.bulan || "-",
-        Nominal_Bayar_Rp: p.amount,
-        Status: p.status,
-        Unit_Sekolah: p.tagihan?.unitSekolah?.name || "-",
-        Operator: p.user?.name || "-"
+        NIS_Siswa: p.tagihan?.murid?.nis || "-",
+        Nama_Siswa: p.tagihan?.murid?.name || "-",
+        Tagihan: p.tagihan?.akun?.nama || "-",
+        Nominal_Bayar_Rp: p.nilaiPembayaran,
+        Unit_Sekolah: p.tagihan?.murid?.unitSekolah?.name || "-",
+        Operator: p.transaksi?.pembuat?.name || "-"
       }))
     }
 

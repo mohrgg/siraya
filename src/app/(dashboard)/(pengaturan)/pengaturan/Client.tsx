@@ -269,6 +269,11 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-text-main mb-1.5">Kota Tempat Tanda Tangan</label>
+                  <input type="text" name="kotaPenandatangan" value={formData.kotaPenandatangan || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Contoh: Bandung, Depok, Jakarta" />
+                  <p className="text-xs text-text-muted mt-1">Akan ditampilkan pada bagian atas tanda tangan laporan global.</p>
+                </div>
                 <div>
                   <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Kepala TU</label>
                   <input type="text" name="namaKepalaTU" value={formData.namaKepalaTU || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Nama pejabat tata usaha" />
@@ -309,6 +314,11 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                       <input type="text" name="email" value={unitData[activeUnitTab]?.email || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Email" />
                       <input type="text" name="website" value={unitData[activeUnitTab]?.website || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Website" />
                     </div>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Kota Tempat Tanda Tangan Unit</label>
+                    <input type="text" name="kotaPenandatangan" value={unitData[activeUnitTab]?.kotaPenandatangan || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Contoh: Bandung, Depok, Jakarta" />
+                    <p className="text-xs text-text-muted mt-1">Akan ditampilkan pada bagian atas tanda tangan dokumen khusus unit ini.</p>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Kepala Sekolah</label>

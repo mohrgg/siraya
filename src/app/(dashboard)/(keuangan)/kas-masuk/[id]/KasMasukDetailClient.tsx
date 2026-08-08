@@ -44,10 +44,11 @@ export default function KasMasukDetailClient({ transaksi }: { transaksi: any }) 
     try {
       const { jsPDF } = await import("jspdf")
       const autoTable = (await import("jspdf-autotable")).default
-      const { drawKopSurat } = await import("@/lib/pdf")
+      const { drawKopSurat, drawTandaTangan } = await import("@/lib/pdf")
       
       const doc = new jsPDF('landscape', 'mm', 'a5') // A5 landscape for resi
       const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
       
       let currentY = drawKopSurat(doc, pageWidth, transaksi.unitSekolah ? `UNIT ${transaksi.unitSekolah.name.toUpperCase()} SIRAYA` : "YAYASAN AL BASYARIAH", transaksi.unitSekolah || undefined) + 8
       
@@ -89,12 +90,17 @@ export default function KasMasukDetailClient({ transaksi }: { transaksi: any }) 
       doc.text(`Total Penerimaan: Rp ${transaksi.totalNilai.toLocaleString('id-ID')}`, 14, finalY + 10)
       
       // Signatures
-      doc.setFont("helvetica", "normal")
-      doc.text("Dibuat Oleh,", 40, finalY + 30)
-      doc.text(transaksi.pembuat?.name || "........................", 40, finalY + 55)
-      
-      doc.text("Diterima Oleh,", 150, finalY + 30)
-      doc.text("........................", 150, finalY + 55)
+      drawTandaTangan(
+        doc,
+        pageWidth,
+        pageHeight,
+        finalY,
+        null, // pengaturan not fetched here, it's fine for now or pass unit
+        transaksi.unitSekolah,
+        new Date(transaksi.tanggal),
+        { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "........................" },
+        { jabatan: "Diterima Oleh,", nama: "........................" }
+      )
 
       doc.save(`Resi_KasMasuk_${transaksi.noReferensi}.pdf`)
       toast.success("Berhasil mencetak Resi")
@@ -111,10 +117,11 @@ export default function KasMasukDetailClient({ transaksi }: { transaksi: any }) 
     try {
       const { jsPDF } = await import("jspdf")
       const autoTable = (await import("jspdf-autotable")).default
-      const { drawKopSurat } = await import("@/lib/pdf")
+      const { drawKopSurat, drawTandaTangan } = await import("@/lib/pdf")
       
       const doc = new jsPDF('portrait')
       const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
       
       let currentY = drawKopSurat(doc, pageWidth, transaksi.unitSekolah ? `UNIT ${transaksi.unitSekolah.name.toUpperCase()} SIRAYA` : "YAYASAN AL BASYARIAH", transaksi.unitSekolah || undefined) + 8
       
@@ -143,17 +150,26 @@ export default function KasMasukDetailClient({ transaksi }: { transaksi: any }) 
       autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
-        startY: 65,
+        startY: currentY + 18,
         theme: 'grid',
         styles: { fontSize: 9 },
-        headStyles: { fillColor: [46, 125, 50] }
+        headStyles: { fillColor: [30, 41, 59] } // Slate 800
       })
 
       const finalY = (doc as any).lastAutoTable.finalY || 70
       
       // Signatures
-      doc.text("Dibuat Oleh,", 150, finalY + 30)
-      doc.text(transaksi.pembuat?.name || "........................", 150, finalY + 55)
+      drawTandaTangan(
+        doc,
+        pageWidth,
+        pageHeight,
+        finalY,
+        null, // pengaturan
+        transaksi.unitSekolah,
+        new Date(transaksi.tanggal),
+        { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "........................" },
+        { jabatan: "Disetujui Oleh,", nama: "........................" }
+      )
 
       doc.save(`Jurnal_KasMasuk_${transaksi.noReferensi}.pdf`)
       toast.success("Berhasil mencetak Jurnal")

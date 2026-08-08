@@ -23,7 +23,7 @@ export async function tambahUnitSekolah(data: { name: string, level: string, add
   return result
 }
 
-export async function editUnitSekolah(id: string, data: { name?: string, level?: string, address?: string, phone?: string, isActive?: boolean }) {
+export async function editUnitSekolah(id: string, data: { name?: string, level?: string, address?: string, phone?: string, email?: string, website?: string, namaKepalaSekolah?: string, nipKepalaSekolah?: string, kotaPenandatangan?: string, isActive?: boolean }) {
   const session = await auth()
   if (!session || session.user.role !== "ADMIN") throw new Error("Akses ditolak. Hanya Super Admin yang diizinkan.")
 

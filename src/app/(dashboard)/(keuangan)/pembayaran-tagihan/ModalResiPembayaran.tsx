@@ -4,6 +4,9 @@ import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import toast from "react-hot-toast"
 import { exportResiPdf } from "@/lib/pdf"
+import PrintHeader from "@/components/shared/print/PrintHeader"
+import PrintSignature from "@/components/shared/print/PrintSignature"
+import PrintFooter from "@/components/shared/print/PrintFooter"
 
 export type ReceiptData = {
   noReferensi: string
@@ -106,28 +109,19 @@ export default function ModalResiPembayaran({
         <div className="print-receipt w-full bg-white text-slate-900 overflow-y-auto p-8 sm:p-10 shrink">
           
           {/* Kop Kwitansi */}
-          <div className="text-center border-b-[3px] border-double border-slate-800 pb-4 mb-6 relative">
-            <h3 className="font-bold text-sm tracking-tight text-slate-500 uppercase">{pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH / SIRAYA EDUCATION"}</h3>
-            <h2 className="font-black text-2xl tracking-tight text-slate-900 uppercase mt-1">{(data.unitSekolahName || unitInfo?.name || pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH").toUpperCase()}</h2>
-            
-            <p className="text-xs font-medium text-slate-600 mt-2 max-w-2xl mx-auto">
-              {[
-                unitInfo?.address || pengaturan?.alamat,
-                (unitInfo?.phone || pengaturan?.telepon) && `Telp: ${unitInfo?.phone || pengaturan?.telepon}`,
-                (unitInfo?.email || pengaturan?.email) && `Email: ${unitInfo?.email || pengaturan?.email}`,
-                (unitInfo?.website || pengaturan?.website) && `Web: ${unitInfo?.website || pengaturan?.website}`
-              ].filter(Boolean).join(' • ') || "Jl. Pendidikan Nusantara No. 123, Bandung, Jawa Barat • Telp: (022) 1234567 • Email: info@siraya.edu"}
-            </p>
-            
-            <div className="absolute right-0 top-0 text-right text-xs text-slate-600 space-y-1 bg-slate-50 p-2 border border-slate-200 rounded-lg shadow-sm print:shadow-none print:border-none print:bg-transparent">
+          <PrintHeader 
+            unitInfo={unitInfo} 
+            pengaturan={pengaturan} 
+            className="block" 
+          />
+
+          {/* Tanggal & No Ref */}
+          <div className="flex justify-between items-center mb-6 text-sm mt-4">
+            <h4 className="text-xl font-black text-slate-900 uppercase border-b border-slate-900 pb-1">Kwitansi Pembayaran</h4>
+            <div className="text-right text-xs text-slate-600">
               <div><span className="font-semibold">Tanggal:</span> {format(new Date(data.tanggal), 'dd MMMM yyyy', { locale: idLocale })}</div>
               <div><span className="font-semibold">No. Ref:</span> {data.noReferensi}</div>
             </div>
-          </div>
-
-          {/* Judul Kwitansi */}
-          <div className="text-center mb-8">
-            <h4 className="inline-block text-xl font-black text-slate-900 uppercase border-b border-slate-900 pb-1">Kwitansi Pembayaran</h4>
           </div>
 
           {/* Identitas Penyetor */}
@@ -166,23 +160,21 @@ export default function ModalResiPembayaran({
           </div>
 
           {/* Area Tanda Tangan */}
-          <div className="flex justify-between items-end text-sm mt-12 mb-6">
-            <div className="text-center w-64">
-              <p className="mb-16">Penyetor / Wali Murid,</p>
-              <p className="font-bold underline underline-offset-4 decoration-slate-300">{data.muridName}</p>
-            </div>
-            
-            <div className="text-center w-64">
-              <p className="mb-1">Bandung, {format(new Date(data.tanggal), 'dd MMMM yyyy', { locale: idLocale })}</p>
-              <p className="mb-16">Bendahara Penerima,</p>
-              <p className="font-bold underline underline-offset-4 decoration-slate-300">{currentUser?.name || pengaturan?.namaBendahara || "Staf Keuangan"}</p>
-            </div>
-          </div>
+          <PrintSignature
+            pengaturan={pengaturan}
+            unitInfo={unitInfo}
+            tipe="ganda"
+            tanggal={data.tanggal}
+            kiri={{ jabatan: "Penyetor / Wali Murid,", nama: data.muridName }}
+            kanan={{ jabatan: "Bendahara Penerima,", nama: currentUser?.name || pengaturan?.namaBendahara || "Staf Keuangan" }}
+            className="flex"
+          />
 
           {/* Catatan */}
-          <div className="text-center text-xs text-slate-500 italic mt-8 border-t border-slate-100 pt-4">
-            {pengaturan?.catatanKwitansi || "Terima kasih atas pembayaran Anda. Simpan kwitansi ini sebagai bukti pembayaran yang sah."}
-          </div>
+          <PrintFooter 
+            pengaturan={pengaturan} 
+            className="block" 
+          />
         </div>
 
         {/* Action Buttons - Non Print */}
