@@ -55,6 +55,7 @@ type UnitSekolah = {
   phone?: string | null
   email?: string | null
   website?: string | null
+  namaKepalaSekolah?: string | null
 }
 
 export default function GuruClient({

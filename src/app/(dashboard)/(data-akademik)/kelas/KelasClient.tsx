@@ -175,14 +175,15 @@ export default function KelasClient({
           toast.error("Tidak ada data rombel untuk diekspor")
           return
         }
-        const headers = ["No", "Nama Rombel", "Tingkat", "Jurusan", "Tahun Akademik", "Wali Kelas"]
+        const headers = ["No", "Nama Rombel", "Tingkat", "Jurusan", "Tahun Akademik", "Wali Kelas", "Jumlah Siswa"]
         const pdfRows = data.classrooms.map((c: any, index: number) => [
           index + 1,
           c.name || "-",
           c.tingkat?.name || "-",
           c.jurusan?.name || "-",
           c.tahunAkademik?.name || "-",
-          c.waliKelas || "Belum ditentukan"
+          c.waliKelas || "Belum ditentukan",
+          c._count?.riwayatKelas ? `${c._count.riwayatKelas} Orang` : "0 Orang"
         ])
         exportTablePdf({
           institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
@@ -192,7 +193,7 @@ export default function KelasClient({
           data: pdfRows,
           filename: `Daftar_Rombel_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
           config: { orientation: 'landscape' },
-          penandatanganKiri: { jabatan: "Mengetahui,", nama: "____________________" },
+          penandatanganKiri: { jabatan: "Mengetahui, Kepala Sekolah", nama: unitObj?.namaKepalaSekolah || pengaturan?.namaKetuaYayasan || "____________________" },
           penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
         })
       } else {
@@ -234,7 +235,7 @@ export default function KelasClient({
           data: pdfRows,
           filename: `Daftar_Murid_${unitObj?.name || "Semua"}_${statusName}_${dateStr}`.replace(/\s+/g, '_'),
           config: { orientation: 'landscape' },
-          penandatanganKiri: { jabatan: "Mengetahui,", nama: "____________________" },
+          penandatanganKiri: { jabatan: "Mengetahui, Kepala Sekolah", nama: unitObj?.namaKepalaSekolah || pengaturan?.namaKetuaYayasan || "____________________" },
           penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
         })
       }

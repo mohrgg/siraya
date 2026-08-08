@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { format } from "date-fns"
 import { revalidatePath } from "next/cache"
+import { cookies } from "next/headers"
 
 export async function getKasMasuk(params?: {
   startDate?: Date,
@@ -20,8 +21,13 @@ export async function getKasMasuk(params?: {
   }
 
   // Role based filtering (unitSekolahId)
+  const cookieStore = await cookies()
+  const activeUnitId = cookieStore.get("activeUnitId")?.value
+
   if (user.role !== "ADMIN" && user.unitSekolahId) {
     whereClause.unitSekolahId = user.unitSekolahId
+  } else if (user.role === "ADMIN" && activeUnitId && activeUnitId !== "all") {
+    whereClause.unitSekolahId = activeUnitId
   }
 
   // Date filtering
@@ -76,10 +82,18 @@ export async function getKasBankAccounts() {
     }
   }
 
+  const cookieStore = await cookies()
+  const activeUnitId = cookieStore.get("activeUnitId")?.value
+
   if (user.role !== "ADMIN" && user.unitSekolahId) {
     whereClause.OR = [
       { unitSekolahId: null },
       { unitSekolahId: user.unitSekolahId }
+    ]
+  } else if (user.role === "ADMIN" && activeUnitId && activeUnitId !== "all") {
+    whereClause.OR = [
+      { unitSekolahId: null },
+      { unitSekolahId: activeUnitId }
     ]
   }
 
@@ -110,10 +124,18 @@ export async function getPendapatanAccounts() {
     }
   }
 
+  const cookieStore = await cookies()
+  const activeUnitId = cookieStore.get("activeUnitId")?.value
+
   if (user.role !== "ADMIN" && user.unitSekolahId) {
     whereClause.OR = [
       { unitSekolahId: null },
       { unitSekolahId: user.unitSekolahId }
+    ]
+  } else if (user.role === "ADMIN" && activeUnitId && activeUnitId !== "all") {
+    whereClause.OR = [
+      { unitSekolahId: null },
+      { unitSekolahId: activeUnitId }
     ]
   }
 
@@ -179,7 +201,17 @@ export async function createKasMasuk(data: KasMasukPayload) {
 
   const totalNilai = data.details.reduce((sum, item) => sum + item.nilai, 0)
   
-  const unitToSave = user.role === "ADMIN" ? (data.unitSekolahId || null) : user.unitSekolahId
+  const cookieStore = await cookies()
+  const activeUnitId = cookieStore.get("activeUnitId")?.value
+
+  let unitToSave = user.unitSekolahId
+  if (user.role === "ADMIN") {
+    if (data.unitSekolahId !== undefined) {
+      unitToSave = data.unitSekolahId
+    } else {
+      unitToSave = (!activeUnitId || activeUnitId === "all") ? null : activeUnitId
+    }
+  }
 
   // Start a transaction for Double Entry Bookkeeping
   const result = await prisma.$transaction(async (tx) => {
