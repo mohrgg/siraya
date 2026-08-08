@@ -179,3 +179,324 @@ export function TableReportHtml({
   )
 }
 
+
+// ============================================================================
+// 4. BUKTI PEMBAYARAN / KWITANSI (RESI)
+// ============================================================================
+export interface ResiPdfData {
+  institutionInfo: PdfInstitutionInfo
+  tanggal: string | Date
+  noReferensi: string
+  penerimaDari: string
+  items: Array<{ keterangan: string, nominal: number }>
+  total: number
+  penandatanganKiri?: { jabatan: string; nama: string }
+  penandatanganKanan?: { jabatan: string; nama: string }
+  catatan?: string
+}
+
+export function ResiHtml({
+  institutionInfo,
+  tanggal,
+  noReferensi,
+  penerimaDari,
+  items,
+  total,
+  penandatanganKiri,
+  penandatanganKanan,
+  catatan
+}: ResiPdfData) {
+  const parsedDate = new Date(tanggal)
+  const dateStr = !isNaN(parsedDate.getTime()) 
+    ? parsedDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
+    : String(tanggal)
+
+  const formatRp = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val)
+
+  return (
+    <div className="font-sans text-slate-900 bg-white">
+      <PrintHeaderHtml institutionInfo={institutionInfo} />
+
+      {/* Header Info: Judul dan Referensi */}
+      <div className="flex justify-between items-start mb-6">
+        <div className="flex-1"></div>
+        <div className="text-center flex-1">
+          <h3 className="text-lg font-bold uppercase tracking-wider text-slate-800 border-b-2 border-slate-400 inline-block pb-1">
+            BUKTI PEMBAYARAN / KWITANSI
+          </h3>
+        </div>
+        <div className="flex-1 text-right text-sm text-slate-600">
+          <p>Tanggal: {dateStr}</p>
+          <p>No. Ref: <span className="font-semibold">{noReferensi}</span></p>
+        </div>
+      </div>
+
+      {/* Identitas */}
+      <div className="mb-6 text-sm">
+        <table className="w-auto">
+          <tbody>
+            <tr>
+              <td className="py-1 pr-4 text-slate-600">Telah terima dari</td>
+              <td className="py-1 pr-2">:</td>
+              <td className="py-1 font-bold text-slate-800">{penerimaDari}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Tabel Item */}
+      <table className="w-full text-sm border-collapse mb-2">
+        <thead className="bg-slate-800 text-white">
+          <tr>
+            <th className="py-2 px-3 border border-slate-700 text-center font-bold w-12">No</th>
+            <th className="py-2 px-3 border border-slate-700 text-left font-bold">Keterangan Pembayaran</th>
+            <th className="py-2 px-3 border border-slate-700 text-right font-bold w-48">Nominal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, i) => (
+            <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+              <td className="py-2 px-3 border border-slate-200 text-center text-slate-700">{i + 1}</td>
+              <td className="py-2 px-3 border border-slate-200 text-slate-700">{item.keterangan}</td>
+              <td className="py-2 px-3 border border-slate-200 text-right text-slate-700 font-medium">{formatRp(item.nominal)}</td>
+            </tr>
+          ))}
+          {/* Baris Total */}
+          <tr className="bg-slate-100">
+            <td colSpan={2} className="py-3 px-3 border border-slate-300 text-right font-bold text-slate-800 uppercase">
+              Total Pembayaran
+            </td>
+            <td className="py-3 px-3 border border-slate-300 text-right font-bold text-slate-900 text-base">
+              {formatRp(total)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <PrintSignatureHtml 
+        kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
+        tanggalCetak={tanggal}
+        penandatanganKiri={penandatanganKiri || { jabatan: "Penyetor / Wali Murid,", nama: penerimaDari }}
+        penandatanganKanan={penandatanganKanan || { jabatan: "Bendahara Penerima,", nama: "Staf Keuangan" }}
+        catatanKwitansi={catatan || "Terima kasih atas pembayaran Anda. Simpan kwitansi ini sebagai bukti pembayaran yang sah."}
+      />
+    </div>
+  )
+}
+
+// ============================================================================
+// 5. JURNAL UMUM
+// ============================================================================
+export interface JurnalPdfData {
+  institutionInfo: PdfInstitutionInfo
+  judulJurnal: string
+  noReferensi: string
+  tanggal: string | Date
+  deskripsi: string
+  detail: Array<{ kodeAkun: string, namaAkun: string, debit: number, kredit: number }>
+  penandatanganKiri?: { jabatan: string; nama: string }
+  penandatanganKanan?: { jabatan: string; nama: string }
+}
+
+export function JurnalHtml({
+  institutionInfo,
+  judulJurnal,
+  noReferensi,
+  tanggal,
+  deskripsi,
+  detail,
+  penandatanganKiri,
+  penandatanganKanan
+}: JurnalPdfData) {
+  const parsedDate = new Date(tanggal)
+  const dateStr = !isNaN(parsedDate.getTime()) 
+    ? parsedDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
+    : String(tanggal)
+    
+  const formatRp = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val)
+
+  return (
+    <div className="font-sans text-slate-900 bg-white">
+      <PrintHeaderHtml institutionInfo={institutionInfo} />
+
+      <div className="text-center mb-6">
+        <h3 className="text-lg font-bold uppercase tracking-wider text-slate-800">{judulJurnal}</h3>
+      </div>
+
+      <div className="mb-6 text-sm text-slate-700">
+        <table className="w-auto">
+          <tbody>
+            <tr><td className="py-1 pr-4">No Referensi</td><td className="py-1 pr-2">:</td><td className="py-1 font-semibold text-slate-900">{noReferensi}</td></tr>
+            <tr><td className="py-1 pr-4">Tanggal</td><td className="py-1 pr-2">:</td><td className="py-1 font-semibold text-slate-900">{dateStr}</td></tr>
+            <tr><td className="py-1 pr-4">Deskripsi</td><td className="py-1 pr-2">:</td><td className="py-1 font-semibold text-slate-900">{deskripsi || "-"}</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <table className="w-full text-sm border-collapse mb-2">
+        <thead className="bg-slate-800 text-white">
+          <tr>
+            <th className="py-2 px-3 border border-slate-700 text-left font-bold w-32">Kode Akun</th>
+            <th className="py-2 px-3 border border-slate-700 text-left font-bold">Nama Akun</th>
+            <th className="py-2 px-3 border border-slate-700 text-right font-bold w-40">Debit</th>
+            <th className="py-2 px-3 border border-slate-700 text-right font-bold w-40">Kredit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {detail.map((d, i) => (
+            <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+              <td className="py-2 px-3 border border-slate-200 text-slate-700">{d.kodeAkun}</td>
+              <td className="py-2 px-3 border border-slate-200 text-slate-700">{d.namaAkun}</td>
+              <td className="py-2 px-3 border border-slate-200 text-right text-slate-700">{d.debit > 0 ? formatRp(d.debit) : "-"}</td>
+              <td className="py-2 px-3 border border-slate-200 text-right text-slate-700">{d.kredit > 0 ? formatRp(d.kredit) : "-"}</td>
+            </tr>
+          ))}
+          {/* Baris Total */}
+          <tr className="bg-slate-100">
+            <td colSpan={2} className="py-3 px-3 border border-slate-300 text-right font-bold text-slate-800 uppercase">
+              Total
+            </td>
+            <td className="py-3 px-3 border border-slate-300 text-right font-bold text-slate-900">
+              {formatRp(detail.reduce((sum, d) => sum + d.debit, 0))}
+            </td>
+            <td className="py-3 px-3 border border-slate-300 text-right font-bold text-slate-900">
+              {formatRp(detail.reduce((sum, d) => sum + d.kredit, 0))}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <PrintSignatureHtml 
+        kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
+        tanggalCetak={tanggal}
+        penandatanganKiri={penandatanganKiri || { jabatan: "Dibuat Oleh,", nama: "........................" }}
+        penandatanganKanan={penandatanganKanan || { jabatan: "Disetujui Oleh,", nama: "........................" }}
+      />
+    </div>
+  )
+}
+
+// ============================================================================
+// 6. LAPORAN PEMASUKAN DAN PENGELUARAN (INCOME STATEMENT)
+// ============================================================================
+export interface IncomeStatementPdfData {
+  institutionInfo: PdfInstitutionInfo
+  startDate: string
+  endDate: string
+  data: {
+    pendapatan: Array<{ kode: string, nama: string, total: number }>
+    pengeluaran: Array<{ kode: string, nama: string, total: number }>
+    totalPendapatan: number
+    totalPengeluaran: number
+  }
+  tanggalCetak?: string | Date
+  penandatanganKiri?: { jabatan: string; nama: string }
+  penandatanganKanan?: { jabatan: string; nama: string }
+}
+
+export function IncomeStatementHtml({
+  institutionInfo,
+  startDate,
+  endDate,
+  data,
+  tanggalCetak = new Date(),
+  penandatanganKiri,
+  penandatanganKanan
+}: IncomeStatementPdfData) {
+  const formatRp = (val: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(val)
+
+  return (
+    <div className="font-sans text-slate-900 bg-white">
+      <PrintHeaderHtml institutionInfo={institutionInfo} />
+
+      <div className="text-center mb-8">
+        <h3 className="text-lg font-bold uppercase tracking-wider text-slate-800">LAPORAN PEMASUKAN DAN PENGELUARAN</h3>
+        <p className="text-sm text-slate-500 mt-1">Periode: {startDate} - {endDate}</p>
+      </div>
+
+      <table className="w-full text-sm border-collapse mb-2">
+        <thead>
+          <tr>
+            <th colSpan={2} className="py-2 px-2 border-b-2 border-slate-800 text-left font-bold text-slate-600 w-3/4">Keterangan</th>
+            <th colSpan={2} className="py-2 px-2 border-b-2 border-slate-800 text-right font-bold text-slate-800 w-1/4">SALDO</th>
+          </tr>
+        </thead>
+        <tbody>
+          {/* PENDAPATAN */}
+          <tr>
+            <td colSpan={4} className="py-2 px-2 font-bold text-[11px] text-emerald-600 uppercase tracking-widest pt-4">
+              PEMASUKAN
+            </td>
+          </tr>
+          {data.pendapatan.length === 0 ? (
+            <tr><td colSpan={4} className="py-2 px-2 pl-6 italic text-slate-400">Tidak ada data pendapatan</td></tr>
+          ) : (
+            data.pendapatan.map((p, i) => (
+              <tr key={i}>
+                <td className="py-1.5 px-2 pl-6 text-slate-800 w-24 align-top">{p.kode}</td>
+                <td className="py-1.5 px-2 text-slate-600 align-top">{p.nama}</td>
+                <td className="py-1.5 px-2 text-slate-600 text-right align-top w-8">Rp.</td>
+                <td className="py-1.5 px-2 text-slate-600 text-right align-top w-32">{formatRp(p.total)}</td>
+              </tr>
+            ))
+          )}
+          <tr className="border-t border-slate-200">
+            <td colSpan={2} className="py-2 px-2 font-bold text-emerald-600 text-right">Total PENDAPATAN</td>
+            <td className="py-2 px-2 font-bold text-emerald-600 text-right w-8">Rp.</td>
+            <td className="py-2 px-2 font-bold text-emerald-600 text-right">{formatRp(data.totalPendapatan)}</td>
+          </tr>
+
+          {/* Spacer */}
+          <tr><td colSpan={4} className="py-4"></td></tr>
+
+          {/* PENGELUARAN */}
+          <tr className="border-t border-slate-300">
+            <td colSpan={2} className="py-2 px-2 font-bold text-slate-800">BIAYA BEBAN</td>
+            <td className="py-2 px-2 font-bold text-slate-800 text-right w-8">Rp.</td>
+            <td className="py-2 px-2 font-bold text-slate-800 text-right">{formatRp(data.totalPengeluaran)}</td>
+          </tr>
+          <tr>
+            <td colSpan={4} className="py-2 px-2 font-bold text-[11px] text-rose-600 uppercase tracking-widest pt-4">
+              PENGELUARAN
+            </td>
+          </tr>
+          {data.pengeluaran.length === 0 ? (
+            <tr><td colSpan={4} className="py-2 px-2 pl-6 italic text-slate-400">Tidak ada data pengeluaran</td></tr>
+          ) : (
+            data.pengeluaran.map((p, i) => (
+              <tr key={i}>
+                <td className="py-1.5 px-2 pl-6 text-slate-800 w-24 align-top">{p.kode}</td>
+                <td className="py-1.5 px-2 text-slate-600 align-top">{p.nama}</td>
+                <td className="py-1.5 px-2 text-slate-600 text-right align-top w-8">Rp.</td>
+                <td className="py-1.5 px-2 text-slate-600 text-right align-top w-32">{formatRp(p.total)}</td>
+              </tr>
+            ))
+          )}
+          <tr className="border-t border-slate-200">
+            <td colSpan={2} className="py-2 px-2 font-bold text-rose-600 text-right">Total PENGELUARAN</td>
+            <td className="py-2 px-2 font-bold text-rose-600 text-right w-8">Rp.</td>
+            <td className="py-2 px-2 font-bold text-rose-600 text-right">{formatRp(data.totalPengeluaran)}</td>
+          </tr>
+
+          {/* Spacer */}
+          <tr><td colSpan={4} className="py-4"></td></tr>
+
+          {/* SALDO BERSIH */}
+          <tr className="border-t-2 border-slate-800">
+            <td colSpan={2} className="py-3 px-2 font-bold text-slate-900 uppercase">Selisih Pemasukan dan Pengeluaran</td>
+            <td className="py-3 px-2 font-bold text-slate-900 text-right w-8 text-base">Rp.</td>
+            <td className="py-3 px-2 font-bold text-slate-900 text-right text-base">{formatRp(data.totalPendapatan - data.totalPengeluaran)}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <PrintSignatureHtml 
+        kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
+        tanggalCetak={tanggalCetak}
+        penandatanganKiri={penandatanganKiri}
+        penandatanganKanan={penandatanganKanan}
+      />
+    </div>
+  )
+}
+

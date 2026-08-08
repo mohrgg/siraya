@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { chromium } from "playwright";
 import { createElement } from "react";
-import { TableReportHtml, TableReportData } from "@/lib/pdf-templates";
-
+// Dynamic imports used inside the endpoint
 export async function POST(req: NextRequest) {
   try {
     const payload = await req.json();
@@ -18,8 +17,20 @@ export async function POST(req: NextRequest) {
     // Switch based on template type
     if (type === "table") {
       const ReactDOMServer = await import("react-dom/server");
-      const tableData = data as TableReportData;
-      htmlBody = (ReactDOMServer as any).renderToStaticMarkup(createElement(TableReportHtml, tableData as any));
+      const { TableReportHtml } = await import("@/lib/pdf-templates");
+      htmlBody = (ReactDOMServer as any).renderToStaticMarkup(createElement(TableReportHtml, data as any));
+    } else if (type === "resi") {
+      const ReactDOMServer = await import("react-dom/server");
+      const { ResiHtml } = await import("@/lib/pdf-templates");
+      htmlBody = (ReactDOMServer as any).renderToStaticMarkup(createElement(ResiHtml, data as any));
+    } else if (type === "jurnal") {
+      const ReactDOMServer = await import("react-dom/server");
+      const { JurnalHtml } = await import("@/lib/pdf-templates");
+      htmlBody = (ReactDOMServer as any).renderToStaticMarkup(createElement(JurnalHtml, data as any));
+    } else if (type === "income_statement") {
+      const ReactDOMServer = await import("react-dom/server");
+      const { IncomeStatementHtml } = await import("@/lib/pdf-templates");
+      htmlBody = (ReactDOMServer as any).renderToStaticMarkup(createElement(IncomeStatementHtml, data as any));
     } else {
       return NextResponse.json({ error: "Unsupported template type" }, { status: 400 });
     }
