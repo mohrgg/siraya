@@ -128,12 +128,12 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
       exportTablePdf({
         institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
         title: "Laporan Kas Masuk (Penerimaan)",
-        subtitle: `Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
+        subtitle: `Unit: ${unitObj?.name || "Semua Unit"} • Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
         headers: tableColumn,
         data: tableRows,
-        filename: `Kas_Masuk_${format(new Date(), "yyyyMMdd")}`,
+        filename: `Kas_Masuk_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_'),
         config: { orientation: 'landscape' },
-        penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+        penandatanganKiri: { jabatan: "Mengetahui, Kepala Sekolah", nama: unitObj?.namaKepalaSekolah || "____________________" },
         penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
       })
 
