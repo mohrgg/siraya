@@ -19,11 +19,14 @@ export default async function MuridDetailPage({ params }: PageProps) {
     notFound()
   }
 
-  const schoolUnits = await prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } })
-  const classrooms = await prisma.subKelas.findMany({
-    include: { tingkat: true, unitSekolah: true, tahunAkademik: true },
-    orderBy: { name: 'asc' }
-  })
+  const [schoolUnits, classrooms, pengaturan] = await Promise.all([
+    prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } }),
+    prisma.subKelas.findMany({
+      include: { tingkat: true, unitSekolah: true, tahunAkademik: true },
+      orderBy: { name: 'asc' }
+    }),
+    prisma.pengaturan.findUnique({ where: { id: "GLOBAL" } })
+  ])
 
   return (
     <div className="max-w-[1600px] mx-auto w-full pb-12 animate-in fade-in duration-300">
@@ -33,6 +36,7 @@ export default async function MuridDetailPage({ params }: PageProps) {
         role={role}
         schoolUnits={schoolUnits}
         classrooms={classrooms}
+        pengaturan={pengaturan}
       />
     </div>
   )

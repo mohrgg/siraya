@@ -9,13 +9,16 @@ export default async function GuruDetailPage({ params }: { params: Promise<{ id:
   
   const { id } = await params
 
-  const guru = await prisma.guru.findUnique({
-    where: { id: id, isDeleted: false },
-    include: {
-      unitSekolah: true,
-      rombelWali: true
-    }
-  })
+  const [guru, pengaturan] = await Promise.all([
+    prisma.guru.findUnique({
+      where: { id: id, isDeleted: false },
+      include: {
+        unitSekolah: true,
+        rombelWali: true
+      }
+    }),
+    prisma.pengaturan.findUnique({ where: { id: "GLOBAL" } })
+  ])
 
   if (!guru) {
     notFound()
@@ -23,5 +26,5 @@ export default async function GuruDetailPage({ params }: { params: Promise<{ id:
 
   const isReadOnly = (session.user as any)?.role === "KEPALA_SEKOLAH"
 
-  return <GuruDetailClient initialData={guru} isReadOnly={isReadOnly} />
+  return <GuruDetailClient initialData={guru} isReadOnly={isReadOnly} pengaturan={pengaturan} />
 }

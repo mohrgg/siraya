@@ -9,7 +9,7 @@ import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import toast from "react-hot-toast"
 
-export default function KasKeluarDetailClient({ transaksi }: { transaksi: any }) {
+export default function KasKeluarDetailClient({ transaksi, pengaturan }: { transaksi: any, pengaturan?: any }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab") || "resi"
@@ -50,7 +50,7 @@ export default function KasKeluarDetailClient({ transaksi }: { transaksi: any })
       const pageWidth = doc.internal.pageSize.getWidth()
       const pageHeight = doc.internal.pageSize.getHeight()
       
-      let currentY = drawKopSurat(doc, pageWidth, transaksi.unitSekolah ? `UNIT ${transaksi.unitSekolah.name.toUpperCase()} SIRAYA` : "YAYASAN AL BASYARIAH", transaksi.unitSekolah || undefined) + 8
+      let currentY = drawKopSurat(doc, pageWidth, transaksi.unitSekolah?.name || pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH", transaksi.unitSekolah || undefined, 15, pengaturan) + 8
       
       doc.setFontSize(12)
       doc.setFont("helvetica", "bold")
@@ -95,7 +95,7 @@ export default function KasKeluarDetailClient({ transaksi }: { transaksi: any })
         pageWidth,
         pageHeight,
         finalY,
-        null,
+        pengaturan,
         transaksi.unitSekolah,
         new Date(transaksi.tanggal),
         { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "........................" },
@@ -123,7 +123,7 @@ export default function KasKeluarDetailClient({ transaksi }: { transaksi: any })
       const pageWidth = doc.internal.pageSize.getWidth()
       const pageHeight = doc.internal.pageSize.getHeight()
       
-      let currentY = drawKopSurat(doc, pageWidth, transaksi.unitSekolah ? `UNIT ${transaksi.unitSekolah.name.toUpperCase()} SIRAYA` : "YAYASAN AL BASYARIAH", transaksi.unitSekolah || undefined) + 8
+      let currentY = drawKopSurat(doc, pageWidth, transaksi.unitSekolah?.name || pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH", transaksi.unitSekolah || undefined, 12, pengaturan) + 8
       
       doc.setFontSize(12)
       doc.setFont("helvetica", "bold")
@@ -164,7 +164,7 @@ export default function KasKeluarDetailClient({ transaksi }: { transaksi: any })
         pageWidth,
         pageHeight,
         finalY,
-        null, // pengaturan
+        pengaturan,
         transaksi.unitSekolah,
         new Date(transaksi.tanggal),
         { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "........................" },

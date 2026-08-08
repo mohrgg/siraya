@@ -98,9 +98,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
     const unitObjForKop = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
     exportToExcel(excelData, filename, {
       title: "Laporan Tunggakan Siswa",
-      unitInfo: unitObjForKop || {
-        name: unitName !== "YAYASAN" ? unitName : "Yayasan Siraya"
-      }
+      unitInfo: unitObjForKop || { name: pengaturan?.namaYayasan || "Yayasan Siraya" }
     })
     toast.success("Excel berhasil diunduh")
   }
@@ -109,7 +107,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
     if (filteredData.length === 0) return
     
     const filename = `Laporan_Tunggakan_${unitName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`
-    const schoolUnitName = filterUnitId ? `UNIT ${unitName.toUpperCase()}` : (pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH")
+    const schoolUnitName = filterUnitId ? unitName : undefined
 
     // Construct table data
     const tableData = filteredData.map((item, idx) => [

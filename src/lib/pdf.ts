@@ -9,11 +9,13 @@ export interface PdfTableOptions {
   filename: string
   schoolUnitName?: string
   unitInfo?: {
+    name?: string | null
     address?: string | null
     phone?: string | null
     email?: string | null
     website?: string | null
     kotaPenandatangan?: string | null
+    [key: string]: any
   }
   pengaturan?: any
   orientation?: 'portrait' | 'landscape'
@@ -406,10 +408,12 @@ export interface IncomeStatementPdfOptions {
   filename: string
   schoolUnitName?: string
   unitInfo?: {
+    name?: string | null
     address?: string | null
     phone?: string | null
     email?: string | null
     website?: string | null
+    [key: string]: any
   }
   pengaturan?: any
   tanggalCetak?: Date | string
@@ -586,18 +590,34 @@ export const drawKopSurat = (
   startY: number = 12,
   pengaturan?: any
 ) => {
-  docInstance.setFont("helvetica", "bold")
-  docInstance.setFontSize(10)
-  docInstance.setTextColor(100, 116, 139)
-  docInstance.text(pengaturan?.namaYayasan || "YAYASAN AL-BASYARIAH / SIRAYA EDUCATION", pageWidth / 2, startY, { align: "center" })
+  let startSubY = startY + 11
 
-  docInstance.setFontSize(15)
-  docInstance.setTextColor(15, 23, 42)
-  docInstance.text((schoolUnitName || pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH").toUpperCase(), pageWidth / 2, startY + 6, { align: "center" })
+  if (unitInfo || schoolUnitName) {
+    // Skema 1: Kop Unit
+    docInstance.setFont("helvetica", "bold")
+    docInstance.setFontSize(10)
+    docInstance.setTextColor(30, 41, 59) // slate-800
+    docInstance.text((pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH").toUpperCase(), pageWidth / 2, startY, { align: "center", charSpace: 1.5 })
+
+    docInstance.setFont("helvetica", "bold")
+    docInstance.setFontSize(18)
+    docInstance.setTextColor(15, 23, 42) // slate-900
+    docInstance.text((unitInfo?.name || schoolUnitName).toUpperCase(), pageWidth / 2, startY + 7, { align: "center", charSpace: 1 })
+    
+    startSubY = startY + 12
+  } else {
+    // Skema 2: Kop Yayasan
+    docInstance.setFont("helvetica", "bold")
+    docInstance.setFontSize(18)
+    docInstance.setTextColor(15, 23, 42)
+    docInstance.text((pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH").toUpperCase(), pageWidth / 2, startY + 4, { align: "center", charSpace: 1 })
+    
+    startSubY = startY + 10
+  }
 
   docInstance.setFont("helvetica", "normal")
-  docInstance.setFontSize(8.5)
-  docInstance.setTextColor(71, 85, 105)
+  docInstance.setFontSize(9)
+  docInstance.setTextColor(51, 65, 85) // slate-700
   
   let kopSubtitle = ""
   if (unitInfo && (unitInfo.address || unitInfo.phone)) {
@@ -621,7 +641,6 @@ export const drawKopSurat = (
   }
   
   const splitSubtitle = docInstance.splitTextToSize(kopSubtitle, pageWidth - 30)
-  let startSubY = startY + 11
   splitSubtitle.forEach((line: string) => {
     docInstance.text(line, pageWidth / 2, startSubY, { align: "center" })
     startSubY += 4

@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/Button"
 import MuridFormModal from "@/components/modals/MuridFormModal"
 import { editSiswa } from "@/actions/siswa"
+import PrintHeader from "@/components/shared/print/PrintHeader"
 
 interface MuridDetailClientProps {
   initialMurid: any
@@ -19,6 +20,7 @@ interface MuridDetailClientProps {
   role: string
   schoolUnits: any[]
   classrooms: any[]
+  pengaturan?: any
 }
 
 const PRIMARY_TABS = [
@@ -41,7 +43,8 @@ export default function MuridDetailClient({
   isReadOnly, 
   role,
   schoolUnits,
-  classrooms
+  classrooms,
+  pengaturan
 }: MuridDetailClientProps) {
   const router = useRouter()
   const [murid, setMurid] = useState(initialMurid)
@@ -103,7 +106,7 @@ export default function MuridDetailClient({
       const { exportToPdfTable } = await import("@/lib/pdf")
       const unitName = murid.unitSekolah?.name || "Unit Sekolah"
       const currentRombel = murid.riwayatKelas?.[0]?.subKelas?.name || murid.subKelas?.name || "Belum ada kelas"
-      const schoolUnitName = murid.unitSekolah?.name ? `UNIT ${murid.unitSekolah.name.toUpperCase()} SIRAYA` : "YAYASAN AL-BASYARIAH SIRAYA"
+      const schoolUnitName = murid.unitSekolah?.name
       const dateStr = new Date().toISOString().split('T')[0]
 
       const headers = ["Keterangan / Field", "Informasi Siswa"]
@@ -172,6 +175,8 @@ export default function MuridDetailClient({
 
   return (
     <div className="space-y-6 print-content">
+      {/* Kop Surat untuk Print Browser */}
+      <PrintHeader unitInfo={murid.unitSekolah} pengaturan={pengaturan} />
       
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 print:hidden">

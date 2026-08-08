@@ -61,12 +61,14 @@ export default function GuruClient({
   initialData,
   schoolUnits,
   userRole,
-  activeUnitId
+  activeUnitId,
+  pengaturan
 }: {
   initialData: Guru[]
   schoolUnits: UnitSekolah[]
   userRole?: string
   activeUnitId: string
+  pengaturan?: any
 }) {
   const router = useRouter()
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
@@ -260,7 +262,7 @@ export default function GuruClient({
       const dateStr = new Date().toISOString().split('T')[0]
       exportToExcel(mappedData, `Data_Guru_${unitName}_${dateStr}`.replace(/\s+/g, '_'), {
         title: "Daftar Data Guru",
-        unitInfo: unitObj || { name: "Yayasan Siraya" }
+        unitInfo: unitObj || { name: pengaturan?.namaYayasan || "Yayasan Siraya" }
       })
       toast.success("Berhasil mengunduh Excel Data Guru")
     } catch (err: any) {
@@ -299,13 +301,9 @@ export default function GuruClient({
         headers,
         data: pdfRows,
         filename: `Daftar_Guru_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
-        schoolUnitName,
-        unitInfo: unitObj ? {
-          address: unitObj.address,
-          phone: unitObj.phone,
-          email: unitObj.email,
-          website: unitObj.website
-        } : undefined,
+        schoolUnitName: unitObj?.name,
+        unitInfo: unitObj,
+        pengaturan,
         orientation: 'landscape'
       })
       toast.success("Berhasil mengunduh PDF Daftar Guru")

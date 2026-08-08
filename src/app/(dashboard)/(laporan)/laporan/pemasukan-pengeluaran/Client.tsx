@@ -130,9 +130,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
     const unitObjForKop = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
     exportToExcel(excelData, filename, {
       title: "Laporan Pemasukan & Pengeluaran",
-      unitInfo: unitObjForKop || {
-        name: unitName !== "YAYASAN" ? unitName : "Yayasan Siraya"
-      }
+      unitInfo: unitObjForKop || { name: pengaturan?.namaYayasan || "Yayasan Siraya" }
     })
     toast.success("Excel berhasil diunduh")
   }
@@ -141,21 +139,16 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
     if (!data) return
     
     const filename = `Laporan_Arus_Kas_${unitName.replace(/\s+/g, '_')}_${startDate}`
-    const schoolUnitName = filterUnitId ? `UNIT ${unitName.toUpperCase()}` : (pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH")
+    const unitObj = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
 
     exportIncomeStatementPdf({
       startDate: startDate || "",
       endDate: endDate || "",
       data: data,
       filename,
-      schoolUnitName,
-      unitInfo: filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : {
-        name: pengaturan?.namaYayasan || "Yayasan Al Basyariah",
-        address: pengaturan?.alamat,
-        phone: pengaturan?.telepon,
-        email: pengaturan?.email,
-        website: pengaturan?.website
-      }
+      schoolUnitName: unitObj?.name,
+      unitInfo: unitObj,
+      pengaturan
     })
     
     toast.success("PDF berhasil diunduh")

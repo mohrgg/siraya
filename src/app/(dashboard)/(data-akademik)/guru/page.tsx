@@ -4,6 +4,7 @@ import GuruClient from "./GuruClient"
 import { auth } from "@/lib/auth"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import prisma from "@/lib/prisma"
 
 export const dynamic = 'force-dynamic'
 
@@ -15,9 +16,10 @@ export default async function GuruPage() {
   const cookieStore = await cookies()
   const activeUnitIdCookie = cookieStore.get("activeUnitId")?.value
 
-  const [data, schoolUnits] = await Promise.all([
+  const [data, schoolUnits, pengaturan] = await Promise.all([
     getGuruList(),
-    getUnitSekolah()
+    getUnitSekolah(),
+    prisma.pengaturan.findUnique({ where: { id: "GLOBAL" } })
   ])
 
   const activeUnitId = activeUnitIdCookie || (user.unitSekolahId ? user.unitSekolahId : (schoolUnits.length > 0 ? schoolUnits[0].id : ""))
@@ -32,7 +34,8 @@ export default async function GuruPage() {
         initialData={data} 
         schoolUnits={schoolUnits} 
         userRole={session?.user?.role} 
-        activeUnitId={activeUnitId} 
+        activeUnitId={activeUnitId}
+        pengaturan={pengaturan}
       />
     </div>
   )

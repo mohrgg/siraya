@@ -134,8 +134,9 @@ export default function RekapitulasiTunggakanClient({
       headers,
       data,
       filename: `Ringkasan_Tunggakan_${activeUnitName}`,
-      schoolUnitName: activeUnitName !== "SEMUA UNIT" ? `UNIT ${activeUnitName.toUpperCase()} SIRAYA` : (pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH"),
-      unitInfo: unitInfo || pengaturan,
+      schoolUnitName: unitInfo?.name || (activeUnitName !== "SEMUA UNIT" ? activeUnitName : undefined),
+      unitInfo: unitInfo,
+      pengaturan,
       orientation: 'landscape'
     })
   }
@@ -188,8 +189,9 @@ export default function RekapitulasiTunggakanClient({
       headers,
       data,
       filename: `Detail_Tunggakan_${activeUnitName}`,
-      schoolUnitName: activeUnitName !== "SEMUA UNIT" ? `UNIT ${activeUnitName.toUpperCase()} SIRAYA` : (pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH"),
-      unitInfo: unitInfo || pengaturan,
+      schoolUnitName: unitInfo?.name || (activeUnitName !== "SEMUA UNIT" ? activeUnitName : undefined),
+      unitInfo: unitInfo,
+      pengaturan,
       orientation: 'landscape'
     })
   }
@@ -245,8 +247,9 @@ export default function RekapitulasiTunggakanClient({
       headers,
       data,
       filename: `Tunggakan_Kelas_${selectedKelasData.subKelasName}_${activeUnitName}`,
-      schoolUnitName: activeUnitName !== "SEMUA UNIT" ? `UNIT ${activeUnitName.toUpperCase()} SIRAYA` : (pengaturan?.namaYayasan || "YAYASAN AL BASYARIAH"),
-      unitInfo: unitInfo || pengaturan,
+      schoolUnitName: unitInfo?.name || (activeUnitName !== "SEMUA UNIT" ? activeUnitName : undefined),
+      unitInfo: unitInfo,
+      pengaturan,
       orientation: 'portrait'
     })
   }

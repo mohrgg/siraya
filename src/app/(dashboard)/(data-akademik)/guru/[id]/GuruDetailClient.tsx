@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
+import PrintHeader from "@/components/shared/print/PrintHeader"
 
 // Types based on the Prisma schema
 type Rombel = {
@@ -48,10 +49,12 @@ type GuruData = {
   rombelWali: Rombel[]
 }
 
-export default function GuruDetailClient({ initialData, isReadOnly = false }: { initialData: GuruData, isReadOnly?: boolean }) {
+export default function GuruDetailClient({ initialData, isReadOnly = false, pengaturan }: { initialData: GuruData, isReadOnly?: boolean, pengaturan?: any }) {
   const router = useRouter()
 
   const [activeTab, setActiveTab] = useState<"profil" | "keuangan" | "rombel">("profil")
+  const [isExportingExcel, setIsExportingExcel] = useState(false)
+  const [isExportingPDF, setIsExportingPDF] = useState(false)
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href)
@@ -74,8 +77,80 @@ export default function GuruDetailClient({ initialData, isReadOnly = false }: { 
     }
   }
 
+  const handleExportExcel = async () => {
+    setIsExportingExcel(true)
+    try {
+      const { exportToExcel } = await import("@/lib/excel")
+      const dataToExport = [{
+        "NIP / NIK": initialData.nip || "-",
+        "Nama Lengkap": initialData.name,
+        "Unit Sekolah": initialData.unitSekolah?.name || "-",
+        "Jenis Kelamin": initialData.gender,
+        "Status Kepegawaian": initialData.statusKepegawaian,
+        "Pendidikan Terakhir": initialData.pendidikan || "-",
+        "Bidang Studi": initialData.bidangStudi || "-",
+        "No. HP / WA": initialData.phone || "-",
+        "Email": initialData.email || "-",
+        "Bank": initialData.bankName || "-",
+        "No. Rekening": initialData.bankAccount || "-",
+        "Atas Nama": initialData.bankAccountName || "-",
+        "Wali Kelas": initialData.rombelWali?.map(r => r.name).join(", ") || "-"
+      }]
+      const dateStr = new Date().toISOString().split('T')[0]
+      exportToExcel(dataToExport, `Profil_Guru_${initialData.name}_${dateStr}`.replace(/\s+/g, '_'), {
+        title: `Profil Guru: ${initialData.name}`,
+        unitInfo: initialData.unitSekolah || { name: pengaturan?.namaYayasan || "Yayasan Siraya" }
+      })
+      toast.success("Berhasil mengunduh Excel Profil Guru")
+    } catch (err: any) {
+      toast.error("Gagal ekspor Excel: " + err.message)
+    } finally {
+      setIsExportingExcel(false)
+    }
+  }
+
+  const handleExportPDF = async () => {
+    setIsExportingPDF(true)
+    try {
+      const { exportToPdfTable } = await import("@/lib/pdf")
+      const dateStr = new Date().toISOString().split('T')[0]
+      const headers = ["Keterangan / Field", "Informasi Guru"]
+      const pdfRows = [
+        ["Nama Lengkap", initialData.name],
+        ["NIP / NIK", initialData.nip || "-"],
+        ["Unit Sekolah", initialData.unitSekolah?.name || "-"],
+        ["Jenis Kelamin", initialData.gender],
+        ["Status Kepegawaian", initialData.statusKepegawaian],
+        ["Pendidikan Terakhir", initialData.pendidikan || "-"],
+        ["Bidang Studi", initialData.bidangStudi || "-"],
+        ["No. HP / WA", initialData.phone || "-"],
+        ["Email", initialData.email || "-"],
+        ["Bank / Rekening", `${initialData.bankName || "-"} / ${initialData.bankAccount || "-"}`],
+        ["Wali Kelas", initialData.rombelWali?.map(r => r.name).join(", ") || "-"]
+      ]
+      exportToPdfTable({
+        title: `Profil Guru - ${initialData.name}`,
+        subtitle: `NIP: ${initialData.nip || "-"} • Unit: ${initialData.unitSekolah?.name || "-"}`,
+        headers,
+        data: pdfRows,
+        filename: `Profil_Guru_${initialData.name}_${dateStr}`.replace(/\s+/g, '_'),
+        schoolUnitName: initialData.unitSekolah?.name,
+        unitInfo: initialData.unitSekolah || undefined,
+        pengaturan,
+        orientation: 'portrait'
+      })
+      toast.success("Berhasil mengunduh PDF Profil Guru")
+    } catch (err: any) {
+      toast.error("Gagal ekspor PDF: " + err.message)
+    } finally {
+      setIsExportingPDF(false)
+    }
+  }
+
   return (
     <div className="space-y-6 print-content animate-in fade-in duration-500">
+      {/* Kop Surat untuk Print Browser */}
+      <PrintHeader unitInfo={initialData.unitSekolah} pengaturan={pengaturan} />
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 print:hidden">
         <Button 
@@ -96,17 +171,19 @@ export default function GuruDetailClient({ initialData, isReadOnly = false }: { 
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => toast.error("Fitur Ekspor Excel belum tersedia")}
+            onClick={handleExportExcel}
+            disabled={isExportingExcel}
             className="gap-1.5 text-xs font-semibold bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50"
           >
-            <FileSpreadsheet size={15} /> Excel
+            <FileSpreadsheet size={15} /> {isExportingExcel ? "Mengunduh..." : "Excel"}
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => toast.error("Fitur Ekspor PDF belum tersedia")}
+            onClick={handleExportPDF}
+            disabled={isExportingPDF}
             className="gap-1.5 text-xs font-semibold bg-white text-rose-600 border-rose-200 hover:bg-rose-50"
           >
-            <FileText size={15} /> PDF
+            <FileText size={15} /> {isExportingPDF ? "Mengunduh..." : "PDF"}
           </Button>
           <Button 
             variant="outline" 
