@@ -42,6 +42,7 @@ interface Props {
   activeTahunAkademikName: string
   pengaturan?: any
   unitInfo?: any
+  userName?: string
 }
 
 export default function RekapitulasiTunggakanClient({
@@ -50,7 +51,8 @@ export default function RekapitulasiTunggakanClient({
   activeTahunAkademikId,
   activeTahunAkademikName,
   pengaturan,
-  unitInfo
+  unitInfo,
+  userName
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
   const [rekapData, setRekapData] = useState<RekapItem[]>([])
@@ -136,7 +138,9 @@ export default function RekapitulasiTunggakanClient({
       headers,
       data,
       filename: `Ringkasan_Tunggakan_${activeUnitName}`,
-      config: { orientation: 'landscape' }
+      config: { orientation: 'landscape' },
+      penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+      penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
     })
   }
 
@@ -189,7 +193,9 @@ export default function RekapitulasiTunggakanClient({
       headers,
       data,
       filename: `Detail_Tunggakan_${activeUnitName}`,
-      config: { orientation: 'landscape' }
+      config: { orientation: 'landscape' },
+      penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+      penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
     })
   }
 
@@ -245,7 +251,9 @@ export default function RekapitulasiTunggakanClient({
       headers,
       data,
       filename: `Tunggakan_Kelas_${selectedKelasData.subKelasName}_${activeUnitName}`,
-      config: { orientation: 'portrait' }
+      config: { orientation: 'portrait' },
+      penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+      penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
     })
   }
 

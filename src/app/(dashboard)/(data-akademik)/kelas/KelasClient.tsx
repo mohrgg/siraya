@@ -20,9 +20,9 @@ import { tambahKelas, editKelas, hapusKelas, hapusTingkatan, tambahTingkatan, ed
 import { hapusSiswa, tambahSiswa, editSiswa } from "@/actions/siswa"
 
 export default function KelasClient({ 
-  activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits, initialTeachers = [], userRole 
+  activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits, initialTeachers = [], userRole, userName 
 }: { 
-  activeUnitId?: string, activeYearId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[], initialTeachers?: any[], userRole?: string 
+  activeUnitId?: string, activeYearId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[], initialTeachers?: any[], userRole?: string, userName?: string
 }) {
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
   const router = useRouter()
@@ -191,7 +191,9 @@ export default function KelasClient({
           headers,
           data: pdfRows,
           filename: `Daftar_Rombel_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
-          config: { orientation: 'landscape' }
+          config: { orientation: 'landscape' },
+          penandatanganKiri: { jabatan: "Mengetahui,", nama: "____________________" },
+          penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
         })
       } else {
         const { getSiswaPaginated } = await import("@/actions/siswa")
@@ -231,7 +233,9 @@ export default function KelasClient({
           headers,
           data: pdfRows,
           filename: `Daftar_Murid_${unitObj?.name || "Semua"}_${statusName}_${dateStr}`.replace(/\s+/g, '_'),
-          config: { orientation: 'landscape' }
+          config: { orientation: 'landscape' },
+          penandatanganKiri: { jabatan: "Mengetahui,", nama: "____________________" },
+          penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
         })
       }
       toast.success("Berhasil mengekspor dokumen PDF resmi")
@@ -570,6 +574,7 @@ export default function KelasClient({
         onClose={() => setViewDetailSubKelas(null)}
         subKelas={viewDetailSubKelas}
         isReadOnly={isReadOnly}
+        userName={userName}
         onManageClass={(sub) => {
           setViewDetailSubKelas(null)
           data.setActiveTab("murid")

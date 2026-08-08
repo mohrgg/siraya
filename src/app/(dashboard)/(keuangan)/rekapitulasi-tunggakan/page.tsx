@@ -40,6 +40,7 @@ export default async function RekapitulasiTunggakanPage() {
       activeTahunAkademikName={activeTahunAkademikName}
       pengaturan={pengaturan}
       unitInfo={activeUnit}
+      userName={user.name || undefined}
     />
   )
 }

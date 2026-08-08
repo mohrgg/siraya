@@ -19,6 +19,7 @@ interface SubKelasDetailDrawerProps {
   prevDisabled?: boolean
   nextDisabled?: boolean
   onManageClass?: (subKelas: any) => void
+  userName?: string
 }
 
 export default function SubKelasDetailDrawer({
@@ -31,7 +32,8 @@ export default function SubKelasDetailDrawer({
   onNext,
   prevDisabled = false,
   nextDisabled = false,
-  onManageClass
+  onManageClass,
+  userName
 }: SubKelasDetailDrawerProps) {
   const router = useRouter()
   const [students, setStudents] = useState<any[]>([])
@@ -138,7 +140,9 @@ export default function SubKelasDetailDrawer({
         headers: tableColumn,
         data: tableRows,
         filename: `Murid_Kelas_${subKelas.nama.replace(/\s+/g, '_')}`,
-        config: { orientation: 'portrait' }
+        config: { orientation: 'portrait' },
+        penandatanganKiri: { jabatan: "Mengetahui,", nama: "____________________" },
+        penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
       })
       toast.success("Berhasil mengunduh PDF Daftar Siswa")
     } catch (err: any) {

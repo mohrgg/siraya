@@ -37,6 +37,7 @@ export default async function MuridDetailPage({ params }: PageProps) {
         schoolUnits={schoolUnits}
         classrooms={classrooms}
         pengaturan={pengaturan}
+        userName={session?.user?.name || undefined}
       />
     </div>
   )

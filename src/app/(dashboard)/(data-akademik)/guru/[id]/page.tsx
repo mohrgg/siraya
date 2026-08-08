@@ -26,5 +26,5 @@ export default async function GuruDetailPage({ params }: { params: Promise<{ id:
 
   const isReadOnly = (session.user as any)?.role === "KEPALA_SEKOLAH"
 
-  return <GuruDetailClient initialData={guru} isReadOnly={isReadOnly} pengaturan={pengaturan} />
+  return <GuruDetailClient initialData={guru} isReadOnly={isReadOnly} pengaturan={pengaturan} userName={session.user.name || undefined} />
 }

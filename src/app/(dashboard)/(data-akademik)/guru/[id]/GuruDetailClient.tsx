@@ -24,6 +24,8 @@ import {
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 import PrintHeader from "@/components/shared/print/PrintHeader"
+import PrintSignature from "@/components/shared/print/PrintSignature"
+import PrintFooter from "@/components/shared/print/PrintFooter"
 
 // Types based on the Prisma schema
 type Rombel = {
@@ -49,7 +51,7 @@ type GuruData = {
   rombelWali: Rombel[]
 }
 
-export default function GuruDetailClient({ initialData, isReadOnly = false, pengaturan }: { initialData: GuruData, isReadOnly?: boolean, pengaturan?: any }) {
+export default function GuruDetailClient({ initialData, isReadOnly = false, pengaturan, userName }: { initialData: GuruData, isReadOnly?: boolean, pengaturan?: any, userName?: string }) {
   const router = useRouter()
 
   const [activeTab, setActiveTab] = useState<"profil" | "keuangan" | "rombel">("profil")
@@ -136,7 +138,9 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
         headers,
         data: pdfRows,
         filename: `Profil_Guru_${initialData.name}_${dateStr}`.replace(/\s+/g, '_'),
-        config: { orientation: 'portrait' }
+        config: { orientation: 'portrait' },
+        penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+        penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
       })
       toast.success("Berhasil mengunduh PDF Profil Guru")
     } catch (err: any) {
@@ -147,6 +151,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
   }
 
   return (
+    <>
     <div className="space-y-6 print-content animate-in fade-in duration-500">
       {/* Kop Surat untuk Print Browser */}
       <PrintHeader unitInfo={initialData.unitSekolah} pengaturan={pengaturan} />
@@ -456,5 +461,57 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
         </div>
       </div>
     </div>
+
+      {/* ========================================================== */}
+      {/* DEDICATED PRINT LAYOUT - DATA PROFIL GURU                  */}
+      {/* ========================================================== */}
+      <div className="hidden print:block text-black bg-white font-sans p-4">
+        {/* KOP SURAT */}
+        <PrintHeader unitInfo={initialData.unitSekolah} pengaturan={pengaturan} className="block" />
+
+        {/* JUDUL */}
+        <div className="text-center py-2 bg-gray-100 rounded border border-gray-300 my-4">
+          <h2 className="text-base font-extrabold uppercase tracking-wide">DATA PROFIL GURU / STAF</h2>
+          <p className="text-xs text-gray-600 mt-0.5">NIP: {initialData.nip || "-"} | Unit: {initialData.unitSekolah?.name || "-"}</p>
+        </div>
+
+        {/* TABEL DATA */}
+        <table className="w-full text-xs border-collapse mb-6">
+          <tbody>
+            {[
+              ["Nama Lengkap", initialData.name],
+              ["NIP / NIK", initialData.nip || "-"],
+              ["Unit Sekolah", initialData.unitSekolah?.name || "-"],
+              ["Jenis Kelamin", initialData.gender],
+              ["Status Kepegawaian", initialData.statusKepegawaian],
+              ["Pendidikan Terakhir", initialData.pendidikan || "-"],
+              ["Bidang Studi", initialData.bidangStudi || "-"],
+              ["No. HP / WA", initialData.phone || "-"],
+              ["Email", initialData.email || "-"],
+              ["Bank / Rekening", `${initialData.bankName || "-"} / ${initialData.bankAccount || "-"}`],
+              ["Wali Kelas", initialData.rombelWali?.map((r: any) => r.name).join(", ") || "-"]
+            ].map(([label, value], i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                <td className="border border-gray-300 px-3 py-1.5 font-semibold w-48">{label}</td>
+                <td className="border border-gray-300 px-3 py-1.5">{value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* TANDA TANGAN */}
+        <PrintSignature
+          pengaturan={pengaturan}
+          tipe="ganda"
+          tanggal={new Date()}
+          kiri={{ jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" }}
+          kanan={{ jabatan: "Petugas,", nama: userName || "____________________" }}
+          className="flex"
+        />
+
+        {/* FOOTER */}
+        <PrintFooter pengaturan={pengaturan} className="block" />
+      </div>
+    </>
   )
 }

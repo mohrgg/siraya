@@ -65,67 +65,144 @@ export function drawTandaTangan(
 }
 
 /**
- * Helper Menggambar Kop Surat
+ * Helper Menggambar Kop Surat - SINKRON dengan PrintHeader HTML
+ * Layout: [LOGO kiri] | Nama Yayasan kecil / Nama Unit besar / Alamat | [balancer kanan]
+ * Garis: tebal + tipis (double border)
  */
-export const drawKopSurat = (
+export const drawKopSurat = async (
   docInstance: jsPDF,
   pageWidth: number,
   institutionInfo: PdfInstitutionInfo,
-  startY: number = 12
-) => {
-  let startSubY = startY + 11
+  startY: number = 10
+): Promise<number> => {
+  const logoSize = 22   // mm
+  const logoX = 14
+  const logoY = startY
+  const textCenterX = pageWidth / 2
+
+  // Muat logo jika ada
+  if (institutionInfo.logoUrl) {
+    try {
+      const imgData = await fetch(institutionInfo.logoUrl)
+        .then(r => r.blob())
+        .then(blob => new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = reject
+          reader.readAsDataURL(blob)
+        }))
+      const format = (imgData.startsWith('data:image/png') || institutionInfo.logoUrl.toLowerCase().includes('.png')) ? 'PNG' : 'JPEG'
+      docInstance.addImage(imgData, format, logoX, logoY, logoSize, logoSize)
+    } catch {
+      // Lanjutkan tanpa logo jika gagal
+    }
+  }
+
+  let textY = startY + 4
 
   if (institutionInfo.namaUnit) {
-    // Skema 1: Kop Unit
+    // Skema 1: Ada unit — nama yayasan kecil di atas, nama unit besar
     docInstance.setFont("helvetica", "bold")
-    docInstance.setFontSize(10)
-    docInstance.setTextColor(30, 41, 59) // slate-800
-    docInstance.text(institutionInfo.namaYayasan.toUpperCase(), pageWidth / 2, startY, { align: "center", charSpace: 1.5 })
+    docInstance.setFontSize(9)
+    docInstance.setTextColor(30, 41, 59)
+    docInstance.text(institutionInfo.namaYayasan.toUpperCase(), textCenterX, textY, { align: "center", charSpace: 1.2 })
+    textY += 7
 
-    docInstance.setFont("helvetica", "bold")
-    docInstance.setFontSize(18)
-    docInstance.setTextColor(15, 23, 42) // slate-900
-    docInstance.text(institutionInfo.namaUnit.toUpperCase(), pageWidth / 2, startY + 7, { align: "center", charSpace: 1 })
-    
-    startSubY = startY + 12
-  } else {
-    // Skema 2: Kop Yayasan
     docInstance.setFont("helvetica", "bold")
     docInstance.setFontSize(18)
     docInstance.setTextColor(15, 23, 42)
-    docInstance.text(institutionInfo.namaYayasan.toUpperCase(), pageWidth / 2, startY + 4, { align: "center", charSpace: 1 })
-    
-    startSubY = startY + 10
+    docInstance.text(institutionInfo.namaUnit.toUpperCase(), textCenterX, textY, { align: "center", charSpace: 0.5 })
+    textY += 6
+  } else {
+    // Skema 2: Tanpa unit — nama yayasan besar
+    docInstance.setFont("helvetica", "bold")
+    docInstance.setFontSize(18)
+    docInstance.setTextColor(15, 23, 42)
+    docInstance.text(institutionInfo.namaYayasan.toUpperCase(), textCenterX, textY + 3, { align: "center", charSpace: 0.5 })
+    textY += 10
   }
 
-  docInstance.setFont("helvetica", "normal")
-  docInstance.setFontSize(9)
-  docInstance.setTextColor(51, 65, 85) // slate-700
-  
-  const parts = []
+  // Subtitle: alamat • telp • email
+  const parts: string[] = []
   if (institutionInfo.alamat) parts.push(institutionInfo.alamat)
   if (institutionInfo.telepon) parts.push(`Telp: ${institutionInfo.telepon}`)
   if (institutionInfo.email) parts.push(`Email: ${institutionInfo.email}`)
   if (institutionInfo.website) parts.push(`Web: ${institutionInfo.website}`)
-  
-  const kopSubtitle = parts.join(' • ')
-  
-  if (kopSubtitle) {
-    const splitSubtitle = docInstance.splitTextToSize(kopSubtitle, pageWidth - 30)
+
+  if (parts.length > 0) {
+    const kopSubtitle = parts.join(' \u2022 ')
+    docInstance.setFont("helvetica", "normal")
+    docInstance.setFontSize(8.5)
+    docInstance.setTextColor(51, 65, 85)
+    const splitSubtitle = docInstance.splitTextToSize(kopSubtitle, pageWidth - 50)
     splitSubtitle.forEach((line: string) => {
-      docInstance.text(line, pageWidth / 2, startSubY, { align: "center" })
-      startSubY += 4
+      docInstance.text(line, textCenterX, textY, { align: "center" })
+      textY += 4
     })
   }
 
-  const lineY = startSubY + 1
+  // Garis ganda persis seperti PrintHeader HTML
+  const lineY = Math.max(textY + 2, startY + logoSize + 2)
   docInstance.setLineWidth(0.8)
   docInstance.setDrawColor(15, 23, 42)
   docInstance.line(14, lineY, pageWidth - 14, lineY)
 
   docInstance.setLineWidth(0.2)
   docInstance.line(14, lineY + 1.5, pageWidth - 14, lineY + 1.5)
-  
+
+  return lineY + 1.5
+}
+
+/**
+ * Versi SYNC dari drawKopSurat (tanpa logo) — digunakan di callback didDrawPage.
+ */
+const drawKopSuratSync = (
+  docInstance: jsPDF,
+  pageWidth: number,
+  institutionInfo: PdfInstitutionInfo,
+  startY: number = 10
+): number => {
+  const textCenterX = pageWidth / 2
+  let textY = startY + 4
+
+  if (institutionInfo.namaUnit) {
+    docInstance.setFont("helvetica", "bold")
+    docInstance.setFontSize(9)
+    docInstance.setTextColor(30, 41, 59)
+    docInstance.text(institutionInfo.namaYayasan.toUpperCase(), textCenterX, textY, { align: "center", charSpace: 1.2 })
+    textY += 7
+    docInstance.setFont("helvetica", "bold")
+    docInstance.setFontSize(18)
+    docInstance.setTextColor(15, 23, 42)
+    docInstance.text(institutionInfo.namaUnit.toUpperCase(), textCenterX, textY, { align: "center", charSpace: 0.5 })
+    textY += 6
+  } else {
+    docInstance.setFont("helvetica", "bold")
+    docInstance.setFontSize(18)
+    docInstance.setTextColor(15, 23, 42)
+    docInstance.text(institutionInfo.namaYayasan.toUpperCase(), textCenterX, textY + 3, { align: "center", charSpace: 0.5 })
+    textY += 10
+  }
+
+  const parts: string[] = []
+  if (institutionInfo.alamat) parts.push(institutionInfo.alamat)
+  if (institutionInfo.telepon) parts.push(`Telp: ${institutionInfo.telepon}`)
+  if (institutionInfo.email) parts.push(`Email: ${institutionInfo.email}`)
+  if (parts.length > 0) {
+    const sub = parts.join(' \u2022 ')
+    docInstance.setFont("helvetica", "normal")
+    docInstance.setFontSize(8.5)
+    docInstance.setTextColor(51, 65, 85)
+    const split = docInstance.splitTextToSize(sub, pageWidth - 50)
+    split.forEach((line: string) => { docInstance.text(line, textCenterX, textY, { align: "center" }); textY += 4 })
+  }
+
+  const lineY = textY + 2
+  docInstance.setLineWidth(0.8)
+  docInstance.setDrawColor(15, 23, 42)
+  docInstance.line(14, lineY, pageWidth - 14, lineY)
+  docInstance.setLineWidth(0.2)
+  docInstance.line(14, lineY + 1.5, pageWidth - 14, lineY + 1.5)
   return lineY + 1.5
 }
 
@@ -151,7 +228,7 @@ const drawFooter = (docInstance: jsPDF, pageWidth: number, pageHeight: number, p
 /**
  * Helper universal untuk mengekspor data tabel menjadi dokumen PDF resmi.
  */
-export function exportTablePdf({
+export async function exportTablePdf({
   institutionInfo,
   title,
   subtitle = "",
@@ -179,7 +256,7 @@ export function exportTablePdf({
   const totalPagesExp = '{total_pages_count_string}'
 
   // Gambar Kop di halaman pertama
-  let currentY = drawKopSurat(doc, pageWidth, institutionInfo, 12) + 8
+  let currentY = await drawKopSurat(doc, pageWidth, institutionInfo, 12) + 8
 
   // Judul & Subjudul Dokumen
   doc.setFont("helvetica", "bold")
@@ -227,7 +304,8 @@ export function exportTablePdf({
     margin: config?.margin || { top: 32, left: 14, right: 14, bottom: 20 },
     didDrawPage: (dataHook) => {
       if (dataHook.pageNumber > 1) {
-        drawKopSurat(doc, pageWidth, institutionInfo, 12)
+        // Untuk halaman lanjutan: kop teks saja (tanpa logo, sync-friendly)
+        drawKopSuratSync(doc, pageWidth, institutionInfo, 12)
       }
       drawFooter(doc, pageWidth, pageHeight, dataHook.pageNumber, totalPagesExp)
     }
@@ -255,7 +333,7 @@ export function exportTablePdf({
 /**
  * Ekspor Resi/Kwitansi Pembayaran Tagihan ke format PDF resmi (A5 Landscape).
  */
-export function exportResiPdf(data: ExportResiPdfOptions) {
+export async function exportResiPdf(data: ExportResiPdfOptions) {
   const doc = new jsPDF({
     orientation: 'landscape',
     unit: 'mm',
@@ -266,7 +344,7 @@ export function exportResiPdf(data: ExportResiPdfOptions) {
   const pageHeight = doc.internal.pageSize.getHeight()
   
   // 1. KOP SURAT
-  const lineY = drawKopSurat(doc, pageWidth, data.institutionInfo, 12)
+  const lineY = await drawKopSurat(doc, pageWidth, data.institutionInfo, 12)
   
   // 2. TANGGAL & NO REF (Kanan Atas sejajar dengan Judul)
   doc.setFont("helvetica", "normal")
@@ -376,12 +454,12 @@ export function exportResiPdf(data: ExportResiPdfOptions) {
 /**
  * Ekspor Jurnal Kas (A4 Portrait).
  */
-export function exportJurnalPdf(data: ExportJurnalPdfOptions) {
+export async function exportJurnalPdf(data: ExportJurnalPdfOptions) {
   const doc = new jsPDF('portrait')
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
   
-  let currentY = drawKopSurat(doc, pageWidth, data.institutionInfo, 12) + 8
+  let currentY = await drawKopSurat(doc, pageWidth, data.institutionInfo, 12) + 8
   
   doc.setFontSize(12)
   doc.setFont("helvetica", "bold")
@@ -440,7 +518,7 @@ export function exportJurnalPdf(data: ExportJurnalPdfOptions) {
 /**
  * Ekspor Laporan Pemasukan & Pengeluaran (Income Statement).
  */
-export function exportIncomeStatementPdf({
+export async function exportIncomeStatementPdf({
   institutionInfo,
   startDate,
   endDate,
@@ -460,7 +538,7 @@ export function exportIncomeStatementPdf({
   const pageHeight = doc.internal.pageSize.getHeight()
   
   // 1. KOP SURAT
-  const headerY = drawKopSurat(doc, pageWidth, institutionInfo, 12)
+  const headerY = await drawKopSurat(doc, pageWidth, institutionInfo, 12)
   
   // 2. JUDUL LAPORAN
   let currentY = headerY + 10

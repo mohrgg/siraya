@@ -10,6 +10,7 @@ import { auth } from "@/lib/auth"
 
 export default async function KelasPage() {
   const session = await auth()
+  const userName = session?.user?.name || undefined
   let schoolUnits = await prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } })
   const levelOrder: Record<string, number> = { "SD": 1, "SMP": 2, "SMA": 3, "SMK": 4, "MA": 5 }
   schoolUnits = schoolUnits.sort((a, b) => (levelOrder[a.level] || 99) - (levelOrder[b.level] || 99))
@@ -43,6 +44,7 @@ export default async function KelasPage() {
         schoolUnits={schoolUnits}
         initialTeachers={teachers}
         userRole={session?.user?.role}
+        userName={userName}
       />
     </div>
   )

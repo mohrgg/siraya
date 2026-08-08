@@ -36,6 +36,7 @@ export default async function GuruPage() {
         userRole={session?.user?.role} 
         activeUnitId={activeUnitId}
         pengaturan={pengaturan}
+        userName={user.name || undefined}
       />
     </div>
   )

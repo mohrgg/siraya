@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/Button"
 import MuridFormModal from "@/components/modals/MuridFormModal"
 import { editSiswa } from "@/actions/siswa"
 import PrintHeader from "@/components/shared/print/PrintHeader"
+import PrintSignature from "@/components/shared/print/PrintSignature"
+import PrintFooter from "@/components/shared/print/PrintFooter"
 
 interface MuridDetailClientProps {
   initialMurid: any
@@ -21,6 +23,7 @@ interface MuridDetailClientProps {
   schoolUnits: any[]
   classrooms: any[]
   pengaturan?: any
+  userName?: string
 }
 
 const PRIMARY_TABS = [
@@ -44,7 +47,8 @@ export default function MuridDetailClient({
   role,
   schoolUnits,
   classrooms,
-  pengaturan
+  pengaturan,
+  userName
 }: MuridDetailClientProps) {
   const router = useRouter()
   const [murid, setMurid] = useState(initialMurid)
@@ -131,7 +135,9 @@ export default function MuridDetailClient({
         headers,
         data: pdfRows,
         filename: `Data_Murid_${murid.nis}_${dateStr}`.replace(/\s+/g, '_'),
-        config: { orientation: 'portrait' }
+        config: { orientation: 'portrait' },
+        penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+        penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
       })
       toast.success("Berhasil mengunduh PDF Profil Siswa")
     } catch (err: any) {
@@ -175,8 +181,6 @@ export default function MuridDetailClient({
 
   return (
     <div className="space-y-6 print-content">
-      {/* Kop Surat untuk Print Browser */}
-      <PrintHeader unitInfo={murid.unitSekolah} pengaturan={pengaturan} />
       
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 print:hidden">
@@ -957,16 +961,16 @@ export default function MuridDetailClient({
         </div>
 
         {/* TANDA TANGAN & PENGESAHAN */}
-        <div className="pt-8 flex items-start justify-between text-center text-xs break-inside-avoid">
-          <div className="w-56 space-y-12">
-            <p className="text-gray-600">Mengetahui,<br/>Orang Tua / Wali Siswa</p>
-            <p className="font-bold underline text-black">( ........................................ )</p>
-          </div>
-          <div className="w-56 space-y-12">
-            <p className="text-gray-600">Bandung, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}<br/>Kepala Sekolah / Wali Kelas</p>
-            <p className="font-bold underline text-black">( ........................................ )</p>
-          </div>
-        </div>
+        <PrintSignature
+          pengaturan={pengaturan}
+          unitInfo={murid.unitSekolah}
+          tipe="ganda"
+          tanggal={new Date()}
+          kiri={{ jabatan: "Mengetahui,", nama: "Orang Tua / Wali Siswa" }}
+          kanan={{ jabatan: "Wali Kelas / Kepala Sekolah,", nama: pengaturan?.namaKepalaTU || "____________________" }}
+          className="flex"
+        />
+        <PrintFooter pengaturan={pengaturan} className="block" />
 
       </div>
 

@@ -62,13 +62,15 @@ export default function GuruClient({
   schoolUnits,
   userRole,
   activeUnitId,
-  pengaturan
+  pengaturan,
+  userName
 }: {
   initialData: Guru[]
   schoolUnits: UnitSekolah[]
   userRole?: string
   activeUnitId: string
   pengaturan?: any
+  userName?: string
 }) {
   const router = useRouter()
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
@@ -302,7 +304,9 @@ export default function GuruClient({
         headers,
         data: pdfRows,
         filename: `Daftar_Guru_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
-        config: { orientation: 'landscape' }
+        config: { orientation: 'landscape' },
+        penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+        penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
       })
       toast.success("Berhasil mengunduh PDF Daftar Guru")
     } catch (err: any) {
