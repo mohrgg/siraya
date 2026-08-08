@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 import { upsertPengaturan } from "@/actions/pengaturan"
 import PrintHeader from "@/components/shared/print/PrintHeader"
+import PrintSignature from "@/components/shared/print/PrintSignature"
+import PrintFooter from "@/components/shared/print/PrintFooter"
 
 export default function PengaturanClient({ initialSettings, units = [] }: { initialSettings: any, units?: any[] }) {
   const [activeTab, setActiveTab] = useState<"profil" | "rekening" | "backup">("profil")
@@ -192,18 +194,57 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
         {activeTab === "profil" && (
           <div className="space-y-6">
             
-            {/* Live Preview Kop Surat */}
+            {/* Live Preview Dokumen Lengkap */}
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 relative overflow-hidden">
               <div className="absolute top-0 left-0 bg-slate-200 text-slate-500 text-[10px] font-bold px-3 py-1 rounded-br-lg uppercase tracking-wider">
-                Live Preview Kop Surat
+                Live Preview Dokumen
               </div>
-              <div className="mt-4 bg-white p-6 shadow-sm border border-slate-100 min-h-[150px]">
+              <div className="mt-4 bg-white p-8 shadow-sm border border-slate-100 min-h-[420px] flex flex-col">
+                {/* === KOP SURAT === */}
                 <PrintHeader 
                   pengaturan={formData} 
-                  unitInfo={activeUnitTab === "GLOBAL" ? undefined : unitData[activeUnitTab]} 
+                  unitInfo={activeUnitTab === "GLOBAL" ? undefined : unitData[activeUnitTab]}
+                  className="block"
+                />
+
+                {/* === AREA KONTEN CONTOH === */}
+                <div className="flex-1 my-6">
+                  <div className="text-center mb-4">
+                    <h3 className="text-base font-bold uppercase tracking-wide text-slate-800">JUDUL DOKUMEN / LAPORAN</h3>
+                    <p className="text-xs text-slate-500 mt-1">Subtitle dokumen akan tampil di sini</p>
+                  </div>
+                  <div className="border border-dashed border-slate-300 rounded-lg p-6 text-center">
+                    <p className="text-sm text-slate-400 italic">[ Area Isi Tabel / Data Dokumen ]</p>
+                  </div>
+                </div>
+
+                {/* === TANDA TANGAN === */}
+                <PrintSignature
+                  pengaturan={formData}
+                  unitInfo={activeUnitTab === "GLOBAL" ? undefined : unitData[activeUnitTab]}
+                  tipe="ganda"
+                  tanggal={new Date()}
+                  kiri={{
+                    jabatan: activeUnitTab !== "GLOBAL" ? "Kepala Sekolah" : "Kepala TU",
+                    nama: activeUnitTab !== "GLOBAL" 
+                      ? (unitData[activeUnitTab]?.namaKepalaSekolah || "____________________")
+                      : (formData.namaKepalaTU || "____________________")
+                  }}
+                  kanan={{
+                    jabatan: "Bendahara",
+                    nama: formData.namaBendahara || "____________________"
+                  }}
+                  className="flex"
+                />
+
+                {/* === FOOTER === */}
+                <PrintFooter 
+                  pengaturan={formData}
+                  catatan={formData.catatanKwitansi}
+                  className="block"
                 />
               </div>
-              <p className="text-xs text-slate-500 mt-4 text-center">Tampilan di atas adalah simulasi kop surat yang akan muncul pada dokumen PDF dan Cetak.</p>
+              <p className="text-xs text-slate-500 mt-4 text-center">Simulasi tampilan dokumen lengkap yang akan muncul pada ekspor PDF dan Cetak. Ubah data pada form di bawah untuk melihat perubahan secara real-time.</p>
             </div>
 
             {/* Pilihan Mode Edit */}

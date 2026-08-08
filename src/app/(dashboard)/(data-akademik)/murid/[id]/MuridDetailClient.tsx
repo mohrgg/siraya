@@ -842,12 +842,8 @@ export default function MuridDetailClient({
       {/* ========================================================== */}
       <div className="hidden print:block space-y-6 text-black bg-white font-sans p-2">
         
-        {/* KOP SURAT SEKOLAH */}
-        <div className="border-b-2 border-black pb-3 text-center space-y-1">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-600">YAYASAN AL-BASYARIAH / SIRAYA EDUCATION</h2>
-          <h1 className="text-xl font-black uppercase tracking-wide text-black">UNIT {unitName} SIRAYA</h1>
-          <p className="text-[11px] text-gray-700">Jl. Pendidikan Nusantara No. 123, Bandung, Jawa Barat • Telp: (022) 1234567 • Email: info@siraya.edu</p>
-        </div>
+        {/* KOP SURAT SEKOLAH (Standar via PrintHeader) */}
+        <PrintHeader unitInfo={murid.unitSekolah} pengaturan={pengaturan} className="block" />
 
         {/* JUDUL DOKUMEN */}
         <div className="text-center py-2 bg-gray-100 rounded border border-gray-300">

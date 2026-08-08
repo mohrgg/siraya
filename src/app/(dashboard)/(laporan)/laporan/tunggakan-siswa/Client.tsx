@@ -108,7 +108,6 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
     if (filteredData.length === 0) return
     
     const filename = `Laporan_Tunggakan_${unitName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`
-    const schoolUnitName = filterUnitId ? unitName : undefined
 
     // Construct table data
     const tableData = filteredData.map((item, idx) => [
