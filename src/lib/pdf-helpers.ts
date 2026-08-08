@@ -17,5 +17,6 @@ export function buildInstitutionInfo(
     website: unitSekolah?.website || pengaturan?.website || null,
     logoUrl: unitSekolah?.logo || pengaturan?.logoUrl || null,
     kotaPenandatangan: unitSekolah?.kotaPenandatangan || pengaturan?.kotaPenandatangan || "Bandung",
+    catatanKwitansi: pengaturan?.catatanKwitansi || null,
   }
 }

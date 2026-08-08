@@ -7,6 +7,7 @@ export interface PdfInstitutionInfo {
   website?: string | null
   logoUrl?: string | null
   kotaPenandatangan?: string | null
+  catatanKwitansi?: string | null
 }
 
 export interface PdfSignatory {

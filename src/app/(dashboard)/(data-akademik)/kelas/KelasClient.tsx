@@ -20,9 +20,9 @@ import { tambahKelas, editKelas, hapusKelas, hapusTingkatan, tambahTingkatan, ed
 import { hapusSiswa, tambahSiswa, editSiswa } from "@/actions/siswa"
 
 export default function KelasClient({ 
-  activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits, initialTeachers = [], userRole, userName 
+  activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits, initialTeachers = [], userRole, userName, pengaturan
 }: { 
-  activeUnitId?: string, activeYearId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[], initialTeachers?: any[], userRole?: string, userName?: string
+  activeUnitId?: string, activeYearId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[], initialTeachers?: any[], userRole?: string, userName?: string, pengaturan?: any
 }) {
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
   const router = useRouter()
@@ -185,7 +185,7 @@ export default function KelasClient({
           c.waliKelas || "Belum ditentukan"
         ])
         exportTablePdf({
-          institutionInfo: buildInstitutionInfo(undefined, unitObj),
+          institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
           title: "Daftar Rekapitulasi Rombel",
           subtitle: `Tahun Akademik: ${activeTahunAkademikId === 'ALL' ? 'Semua' : activeTahunAkademik?.name} • Unit: ${unitObj?.name || "Semua Unit"}`,
           headers,
@@ -227,7 +227,7 @@ export default function KelasClient({
 
         const statusName = data.activeTab === "murid" ? "Aktif" : (data.filterAlumniStatus || "Semua Status")
         exportTablePdf({
-          institutionInfo: buildInstitutionInfo(undefined, unitObj),
+          institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
           title: `Daftar Murid (${statusName})`,
           subtitle: `Unit: ${unitObj?.name || "Semua Unit"} • Total: ${res.data.length} Siswa`,
           headers,

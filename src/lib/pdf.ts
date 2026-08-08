@@ -29,39 +29,59 @@ export function drawTandaTangan(
   kiri?: PdfSignatory,
   kanan?: PdfSignatory
 ) {
-  let startY = finalY + 15
+  let startY = finalY + 14
   
-  if (startY + 30 > pageHeight - 20) {
+  if (startY + 40 > pageHeight - 20) {
     doc.addPage()
     startY = 30
   }
 
-  doc.setFontSize(9)
-  doc.setFont("helvetica", "normal")
-  doc.setTextColor(71, 85, 105)
-
   const dateObj = typeof tanggalCetak === 'string' ? new Date(tanggalCetak) : (tanggalCetak || new Date())
   const dateStr = dateObj.toLocaleDateString('id-ID', {
-    day: '2-digit', month: 'long', year: 'numeric'
+    day: 'numeric', month: 'long', year: 'numeric'
   })
-  
   const kota = institutionInfo.kotaPenandatangan || "Bandung"
-  const tempatTanggal = `${kota}, ${dateStr}`
 
-  // Kanan
-  const defKanan = kanan || { jabatan: "Petugas,", nama: "__________________________" }
-  doc.text(tempatTanggal, pageWidth - 20, startY, { align: "right" })
-  doc.text(defKanan.jabatan, pageWidth - 20, startY + 6, { align: "right" })
-  doc.setFont("helvetica", "bold")
-  doc.text(defKanan.nama, pageWidth - 20, startY + 30, { align: "right" })
-
-  // Kiri
+  // ── KIRI: jabatan → spasi ttd (24mm) → nama underline ──────────────────
   if (kiri) {
     doc.setFont("helvetica", "normal")
-    doc.text(kiri.jabatan, 20, startY + 6, { align: "left" })
+    doc.setFontSize(9)
+    doc.setTextColor(71, 85, 105)
+    doc.text(kiri.jabatan, 20, startY)
+
+    // Underline nama kiri
     doc.setFont("helvetica", "bold")
-    doc.text(kiri.nama, 20, startY + 30, { align: "left" })
+    doc.setTextColor(15, 23, 42)
+    const namaKiriY = startY + 24
+    const namaKiriW = doc.getTextWidth(kiri.nama)
+    doc.text(kiri.nama, 20, namaKiriY)
+    doc.setLineWidth(0.3)
+    doc.setDrawColor(15, 23, 42)
+    doc.line(20, namaKiriY + 1, 20 + namaKiriW, namaKiriY + 1)
   }
+
+  // ── KANAN: kota+tanggal → spasi ttd (24mm) → nama underline → jabatan ──
+  const defKanan = kanan || { jabatan: "Petugas", nama: "__________________________" }
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(9)
+  doc.setTextColor(71, 85, 105)
+  doc.text(`${kota}, ${dateStr}`, pageWidth - 20, startY, { align: "right" })
+
+  // Underline nama kanan
+  doc.setFont("helvetica", "bold")
+  doc.setTextColor(15, 23, 42)
+  const namaKananY = startY + 24
+  const namaKananW = doc.getTextWidth(defKanan.nama)
+  doc.text(defKanan.nama, pageWidth - 20, namaKananY, { align: "right" })
+  doc.setLineWidth(0.3)
+  doc.setDrawColor(15, 23, 42)
+  doc.line(pageWidth - 20 - namaKananW, namaKananY + 1, pageWidth - 20, namaKananY + 1)
+
+  // Jabatan kanan — di bawah nama (seperti PrintSignature)
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(9)
+  doc.setTextColor(71, 85, 105)
+  doc.text(defKanan.jabatan, pageWidth - 20, namaKananY + 5, { align: "right" })
 }
 
 /**
@@ -75,9 +95,9 @@ export const drawKopSurat = async (
   institutionInfo: PdfInstitutionInfo,
   startY: number = 10
 ): Promise<number> => {
-  const logoSize = 22   // mm
+  const logoSize = 26   // mm — disamakan dengan w-24 h-24 (96px ~ 25.4mm)
   const logoX = 14
-  const logoY = startY
+  const logoY = startY - 2 // Geser sedikit ke atas agar sejajar tengah
   const textCenterX = pageWidth / 2
 
   // Muat logo jika ada
@@ -101,25 +121,29 @@ export const drawKopSurat = async (
   let textY = startY + 4
 
   if (institutionInfo.namaUnit) {
+    const yayasanText = institutionInfo.namaYayasan.toUpperCase().split('').join(' ')
+    const unitText = institutionInfo.namaUnit.toUpperCase().split('').join(' ')
+
     // Skema 1: Ada unit — nama yayasan kecil di atas, nama unit besar
     docInstance.setFont("helvetica", "bold")
-    docInstance.setFontSize(9)
+    docInstance.setFontSize(11) // text-[14px]
     docInstance.setTextColor(30, 41, 59)
-    docInstance.text(institutionInfo.namaYayasan.toUpperCase(), textCenterX, textY, { align: "center", charSpace: 1.2 })
+    docInstance.text(yayasanText, textCenterX, textY, { align: "center" })
     textY += 7
 
     docInstance.setFont("helvetica", "bold")
-    docInstance.setFontSize(18)
+    docInstance.setFontSize(20) // text-[26px]
     docInstance.setTextColor(15, 23, 42)
-    docInstance.text(institutionInfo.namaUnit.toUpperCase(), textCenterX, textY, { align: "center", charSpace: 0.5 })
-    textY += 6
+    docInstance.text(unitText, textCenterX, textY, { align: "center" })
+    textY += 7
   } else {
+    const yayasanText = institutionInfo.namaYayasan.toUpperCase().split('').join(' ')
     // Skema 2: Tanpa unit — nama yayasan besar
     docInstance.setFont("helvetica", "bold")
-    docInstance.setFontSize(18)
+    docInstance.setFontSize(22) // text-[26px]
     docInstance.setTextColor(15, 23, 42)
-    docInstance.text(institutionInfo.namaYayasan.toUpperCase(), textCenterX, textY + 3, { align: "center", charSpace: 0.5 })
-    textY += 10
+    docInstance.text(yayasanText, textCenterX, textY + 4, { align: "center" })
+    textY += 12
   }
 
   // Subtitle: alamat • telp • email
@@ -132,25 +156,27 @@ export const drawKopSurat = async (
   if (parts.length > 0) {
     const kopSubtitle = parts.join(' \u2022 ')
     docInstance.setFont("helvetica", "normal")
-    docInstance.setFontSize(8.5)
+    docInstance.setFontSize(9) // text-[13px]
     docInstance.setTextColor(51, 65, 85)
-    const splitSubtitle = docInstance.splitTextToSize(kopSubtitle, pageWidth - 50)
+    // Constraint max-w-2xl HTML setara dengan ~170mm
+    const maxSubtitleWidth = Math.min(pageWidth - 60, 170)
+    const splitSubtitle = docInstance.splitTextToSize(kopSubtitle, maxSubtitleWidth)
     splitSubtitle.forEach((line: string) => {
       docInstance.text(line, textCenterX, textY, { align: "center" })
-      textY += 4
+      textY += 4.5
     })
   }
 
   // Garis ganda persis seperti PrintHeader HTML
-  const lineY = Math.max(textY + 2, startY + logoSize + 2)
-  docInstance.setLineWidth(0.8)
+  const lineY = Math.max(textY + 2, startY + logoSize - 2)
+  docInstance.setLineWidth(1.2) // border-b-[4px]
   docInstance.setDrawColor(15, 23, 42)
   docInstance.line(14, lineY, pageWidth - 14, lineY)
 
-  docInstance.setLineWidth(0.2)
-  docInstance.line(14, lineY + 1.5, pageWidth - 14, lineY + 1.5)
+  docInstance.setLineWidth(0.3) // border-b-[1px]
+  docInstance.line(14, lineY + 2, pageWidth - 14, lineY + 2)
 
-  return lineY + 1.5
+  return lineY + 2
 }
 
 /**
@@ -166,22 +192,26 @@ const drawKopSuratSync = (
   let textY = startY + 4
 
   if (institutionInfo.namaUnit) {
+    const yayasanText = institutionInfo.namaYayasan.toUpperCase().split('').join(' ')
+    const unitText = institutionInfo.namaUnit.toUpperCase().split('').join(' ')
+
     docInstance.setFont("helvetica", "bold")
-    docInstance.setFontSize(9)
+    docInstance.setFontSize(11) // text-[14px]
     docInstance.setTextColor(30, 41, 59)
-    docInstance.text(institutionInfo.namaYayasan.toUpperCase(), textCenterX, textY, { align: "center", charSpace: 1.2 })
+    docInstance.text(yayasanText, textCenterX, textY, { align: "center" })
     textY += 7
     docInstance.setFont("helvetica", "bold")
-    docInstance.setFontSize(18)
+    docInstance.setFontSize(20) // text-[26px]
     docInstance.setTextColor(15, 23, 42)
-    docInstance.text(institutionInfo.namaUnit.toUpperCase(), textCenterX, textY, { align: "center", charSpace: 0.5 })
-    textY += 6
+    docInstance.text(unitText, textCenterX, textY, { align: "center" })
+    textY += 7
   } else {
+    const yayasanText = institutionInfo.namaYayasan.toUpperCase().split('').join(' ')
     docInstance.setFont("helvetica", "bold")
-    docInstance.setFontSize(18)
+    docInstance.setFontSize(22) // text-[26px]
     docInstance.setTextColor(15, 23, 42)
-    docInstance.text(institutionInfo.namaYayasan.toUpperCase(), textCenterX, textY + 3, { align: "center", charSpace: 0.5 })
-    textY += 10
+    docInstance.text(yayasanText, textCenterX, textY + 4, { align: "center" })
+    textY += 12
   }
 
   const parts: string[] = []
@@ -191,37 +221,51 @@ const drawKopSuratSync = (
   if (parts.length > 0) {
     const sub = parts.join(' \u2022 ')
     docInstance.setFont("helvetica", "normal")
-    docInstance.setFontSize(8.5)
+    docInstance.setFontSize(9) // text-[13px]
     docInstance.setTextColor(51, 65, 85)
-    const split = docInstance.splitTextToSize(sub, pageWidth - 50)
-    split.forEach((line: string) => { docInstance.text(line, textCenterX, textY, { align: "center" }); textY += 4 })
+    const maxSubtitleWidth = Math.min(pageWidth - 60, 170)
+    const split = docInstance.splitTextToSize(sub, maxSubtitleWidth)
+    split.forEach((line: string) => { docInstance.text(line, textCenterX, textY, { align: "center" }); textY += 4.5 })
   }
 
-  const lineY = textY + 2
-  docInstance.setLineWidth(0.8)
+  const logoSize = 26
+  const lineY = Math.max(textY + 2, startY + logoSize - 2)
+  docInstance.setLineWidth(1.2) // border-b-[4px]
   docInstance.setDrawColor(15, 23, 42)
   docInstance.line(14, lineY, pageWidth - 14, lineY)
-  docInstance.setLineWidth(0.2)
-  docInstance.line(14, lineY + 1.5, pageWidth - 14, lineY + 1.5)
-  return lineY + 1.5
+  docInstance.setLineWidth(0.3) // border-b-[1px]
+  docInstance.line(14, lineY + 2, pageWidth - 14, lineY + 2)
+  return lineY + 2
 }
 
 /**
  * Helper menggambar Footer
  */
-const drawFooter = (docInstance: jsPDF, pageWidth: number, pageHeight: number, pageNumber: number, totalPagesExp: string) => {
-  const footerY = pageHeight - 12
-  docInstance.setFont("helvetica", "italic")
-  docInstance.setFontSize(7.5)
-  docInstance.setTextColor(148, 163, 184) // Slate-400
-
+const drawFooter = (docInstance: jsPDF, pageWidth: number, pageHeight: number, pageNumber: number, totalPagesExp: string, institutionInfo?: PdfInstitutionInfo) => {
   const dateStr = new Date().toLocaleDateString('id-ID', {
     day: '2-digit', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit'
   })
-  docInstance.text(`Dicetak melalui Sistem Informasi Siraya pada ${dateStr}`, 14, footerY)
 
-  const pageStr = `Halaman ${pageNumber} dari ${totalPagesExp}`
+  // Garis pemisah footer
+  const lineY = pageHeight - 18
+  docInstance.setLineWidth(0.2)
+  docInstance.setDrawColor(209, 213, 219) // gray-300
+  docInstance.line(14, lineY, pageWidth - 14, lineY)
+
+  docInstance.setFont("helvetica", "italic")
+  docInstance.setFontSize(7.5)
+  docInstance.setTextColor(107, 114, 128) // gray-500
+
+  let footerY = lineY + 4
+  // Tampilkan catatanKwitansi jika ada (center, seperti PrintFooter)
+  if (institutionInfo?.catatanKwitansi) {
+    docInstance.text(institutionInfo.catatanKwitansi, pageWidth / 2, footerY, { align: "center" })
+    footerY += 4
+  }
+  docInstance.text(`Dicetak melalui Sistem Informasi Siraya pada ${dateStr}`, pageWidth / 2, footerY, { align: "center" })
+
+  const pageStr = `Hal. ${pageNumber} / ${totalPagesExp}`
   docInstance.text(pageStr, pageWidth - 14, footerY, { align: "right" })
 }
 
@@ -245,89 +289,48 @@ export async function exportTablePdf({
     return
   }
 
-  const doc = new jsPDF({
-    orientation: config?.orientation || 'landscape',
-    unit: 'mm',
-    format: config?.format || 'a4'
-  })
-
-  const pageWidth = doc.internal.pageSize.getWidth()
-  const pageHeight = doc.internal.pageSize.getHeight()
-  const totalPagesExp = '{total_pages_count_string}'
-
-  // Gambar Kop di halaman pertama
-  let currentY = await drawKopSurat(doc, pageWidth, institutionInfo, 12) + 8
-
-  // Judul & Subjudul Dokumen
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(13)
-  doc.setTextColor(5, 150, 105) // Emerald-600
-  doc.text(title.toUpperCase(), pageWidth / 2, currentY, { align: "center" })
-  currentY += 6
-
-  if (subtitle) {
-    doc.setFont("helvetica", "normal")
-    doc.setFontSize(9.5)
-    doc.setTextColor(71, 85, 105)
-    const splitReportSubtitle = doc.splitTextToSize(subtitle, pageWidth - 30)
-    splitReportSubtitle.forEach((line: string) => {
-      doc.text(line, pageWidth / 2, currentY, { align: "center" })
-      currentY += 5
-    })
-    currentY += 2
-  }
-
-  // Render Tabel Vektor dengan AutoTable
-  autoTable(doc, {
-    startY: currentY,
-    head: [headers],
-    body: data,
-    styles: {
-      font: 'helvetica',
-      fontSize: 8,
-      cellPadding: 2.5,
-      textColor: [30, 41, 59], // Slate-800
-      overflow: 'linebreak',
-      lineColor: [226, 232, 240], // Slate-200
-      lineWidth: 0.2
-    },
-    headStyles: {
-      fillColor: [30, 41, 59], // Slate-800 Theme
-      textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      halign: 'center',
-      valign: 'middle'
-    },
-    alternateRowStyles: {
-      fillColor: [248, 250, 252] // Slate-50
-    },
-    margin: config?.margin || { top: 32, left: 14, right: 14, bottom: 20 },
-    didDrawPage: (dataHook) => {
-      if (dataHook.pageNumber > 1) {
-        // Untuk halaman lanjutan: kop teks saja (tanpa logo, sync-friendly)
-        drawKopSuratSync(doc, pageWidth, institutionInfo, 12)
-      }
-      drawFooter(doc, pageWidth, pageHeight, dataHook.pageNumber, totalPagesExp)
+  const payload = {
+    type: "table",
+    data: {
+      institutionInfo,
+      title,
+      subtitle,
+      headers,
+      data,
+      filename,
+      config,
+      tanggalCetak,
+      penandatanganKiri,
+      penandatanganKanan
     }
-  })
-
-  if (typeof doc.putTotalPages === 'function') {
-    doc.putTotalPages(totalPagesExp)
   }
 
-  const finalY = (doc as any).lastAutoTable.finalY
-  drawTandaTangan(
-    doc, 
-    pageWidth, 
-    pageHeight, 
-    finalY, 
-    institutionInfo,
-    tanggalCetak, 
-    penandatanganKiri, 
-    penandatanganKanan
-  )
+  try {
+    const response = await fetch('/api/pdf', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
 
-  doc.save(`${filename}.pdf`)
+    if (!response.ok) {
+      throw new Error(`Gagal mengekspor PDF: ${response.statusText}`)
+    }
+
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${filename || 'export_tabel'}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    setTimeout(() => URL.revokeObjectURL(url), 100)
+  } catch (error) {
+    console.error("Export PDF error:", error)
+    throw error
+  }
 }
 
 /**
@@ -666,7 +669,7 @@ export async function exportIncomeStatementPdf({
   const pageCount = (doc.internal as any).getNumberOfPages()
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i)
-    drawFooter(doc, pageWidth, pageHeight, i, totalPagesExp)
+    drawFooter(doc, pageWidth, pageHeight, i, totalPagesExp, institutionInfo)
   }
 
   const finalY = (doc as any).lastAutoTable.finalY

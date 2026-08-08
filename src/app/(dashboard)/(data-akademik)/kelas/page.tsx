@@ -24,6 +24,7 @@ export default async function KelasPage() {
   const majors = await getJurusan()
   const classrooms = await getKelas(activeUnitId, activeYearId)
   const teachers = await getGuruList()
+  const pengaturan = await prisma.pengaturan.findUnique({ where: { id: "GLOBAL" } })
   const students: any[] = [] // Now fetched asynchronously in KelasClient via pagination
 
   return (
@@ -45,6 +46,7 @@ export default async function KelasPage() {
         initialTeachers={teachers}
         userRole={session?.user?.role}
         userName={userName}
+        pengaturan={pengaturan}
       />
     </div>
   )

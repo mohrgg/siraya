@@ -305,7 +305,7 @@ export default function GuruClient({
         data: pdfRows,
         filename: `Daftar_Guru_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
         config: { orientation: 'landscape' },
-        penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+        penandatanganKiri: { jabatan: "Mengetahui, Kepala Sekolah", nama: unitObj?.namaKepalaSekolah || pengaturan?.namaKetuaYayasan || "____________________" },
         penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
       })
       toast.success("Berhasil mengunduh PDF Daftar Guru")
