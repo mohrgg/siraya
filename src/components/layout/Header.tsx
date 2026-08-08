@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Bell } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 import { setGlobalContext } from "@/actions/app-context"
 
 type SchoolUnit = { id: string; name: string }
@@ -37,7 +37,13 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
 
     startTransition(async () => {
       await setGlobalContext(newUnit, newYear)
-      router.refresh()
+      window.location.reload()
+    })
+  }
+
+  const handleManualRefresh = () => {
+    startTransition(() => {
+      window.location.reload()
     })
   }
   
@@ -94,8 +100,13 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
       </div>
 
       <div className="flex items-center gap-4">
-        <button className="w-10 h-10 rounded-full flex items-center justify-center text-text-muted hover:bg-bg hover:text-primary transition-colors">
-          <Bell size={20} />
+        <button 
+          onClick={handleManualRefresh}
+          disabled={isPending}
+          className="w-10 h-10 rounded-full flex items-center justify-center text-text-muted hover:bg-bg hover:text-primary transition-colors disabled:opacity-50"
+          title="Refresh Data"
+        >
+          <RefreshCw size={20} className={isPending ? "animate-spin text-primary" : ""} />
         </button>
       </div>
     </header>
