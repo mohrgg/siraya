@@ -7,16 +7,17 @@ import prisma from "@/lib/prisma"
 
 import { cookies } from "next/headers"
 import { auth } from "@/lib/auth"
+import { getTenantContext } from "@/lib/tenant"
 
 export default async function KelasPage() {
-  const session = await auth()
-  const userName = session?.user?.name || undefined
+  const tenant = await getTenantContext()
+  const userName = tenant.user?.name || undefined
   let schoolUnits = await prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } })
   const levelOrder: Record<string, number> = { "SD": 1, "SMP": 2, "SMA": 3, "SMK": 4, "MA": 5 }
   schoolUnits = schoolUnits.sort((a, b) => (levelOrder[a.level] || 99) - (levelOrder[b.level] || 99))
   
   const cookieStore = await cookies()
-  const activeUnitId = cookieStore.get("activeUnitId")?.value || schoolUnits[0]?.id
+  const activeUnitId = tenant.unitId || "all"
   const academicYears = await getTahunAkademik()
   const activeYearId = cookieStore.get("activeYearId")?.value || academicYears.find((y: any) => y.isActive)?.id
 
@@ -44,7 +45,7 @@ export default async function KelasPage() {
         academicYears={academicYears}
         schoolUnits={schoolUnits}
         initialTeachers={teachers}
-        userRole={session?.user?.role}
+        userRole={tenant.role}
         userName={userName}
         pengaturan={pengaturan}
       />

@@ -127,7 +127,7 @@ export default function GuruClient({
   const handleOpenAdd = () => {
     setFormData({
       ...defaultForm,
-      unitSekolahId: activeUnitId || schoolUnits[0]?.id || ""
+      unitSekolahId: (activeUnitId && activeUnitId !== "all") ? activeUnitId : (schoolUnits[0]?.id || "")
     })
     setIsAdding(true)
   }
@@ -218,7 +218,7 @@ export default function GuruClient({
 
   const filteredData = useMemo(() => {
     return data.filter(item => {
-      if (activeUnitId && item.unitSekolahId !== activeUnitId) return false
+      if (activeUnitId && activeUnitId !== "all" && item.unitSekolahId !== activeUnitId) return false
       if (statusFilter && item.statusKepegawaian !== statusFilter) return false
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase()

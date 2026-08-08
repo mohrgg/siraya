@@ -12,7 +12,7 @@ export async function getTingkatan(unitSekolahId?: string) {
   return prisma.tingkat.findMany({
     where: {
       isDeleted: false,
-      ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId ? { unitSekolahId } : {}))
+      ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId && unitSekolahId !== "all" ? { unitSekolahId } : {}))
     },
     include: { unitSekolah: true },
     orderBy: { order: "asc" }
@@ -102,7 +102,7 @@ export async function getKelas(unitSekolahId?: string, tahunAkademikId?: string)
   return prisma.subKelas.findMany({
     where: {
       isDeleted: false,
-      ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId ? { unitSekolahId } : {})),
+      ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId && unitSekolahId !== "all" ? { unitSekolahId } : {})),
       ...(tahunAkademikId ? { tahunAkademikId } : {})
     },
     include: {

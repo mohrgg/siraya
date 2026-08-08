@@ -1,20 +1,13 @@
 import { getGuruList } from "@/actions/guru"
 import { getUnitSekolah } from "@/actions/unit-sekolah"
 import GuruClient from "./GuruClient"
-import { auth } from "@/lib/auth"
-import { cookies } from "next/headers"
-import { redirect } from "next/navigation"
+import { getTenantContext } from "@/lib/tenant"
 import prisma from "@/lib/prisma"
 
 export const dynamic = 'force-dynamic'
 
 export default async function GuruPage() {
-  const session = await auth()
-  if (!session?.user) redirect("/login")
-  
-  const user = session.user as any
-  const cookieStore = await cookies()
-  const activeUnitIdCookie = cookieStore.get("activeUnitId")?.value
+  const tenant = await getTenantContext()
 
   const [data, schoolUnits, pengaturan] = await Promise.all([
     getGuruList(),
@@ -22,7 +15,8 @@ export default async function GuruPage() {
     prisma.pengaturan.findUnique({ where: { id: "GLOBAL" } })
   ])
 
-  const activeUnitId = activeUnitIdCookie || (user.unitSekolahId ? user.unitSekolahId : (schoolUnits.length > 0 ? schoolUnits[0].id : ""))
+  // activeUnitId is null when in Global mode
+  const activeUnitId = tenant.unitId || "all"
 
   return (
     <div className="max-w-[1600px] mx-auto w-full">
@@ -33,10 +27,10 @@ export default async function GuruPage() {
       <GuruClient 
         initialData={data} 
         schoolUnits={schoolUnits} 
-        userRole={session?.user?.role} 
+        userRole={tenant.role} 
         activeUnitId={activeUnitId}
         pengaturan={pengaturan}
-        userName={user.name || undefined}
+        userName={tenant.user.name || undefined}
       />
     </div>
   )

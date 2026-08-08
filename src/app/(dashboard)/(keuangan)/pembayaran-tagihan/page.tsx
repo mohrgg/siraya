@@ -7,17 +7,16 @@ import { getTahunAkademikAktif } from "@/actions/pembuatan-tagihan"
 import { getPengaturan } from "@/actions/pengaturan"
 import { getUnitSekolah } from "@/actions/unit-sekolah"
 
+import { getTenantContext } from "@/lib/tenant"
+
 export const metadata = {
   title: "Pembayaran Tagihan | Sistem Informasi Sekolah",
 }
 
 export default async function PembayaranTagihanPage() {
-  const session = await auth()
-  if (!session?.user) redirect("/login")
-  const user = session.user as any
-  
-  const cookieStore = await cookies()
-  const activeUnitId = cookieStore.get("activeUnitId")?.value || (user.unitSekolahId ? user.unitSekolahId : "")
+  const tenant = await getTenantContext()
+  const user = tenant.user
+  const activeUnitId = tenant.unitId || "all"
   
   const tahunAkademikAktif = await getTahunAkademikAktif()
   

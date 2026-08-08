@@ -49,7 +49,7 @@ export async function getSiswaPaginated(params: {
 
   const where: any = {
     isDeleted: false,
-    ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (params.unitSekolahId ? { unitSekolahId: params.unitSekolahId } : {})),
+    ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (params.unitSekolahId && params.unitSekolahId !== "all" ? { unitSekolahId: params.unitSekolahId } : {})),
   }
   
   if (params.statusFilter && params.statusFilter !== 'SEMUA') {
