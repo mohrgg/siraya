@@ -17,18 +17,21 @@ export default function AkunKeuanganClient({
   initialKlasifikasi, 
   initialSubKlasifikasi, 
   initialAkunDetail, 
-  unitSekolahList,
-  userRole,
-  userUnitId
+  unitSekolahList = [],
+  userRole = "TATA_USAHA",
+  userUnitId = "",
+  isGlobal = false
 }: { 
   initialKlasifikasi: Klasifikasi[], 
   initialSubKlasifikasi: SubKlasifikasi[], 
   initialAkunDetail: AkunDetail[],
-  unitSekolahList: any[],
+  unitSekolahList?: { id: string, name: string }[],
   userRole?: string,
-  userUnitId?: string | null
+  userUnitId?: string | null,
+  isGlobal?: boolean
 }) {
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
+  const isAdmin = userRole === "ADMIN"
 
   const [activeTab, setActiveTab] = useState<"AKUN" | "SUBKLASIFIKASI">("SUBKLASIFIKASI")
   const [searchTerm, setSearchTerm] = useState("")
@@ -65,12 +68,14 @@ export default function AkunKeuanganClient({
   const filteredAkun = akunDetail.filter(a => {
     const matchesSearch = a.nama.toLowerCase().includes(searchTerm.toLowerCase()) || a.kode.includes(searchTerm)
     
-    // Role-based visibility
-    if (userRole === "TATA_USAHA" && userUnitId) {
-      // TU can only see Global accounts (unitSekolahId = null) or Accounts specific to their unit
+    // Role-based & Context-based visibility
+    if (!isGlobal && userUnitId) {
+      // If not in Global Mode, we only show accounts matching the active unit OR global accounts
       const matchesUnit = a.unitSekolahId === null || a.unitSekolahId === userUnitId
       return matchesSearch && matchesUnit
     }
+    
+    // If in Global Mode, show everything that matches the search
     return matchesSearch
   }).sort((a, b) => {
     const numA = parseInt(a.kode)
@@ -311,11 +316,19 @@ export default function AkunKeuanganClient({
           
           <div className="flex flex-col gap-1.5 p-4 bg-primary/5 border border-primary/10 rounded-xl mt-2">
             <label className="text-sm font-semibold text-primary">Tipe Administrasi (Kepemilikan Akun)</label>
-            <p className="text-xs text-text-muted mb-2">Kosongkan jika akun ini berlaku Global/Yayasan (semua unit bisa memakai).</p>
-            <select className="w-full px-3 py-2 bg-white border border-border rounded-lg text-text-main" value={akunForm.unitSekolahId} onChange={e => setAkunForm({ ...akunForm, unitSekolahId: e.target.value })}>
-              <option value="">-- Administrasi Global (Semua Unit) --</option>
-              {unitSekolahList.map(u => <option key={u.id} value={u.id}>Administrasi: {u.name}</option>)}
-            </select>
+            {isAdmin ? (
+              <>
+                <p className="text-xs text-text-muted mb-2">Kosongkan jika akun ini berlaku Global/Yayasan (semua unit bisa memakai).</p>
+                <select className="w-full px-3 py-2 bg-white border border-border rounded-lg text-text-main" value={akunForm.unitSekolahId} onChange={e => setAkunForm({ ...akunForm, unitSekolahId: e.target.value })}>
+                  <option value="">-- Administrasi Global (Semua Unit) --</option>
+                  {unitSekolahList.map(u => <option key={u.id} value={u.id}>Administrasi: {u.name}</option>)}
+                </select>
+              </>
+            ) : (
+              <p className="text-sm text-text-main font-medium mt-1 p-2 bg-white border border-border rounded-lg">
+                Akun ini akan terkunci secara eksklusif untuk Unit Sekolah Anda.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-3 mt-2">
@@ -387,7 +400,7 @@ export default function AkunKeuanganClient({
                   <Plus size={16} className="mr-1.5"/> Tambah Akun
                 </Button>
               )}
-              {!isReadOnly && activeTab === 'SUBKLASIFIKASI' && (
+              {isAdmin && activeTab === 'SUBKLASIFIKASI' && (
                 <Button onClick={() => {
                   const defaultKlasId = klasifikasi[0]?.id || ""
                   setSubKlasForm({ id: "", kode: generateSubKlasKode(defaultKlasId, subKlasifikasi), nama: "", klasifikasiAkunId: defaultKlasId })
@@ -483,7 +496,7 @@ export default function AkunKeuanganClient({
                   <th className="p-4 font-semibold">NAMA SUBKLASIFIKASI</th>
                   <th className="p-4 font-semibold">INDUK (KLASIFIKASI)</th>
                   <th className="p-4 font-semibold text-center">JML AKUN</th>
-                  {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
+                  {isAdmin && <th className="p-4 font-semibold text-right">AKSI</th>}
                 </tr>
               </thead>
               <tbody>
@@ -499,7 +512,7 @@ export default function AkunKeuanganClient({
                     <td className="p-4 text-center font-medium text-text-muted">
                       {item._count?.akunDetail || 0}
                     </td>
-                    {!isReadOnly && (
+                    {isAdmin && (
                       <td className="p-4">
                         <div className="flex items-center justify-end gap-2">
                           <Button variant="outline" size="sm" onClick={() => handleEditSubKlas(item)}>

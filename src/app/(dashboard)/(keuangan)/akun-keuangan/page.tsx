@@ -2,16 +2,18 @@ import { getKlasifikasiAkun, getSubKlasifikasiAkun, getAkunDetail } from "@/acti
 import { getUnitSekolah } from "@/actions/unit-sekolah"
 import AkunKeuanganClient from "./AkunKeuanganClient"
 import { auth } from "@/lib/auth"
+import { getTenantContext } from "@/lib/tenant"
 
 export default async function AkunKeuanganPage() {
   const session = await auth()
   
   // Fetch data in parallel
-  const [klasifikasi, subKlasifikasi, akunDetail, unitSekolah] = await Promise.all([
+  const [klasifikasi, subKlasifikasi, akunDetail, unitSekolah, tenant] = await Promise.all([
     getKlasifikasiAkun(),
     getSubKlasifikasiAkun(),
     getAkunDetail(),
-    getUnitSekolah()
+    getUnitSekolah(),
+    getTenantContext()
   ])
 
   return (
@@ -25,8 +27,9 @@ export default async function AkunKeuanganPage() {
         initialSubKlasifikasi={subKlasifikasi} 
         initialAkunDetail={akunDetail}
         unitSekolahList={unitSekolah}
-        userRole={session?.user?.role}
-        userUnitId={session?.user?.unitSekolahId}
+        userRole={tenant.role}
+        userUnitId={tenant.unitId}
+        isGlobal={tenant.isGlobal}
       />
     </div>
   )

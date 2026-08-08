@@ -21,13 +21,17 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
 
   // Helper untuk mengambil active unit dan year dari cookie
   const getActiveContext = async () => {
+    const userUnitId = (session?.user as any)?.unitSekolahId
     const schoolUnits = await prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } })
     const allAcademicYears = await prisma.tahunAkademik.findMany({ orderBy: { createdAt: 'desc' } })
     const cookieStore = await cookies()
     
     let activeUnitId = cookieStore.get("activeUnitId")?.value
+    
     if (role === "ADMIN" && !activeUnitId) {
       activeUnitId = "all"
+    } else if (role !== "ADMIN" && userUnitId) {
+      activeUnitId = userUnitId
     } else if (!activeUnitId) {
       activeUnitId = schoolUnits[0]?.id
     }
@@ -110,16 +114,6 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
 
   // ==================== TATA USAHA ====================
   if (role === "TATA_USAHA") {
-    if (activeTab === "yayasan") {
-      const data = await getYayasanDashboardData()
-      return (
-        <div className="max-w-[1600px] mx-auto w-full">
-          <DashboardNavTabs role="TATA_USAHA" />
-          <YayasanDashboard role="TATA_USAHA" {...data} />
-        </div>
-      )
-    }
-
     const { activeUnit, activeYear, activeUnitId, activeYearId } = await getActiveContext()
     
     if (!activeUnitId) {

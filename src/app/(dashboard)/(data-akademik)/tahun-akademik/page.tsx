@@ -4,9 +4,17 @@ import prisma from "@/lib/prisma"
 import { cookies } from "next/headers"
 
 import { auth } from "@/lib/auth"
+import { getTenantContext } from "@/lib/tenant"
+import { redirect } from "next/navigation"
 
 export default async function TahunAkademikPage() {
   const session = await auth()
+  const tenant = await getTenantContext()
+  
+  if (tenant.role !== "ADMIN") {
+    redirect("/")
+  }
+
   const data = await getTahunAkademik()
 
   return (

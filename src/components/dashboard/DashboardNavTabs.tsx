@@ -16,7 +16,9 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
   const router = useRouter()
   
   // Menentukan default tab berdasarkan role
-  const defaultTab = role === 'KEPALA_SEKOLAH' ? 'kepsek' : 'yayasan'
+  let defaultTab = 'yayasan'
+  if (role === 'KEPALA_SEKOLAH') defaultTab = 'kepsek'
+  if (role === 'TATA_USAHA') defaultTab = 'unit'
   const activeTab = searchParams.get('tab') || defaultTab
 
   // Pemetaan daftar tab sesuai role sistem
@@ -30,7 +32,6 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
         ]
       case 'TATA_USAHA':
         return [
-          { id: 'yayasan', label: 'Yayasan', icon: Building2 },
           { id: 'unit', label: 'Unit Aktif', icon: School },
         ]
       case 'KEPALA_SEKOLAH':

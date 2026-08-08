@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { format } from "date-fns"
 import { revalidatePath } from "next/cache"
-import { cookies } from "next/headers"
+import { getTenantContext } from "@/lib/tenant"
 
 export async function getKasKeluar(params?: {
   startDate?: Date,
@@ -12,22 +12,14 @@ export async function getKasKeluar(params?: {
   filterBy?: 'tanggal_transaksi' | 'tanggal_pembuatan',
   search?: string
 }) {
-  const session = await auth()
-  if (!session || !session.user) throw new Error("Unauthorized")
-  const user = session.user as any
+  const tenant = await getTenantContext()
 
   const whereClause: any = {
     jenis: "KAS_KELUAR",
   }
 
-  // Role based filtering (unitSekolahId)
-  const cookieStore = await cookies()
-  const activeUnitId = cookieStore.get("activeUnitId")?.value
-
-  if (user.role !== "ADMIN" && user.unitSekolahId) {
-    whereClause.unitSekolahId = user.unitSekolahId
-  } else if (user.role === "ADMIN" && activeUnitId && activeUnitId !== "all") {
-    whereClause.unitSekolahId = activeUnitId
+  if (!tenant.isGlobal) {
+    whereClause.unitSekolahId = tenant.unitId
   }
 
   // Date filtering
@@ -69,9 +61,7 @@ export async function getKasKeluar(params?: {
 }
 
 export async function getKasBankAccounts() {
-  const session = await auth()
-  if (!session || !session.user) throw new Error("Unauthorized")
-  const user = session.user as any
+  const tenant = await getTenantContext()
 
   const whereClause: any = {
     isKasBank: true,
@@ -83,18 +73,10 @@ export async function getKasBankAccounts() {
     }
   }
 
-  const cookieStore = await cookies()
-  const activeUnitId = cookieStore.get("activeUnitId")?.value
-
-  if (user.role !== "ADMIN" && user.unitSekolahId) {
+  if (!tenant.isGlobal) {
     whereClause.OR = [
       { unitSekolahId: null },
-      { unitSekolahId: user.unitSekolahId }
-    ]
-  } else if (user.role === "ADMIN" && activeUnitId && activeUnitId !== "all") {
-    whereClause.OR = [
-      { unitSekolahId: null },
-      { unitSekolahId: activeUnitId }
+      { unitSekolahId: tenant.unitId }
     ]
   }
 
@@ -111,9 +93,7 @@ export async function getKasBankAccounts() {
 
 export async function getPengeluaranAccounts() {
   // Returns non-kas accounts (usually Expenses / Biaya)
-  const session = await auth()
-  if (!session || !session.user) throw new Error("Unauthorized")
-  const user = session.user as any
+  const tenant = await getTenantContext()
 
   const whereClause: any = {
     isKasBank: false,
@@ -125,18 +105,10 @@ export async function getPengeluaranAccounts() {
     }
   }
 
-  const cookieStore = await cookies()
-  const activeUnitId = cookieStore.get("activeUnitId")?.value
-
-  if (user.role !== "ADMIN" && user.unitSekolahId) {
+  if (!tenant.isGlobal) {
     whereClause.OR = [
       { unitSekolahId: null },
-      { unitSekolahId: user.unitSekolahId }
-    ]
-  } else if (user.role === "ADMIN" && activeUnitId && activeUnitId !== "all") {
-    whereClause.OR = [
-      { unitSekolahId: null },
-      { unitSekolahId: activeUnitId }
+      { unitSekolahId: tenant.unitId }
     ]
   }
 
@@ -208,9 +180,7 @@ export type KasKeluarPayload = {
 }
 
 export async function createKasKeluar(data: KasKeluarPayload) {
-  const session = await auth()
-  if (!session || !session.user) throw new Error("Unauthorized")
-  const user = session.user as any
+  const tenant = await getTenantContext()
   
   if (!data.details || data.details.length === 0) {
     throw new Error("Harus ada minimal satu baris pembukuan")
@@ -218,16 +188,29 @@ export async function createKasKeluar(data: KasKeluarPayload) {
 
   const totalNilai = data.details.reduce((sum, item) => sum + item.nilai, 0)
   
-  const cookieStore = await cookies()
-  const activeUnitId = cookieStore.get("activeUnitId")?.value
-
-  let unitToSave = user.unitSekolahId
-  if (user.role === "ADMIN") {
+  let unitToSave = tenant.unitId
+  if (tenant.role === "ADMIN") {
     if (data.unitSekolahId !== undefined) {
       unitToSave = data.unitSekolahId
-    } else {
-      unitToSave = (!activeUnitId || activeUnitId === "all") ? null : activeUnitId
+    } else if (tenant.isGlobal) {
+      unitToSave = null
     }
+  }
+
+  // VALIDASI ISOLASI AKUN KEUANGAN (Prioritas 5)
+  const allAccountIds = [data.akunSumberId, ...data.details.map(d => d.akunId)]
+  const invalidAccounts = await prisma.akunDetail.findMany({
+    where: {
+      id: { in: allAccountIds },
+      unitSekolahId: {
+        not: null,
+        notIn: unitToSave ? [unitToSave] : []
+      }
+    }
+  })
+
+  if (invalidAccounts.length > 0) {
+    throw new Error(`Transaksi ditolak: Terdapat akun (${invalidAccounts.map(a => a.nama).join(", ")}) yang bukan milik unit transaksi ini.`)
   }
 
   // Start a transaction for Double Entry Bookkeeping
@@ -247,7 +230,7 @@ export async function createKasKeluar(data: KasKeluarPayload) {
         penerimaId: data.penerimaId || null,
         divisiId: data.divisiId,
         unitSekolahId: unitToSave,
-        pembuatId: user.id,
+        pembuatId: tenant.user.id,
       }
     })
 
@@ -281,7 +264,7 @@ export async function createKasKeluar(data: KasKeluarPayload) {
   // Log Aktivitas
   await prisma.logAktivitas.create({
     data: {
-      penggunaId: user.id,
+      penggunaId: tenant.user.id,
       aksi: "CREATE",
       modul: "KAS_KELUAR",
       keterangan: `Membuat pengeluaran kas (No Ref: ${data.noReferensi}) sebesar Rp ${totalNilai.toLocaleString('id-ID')}`
@@ -293,11 +276,10 @@ export async function createKasKeluar(data: KasKeluarPayload) {
 }
 
 export async function hapusKasKeluar(id: string) {
-  const session = await auth()
-  if (!session || !session.user || (session.user as any).role !== "ADMIN") {
+  const tenant = await getTenantContext()
+  if (tenant.role !== "ADMIN") {
     throw new Error("Hanya admin yang dapat menghapus transaksi yang sudah diposting")
   }
-  const user = session.user as any
 
   const tx = await prisma.transaksi.findUnique({ where: { id } })
   if (!tx) throw new Error("Transaksi tidak ditemukan")
@@ -306,7 +288,7 @@ export async function hapusKasKeluar(id: string) {
 
   await prisma.logAktivitas.create({
     data: {
-      penggunaId: user.id,
+      penggunaId: tenant.user.id,
       aksi: "DELETE",
       modul: "KAS_KELUAR",
       keterangan: `Menghapus pengeluaran kas (No Ref: ${tx.noReferensi}) sebesar Rp ${tx.totalNilai.toLocaleString('id-ID')}`
@@ -318,8 +300,7 @@ export async function hapusKasKeluar(id: string) {
 }
 
 export async function getKasKeluarById(id: string) {
-  const session = await auth()
-  if (!session || !session.user) throw new Error("Unauthorized")
+  const tenant = await getTenantContext()
 
   const tx = await prisma.transaksi.findUnique({
     where: { id },
@@ -343,9 +324,7 @@ export async function getKasKeluarById(id: string) {
 }
 
 export async function updateKasKeluar(id: string, data: KasKeluarPayload) {
-  const session = await auth()
-  if (!session || !session.user) throw new Error("Unauthorized")
-  const user = session.user as any
+  const tenant = await getTenantContext()
   
   if (!data.details || data.details.length === 0) {
     throw new Error("Harus ada minimal satu baris pembukuan")
@@ -358,7 +337,29 @@ export async function updateKasKeluar(id: string, data: KasKeluarPayload) {
 
   if (!existingTx) throw new Error("Transaksi tidak ditemukan")
 
+  if (tenant.role === "TATA_USAHA" && existingTx.unitSekolahId !== tenant.unitId) {
+    throw new Error("Anda tidak berhak mengubah transaksi unit lain.")
+  }
+
   const totalNilai = data.details.reduce((sum, item) => sum + item.nilai, 0)
+
+  // VALIDASI ISOLASI AKUN KEUANGAN (Prioritas 5)
+  const unitToSave = data.unitSekolahId !== undefined ? data.unitSekolahId : existingTx.unitSekolahId
+  const allAccountIds = [data.akunSumberId, ...data.details.map(d => d.akunId)]
+  
+  const invalidAccounts = await prisma.akunDetail.findMany({
+    where: {
+      id: { in: allAccountIds },
+      unitSekolahId: {
+        not: null,
+        notIn: unitToSave ? [unitToSave] : []
+      }
+    }
+  })
+
+  if (invalidAccounts.length > 0) {
+    throw new Error(`Transaksi ditolak: Terdapat akun (${invalidAccounts.map(a => a.nama).join(", ")}) yang bukan milik unit transaksi ini.`)
+  }
   
   const result = await prisma.$transaction(async (tx) => {
     // 1. Update the Header Transaksi
@@ -412,7 +413,7 @@ export async function updateKasKeluar(id: string, data: KasKeluarPayload) {
   // Log Aktivitas
   await prisma.logAktivitas.create({
     data: {
-      penggunaId: user.id,
+      penggunaId: tenant.user.id,
       aksi: "UPDATE",
       modul: "KAS_KELUAR",
       keterangan: `Mengubah pengeluaran kas (No Ref: ${existingTx.noReferensi}) menjadi Rp ${totalNilai.toLocaleString('id-ID')}`

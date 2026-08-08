@@ -1,9 +1,17 @@
 import { getUnitSekolah } from "@/actions/unit-sekolah"
 import UnitSekolahClient from "./UnitSekolahClient"
 import { auth } from "@/lib/auth"
+import { getTenantContext } from "@/lib/tenant"
+import { redirect } from "next/navigation"
 
 export default async function UnitSekolahPage() {
   const session = await auth()
+  const tenant = await getTenantContext()
+  
+  if (tenant.role !== "ADMIN") {
+    redirect("/")
+  }
+
   const data = await getUnitSekolah()
 
   return (
