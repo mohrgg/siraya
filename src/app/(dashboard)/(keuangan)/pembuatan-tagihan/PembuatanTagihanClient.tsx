@@ -314,25 +314,26 @@ export default function PembuatanTagihanClient({
         </div>
 
         {/* Filters and Actions Row */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-3 w-full xl:flex-1">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-wrap gap-3 items-center flex-1 w-full">
             
-            <div className="relative w-full flex-1 min-w-[200px]">
+            {/* Search Box */}
+            <div className="relative w-full sm:w-64 flex-shrink-0">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
               <input 
                 type="text" 
                 placeholder="Cari Siswa / No Pendaftaran..." 
-                className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 disabled:opacity-60"
+                className="w-full pl-10 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 disabled:opacity-60"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 disabled={gridData.length === 0}
               />
             </div>
 
-            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-2 py-1">
-              <Filter size={14} className="text-text-muted ml-2" />
+            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary/50">
+              <Filter size={14} className="text-text-muted" />
               <select 
-                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-1"
+                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-0.5 outline-none cursor-pointer"
                 value={kelasId}
                 onChange={e => setKelasId(e.target.value)}
               >
@@ -344,9 +345,9 @@ export default function PembuatanTagihanClient({
             </div>
 
             {jurusanList.length > 0 && (
-              <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-2 py-1">
+              <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary/50">
                 <select 
-                  className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-1 px-2"
+                  className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-0.5 outline-none cursor-pointer"
                   value={jurusanId}
                   onChange={e => setJurusanId(e.target.value)}
                 >
@@ -358,9 +359,9 @@ export default function PembuatanTagihanClient({
               </div>
             )}
 
-            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-2 py-1">
+            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary/50">
               <select 
-                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-1 px-2"
+                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-0.5 outline-none cursor-pointer"
                 value={subKelasId}
                 onChange={e => setSubKelasId(e.target.value)}
                 disabled={!kelasId}
@@ -382,7 +383,7 @@ export default function PembuatanTagihanClient({
             </Button>
           </div>
 
-          <div className="flex gap-2 flex-wrap items-center">
+          <div className="flex gap-2 flex-wrap items-center w-full lg:w-auto justify-end">
             {!isReadOnly && gridData.length > 0 && (
               <Button 
                 onClick={() => setIsModalOpen(true)}

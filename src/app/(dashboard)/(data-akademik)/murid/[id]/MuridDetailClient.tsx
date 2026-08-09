@@ -10,6 +10,7 @@ import {
   FileSpreadsheet
 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import { ToolbarExportExcel, ToolbarExportPDF } from "@/components/ui/DataTableToolbar"
 import MuridFormModal from "@/components/modals/MuridFormModal"
 import { editSiswa } from "@/actions/siswa"
 import PrintHeader from "@/components/shared/print/PrintHeader"
@@ -200,22 +201,14 @@ export default function MuridDetailClient({
           >
             <Share2 size={15} /> Salin Tautan Profil
           </Button>
-          <Button 
-            variant="outline" 
+          <ToolbarExportExcel 
             onClick={handleExportExcel}
             disabled={isExportingExcel}
-            className="gap-1.5 text-xs font-semibold bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-          >
-            <FileSpreadsheet size={15} /> Excel
-          </Button>
-          <Button 
-            variant="outline" 
+          />
+          <ToolbarExportPDF 
             onClick={handleExportPDF}
             disabled={isExportingPDF}
-            className="gap-1.5 text-xs font-semibold bg-white text-rose-600 border-rose-200 hover:bg-rose-50"
-          >
-            <FileText size={15} /> PDF
-          </Button>
+          />
           <Button 
             variant="outline" 
             onClick={handlePrint}

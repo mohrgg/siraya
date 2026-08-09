@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Users, GraduationCap, Building, Award, Calendar, User, Edit2, Info, ArrowRight, Phone, MessageCircle, FileSpreadsheet, FileText } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { SideDrawer } from "@/components/ui/SideDrawer"
+import { ToolbarExportExcel, ToolbarExportPDF } from "@/components/ui/DataTableToolbar"
 import { getSiswaPaginated } from "@/actions/siswa"
 import toast from "react-hot-toast"
 
@@ -322,26 +323,16 @@ export default function SubKelasDetailDrawer({
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportExcel}
-              disabled={isExportingExcel || students.length === 0}
-              className="flex items-center gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50 text-xs font-semibold"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Excel</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportPDF}
-              disabled={isExportingPDF || students.length === 0}
-              className="flex items-center gap-1.5 text-rose-600 border-rose-200 hover:bg-rose-50 text-xs font-semibold"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>PDF</span>
-            </Button>
+            <ToolbarExportExcel 
+              onClick={handleExportExcel} 
+              isExporting={isExportingExcel} 
+              disabled={students.length === 0}
+            />
+            <ToolbarExportPDF 
+              onClick={handleExportPDF} 
+              isExporting={isExportingPDF} 
+              disabled={students.length === 0}
+            />
           </div>
         </div>
 

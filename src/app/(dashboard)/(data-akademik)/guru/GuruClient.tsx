@@ -21,13 +21,25 @@ import {
   UploadCloud,
   User,
   X,
-  Eye
+  Eye,
+  Filter
 } from "lucide-react"
 import Link from "next/link"
 import { tambahGuru, editGuru, hapusGuru, hapusGuruMassal } from "@/actions/guru"
 import toast from "react-hot-toast"
 import GuruFormModal from "@/components/modals/GuruFormModal"
 import ImportGuruModal from "@/components/modals/ImportGuruModal"
+import { 
+  Toolbar, 
+  ToolbarSearch, 
+  ToolbarFilter, 
+  ToolbarActions, 
+  ToolbarExportExcel, 
+  ToolbarExportPDF, 
+  ToolbarImportExcel, 
+  ToolbarAddButton, 
+  ToolbarDivider 
+} from "@/components/ui/DataTableToolbar"
 
 type Guru = {
   id: string
@@ -335,88 +347,56 @@ export default function GuruClient({
         </div>
 
         {/* Top Filter & Toolbar */}
-      <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
-        <div className="flex flex-wrap gap-3 items-center flex-1">
-          {/* Search Box */}
-          <div className="relative w-full md:w-64 flex-shrink-0">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-            <input
-              type="text"
-              placeholder="Cari nama, NIP, tugas..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
-            />
-          </div>
+        <Toolbar>
+          <ToolbarSearch 
+            value={searchTerm}
+            onChange={(e: any) => setSearchTerm(e.target.value)}
+            placeholder="Cari nama, NIP, tugas..."
+          />
 
-          {/* Filter Status Kepegawaian */}
-          <select
+          <ToolbarFilter 
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
-          >
-            <option value="">Semua Status</option>
-            <option value="GTY">GTY (Tetap Yayasan)</option>
-            <option value="GTT">GTT (Honorer)</option>
-            <option value="PNS">PNS (Pegawai Negeri Sipil)</option>
-            <option value="DPK">DPK (Diperbantukan)</option>
-            <option value="PPPK">PPPK (Perjanjian Kerja)</option>
-            <option value="Honor">Honor (Pegawai Lepas)</option>
-            <option value="Staf TU">Staf TU (Tata Usaha)</option>
-            <option value="Satpam">Satpam (Keamanan)</option>
-            <option value="OB">OB (Kebersihan)</option>
-          </select>
+            onChange={setStatusFilter}
+            options={[
+              { value: "", label: "Semua Status" },
+              { value: "GTY", label: "GTY (Tetap Yayasan)" },
+              { value: "GTT", label: "GTT (Honorer)" },
+              { value: "PNS", label: "PNS (Pegawai Negeri Sipil)" },
+              { value: "DPK", label: "DPK (Diperbantukan)" },
+              { value: "PPPK", label: "PPPK (Perjanjian Kerja)" },
+              { value: "Honor", label: "Honor (Pegawai Lepas)" },
+              { value: "Staf TU", label: "Staf TU (Tata Usaha)" },
+              { value: "Satpam", label: "Satpam (Keamanan)" },
+              { value: "OB", label: "OB (Kebersihan)" }
+            ]}
+          />
 
-          {/* Action Buttons */}
-          <div className="flex gap-2 border-l border-border pl-3" title="Ekspor data sesuai filter saat ini">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportExcel}
-              disabled={isExportingExcel || filteredData.length === 0}
-              className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100"
-            >
-              <FileSpreadsheet size={16} className="mr-1.5" />
-              {isExportingExcel ? 'Mengekspor...' : 'Excel'}
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportPDF}
-              disabled={isExportingPDF || filteredData.length === 0}
-              className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800"
-            >
-              <FileText size={16} className="mr-1.5" />
-              {isExportingPDF ? 'Mengekspor...' : 'PDF'}
-            </Button>
+          <ToolbarActions>
+            <ToolbarExportExcel 
+              onClick={handleExportExcel} 
+              disabled={filteredData.length === 0} 
+              isExporting={isExportingExcel} 
+            />
+            <ToolbarExportPDF 
+              onClick={handleExportPDF} 
+              disabled={filteredData.length === 0} 
+              isExporting={isExportingPDF} 
+            />
 
             {!isReadOnly && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowModalImportGuru(true)}
-                className="opacity-100 border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800"
-              >
-                <UploadCloud size={16} className="mr-1.5" />
-                Impor Excel
-              </Button>
+              <ToolbarImportExcel onClick={() => setShowModalImportGuru(true)} />
             )}
-          </div>
-        </div>
 
-        {!isReadOnly && (
-          <div className="flex-shrink-0">
-            <Button
-              onClick={handleOpenAdd}
-              className="flex items-center bg-primary text-white hover:bg-primary/90 shadow-sm"
-            >
-              <Plus size={16} className="mr-1.5" />
-              <span>Tambah Guru</span>
-            </Button>
-          </div>
-        )}
-      </div>
+            {!isReadOnly && (
+              <>
+                <ToolbarDivider />
+                <ToolbarAddButton onClick={handleOpenAdd}>
+                  Tambah Guru
+                </ToolbarAddButton>
+              </>
+            )}
+          </ToolbarActions>
+        </Toolbar>
 
       {/* Data Table */}
       <div className="overflow-x-auto">

@@ -165,24 +165,26 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
         </div>
 
         {/* Filters and Actions */}
-        <div className="flex flex-col xl:flex-row justify-between items-start gap-4 mb-6">
-          <div className="flex flex-wrap gap-3 items-center flex-1">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-wrap gap-3 items-center flex-1 w-full">
             
-            <div className="relative w-full md:w-64 flex-shrink-0">
+            {/* 1. Search Box */}
+            <div className="relative w-full sm:w-64 flex-shrink-0">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
               <input 
                 type="text" 
                 placeholder="Cari No Ref atau Nama..." 
-                className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
+                className="w-full pl-10 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
 
-            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-2 py-1">
-              <Filter size={14} className="text-text-muted ml-2" />
+            {/* 2. Dropdown FilterBy */}
+            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary/50">
+              <Filter size={14} className="text-text-muted" />
               <select 
-                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-1"
+                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-0.5 outline-none cursor-pointer"
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value as any)}
               >
@@ -191,10 +193,11 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
               </select>
             </div>
 
-            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-2 py-1">
-              <CalendarIcon size={14} className="text-text-muted ml-2" />
+            {/* 3. Dropdown Waktu */}
+            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary/50">
+              <CalendarIcon size={14} className="text-text-muted" />
               <select 
-                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-1"
+                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-0.5 outline-none cursor-pointer"
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value as any)}
               >
@@ -207,45 +210,46 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
 
             {timeRange === 'custom' && (
               <div className="flex items-center gap-2">
-                <input type="date" className="bg-bg border border-border rounded-xl px-3 py-2 text-sm" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                <input type="date" className="bg-bg border border-border rounded-xl px-3 py-1.5 text-sm" value={startDate} onChange={e => setStartDate(e.target.value)} />
                 <span className="text-text-muted">-</span>
-                <input type="date" className="bg-bg border border-border rounded-xl px-3 py-2 text-sm" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                <input type="date" className="bg-bg border border-border rounded-xl px-3 py-1.5 text-sm" value={endDate} onChange={e => setEndDate(e.target.value)} />
               </div>
             )}
             
           </div>
 
-          <div className="flex gap-2 flex-wrap items-center">
+          <div className="flex gap-2 flex-wrap items-center w-full lg:w-auto justify-end">
             <Button variant="outline" size="sm" onClick={handleRefresh} title="Refresh Data">
               <RefreshCw size={16} />
             </Button>
             <Button 
-              variant="outline"
               size="sm"
               onClick={handleExportExcel}
               disabled={isExportingExcel || filteredData.length === 0}
-              className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800"
+              className="border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800"
             >
               <FileSpreadsheet size={16} className="mr-1.5" /> 
               {isExportingExcel ? "Mengekspor..." : "Excel"}
             </Button>
             <Button 
-              variant="outline"
               size="sm"
               onClick={handleExportPDF}
               disabled={isExportingPDF || filteredData.length === 0}
-              className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800"
+              className="border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800"
             >
               <FileText size={16} className="mr-1.5" /> 
               {isExportingPDF ? "Mengekspor..." : "PDF"}
             </Button>
             
             {isReadOnly ? null : (
-              <Link href="/kas-keluar/tambah">
-                <Button>
-                  <Plus size={16} className="mr-1.5" /> Tambah Kas Keluar
-                </Button>
-              </Link>
+              <>
+                <div className="h-6 w-px bg-border mx-1 hidden sm:block"></div>
+                <Link href="/kas-keluar/tambah">
+                  <Button size="sm">
+                    <Plus size={16} className="mr-1.5" /> Tambah Data
+                  </Button>
+                </Link>
+              </>
             )}
           </div>
         </div>
