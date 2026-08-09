@@ -498,10 +498,10 @@ export default function PembuatanTagihanClient({
                             <td className="p-4 text-center sticky right-0 bg-white z-20 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
                               <Button 
                                 size="sm"
-                                variant="outline"
+                                variant={row.isDirty ? "primary" : "outline"}
                                 onClick={() => handleSimpanBaris(row)}
                                 disabled={!row.isDirty || savingRowId === row.id}
-                                className={`px-3 py-1.5 h-auto text-xs font-semibold transition-all shadow-sm ${row.isDirty ? 'bg-primary text-white border-primary hover:bg-primary/90' : ''}`}
+                                className="px-3 py-1.5 h-auto text-xs font-semibold transition-all shadow-sm"
                               >
                                 {savingRowId === row.id ? (
                                   <Loader2 size={14} className="animate-spin" />
