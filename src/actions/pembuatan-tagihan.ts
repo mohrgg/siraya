@@ -169,31 +169,46 @@ export async function tambahTagihanMassal(data: {
     throw new Error("Tidak ada siswa di kelas ini pada tahun akademik tersebut")
   }
 
-  // 2. Buat tagihan menggunakan upsert agar tidak duplicate
+  // 2. Buat tagihan dengan mengecek kondisi eksisting agar sisa tagihan valid
   let successCount = 0
   
   await prisma.$transaction(async (tx) => {
     for (const rk of riwayatKelas) {
-      await tx.tagihan.upsert({
+      const existing = await tx.tagihan.findUnique({
         where: {
           muridId_akunId_tahunAkademikId: {
             muridId: rk.muridId,
             akunId: akunId,
             tahunAkademikId: tahunAkademikId
           }
-        },
-        update: {
-          jumlah: jumlah,
-        },
-        create: {
-          muridId: rk.muridId,
-          akunId: akunId,
-          tahunAkademikId: tahunAkademikId,
-          jumlah: jumlah,
-          sisaTagihan: jumlah, // Sisa tagihan awal = jumlah
-          status: "BELUM_LUNAS"
         }
       })
+
+      if (existing) {
+        const totalTelahDibayar = existing.jumlah - existing.sisaTagihan
+        const sisaTagihanBaru = Math.max(0, jumlah - totalTelahDibayar)
+        const statusBaru = sisaTagihanBaru <= 0 ? "LUNAS" : (sisaTagihanBaru < jumlah ? "SEBAGIAN" : "BELUM_LUNAS")
+
+        await tx.tagihan.update({
+          where: { id: existing.id },
+          data: {
+            jumlah: jumlah,
+            sisaTagihan: sisaTagihanBaru,
+            status: statusBaru
+          }
+        })
+      } else {
+        await tx.tagihan.create({
+          data: {
+            muridId: rk.muridId,
+            akunId: akunId,
+            tahunAkademikId: tahunAkademikId,
+            jumlah: jumlah,
+            sisaTagihan: jumlah,
+            status: jumlah > 0 ? "BELUM_LUNAS" : "LUNAS"
+          }
+        })
+      }
       successCount++
     }
   })
@@ -213,26 +228,41 @@ export async function updateTagihanSiswa(muridId: string, tahunAkademikId: strin
 
   await prisma.$transaction(async (tx) => {
     for (const update of tagihanUpdates) {
-      await tx.tagihan.upsert({
+      const existing = await tx.tagihan.findUnique({
         where: {
           muridId_akunId_tahunAkademikId: {
             muridId: muridId,
             akunId: update.akunId,
             tahunAkademikId: tahunAkademikId
           }
-        },
-        update: {
-          jumlah: update.jumlah
-        },
-        create: {
-          muridId: muridId,
-          akunId: update.akunId,
-          tahunAkademikId: tahunAkademikId,
-          jumlah: update.jumlah,
-          sisaTagihan: update.jumlah,
-          status: update.jumlah > 0 ? "BELUM_LUNAS" : "LUNAS"
         }
       })
+
+      if (existing) {
+        const totalTelahDibayar = existing.jumlah - existing.sisaTagihan
+        const sisaTagihanBaru = Math.max(0, update.jumlah - totalTelahDibayar)
+        const statusBaru = sisaTagihanBaru <= 0 ? "LUNAS" : (sisaTagihanBaru < update.jumlah ? "SEBAGIAN" : "BELUM_LUNAS")
+
+        await tx.tagihan.update({
+          where: { id: existing.id },
+          data: {
+            jumlah: update.jumlah,
+            sisaTagihan: sisaTagihanBaru,
+            status: statusBaru
+          }
+        })
+      } else {
+        await tx.tagihan.create({
+          data: {
+            muridId: muridId,
+            akunId: update.akunId,
+            tahunAkademikId: tahunAkademikId,
+            jumlah: update.jumlah,
+            sisaTagihan: update.jumlah,
+            status: update.jumlah > 0 ? "BELUM_LUNAS" : "LUNAS"
+          }
+        })
+      }
     }
   })
 
@@ -294,9 +324,7 @@ export async function editTagihanMassal(subKelasId: string, tahunAkademikId: str
         tahunAkademikId,
         akunId,
         muridId: { in: muridIds },
-        // Jangan ubah yang sudah lunas atau dicicil (Opsional: di sini kita asumsikan update all untuk simplifikasi 
-        // tapi sebaiknya status="BELUM_LUNAS" dan sisaTagihan=jumlah yang lama agar tidak merusak cicilan)
-        // Karena sistem belum mencatat cicilan, kita update semua saja saat ini
+        status: "BELUM_LUNAS" // Hanya ubah yang belum pernah dibayar
       },
       data: {
         jumlah: jumlah,

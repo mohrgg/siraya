@@ -90,21 +90,21 @@ export function PrintSignatureHtml({
     return (
       <div className="flex flex-col items-center text-sm w-64">
         <p className="mb-1 h-5">{showDate ? `${kotaPenandatangan}, ${dateStr}` : ""}</p>
-        <p className="mb-20">{signer.jabatan}</p>
+        <p className="mb-12">{signer.jabatan}</p>
         <p className="font-bold underline underline-offset-4">{signer.nama}</p>
       </div>
     )
   }
 
   return (
-    <div className="mt-12 break-inside-avoid">
+    <div className="mt-6 break-inside-avoid">
       <div className="flex justify-between items-start w-full px-8">
         {renderSigner(penandatanganKiri, false)}
         {renderSigner(penandatanganKanan, true)}
       </div>
       
       {/* Footer / Notes */}
-      <div className="mt-16 pt-4 border-t border-slate-300 text-center text-[10px] text-slate-500 italic">
+      <div className="mt-8 pt-4 border-t border-slate-300 text-center text-[10px] text-slate-500 italic">
         {catatanKwitansi && <p className="mb-1">{catatanKwitansi}</p>}
         <p>Dicetak melalui Sistem Informasi Siraya pada {new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} WIB</p>
       </div>
@@ -214,7 +214,7 @@ export function ResiHtml({
   const formatRp = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val)
 
   return (
-    <div className="font-sans text-slate-900 bg-white">
+    <div className="font-sans text-slate-900 bg-white min-h-screen flex flex-col">
       <PrintHeaderHtml institutionInfo={institutionInfo} />
 
       {/* Header Info: Judul dan Referensi */}
@@ -272,6 +272,8 @@ export function ResiHtml({
           </tr>
         </tbody>
       </table>
+
+      <div className="flex-grow"></div>
 
       <PrintSignatureHtml 
         kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}

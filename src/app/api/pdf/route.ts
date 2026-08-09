@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     
     // Render PDF
     const pdfBuffer = await page.pdf({
-      format: "A4",
+      format: (data.config?.format as any) || "A4",
       landscape: data.config?.orientation === "landscape",
       printBackground: true,
       margin: {
