@@ -11,7 +11,7 @@ import {
   editTagihanMassal,
   hapusTagihanMassal
 } from "@/actions/pembuatan-tagihan"
-import { Plus, Search, Filter, Loader2, Save, MoreVertical, Edit2, Trash2, X } from "lucide-react"
+import { Plus, Search, Filter, Loader2, Save, MoreVertical, Edit2, Trash2, X, GripHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 import ModalTambahTagihan from "./ModalTambahTagihan"
@@ -75,6 +75,9 @@ export default function PembuatanTagihanClient({
   const [deletingCol, setDeletingCol] = useState<{id: string, nama: string} | null>(null)
   const [isDeletingMassal, setIsDeletingMassal] = useState(false)
 
+  // Drag and Drop States
+  const [draggedColumnId, setDraggedColumnId] = useState<string | null>(null)
+
   useEffect(() => {
     if (!activeUnitId) {
       setKelasList([])
@@ -128,6 +131,25 @@ export default function PembuatanTagihanClient({
     })
     
     const columns = Array.from(columnsMap.values()).sort((a, b) => a.kode.localeCompare(b.kode))
+    
+    // Terapkan urutan dari localStorage jika ada
+    try {
+      const savedOrderStr = localStorage.getItem(`tagihanColumnOrder_${activeUnitId}`)
+      if (savedOrderStr) {
+        const savedOrder = JSON.parse(savedOrderStr) as string[]
+        columns.sort((a, b) => {
+          const idxA = savedOrder.indexOf(a.id)
+          const idxB = savedOrder.indexOf(b.id)
+          if (idxA === -1 && idxB === -1) return 0
+          if (idxA === -1) return 1
+          if (idxB === -1) return -1
+          return idxA - idxB
+        })
+      }
+    } catch (e) {
+      console.error("Failed to parse column order from localStorage", e)
+    }
+
     setAkunColumns(columns)
 
     // Pass 2: Build grid rows
@@ -383,11 +405,46 @@ export default function PembuatanTagihanClient({
                     <th className="p-4 font-semibold min-w-[200px] sticky left-12 bg-bg z-30 shadow-[1px_0_0_0_#e2e8f0]">SISWA/I</th>
                     
                     {akunColumns.map(col => (
-                      <th key={col.id} className={`p-4 font-semibold text-center min-w-[150px] relative group ${!isReadOnly ? 'bg-emerald-50/50 text-emerald-700 border-x border-emerald-100/50' : ''}`}>
+                      <th 
+                        key={col.id} 
+                        className={`p-4 font-semibold text-center min-w-[150px] relative group transition-colors ${!isReadOnly ? 'bg-emerald-50/50 text-emerald-700 border-x border-emerald-100/50 cursor-grab active:cursor-grabbing hover:bg-emerald-50' : ''} ${draggedColumnId === col.id ? 'opacity-50' : ''}`}
+                        draggable={!isReadOnly}
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = "move"
+                          setDraggedColumnId(col.id)
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault()
+                          e.dataTransfer.dropEffect = "move"
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault()
+                          if (!draggedColumnId || draggedColumnId === col.id) return
+                          
+                          const newCols = [...akunColumns]
+                          const draggedIdx = newCols.findIndex(c => c.id === draggedColumnId)
+                          const targetIdx = newCols.findIndex(c => c.id === col.id)
+                          
+                          if (draggedIdx > -1 && targetIdx > -1) {
+                            const [draggedItem] = newCols.splice(draggedIdx, 1)
+                            newCols.splice(targetIdx, 0, draggedItem)
+                            
+                            setAkunColumns(newCols)
+                            localStorage.setItem(`tagihanColumnOrder_${activeUnitId}`, JSON.stringify(newCols.map(c => c.id)))
+                          }
+                          setDraggedColumnId(null)
+                        }}
+                        onDragEnd={() => setDraggedColumnId(null)}
+                      >
                         <div className="flex items-center justify-center gap-2">
-                          <div>
-                            <span className="flex items-center justify-center gap-1.5">
-                              {col.nama} {!isReadOnly && <Edit2 size={12} className="opacity-60" />}
+                          {!isReadOnly && (
+                            <div className="opacity-0 group-hover:opacity-40 transition-opacity text-emerald-600 cursor-grab active:cursor-grabbing mr-1 flex-shrink-0" title="Geser kolom">
+                              <GripHorizontal size={14} />
+                            </div>
+                          )}
+                          <div className="flex-1 text-center truncate">
+                            <span className="flex items-center justify-center gap-1.5 truncate">
+                              {col.nama}
                             </span>
                             <span className={`text-[10px] ${!isReadOnly ? 'opacity-80 text-emerald-600/80' : 'opacity-70'}`}>[{col.kode}]</span>
                           </div>
@@ -397,7 +454,7 @@ export default function PembuatanTagihanClient({
                                 e.stopPropagation();
                                 setActiveMenuColId(activeMenuColId === col.id ? null : col.id)
                               }}
-                              className="p-1 rounded text-text-muted hover:bg-black/5 transition-colors"
+                              className="p-1 rounded text-emerald-600/60 hover:bg-emerald-100 transition-colors flex-shrink-0"
                             >
                               <MoreVertical size={16} />
                             </button>
@@ -406,9 +463,9 @@ export default function PembuatanTagihanClient({
 
                         {/* Dropdown Menu */}
                         {activeMenuColId === col.id && (
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-36 bg-white rounded-lg shadow-lg border border-border py-1.5 z-[99] animate-in fade-in zoom-in-95">
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-36 bg-white rounded-lg shadow-lg border border-border py-1.5 z-[99] animate-in fade-in zoom-in-95 font-normal">
                             <button 
-                              className="w-full px-3 py-2 text-left text-xs font-medium text-text-main hover:bg-bg flex items-center gap-2"
+                              className="w-full px-3 py-2 text-left text-xs text-text-main hover:bg-bg flex items-center gap-2"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveMenuColId(null)
@@ -421,7 +478,7 @@ export default function PembuatanTagihanClient({
                               Ubah Nominal
                             </button>
                             <button 
-                              className="w-full px-3 py-2 text-left text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2"
+                              className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveMenuColId(null)
