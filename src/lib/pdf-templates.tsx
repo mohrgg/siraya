@@ -106,7 +106,7 @@ export function PrintSignatureHtml({
       {/* Footer / Notes */}
       <div className="mt-16 pt-4 border-t border-slate-300 text-center text-[10px] text-slate-500 italic">
         {catatanKwitansi && <p className="mb-1">{catatanKwitansi}</p>}
-        <p>Dicetak melalui Sistem Informasi Siraya pada {!isNaN(parsedDate.getTime()) ? parsedDate.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : String(tanggalCetak)}</p>
+        <p>Dicetak melalui Sistem Informasi Siraya pada {new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} WIB</p>
       </div>
     </div>
   )
