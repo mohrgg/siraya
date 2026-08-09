@@ -137,7 +137,7 @@ export function TableReportHtml({
   penandatanganKanan
 }: TableReportData) {
   return (
-    <div className="font-sans text-slate-900 bg-white">
+    <div className="font-sans text-slate-900 bg-white min-h-[100vh] flex flex-col">
       <PrintHeaderHtml institutionInfo={institutionInfo} />
       
       <div className="text-center mb-6">
@@ -167,6 +167,8 @@ export function TableReportHtml({
           ))}
         </tbody>
       </table>
+
+      <div className="flex-grow"></div>
 
       <PrintSignatureHtml 
         kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
