@@ -44,7 +44,7 @@ export default function KelasToolbar({
   return (
     <Toolbar>
       {/* Search dengan custom loading icon support (pakai relative div custom wrapper) */}
-      <div className="relative w-full sm:w-64 flex-shrink-0">
+      <div className="relative w-full sm:w-44 flex-shrink-0">
         <ToolbarSearch 
           value={searchTerm}
           onChange={(e: any) => setSearchTerm(e.target.value)}

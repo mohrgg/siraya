@@ -318,7 +318,7 @@ export default function PembuatanTagihanClient({
           <div className="flex flex-wrap gap-3 items-center flex-1 w-full">
             
             {/* Search Box */}
-            <div className="relative w-full sm:w-64 flex-shrink-0">
+            <div className="relative w-full sm:w-44 flex-shrink-0">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
               <input 
                 type="text" 

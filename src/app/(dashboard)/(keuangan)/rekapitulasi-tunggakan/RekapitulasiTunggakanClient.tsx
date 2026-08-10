@@ -319,7 +319,7 @@ export default function RekapitulasiTunggakanClient({
                 {/* BAGIAN 1: TABEL RINGKASAN */}
                 <div>
                   <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
-                    <div className="relative w-full sm:w-64">
+                    <div className="relative w-full sm:w-44">
                       <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                       <input 
                         type="text" 
@@ -429,7 +429,7 @@ export default function RekapitulasiTunggakanClient({
                   </div>
 
                   <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
-                    <div className="relative w-full sm:w-64">
+                    <div className="relative w-full sm:w-44">
                       <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                       <input 
                         type="text" 
@@ -528,7 +528,7 @@ export default function RekapitulasiTunggakanClient({
             {activeTab === 'detail' && (
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                  <div className="relative w-full sm:w-64">
+                  <div className="relative w-full sm:w-44">
                     <select 
                       className="w-full pl-4 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
                       value={selectedSubKelasId}

@@ -209,7 +209,7 @@ export default function TahunAkademikClient({ initialData, userRole }: { initial
           {/* Top Filter & Toolbar */}
           <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
             <div className="flex flex-wrap gap-3 items-center flex-1">
-              <div className="relative w-full md:w-64 flex-shrink-0">
+              <div className="relative w-full md:w-44 flex-shrink-0">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input
                   type="text"

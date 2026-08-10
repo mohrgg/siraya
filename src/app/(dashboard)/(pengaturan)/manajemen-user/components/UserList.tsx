@@ -29,7 +29,7 @@ export default function UserList({
           <input 
             type="text" 
             placeholder="Cari nama/email..." 
-            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-primary focus:ring-2 focus:ring-primary/20 w-64 shadow-sm transition-all" 
+            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-primary focus:ring-2 focus:ring-primary/20 w-44 shadow-sm transition-all" 
             value={searchQuery} 
             onChange={e => setSearchQuery(e.target.value)} 
           />

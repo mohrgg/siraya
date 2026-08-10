@@ -32,7 +32,7 @@ export function Toolbar({ children }: { children: React.ReactNode }) {
 interface ToolbarSearchProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 export function ToolbarSearch({ className, ...props }: ToolbarSearchProps) {
   return (
-    <div className="relative w-full sm:w-64 flex-shrink-0">
+    <div className="relative w-full sm:w-44 flex-shrink-0">
       <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
       <input
         type="text"
