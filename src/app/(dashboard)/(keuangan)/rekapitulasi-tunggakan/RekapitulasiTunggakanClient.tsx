@@ -8,6 +8,14 @@ import { getRekapitulasiTunggakan } from "@/actions/rekapitulasi-tunggakan"
 import { exportTablePdf } from "@/lib/pdf"
 import { buildInstitutionInfo } from "@/lib/pdf-helpers"
 import { exportToExcel } from "@/lib/excel"
+import { 
+  Toolbar, 
+  ToolbarSearch, 
+  ToolbarFilter, 
+  ToolbarActions,
+  ToolbarExportExcel,
+  ToolbarExportPDF
+} from "@/components/ui/DataTableToolbar"
 
 interface Akun {
   id: string
@@ -318,20 +326,21 @@ export default function RekapitulasiTunggakanClient({
               <div className="flex flex-col gap-8">
                 {/* BAGIAN 1: TABEL RINGKASAN */}
                 <div>
-                  <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
-                    <div className="relative w-full sm:w-44">
-                      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-                      <input 
-                        type="text" 
-                        placeholder="Cari kelas..." 
-                        className="w-full pl-9 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
-                        value={searchTerm1}
-                        onChange={e => setSearchTerm1(e.target.value)}
-                        disabled={rekapData.length === 0}
-                      />
-                    </div>
+                  <div className="flex gap-2 mb-6 border-b border-border">
+                    <h3 className="px-2 py-3 font-semibold text-lg text-text-main">
+                      Ringkasan Tunggakan Kelas
+                    </h3>
+                  </div>
+
+                  <Toolbar>
+                    <ToolbarSearch 
+                      value={searchTerm1}
+                      onChange={(e: any) => setSearchTerm1(e.target.value)}
+                      placeholder="Cari kelas..." 
+                      disabled={rekapData.length === 0}
+                    />
                     
-                    <div className="flex gap-2 items-center">
+                    <ToolbarActions>
                       <Button
                         size="sm"
                         variant="outline"
@@ -340,35 +349,27 @@ export default function RekapitulasiTunggakanClient({
                       >
                         <RefreshCw size={16} />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800"
+                      <ToolbarExportExcel 
                         onClick={handleExportExcelRingkasan}
-                      >
-                        <FileSpreadsheet size={16} className="mr-1.5" /> Excel
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800"
+                        disabled={filteredData1.length === 0}
+                      />
+                      <ToolbarExportPDF 
                         onClick={handleExportPdfRingkasan}
-                      >
-                        <FilePdf size={16} className="mr-1.5" /> PDF
-                      </Button>
-                    </div>
-                  </div>
+                        disabled={filteredData1.length === 0}
+                      />
+                    </ToolbarActions>
+                  </Toolbar>
 
-                  <div className="overflow-x-auto min-h-[300px] border border-border/50 rounded-xl">
+                  <div className="overflow-x-auto min-h-[300px]">
                     <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
                       <thead>
-                        <tr className="border-b-2 border-border bg-gray-50 text-text-main text-xs font-bold uppercase tracking-wider">
-                          <th className="p-4 text-center w-16 sticky left-0 bg-gray-50 z-20 shadow-[1px_0_0_0_#e2e8f0]">NO</th>
-                          <th className="p-4 min-w-[250px] sticky left-16 bg-gray-50 z-20 shadow-[1px_0_0_0_#e2e8f0]">KELAS</th>
-                          <th className="p-4 text-right">TOTAL TAGIHAN</th>
-                          <th className="p-4 text-right">TOTAL YANG SUDAH DIBAYAR</th>
-                          <th className="p-4 text-right">TOTAL TUNGGAKAN BERJALAN</th>
-                          <th className="p-4 text-right">TOTAL TUNGGAKAN (KESELURUHAN)</th>
+                        <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
+                          <th className="p-4 font-semibold text-center w-16">NO</th>
+                          <th className="p-4 font-semibold min-w-[250px]">KELAS</th>
+                          <th className="p-4 font-semibold text-right">TOTAL TAGIHAN</th>
+                          <th className="p-4 font-semibold text-right">TOTAL YANG SUDAH DIBAYAR</th>
+                          <th className="p-4 font-semibold text-right">TOTAL TUNGGAKAN BERJALAN</th>
+                          <th className="p-4 font-semibold text-right">TOTAL TUNGGAKAN (KESELURUHAN)</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -380,11 +381,11 @@ export default function RekapitulasiTunggakanClient({
                           </tr>
                         ) : (
                           filteredData1.map((row, idx) => (
-                            <tr key={row.subKelasId} className="border-b border-border/50 hover:bg-bg/50 transition-colors">
-                              <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                            <tr key={row.subKelasId} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
+                              <td className="p-4 text-center text-text-muted">
                                 {idx + 1}
                               </td>
-                              <td className="p-4 font-bold text-text-main sticky left-16 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                              <td className="p-4 font-medium text-text-main">
                                 {row.subKelasName.toUpperCase()}
                               </td>
                               <td className="p-4 text-right font-medium">Rp. {formatRupiah(row.totalTagihan)}</td>
@@ -396,9 +397,9 @@ export default function RekapitulasiTunggakanClient({
                         )}
                       </tbody>
                       {filteredData1.length > 0 && (
-                        <tfoot className="bg-gray-50 font-bold border-t-2 border-border/60">
+                        <tfoot className="bg-bg font-semibold border-t border-border">
                           <tr>
-                            <td colSpan={2} className="p-4 text-right text-text-main sticky left-0 bg-gray-50 z-10 shadow-[1px_0_0_0_#e2e8f0]">
+                            <td colSpan={2} className="p-4 text-right text-text-main">
                               TOTAL KESELURUHAN
                             </td>
                             <td className="p-4 text-right text-emerald-700">
@@ -407,10 +408,10 @@ export default function RekapitulasiTunggakanClient({
                             <td className="p-4 text-right text-emerald-700">
                               Rp. {formatRupiah(filteredData1.reduce((acc, r) => acc + r.totalDibayar, 0))}
                             </td>
-                            <td className="p-4 text-right text-emerald-700">
+                            <td className="p-4 text-right text-rose-600">
                               Rp. {formatRupiah(filteredData1.reduce((acc, r) => acc + r.totalTunggakan, 0))}
                             </td>
-                            <td className="p-4 text-right text-emerald-700">
+                            <td className="p-4 text-right text-rose-600">
                               Rp. {formatRupiah(filteredData1.reduce((acc, r) => acc + r.totalTunggakan, 0))}
                             </td>
                           </tr>
@@ -428,47 +429,34 @@ export default function RekapitulasiTunggakanClient({
                     </h3>
                   </div>
 
-                  <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
-                    <div className="relative w-full sm:w-44">
-                      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-                      <input 
-                        type="text" 
-                        placeholder="Cari kelas..." 
-                        className="w-full pl-9 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
-                        value={searchTerm2}
-                        onChange={e => setSearchTerm2(e.target.value)}
-                        disabled={rekapData.length === 0}
-                      />
-                    </div>
+                  <Toolbar>
+                    <ToolbarSearch 
+                      value={searchTerm2}
+                      onChange={(e: any) => setSearchTerm2(e.target.value)}
+                      placeholder="Cari kelas..." 
+                      disabled={rekapData.length === 0}
+                    />
                     
-                    <div className="flex gap-2 items-center">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800"
+                    <ToolbarActions>
+                      <ToolbarExportExcel 
                         onClick={handleExportExcelDetail}
-                      >
-                        <FileSpreadsheet size={16} className="mr-1.5" /> Excel
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800"
+                        disabled={filteredData2.length === 0}
+                      />
+                      <ToolbarExportPDF 
                         onClick={handleExportPdfDetail}
-                      >
-                        <FilePdf size={16} className="mr-1.5" /> PDF
-                      </Button>
-                    </div>
-                  </div>
+                        disabled={filteredData2.length === 0}
+                      />
+                    </ToolbarActions>
+                  </Toolbar>
 
-                  <div className="overflow-x-auto min-h-[300px] border border-border/50 rounded-xl">
+                  <div className="overflow-x-auto min-h-[300px]">
                     <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
                       <thead>
-                        <tr className="border-b-2 border-border bg-gray-50 text-text-main text-xs font-bold uppercase tracking-wider">
-                          <th className="p-4 text-center w-16 sticky left-0 bg-gray-50 z-20 shadow-[1px_0_0_0_#e2e8f0]">NO</th>
-                          <th className="p-4 min-w-[250px] sticky left-16 bg-gray-50 z-20 shadow-[1px_0_0_0_#e2e8f0]">KELAS</th>
+                        <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
+                          <th className="p-4 font-semibold text-center w-16">NO</th>
+                          <th className="p-4 font-semibold min-w-[250px]">KELAS</th>
                           {akunList.map(akun => (
-                            <th key={akun.id} className="p-4 text-right border-l border-border">{akun.nama.toUpperCase()}</th>
+                            <th key={akun.id} className="p-4 font-semibold text-right">{akun.nama.toUpperCase()}</th>
                           ))}
                         </tr>
                       </thead>
@@ -481,18 +469,18 @@ export default function RekapitulasiTunggakanClient({
                           </tr>
                         ) : (
                           filteredData2.map((row, idx) => (
-                            <tr key={row.subKelasId} className="border-b border-border/50 hover:bg-bg/50 transition-colors">
-                              <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                            <tr key={row.subKelasId} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
+                              <td className="p-4 text-center text-text-muted">
                                 {idx + 1}
                               </td>
-                              <td className="p-4 font-bold text-text-main sticky left-16 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                              <td className="p-4 font-medium text-text-main">
                                 {row.subKelasName.toUpperCase()}
                               </td>
                               
                               {akunList.map(akun => {
                                 const val = row.detailKomponen[akun.id]?.tunggakan || 0
                                 return (
-                                  <td key={akun.id} className="p-4 text-right font-medium opacity-80 border-l border-border/40">
+                                  <td key={akun.id} className="p-4 text-right font-medium opacity-80">
                                     {val > 0 ? `Rp. ${formatRupiah(val)}` : "-"}
                                   </td>
                                 )
@@ -502,16 +490,16 @@ export default function RekapitulasiTunggakanClient({
                         )}
                       </tbody>
                       {filteredData2.length > 0 && (
-                        <tfoot className="bg-gray-50 font-bold border-t-2 border-border/60">
+                        <tfoot className="bg-bg font-semibold border-t border-border">
                           <tr>
-                            <td colSpan={2} className="p-4 text-right text-text-main sticky left-0 bg-gray-50 z-10 shadow-[1px_0_0_0_#e2e8f0]">
+                            <td colSpan={2} className="p-4 text-right text-text-main">
                               TOTAL KESELURUHAN
                             </td>
                             
                             {akunList.map(akun => {
                               const colTotal = filteredData2.reduce((acc, r) => acc + (r.detailKomponen[akun.id]?.tunggakan || 0), 0)
                               return (
-                                <td key={akun.id} className="p-4 text-right text-emerald-700 opacity-80 border-l border-border/40">
+                                <td key={akun.id} className="p-4 text-right text-rose-600 opacity-80">
                                   Rp. {formatRupiah(colTotal)}
                                 </td>
                               )
@@ -527,52 +515,36 @@ export default function RekapitulasiTunggakanClient({
 
             {activeTab === 'detail' && (
               <div className="flex flex-col gap-6">
-                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                  <div className="relative w-full sm:w-44">
-                    <select 
-                      className="w-full pl-4 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
-                      value={selectedSubKelasId}
-                      onChange={e => setSelectedSubKelasId(e.target.value)}
-                    >
-                      {rekapData.map(r => (
-                        <option key={r.subKelasId} value={r.subKelasId}>
-                          Kelas {r.subKelasName.toUpperCase()}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <Toolbar>
+                  <ToolbarFilter
+                    value={selectedSubKelasId}
+                    onChange={(val) => setSelectedSubKelasId(val as string)}
+                    options={rekapData.map(r => ({ label: `Kelas ${r.subKelasName.toUpperCase()}`, value: r.subKelasId }))}
+                  />
                   
-                  <div className="flex gap-2 items-center">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800"
+                  <ToolbarActions>
+                    <ToolbarExportExcel 
                       onClick={handleExportExcelKelas}
-                    >
-                      <FileSpreadsheet size={16} className="mr-1.5" /> Excel
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800"
+                      disabled={!selectedKelasData || !selectedKelasData.studentsList || selectedKelasData.studentsList.length === 0}
+                    />
+                    <ToolbarExportPDF 
                       onClick={handleExportPdfKelas}
-                    >
-                      <FilePdf size={16} className="mr-1.5" /> PDF
-                    </Button>
-                  </div>
-                </div>
+                      disabled={!selectedKelasData || !selectedKelasData.studentsList || selectedKelasData.studentsList.length === 0}
+                    />
+                  </ToolbarActions>
+                </Toolbar>
 
-                <div className="overflow-x-auto min-h-[300px] border border-border/50 rounded-xl">
+                <div className="overflow-x-auto min-h-[300px]">
                   <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
                     <thead>
-                      <tr className="border-b-2 border-border bg-gray-50 text-text-main text-xs font-bold uppercase tracking-wider">
-                        <th className="p-4 text-center w-16 sticky left-0 bg-gray-50 z-20 shadow-[1px_0_0_0_#e2e8f0]">NO</th>
-                        <th className="p-4 min-w-[250px] sticky left-16 bg-gray-50 z-20 shadow-[1px_0_0_0_#e2e8f0]">NAMA SISWA</th>
-                        <th className="p-4 text-right">TOTAL TAGIHAN</th>
-                        <th className="p-4 text-right">TOTAL DIBAYAR</th>
-                        <th className="p-4 text-right text-rose-600">TUNGGAKAN</th>
+                      <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
+                        <th className="p-4 font-semibold text-center w-16">NO</th>
+                        <th className="p-4 font-semibold min-w-[250px]">NAMA SISWA</th>
+                        <th className="p-4 font-semibold text-right">TOTAL TAGIHAN</th>
+                        <th className="p-4 font-semibold text-right">TOTAL DIBAYAR</th>
+                        <th className="p-4 font-semibold text-right text-rose-600">TUNGGAKAN</th>
                         {akunList.map(akun => (
-                          <th key={akun.id} className="p-4 text-right opacity-70 border-l border-border">{akun.nama.toUpperCase()}</th>
+                          <th key={akun.id} className="p-4 font-semibold text-right opacity-70">{akun.nama.toUpperCase()}</th>
                         ))}
                       </tr>
                     </thead>
@@ -585,12 +557,12 @@ export default function RekapitulasiTunggakanClient({
                         </tr>
                       ) : (
                         selectedKelasData.studentsList.map((student, idx) => (
-                          <tr key={student.id} className="border-b border-border/50 hover:bg-bg/50 transition-colors">
-                            <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                          <tr key={student.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
+                            <td className="p-4 text-center text-text-muted">
                               {idx + 1}
                             </td>
-                            <td className="p-4 sticky left-16 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
-                              <p className="font-bold text-text-main">{student.name}</p>
+                            <td className="p-4">
+                              <p className="font-medium text-text-main">{student.name}</p>
                               <p className="text-xs text-text-muted">{student.nisn}</p>
                             </td>
                             <td className="p-4 text-right font-medium">Rp. {formatRupiah(student.totalTagihan)}</td>
@@ -599,7 +571,7 @@ export default function RekapitulasiTunggakanClient({
                             {akunList.map(akun => {
                               const val = student.detailKomponen[akun.id]?.tunggakan || 0
                               return (
-                                <td key={akun.id} className="p-4 text-right font-medium opacity-80 border-l border-border/40">
+                                <td key={akun.id} className="p-4 text-right font-medium opacity-80">
                                   {val > 0 ? `Rp. ${formatRupiah(val)}` : "-"}
                                 </td>
                               )
@@ -609,9 +581,9 @@ export default function RekapitulasiTunggakanClient({
                       )}
                     </tbody>
                     {selectedKelasData && selectedKelasData.studentsList && selectedKelasData.studentsList.length > 0 && (
-                      <tfoot className="bg-gray-50 font-bold border-t-2 border-border/60">
+                      <tfoot className="bg-bg font-semibold border-t border-border">
                         <tr>
-                          <td colSpan={2} className="p-4 text-right text-text-main sticky left-0 bg-gray-50 z-10 shadow-[1px_0_0_0_#e2e8f0]">
+                          <td colSpan={2} className="p-4 text-right text-text-main">
                             TOTAL KESELURUHAN
                           </td>
                           <td className="p-4 text-right text-emerald-700">
@@ -620,13 +592,13 @@ export default function RekapitulasiTunggakanClient({
                           <td className="p-4 text-right text-emerald-700">
                             Rp. {formatRupiah(selectedKelasData.studentsList.reduce((acc, s) => acc + s.totalDibayar, 0))}
                           </td>
-                          <td className="p-4 text-right text-rose-700">
+                          <td className="p-4 text-right text-rose-600">
                             Rp. {formatRupiah(selectedKelasData.studentsList.reduce((acc, s) => acc + s.totalTunggakan, 0))}
                           </td>
                           {akunList.map(akun => {
                             const colTotal = selectedKelasData.studentsList!.reduce((acc, s) => acc + (s.detailKomponen[akun.id]?.tunggakan || 0), 0)
                             return (
-                              <td key={akun.id} className="p-4 text-right opacity-80 border-l border-border/40">
+                              <td key={akun.id} className="p-4 text-right text-rose-600 opacity-80">
                                 Rp. {formatRupiah(colTotal)}
                               </td>
                             )
