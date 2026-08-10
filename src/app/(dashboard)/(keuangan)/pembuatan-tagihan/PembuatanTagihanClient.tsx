@@ -16,6 +16,12 @@ import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 import ModalTambahTagihan from "./ModalTambahTagihan"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import { 
+  Toolbar, 
+  ToolbarSearch, 
+  ToolbarFilter, 
+  ToolbarActions
+} from "@/components/ui/DataTableToolbar"
 
 type GridRow = {
   id: string
@@ -314,76 +320,55 @@ export default function PembuatanTagihanClient({
         </div>
 
         {/* Filters and Actions Row */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-          <div className="flex flex-wrap gap-3 items-center flex-1 w-full">
-            
-            {/* Search Box */}
-            <div className="relative w-full sm:w-44 flex-shrink-0">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-              <input 
-                type="text" 
-                placeholder="Cari Siswa / No Pendaftaran..." 
-                className="w-full pl-10 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 disabled:opacity-60"
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                disabled={gridData.length === 0}
-              />
-            </div>
+        <Toolbar>
+          <ToolbarSearch 
+            value={searchTerm}
+            onChange={(e: any) => setSearchTerm(e.target.value)}
+            placeholder="Cari Siswa / No Pendaftaran..." 
+            disabled={gridData.length === 0}
+          />
 
-            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary/50">
-              <Filter size={14} className="text-text-muted" />
-              <select 
-                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-0.5 outline-none cursor-pointer"
-                value={kelasId}
-                onChange={e => setKelasId(e.target.value)}
-              >
-                <option value="">Kelas...</option>
-                {kelasList.map(kelas => (
-                  <option key={kelas.id} value={kelas.id}>{kelas.name}</option>
-                ))}
-              </select>
-            </div>
+          <ToolbarFilter
+            icon={<Filter size={14} />}
+            value={kelasId}
+            onChange={(val) => setKelasId(val as string)}
+            options={[
+              { label: "Kelas...", value: "" },
+              ...kelasList.map(kelas => ({ label: kelas.name, value: kelas.id }))
+            ]}
+          />
 
-            {jurusanList.length > 0 && (
-              <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary/50">
-                <select 
-                  className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-0.5 outline-none cursor-pointer"
-                  value={jurusanId}
-                  onChange={e => setJurusanId(e.target.value)}
-                >
-                  <option value="">Jurusan...</option>
-                  {jurusanList.map(jurusan => (
-                    <option key={jurusan.id} value={jurusan.id}>{jurusan.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+          {jurusanList.length > 0 && (
+            <ToolbarFilter
+              value={jurusanId}
+              onChange={(val) => setJurusanId(val as string)}
+              options={[
+                { label: "Jurusan...", value: "" },
+                ...jurusanList.map(jurusan => ({ label: jurusan.name, value: jurusan.id }))
+              ]}
+            />
+          )}
 
-            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary/50">
-              <select 
-                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-0.5 outline-none cursor-pointer"
-                value={subKelasId}
-                onChange={e => setSubKelasId(e.target.value)}
-                disabled={!kelasId}
-              >
-                <option value="">Subkelas...</option>
-                {subKelasList.map(sk => (
-                  <option key={sk.id} value={sk.id}>{sk.name}</option>
-                ))}
-              </select>
-            </div>
+          <ToolbarFilter
+            value={subKelasId}
+            onChange={(val) => setSubKelasId(val as string)}
+            disabled={!kelasId}
+            options={[
+              { label: "Subkelas...", value: "" },
+              ...subKelasList.map(sk => ({ label: sk.name, value: sk.id }))
+            ]}
+          />
 
-            <Button 
-              size="sm"
-              onClick={handleTampilkan} 
-              disabled={!subKelasId || isLoading}
-              className="px-4 py-1.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90"
-            >
-              {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
-            </Button>
-          </div>
+          <Button 
+            size="sm"
+            onClick={handleTampilkan} 
+            disabled={!subKelasId || isLoading}
+            className="px-4 py-1.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90"
+          >
+            {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
+          </Button>
 
-          <div className="flex gap-2 flex-wrap items-center w-full lg:w-auto justify-end">
+          <ToolbarActions>
             {!isReadOnly && gridData.length > 0 && (
               <Button 
                 onClick={() => setIsModalOpen(true)}
@@ -392,8 +377,8 @@ export default function PembuatanTagihanClient({
                 <Plus size={16} className="mr-1.5" /> Tambah Tagihan
               </Button>
             )}
-          </div>
-        </div>
+          </ToolbarActions>
+        </Toolbar>
 
         {/* Table / Empty State Container */}
         {gridData.length > 0 ? (

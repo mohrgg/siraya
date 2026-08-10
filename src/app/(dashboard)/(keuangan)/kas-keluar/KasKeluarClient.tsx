@@ -11,6 +11,16 @@ import { hapusKasKeluar } from "@/actions/kas-keluar"
 import toast from "react-hot-toast"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
+import { 
+  Toolbar, 
+  ToolbarSearch, 
+  ToolbarFilter, 
+  ToolbarActions, 
+  ToolbarExportExcel, 
+  ToolbarExportPDF, 
+  ToolbarAddButton, 
+  ToolbarDivider 
+} from "@/components/ui/DataTableToolbar"
 
 type TransaksiWithRelations = any // Type will be inferred properly in real project
 
@@ -165,94 +175,70 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
         </div>
 
         {/* Filters and Actions */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-          <div className="flex flex-wrap gap-3 items-center flex-1 w-full">
-            
-            {/* 1. Search Box */}
-            <div className="relative w-full sm:w-44 flex-shrink-0">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-              <input 
-                type="text" 
-                placeholder="Cari No Ref atau Nama..." 
-                className="w-full pl-10 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-              />
+        <Toolbar>
+          <ToolbarSearch 
+            value={searchTerm}
+            onChange={(e: any) => setSearchTerm(e.target.value)}
+            placeholder="Cari No Ref atau Nama..." 
+          />
+
+          <ToolbarFilter
+            icon={<Filter size={14} />}
+            value={filterBy}
+            onChange={(val) => setFilterBy(val as any)}
+            options={[
+              { label: "Tgl Transaksi", value: "tanggal_transaksi" },
+              { label: "Tgl Pembuatan", value: "tanggal_pembuatan" }
+            ]}
+          />
+
+          <ToolbarFilter
+            icon={<CalendarIcon size={14} />}
+            value={timeRange}
+            onChange={(val) => setTimeRange(val as any)}
+            options={[
+              { label: "Hari Ini", value: "hari" },
+              { label: "Minggu Ini", value: "minggu" },
+              { label: "Bulan Ini", value: "bulan" },
+              { label: "Custom Tanggal", value: "custom" }
+            ]}
+          />
+
+          {timeRange === 'custom' && (
+            <div className="flex items-center gap-2">
+              <input type="date" className="bg-bg border border-border rounded-xl px-3 py-1.5 text-sm" value={startDate} onChange={e => setStartDate(e.target.value)} />
+              <span className="text-text-muted">-</span>
+              <input type="date" className="bg-bg border border-border rounded-xl px-3 py-1.5 text-sm" value={endDate} onChange={e => setEndDate(e.target.value)} />
             </div>
+          )}
 
-            {/* 2. Dropdown FilterBy */}
-            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary/50">
-              <Filter size={14} className="text-text-muted" />
-              <select 
-                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-0.5 outline-none cursor-pointer"
-                value={filterBy}
-                onChange={(e) => setFilterBy(e.target.value as any)}
-              >
-                <option value="tanggal_transaksi">Tgl Transaksi</option>
-                <option value="tanggal_pembuatan">Tgl Pembuatan</option>
-              </select>
-            </div>
-
-            {/* 3. Dropdown Waktu */}
-            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary/50">
-              <CalendarIcon size={14} className="text-text-muted" />
-              <select 
-                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-0.5 outline-none cursor-pointer"
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value as any)}
-              >
-                <option value="hari">Hari Ini</option>
-                <option value="minggu">Minggu Ini</option>
-                <option value="bulan">Bulan Ini</option>
-                <option value="custom">Custom Tanggal</option>
-              </select>
-            </div>
-
-            {timeRange === 'custom' && (
-              <div className="flex items-center gap-2">
-                <input type="date" className="bg-bg border border-border rounded-xl px-3 py-1.5 text-sm" value={startDate} onChange={e => setStartDate(e.target.value)} />
-                <span className="text-text-muted">-</span>
-                <input type="date" className="bg-bg border border-border rounded-xl px-3 py-1.5 text-sm" value={endDate} onChange={e => setEndDate(e.target.value)} />
-              </div>
-            )}
-            
-          </div>
-
-          <div className="flex gap-2 flex-wrap items-center w-full lg:w-auto justify-end">
+          <ToolbarActions>
             <Button variant="outline" size="sm" onClick={handleRefresh} title="Refresh Data">
               <RefreshCw size={16} />
             </Button>
-            <Button 
-              size="sm"
+            <ToolbarExportExcel 
               onClick={handleExportExcel}
               disabled={isExportingExcel || filteredData.length === 0}
-              className="border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800"
-            >
-              <FileSpreadsheet size={16} className="mr-1.5" /> 
-              {isExportingExcel ? "Mengekspor..." : "Excel"}
-            </Button>
-            <Button 
-              size="sm"
+              isExporting={isExportingExcel}
+            />
+            <ToolbarExportPDF 
               onClick={handleExportPDF}
               disabled={isExportingPDF || filteredData.length === 0}
-              className="border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800"
-            >
-              <FileText size={16} className="mr-1.5" /> 
-              {isExportingPDF ? "Mengekspor..." : "PDF"}
-            </Button>
+              isExporting={isExportingPDF}
+            />
             
             {isReadOnly ? null : (
               <>
-                <div className="h-6 w-px bg-border mx-1 hidden sm:block"></div>
+                <ToolbarDivider />
                 <Link href="/kas-keluar/tambah">
-                  <Button size="sm">
-                    <Plus size={16} className="mr-1.5" /> Tambah Data
-                  </Button>
+                  <ToolbarAddButton onClick={() => {}}>
+                    Tambah Data
+                  </ToolbarAddButton>
                 </Link>
               </>
             )}
-          </div>
-        </div>
+          </ToolbarActions>
+        </Toolbar>
 
         {/* Table */}
         <div className="overflow-x-auto">
