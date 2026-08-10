@@ -17,6 +17,11 @@ import toast from "react-hot-toast"
 import ModalPembayaranTagihan, { TagihanItem } from "./ModalPembayaranTagihan"
 import ModalResiPembayaran, { ReceiptData } from "./ModalResiPembayaran"
 import ModalPilihRiwayatTransaksi from "./ModalPilihRiwayatTransaksi"
+import { 
+  Toolbar, 
+  ToolbarSearch, 
+  ToolbarFilter
+} from "@/components/ui/DataTableToolbar"
 
 type TagihanData = {
   id: string
@@ -302,73 +307,54 @@ export default function PembayaranTagihanClient({
           </button>
         </div>
 
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:flex-1">
-            <div className="relative w-full flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
-              <input 
-                type="text" 
-                placeholder="Cari siswa atau NISN..." 
-                className="w-full pl-9 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                disabled={gridData.length === 0}
-              />
-            </div>
+        <Toolbar>
+          <ToolbarSearch 
+            value={searchTerm}
+            onChange={(e: any) => setSearchTerm(e.target.value)}
+            placeholder="Cari siswa atau NISN..." 
+            disabled={gridData.length === 0}
+          />
 
-            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-2 py-1">
-              <Filter size={14} className="text-text-muted ml-2" />
-              <select 
-                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-1"
-                value={kelasId}
-                onChange={e => setKelasId(e.target.value)}
-              >
-                <option value="">Kelas...</option>
-                {kelasList.map(kelas => (
-                  <option key={kelas.id} value={kelas.id}>{kelas.name}</option>
-                ))}
-              </select>
-            </div>
+          <ToolbarFilter
+            icon={<Filter size={14} />}
+            value={kelasId}
+            onChange={(val) => setKelasId(val as string)}
+            options={[
+              { label: "Kelas...", value: "" },
+              ...kelasList.map(kelas => ({ label: kelas.name, value: kelas.id }))
+            ]}
+          />
 
-            {jurusanList.length > 0 && (
-              <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-2 py-1">
-                <select 
-                  className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-1 px-2"
-                  value={jurusanId}
-                  onChange={e => setJurusanId(e.target.value)}
-                >
-                  <option value="">Jurusan...</option>
-                  {jurusanList.map(jurusan => (
-                    <option key={jurusan.id} value={jurusan.id}>{jurusan.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+          {jurusanList.length > 0 && (
+            <ToolbarFilter
+              value={jurusanId}
+              onChange={(val) => setJurusanId(val as string)}
+              options={[
+                { label: "Jurusan...", value: "" },
+                ...jurusanList.map(jurusan => ({ label: jurusan.name, value: jurusan.id }))
+              ]}
+            />
+          )}
 
-            <div className="flex items-center gap-2 bg-bg border border-border rounded-xl px-2 py-1">
-              <select 
-                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-1 px-2"
-                value={subKelasId}
-                onChange={e => setSubKelasId(e.target.value)}
-                disabled={!kelasId}
-              >
-                <option value="">Subkelas...</option>
-                {subKelasList.map(sk => (
-                  <option key={sk.id} value={sk.id}>{sk.name}</option>
-                ))}
-              </select>
-            </div>
+          <ToolbarFilter
+            value={subKelasId}
+            onChange={(val) => setSubKelasId(val as string)}
+            disabled={!kelasId}
+            options={[
+              { label: "Subkelas...", value: "" },
+              ...subKelasList.map(sk => ({ label: sk.name, value: sk.id }))
+            ]}
+          />
 
-            <Button 
-              size="sm"
-              onClick={handleTampilkan} 
-              disabled={!subKelasId || isLoading}
-              className="px-4 py-1.5 h-auto whitespace-nowrap bg-emerald-500 hover:bg-emerald-600 text-white"
-            >
-              {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
-            </Button>
-          </div>
-        </div>
+          <Button 
+            size="sm"
+            onClick={handleTampilkan} 
+            disabled={!subKelasId || isLoading}
+            className="px-4 py-1.5 h-auto whitespace-nowrap bg-emerald-500 hover:bg-emerald-600 text-white"
+          >
+            {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
+          </Button>
+        </Toolbar>
 
         {/* Table Container */}
         {gridData.length > 0 ? (
