@@ -68,11 +68,16 @@ function generateInteractiveChartData(transactions: any[], todayStart: Date, wee
 }
 
 // ==================== STANDAR YAYASAN (GLOBAL) ====================
-export async function getYayasanDashboardData() {
+export async function getYayasanDashboardData(yearId?: string) {
   const totalPegawai = await prisma.pengguna.count({ where: { isActive: true } })
   const totalUnit = await prisma.unitSekolah.count({ where: { isActive: true } })
-  const totalRombel = await prisma.subKelas.count({ where: { isDeleted: false } })
-  const totalSiswa = await prisma.murid.count({ where: { isActive: true } })
+  const totalRombel = await prisma.subKelas.count({ where: { isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) } })
+  const totalSiswa = await prisma.murid.count({ 
+    where: { 
+      isActive: true,
+      ...(yearId ? { riwayatKelas: { some: { tahunAkademikId: yearId } } } : {})
+    } 
+  })
   const totalGuru = await prisma.guru.count({ where: { isDeleted: false, isActive: true } })
 
   const unitsRaw = await prisma.unitSekolah.findMany({
@@ -81,9 +86,14 @@ export async function getYayasanDashboardData() {
       name: true,
       _count: {
         select: {
-          murid: { where: { isActive: true } },
+          murid: { 
+            where: { 
+              isActive: true,
+              ...(yearId ? { riwayatKelas: { some: { tahunAkademikId: yearId } } } : {})
+            } 
+          },
           jurusan: { where: { isDeleted: false } },
-          subKelas: { where: { isDeleted: false } },
+          subKelas: { where: { isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) } },
           guru: { where: { isDeleted: false, isActive: true } }
         }
       },
@@ -91,9 +101,9 @@ export async function getYayasanDashboardData() {
         select: {
           name: true,
           subKelas: {
-            where: { isDeleted: false },
+            where: { isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) },
             select: {
-              _count: { select: { riwayatKelas: { where: { murid: { isActive: true } } } } }
+              _count: { select: { riwayatKelas: { where: { murid: { isActive: true }, ...(yearId ? { tahunAkademikId: yearId } : {}) } } } }
             }
           }
         }
@@ -156,14 +166,27 @@ export async function getYayasanDashboardData() {
   // 3. Demografi Gender Global
   const genderDistribution = await prisma.murid.groupBy({
     by: ['gender'],
-    where: { isActive: true },
+    where: { 
+      isActive: true,
+      ...(yearId ? { riwayatKelas: { some: { tahunAkademikId: yearId } } } : {})
+    },
     _count: { _all: true }
   })
-  const genderData = genderDistribution.map(g => ({
-    name: g.gender === 'Laki-laki' ? 'Laki-laki' : g.gender === 'Perempuan' ? 'Perempuan' : 'Tidak Diketahui',
-    value: g._count._all,
-    color: g.gender === 'Laki-laki' ? '#3b82f6' : g.gender === 'Perempuan' ? '#ec4899' : '#94a3b8'
-  }))
+  
+  // Agregasi untuk menghindari duplikasi "Tidak Diketahui" jika ada null dan string kosong
+  const genderDataMap = { 'Laki-laki': 0, 'Perempuan': 0, 'Tidak Diketahui': 0 }
+  genderDistribution.forEach(g => {
+    if (g.gender === 'Laki-laki' || g.gender === 'Perempuan') {
+      genderDataMap[g.gender] += g._count._all
+    } else {
+      genderDataMap['Tidak Diketahui'] += g._count._all
+    }
+  })
+  const genderData = [
+    { name: 'Laki-laki', value: genderDataMap['Laki-laki'], color: '#3b82f6' },
+    { name: 'Perempuan', value: genderDataMap['Perempuan'], color: '#ec4899' },
+    { name: 'Tidak Diketahui', value: genderDataMap['Tidak Diketahui'], color: '#94a3b8' }
+  ].filter(g => g.value > 0)
 
   // 4. Indeks Kualitas & Anomali Data Yayasan
   const completeDataCount = await prisma.murid.count({
@@ -247,7 +270,9 @@ export async function getYayasanDashboardData() {
     value: p._count._all
   }))
 
-  const academicYear = await prisma.tahunAkademik.findFirst({ where: { isActive: true } })
+  const academicYear = yearId 
+    ? await prisma.tahunAkademik.findUnique({ where: { id: yearId } })
+    : await prisma.tahunAkademik.findFirst({ where: { isActive: true } })
 
   // ==================== KEUANGAN (FINANCIAL METRICS) ====================
   // 1. Total Kas Global (Pemasukan vs Pengeluaran)
@@ -361,7 +386,13 @@ export const getTuYayasanData = getYayasanDashboardData;
 
 // ==================== STANDAR UNIT SEKOLAH ====================
 export async function getUnitDashboardData(unitId: string, yearId?: string) {
-  const totalMurid = await prisma.murid.count({ where: { isActive: true, unitSekolahId: unitId } })
+  const totalMurid = await prisma.murid.count({ 
+    where: { 
+      isActive: true, 
+      unitSekolahId: unitId,
+      ...(yearId ? { riwayatKelas: { some: { tahunAkademikId: yearId } } } : {})
+    } 
+  })
   const totalRombel = await prisma.subKelas.count({ where: { unitSekolahId: unitId, isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) } })
   const totalJurusan = await prisma.jurusan.count({ where: { unitSekolahId: unitId, isDeleted: false } })
   const totalGuru = await prisma.guru.count({ where: { unitSekolahId: unitId, isDeleted: false, isActive: true } })
@@ -407,7 +438,7 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
         where: { isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) },
         select: {
           name: true,
-          _count: { select: { riwayatKelas: { where: { murid: { isActive: true } } } } }
+          _count: { select: { riwayatKelas: { where: { murid: { isActive: true }, ...(yearId ? { tahunAkademikId: yearId } : {}) } } } }
         }
       }
     }
@@ -441,14 +472,27 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
   // 4. Gender
   const genderDist = await prisma.murid.groupBy({
     by: ['gender'],
-    where: { isActive: true, unitSekolahId: unitId, gender: { not: null, notIn: [''] } },
+    where: { 
+      isActive: true, 
+      unitSekolahId: unitId,
+      ...(yearId ? { riwayatKelas: { some: { tahunAkademikId: yearId } } } : {})
+    },
     _count: { _all: true }
   })
-  const genderData = genderDist.map(g => ({
-    name: g.gender || 'Tidak Diketahui',
-    value: g._count._all,
-    color: g.gender === 'Laki-laki' ? '#3b82f6' : g.gender === 'Perempuan' ? '#ec4899' : '#94a3b8'
-  }))
+  
+  const unitGenderMap = { 'Laki-laki': 0, 'Perempuan': 0, 'Tidak Diketahui': 0 }
+  genderDist.forEach(g => {
+    if (g.gender === 'Laki-laki' || g.gender === 'Perempuan') {
+      unitGenderMap[g.gender] += g._count._all
+    } else {
+      unitGenderMap['Tidak Diketahui'] += g._count._all
+    }
+  })
+  const genderData = [
+    { name: 'Laki-laki', value: unitGenderMap['Laki-laki'], color: '#3b82f6' },
+    { name: 'Perempuan', value: unitGenderMap['Perempuan'], color: '#ec4899' },
+    { name: 'Tidak Diketahui', value: unitGenderMap['Tidak Diketahui'], color: '#94a3b8' }
+  ].filter(g => g.value > 0)
 
   // 5. Beasiswa vs Reguler
   const scholarshipCount = await prisma.murid.count({ where: { isActive: true, unitSekolahId: unitId, isScholarship: true } })
@@ -540,11 +584,14 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
   })
   const pengeluaranBulanIni = kasKeluarUnit._sum.totalNilai || 0
 
-  const tagihanUnit = await prisma.tagihan.aggregate({
+  const tagihanUnitLengkap = await prisma.tagihan.aggregate({
     where: { murid: { unitSekolahId: unitId } },
-    _sum: { sisaTagihan: true }
+    _sum: { jumlah: true, sisaTagihan: true }
   })
-  const totalTunggakanUnit = tagihanUnit._sum.sisaTagihan || 0
+  const totalTagihanUnit = tagihanUnitLengkap._sum.jumlah || 0
+  const totalTunggakanUnit = tagihanUnitLengkap._sum.sisaTagihan || 0
+  const terbayarUnit = totalTagihanUnit - totalTunggakanUnit
+  const kolektibilitasUnit = totalTagihanUnit > 0 ? Math.round((terbayarUnit / totalTagihanUnit) * 100) : null
 
   const tunggakanKritisList = await prisma.tagihan.findMany({
     where: { murid: { unitSekolahId: unitId }, sisaTagihan: { gt: 0 } },
@@ -566,14 +613,31 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
   })
   const interactiveChartDataU = generateInteractiveChartData(rawMonthTransactionsU, todayStart, weekStart, monthStart)
 
+  const currentYearU = new Date().getFullYear()
+  const trendData = []
+  for (let i = 2; i >= 0; i--) {
+    const year = currentYearU - i
+    const count = await prisma.murid.count({
+      where: {
+        unitSekolahId: unitId,
+        createdAt: {
+          gte: new Date(`${year}-01-01`),
+          lt: new Date(`${year + 1}-01-01`)
+        }
+      }
+    })
+    // Dummy fallback if count is 0 just to show chart, but we will use real count
+    trendData.push({ year: year.toString(), total: count })
+  }
+
   return {
     totalMurid, totalRombel, totalSubKelas: totalRombel, totalJurusan, totalGuru,
     rombelData, statusData, paralelData, tingkatDistribution, capacityWarnings,
     genderData, parentData, scholarshipData, incomeData, ageData,
     guruStatusData, guruPendidikanData,
-    anomalyList, missingParent, mutationLogs, unitLogs,
+    anomalyList, missingParent, mutationLogs, unitLogs, trendData,
     // Ekstra Keuangan Unit
-    penerimaanBulanIni, pengeluaranBulanIni, totalTunggakanUnit, tunggakanKritisList, 
+    penerimaanBulanIni, pengeluaranBulanIni, totalTunggakanUnit, tunggakanKritisList, kolektibilitasUnit,
     ...interactiveChartDataU
   }
 }
@@ -806,8 +870,28 @@ export async function getKepsekData(unitId: string, yearId?: string) {
   }))
 
   // Gender & Status
-  const genderDist = await prisma.murid.groupBy({ by: ['gender'], where: { isActive: true, unitSekolahId: unitId }, _count: { _all: true } })
-  const genderData = genderDist.map(g => ({ name: g.gender || 'Tidak Diketahui', value: g._count._all }))
+  const genderDist = await prisma.murid.groupBy({
+    by: ['gender'],
+    where: { 
+      isActive: true, 
+      unitSekolahId: unitId,
+      ...(yearId ? { riwayatKelas: { some: { tahunAkademikId: yearId } } } : {})
+    },
+    _count: { _all: true }
+  })
+  const kepsekGenderMap = { 'Laki-laki': 0, 'Perempuan': 0, 'Tidak Diketahui': 0 }
+  genderDist.forEach(g => {
+    if (g.gender === 'Laki-laki' || g.gender === 'Perempuan') {
+      kepsekGenderMap[g.gender] += g._count._all
+    } else {
+      kepsekGenderMap['Tidak Diketahui'] += g._count._all
+    }
+  })
+  const genderData = [
+    { name: 'Laki-laki', value: kepsekGenderMap['Laki-laki'], color: '#3b82f6' },
+    { name: 'Perempuan', value: kepsekGenderMap['Perempuan'], color: '#ec4899' },
+    { name: 'Tidak Diketahui', value: kepsekGenderMap['Tidak Diketahui'], color: '#94a3b8' }
+  ].filter(g => g.value > 0)
 
   const statusDist = await prisma.murid.groupBy({ by: ['status'], where: { unitSekolahId: unitId }, _count: { _all: true } })
   const statusData = statusDist.map(s => ({ name: s.status, value: s._count._all }))

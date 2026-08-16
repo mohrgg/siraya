@@ -6,7 +6,7 @@ import {
   CheckCircle2, Clock, PlusCircle, BookOpen, ArrowRight, UserCheck, 
   HeartHandshake, Sparkles, Activity, Wallet
 } from "lucide-react"
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine, LineChart, Line } from 'recharts'
 import Link from 'next/link'
 import PendapatanInteractiveChart from './PendapatanInteractiveChart'
 import toast from "react-hot-toast"
@@ -41,6 +41,8 @@ interface UnitDashboardProps {
   pendapatanHariIniChart?: any[]
   pendapatanMingguIniChart?: any[]
   pendapatanBulanIniChart?: any[]
+  trendData?: Array<{ year: string; total: number }>
+  kolektibilitasUnit?: number | null
 }
 
 export default function UnitDashboard(props: UnitDashboardProps) {
@@ -68,7 +70,9 @@ export default function UnitDashboard(props: UnitDashboardProps) {
     pengeluaranBulanIni = 0,
     totalTunggakanUnit = 0,
     tunggakanKritisList = [],
-    pendapatanHariIniChart = [], pendapatanMingguIniChart = [], pendapatanBulanIniChart = []
+    pendapatanHariIniChart = [], pendapatanMingguIniChart = [], pendapatanBulanIniChart = [],
+    trendData = [],
+    kolektibilitasUnit = null
   } = props
 
   const [activeTab, setActiveTab] = useState<'anomali' | 'mutasi' | 'tunggakan'>('anomali')
@@ -117,272 +121,385 @@ export default function UnitDashboard(props: UnitDashboardProps) {
         )}
       </div>
 
-      {/* Row 1: Keuangan (Financial Metrics) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl border border-emerald-900/20 p-5 shadow-sm text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-5 rounded-full blur-2xl"></div>
-          <div className="flex items-center justify-between mb-3 relative z-10">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">Penerimaan Bulan Ini</span>
-            <div className="w-10 h-10 bg-white/20 text-white rounded-xl flex items-center justify-center backdrop-blur-sm">
-              <Wallet size={20} />
+      {/* SECTION 2: Overview KPI */}
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 px-1">
+          <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
+          <h2 className="text-xl font-bold text-gray-900">Overview Unit</h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Total Siswa Aktif</span>
+              <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                <GraduationCap size={20} />
+              </div>
             </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-gray-900">{formatNumber(totalMurid)}</span>
+              <span className="text-xs font-semibold text-blue-600">Peserta Didik</span>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-2">Siswa berstatus aktif di unit ini</p>
           </div>
-          <div className="flex items-baseline gap-2 relative z-10">
-            <span className="text-3xl font-black">{formatCurrency(penerimaanBulanIni)}</span>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Rombongan Belajar</span>
+              <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
+                <LayoutDashboard size={20} />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-gray-900">{formatNumber(totalRombel)}</span>
+              <span className="text-xs font-semibold text-purple-600">Rombel Aktif</span>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-2">Kelas yang sedang berjalan</p>
           </div>
-          <p className="text-[11px] text-emerald-200 mt-2 relative z-10">Total kas masuk di unit {unitName}</p>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Tenaga Pendidik</span>
+              <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+                <Users size={20} />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-gray-900">{formatNumber(totalGuru)}</span>
+              <span className="text-xs font-semibold text-amber-600">Guru Aktif</span>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-2">Berbasis di unit ini</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-rose-500 to-rose-700 rounded-2xl border border-rose-900/20 p-5 shadow-sm text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-5 rounded-full blur-2xl"></div>
+            <div className="flex items-center justify-between mb-3 relative z-10">
+              <span className="text-xs font-bold uppercase tracking-wider text-rose-100">Total Piutang Unit</span>
+              <div className="w-10 h-10 bg-white/20 text-white rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <AlertTriangle size={20} />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2 relative z-10">
+              <span className="text-2xl font-black">{formatCurrency(totalTunggakanUnit)}</span>
+            </div>
+            <p className="text-[11px] text-rose-200 mt-2 relative z-10">Total tagihan siswa yang belum dibayar</p>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3: Statistik Akademik */}
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 px-1 mt-2">
+          <div className="w-1.5 h-6 bg-purple-500 rounded-full"></div>
+          <h2 className="text-xl font-bold text-gray-900">Statistik Akademik</h2>
         </div>
 
-        <div className="bg-gradient-to-br from-rose-500 to-rose-700 rounded-2xl border border-rose-900/20 p-5 shadow-sm text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-5 rounded-full blur-2xl"></div>
-          <div className="flex items-center justify-between mb-3 relative z-10">
-            <span className="text-xs font-bold uppercase tracking-wider text-rose-100">Total Tunggakan Unit</span>
-            <div className="w-10 h-10 bg-white/20 text-white rounded-xl flex items-center justify-center backdrop-blur-sm">
-              <AlertTriangle size={20} />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2 relative z-10">
-            <span className="text-3xl font-black">{formatCurrency(totalTunggakanUnit)}</span>
-          </div>
-          <p className="text-[11px] text-rose-200 mt-2 relative z-10">Total tagihan siswa yang belum dibayar</p>
-        </div>
-      </div>
-
-      {/* Row 2: Key Metrics Akademik */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Total Siswa Aktif</span>
-            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-              <GraduationCap size={20} />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-gray-900">{formatNumber(totalMurid)}</span>
-            <span className="text-xs font-semibold text-blue-600">Peserta Didik</span>
-          </div>
-          <p className="text-[11px] text-gray-400 mt-2">Siswa berstatus aktif di unit ini</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Rombongan Belajar</span>
-            <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
-              <LayoutDashboard size={20} />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-gray-900">{formatNumber(totalRombel)}</span>
-            <span className="text-xs font-semibold text-purple-600">Rombel Aktif</span>
-          </div>
-          <p className="text-[11px] text-gray-400 mt-2">Kelas yang sedang berjalan</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Program / Jurusan</span>
-            <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
-              <BookOpen size={20} />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-gray-900">{formatNumber(totalJurusan)}</span>
-            <span className="text-xs font-semibold text-emerald-600">Jurusan Terdaftar</span>
-          </div>
-          <p className="text-[11px] text-gray-400 mt-2">Kompetensi keahlian / peminatan</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Tenaga Pendidik</span>
-            <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
-              <Users size={20} />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-gray-900">{formatNumber(totalGuru)}</span>
-            <span className="text-xs font-semibold text-amber-600">Guru Aktif</span>
-          </div>
-          <p className="text-[11px] text-gray-400 mt-2">Berbasis di unit ini</p>
-        </div>
-      </div>
-
-      {/* Row 1.5: Grafik Pendapatan Interaktif */}
-      <div className="w-full h-[350px]">
-        <PendapatanInteractiveChart 
-          hariIniData={pendapatanHariIniChart}
-          mingguIniData={pendapatanMingguIniChart}
-          bulanIniData={pendapatanBulanIniChart}
-        />
-      </div>
-
-      {/* Row 2: Kepadatan Rombel (Bar Chart with Reference Line) & Task Alert List */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Bar Chart: Kepadatan Rombel */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm lg:col-span-2 flex flex-col h-[420px]">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-                <Users size={18} className="text-primary" />
-                Kepadatan Siswa per Rombel
-              </h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Batas ideal maksimal adalah 35 siswa/rombel (Garis Merah).
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 border border-red-200 rounded-lg text-[11px] font-bold">
-                Batas Ideal: 35
-              </span>
-              {capacityWarnings.length > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold shadow-sm">
-                  <AlertTriangle size={14} />
-                  {capacityWarnings.length} Melebihi Batas
+        {/* Row 1: Kepadatan Rombel + Gender */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Bar Chart: Kepadatan Rombel (2 Kolom) */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm lg:col-span-2 flex flex-col h-[420px]">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+                  <Users size={18} className="text-purple-500" />
+                  Kepadatan Siswa per Rombel
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Batas ideal maksimal adalah 35 siswa/rombel.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 border border-red-200 rounded-lg text-[11px] font-bold">
+                  Batas Ideal: 35
                 </span>
+              </div>
+            </div>
+
+            <div className="flex-1 w-full mt-4 min-h-0">
+              {rombelData && rombelData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={rombelData} margin={{ top: 25, right: 10, left: -20, bottom: 40 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#64748b', fontSize: 11 }} 
+                      interval={0}
+                      angle={-30}
+                      textAnchor="end"
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#64748b', fontSize: 12 }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} 
+                      formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Jumlah']}
+                    />
+                    <ReferenceLine 
+                      y={35} 
+                      label={{ 
+                        value: 'Maks Ideal (35)', 
+                        fill: '#dc2626', 
+                        fontSize: 11, 
+                        fontWeight: 'bold', 
+                        position: 'top',
+                        dy: -6
+                      }} 
+                      stroke="#ef4444" 
+                      strokeDasharray="4 4" 
+                      strokeWidth={2} 
+                    />
+                    <Bar dataKey="total" radius={[6, 6, 0, 0]} barSize={32}>
+                      {rombelData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.total > 35 ? '#ef4444' : '#8b5cf6'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                  <LayoutDashboard size={32} className="text-gray-300 mb-2" />
+                  <p className="text-sm font-semibold text-gray-600">Belum Ada Rombel Aktif</p>
+                </div>
               )}
             </div>
           </div>
 
+          {/* Pie: Gender (1 Kolom) */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between h-[420px]">
+            <div>
+              <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2 mb-1">
+                <Users size={20} className="text-pink-500" />
+                Demografi Gender
+              </h3>
+              <p className="text-xs text-gray-500">Perbandingan siswa laki-laki dan perempuan di unit ini.</p>
+            </div>
+
+            <div className="flex-1 min-h-[240px] my-4 flex items-center justify-center">
+              {genderData && genderData.length > 0 && genderData.some(d => d.value > 0) ? (
+                <div className="w-full flex flex-col items-center">
+                  <div className="w-full h-[180px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={genderData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={75}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {genderData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0' }} 
+                          formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Total']}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-3 mt-4 px-2">
+                    {genderData.map((d, i) => (
+                      <div key={i} className="flex items-center gap-1.5 text-xs">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color || COLORS[i % COLORS.length] }}></span>
+                        <span className="text-gray-600">{d.name} <span className="font-bold text-gray-900">({formatNumber(d.value)})</span></span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada data</div>
+              )}
+            </div>
+
+            <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between text-xs font-medium text-gray-600">
+              <span>Rasio Unit L:P</span>
+              <span className="font-bold text-gray-900">
+                {(() => {
+                  const l = genderData.find(g => g.name === 'Laki-laki')?.value || 0;
+                  const p = genderData.find(g => g.name === 'Perempuan')?.value || 0;
+                  return (l > 0 || p > 0) ? `${Math.round((l / (l + p)) * 100)}% : ${Math.round((p / (l + p)) * 100)}%` : '-';
+                })()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: Pertumbuhan Siswa Line Chart */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col h-[350px]">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+                <Activity size={18} className="text-indigo-500" />
+                Trend Pertumbuhan Siswa Baru
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">Pertumbuhan siswa 3 tahun terakhir.</p>
+            </div>
+          </div>
           <div className="flex-1 w-full mt-4 min-h-0">
-            {rombelData && rombelData.length > 0 ? (
+            {trendData && trendData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={rombelData} margin={{ top: 25, right: 10, left: -20, bottom: 40 }}>
+                <LineChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#64748b', fontSize: 11 }} 
-                    interval={0}
-                    angle={-30}
-                    textAnchor="end"
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#64748b', fontSize: 12 }}
-                    domain={[0, (dataMax: number) => Math.max(Math.round(dataMax * 1.25), 45)]}
-                  />
+                  <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                   <Tooltip 
                     contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} 
-                    formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Jumlah']}
+                    formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Siswa Baru']}
                   />
-                  <ReferenceLine 
-                    y={35} 
-                    label={{ 
-                      value: 'Maks Ideal (35)', 
-                      fill: '#dc2626', 
-                      fontSize: 11, 
-                      fontWeight: 'bold', 
-                      position: 'top',
-                      dy: -6
-                    }} 
-                    stroke="#ef4444" 
-                    strokeDasharray="4 4" 
-                    strokeWidth={2} 
-                  />
-                  <Bar dataKey="total" radius={[6, 6, 0, 0]} barSize={32}>
-                    {rombelData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.total > 35 ? '#ef4444' : '#3b82f6'} />
-                    ))}
-                  </Bar>
-                </BarChart>
+                  <Line type="monotone" dataKey="total" stroke="#6366f1" strokeWidth={4} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                </LineChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                <LayoutDashboard size={32} className="text-gray-300 mb-2" />
-                <p className="text-sm font-semibold text-gray-600">Belum Ada Rombel Aktif</p>
+                <p className="text-sm font-semibold text-gray-600">Belum Ada Data Trend</p>
               </div>
             )}
           </div>
         </div>
+      </section>
 
-        {/* Task & Anomaly Center */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between h-[420px]">
-          <div className="flex flex-col flex-1 min-h-0">
-            <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3 shrink-0">
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setActiveTab('anomali')}
-                  className={`text-sm font-bold pb-1 transition-all ${
-                    activeTab === 'anomali' ? 'text-primary border-b-2 border-primary' : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                >
-                  Anomali ({anomalyList.length})
-                </button>
-                <button
-                  onClick={() => setActiveTab('mutasi')}
-                  className={`text-sm font-bold pb-1 transition-all ${
-                    activeTab === 'mutasi' ? 'text-primary border-b-2 border-primary' : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                >
-                  Mutasi ({mutationLogs.length})
-                </button>
-                <button
-                  onClick={() => setActiveTab('tunggakan')}
-                  className={`text-sm font-bold pb-1 transition-all ${
-                    activeTab === 'tunggakan' ? 'text-primary border-b-2 border-primary' : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                >
-                  Tunggakan
-                </button>
-              </div>
-            </div>
+      {/* SECTION 4: SDM */}
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 px-1 mt-2">
+          <div className="w-1.5 h-6 bg-amber-500 rounded-full"></div>
+          <h2 className="text-xl font-bold text-gray-900">Sumber Daya Manusia</h2>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Guru Status Table */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col lg:col-span-2 h-[350px]">
+            <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2 mb-4 border-b border-gray-100 pb-3">
+              <UserCheck size={18} className="text-amber-500" />
+              Komposisi Guru / Pegawai
+            </h3>
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+              {(() => {
+                const totalGuruPgw = guruStatusData?.reduce((sum, item) => sum + item.value, 0) || 0;
+                if (!guruStatusData || guruStatusData.length === 0 || totalGuruPgw === 0) {
+                  return <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada data status kepegawaian</div>;
+                }
+                
+                // Urutkan dari jumlah terbanyak
+                const sortedData = [...guruStatusData].sort((a, b) => b.value - a.value);
 
-            <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 min-h-0">
-              {activeTab === 'anomali' ? (
-                anomalyList.length > 0 ? (
-                  anomalyList.map((item, idx) => (
-                    <div key={idx} className="p-3 bg-amber-50/50 border border-amber-100 rounded-xl flex items-start justify-between gap-2 text-xs">
-                      <div>
-                        <p className="font-bold text-gray-900">{item.name}</p>
-                        <p className="text-[11px] text-gray-500 font-mono">NIS: {item.nis}</p>
-                        <div className="flex flex-wrap gap-1 mt-1.5">
-                          {!item.nisn && <span className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[9px] font-bold">No NISN</span>}
-                          {!item.nik && <span className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[9px] font-bold">No NIK</span>}
-                          {(!item.fatherName || !item.motherName) && <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-[9px] font-bold">Ortu Kosong</span>}
-                        </div>
-                      </div>
-                      <Link
-                        href={`/kelas`}
-                        className="text-primary hover:bg-primary/10 p-1.5 rounded-lg transition-colors"
-                        title="Perbaiki Data"
-                      >
-                        <ArrowRight size={14} />
-                      </Link>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-10 text-gray-400 text-xs">
-                    <CheckCircle2 size={24} className="text-emerald-500 mx-auto mb-2" />
-                    Tidak ditemukan anomali data di unit ini!
+                return (
+                  <div className="overflow-hidden rounded-xl border border-gray-100">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold text-gray-600">Status Kepegawaian</th>
+                          <th className="px-4 py-3 font-semibold text-gray-600 text-right w-24">Jumlah</th>
+                          <th className="px-4 py-3 font-semibold text-gray-600 text-right w-24">Persentase</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {sortedData.map((d, i) => (
+                          <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-4 py-3 text-gray-900 font-medium">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color || COLORS[(i + 4) % COLORS.length] }}></div>
+                                {d.name}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-gray-700 text-right font-semibold">{formatNumber(d.value)}</td>
+                            <td className="px-4 py-3 text-gray-500 text-right">
+                              <span className="inline-flex items-center justify-center px-2 py-1 rounded bg-gray-100 text-[11px] font-bold">
+                                {Math.round((d.value / totalGuruPgw) * 100)}%
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                )
-              ) : activeTab === 'mutasi' ? (
-                mutationLogs.length > 0 ? (
-                  mutationLogs.map((item, idx) => (
-                    <div key={idx} className="p-3 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-between text-xs">
-                      <div>
-                        <p className="font-bold text-gray-900">{item.name}</p>
-                        <p className="text-[10px] text-gray-400">{new Date(item.updatedAt).toLocaleDateString('id-ID')}</p>
-                      </div>
-                      <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded-lg text-[10px] font-bold">
-                        {item.status}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-10 text-gray-400 text-xs">Belum ada catatan mutasi siswa.</div>
-                )
-              ) : (
-                tunggakanKritisList.length > 0 ? (
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Rasio Guru:Siswa */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col items-center justify-center text-center h-[350px] relative overflow-hidden">
+            <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-amber-50 rounded-full opacity-50 blur-2xl"></div>
+            <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-6 relative z-10">
+              <Users size={32} />
+            </div>
+            <h3 className="text-gray-500 font-bold uppercase tracking-widest text-xs mb-2 relative z-10">Rasio Guru : Siswa</h3>
+            <div className="flex items-center justify-center gap-3 relative z-10">
+              <span className="text-5xl font-black text-amber-600">1</span>
+              <span className="text-3xl font-bold text-gray-300">:</span>
+              <span className="text-5xl font-black text-gray-900">{totalGuru > 0 ? Math.round(totalMurid / totalGuru) : 0}</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-4 max-w-[200px] relative z-10">
+              Setiap 1 Guru Aktif rata-rata menangani {totalGuru > 0 ? Math.round(totalMurid / totalGuru) : 0} Siswa Aktif di unit ini.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 5: Keuangan Unit */}
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 px-1 mt-2">
+          <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
+          <h2 className="text-xl font-bold text-gray-900">Keuangan Unit</h2>
+        </div>
+
+        {/* 3 KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-5 shadow-sm text-white">
+            <div className="text-xs font-bold uppercase tracking-wider text-emerald-100 mb-2">Pendapatan Bulan Ini</div>
+            <div className="text-3xl font-black">{formatCurrency(penerimaanBulanIni)}</div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-rose-500 to-rose-700 rounded-2xl p-5 shadow-sm text-white">
+            <div className="text-xs font-bold uppercase tracking-wider text-rose-100 mb-2">Total Piutang (Tunggakan)</div>
+            <div className="text-3xl font-black">{formatCurrency(totalTunggakanUnit)}</div>
+          </div>
+
+          <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-5 shadow-sm text-white">
+            <div className="text-xs font-bold uppercase tracking-wider text-blue-100 mb-2">Kolektibilitas Unit</div>
+            <div className="text-3xl font-black">{kolektibilitasUnit === null ? 'N/A' : `${kolektibilitasUnit}%`}</div>
+          </div>
+        </div>
+
+        {/* Trend Pendapatan & Tunggakan Kritis */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col lg:col-span-2 h-[420px]">
+            <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2 mb-4">
+              <Activity size={18} className="text-emerald-500" />
+              Trend Pendapatan Unit
+            </h3>
+            <div className="flex-1 w-full min-h-0">
+              <PendapatanInteractiveChart 
+                hariIniData={pendapatanHariIniChart}
+                mingguIniData={pendapatanMingguIniChart}
+                bulanIniData={pendapatanBulanIniChart}
+              />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between h-[420px]">
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3 shrink-0">
+                <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+                  <AlertTriangle size={18} className="text-rose-500" />
+                  Tunggakan Kritis
+                </h3>
+              </div>
+              <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 min-h-0">
+                {tunggakanKritisList && tunggakanKritisList.length > 0 ? (
                   tunggakanKritisList.map((item, idx) => (
                     <div key={idx} className="p-3 bg-rose-50/50 border border-rose-100 rounded-xl flex items-start justify-between gap-2 text-xs">
                       <div>
-                        <p className="font-bold text-gray-900">{item.murid.name}</p>
-                        <p className="text-[11px] text-gray-500 font-mono">NIS: {item.murid.nis}</p>
+                        <p className="font-bold text-gray-900">{item.murid?.name}</p>
+                        <p className="text-[11px] text-gray-500 font-mono">NIS: {item.murid?.nis}</p>
                         <div className="flex flex-wrap gap-1 mt-1.5">
-                          <span className="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded text-[9px] font-bold">{item.akun.nama}</span>
+                          <span className="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded text-[9px] font-bold">{item.akun?.nama}</span>
                           <span className="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded text-[9px] font-bold">{formatCurrency(item.sisaTagihan)}</span>
                         </div>
                       </div>
@@ -400,198 +517,12 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                     <CheckCircle2 size={24} className="text-emerald-500 mx-auto mb-2" />
                     Tidak ada tunggakan kritis.
                   </div>
-                )
-              )}
-            </div>
-          </div>
-
-          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 shrink-0">
-            <span>Siswa tanpa data wali:</span>
-            <span className="font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100">{missingParent} Siswa</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Row 3: 5 Pie Charts */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        {/* Pie 1: Gender */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
-          <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
-            <UserCheck size={16} className="text-blue-500" /> Komposisi Gender
-          </h4>
-          <div className="h-[180px] my-2">
-            {genderData && genderData.length > 0 && genderData.some(d => d.value > 0) ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={genderData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={4} dataKey="value">
-                    {genderData.map((e, i) => <Cell key={i} fill={e.color || COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ borderRadius: '10px', border: 'none' }} />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada data</div>
-            )}
-          </div>
-        </div>
-
-        {/* Pie 2: Kelengkapan Wali */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
-          <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
-            <HeartHandshake size={16} className="text-emerald-500" /> Kelengkapan Data Wali
-          </h4>
-          <div className="h-[180px] my-2">
-            {parentData && parentData.length > 0 && parentData.some(d => d.value > 0) ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={parentData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={4} dataKey="value">
-                    {parentData.map((e, i) => <Cell key={i} fill={e.color || COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ borderRadius: '10px', border: 'none' }} />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada data</div>
-            )}
-          </div>
-        </div>
-
-        {/* Pie 3: Beasiswa vs Reguler */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
-          <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
-            <Sparkles size={16} className="text-amber-500" /> Beasiswa vs Reguler
-          </h4>
-          <div className="h-[180px] my-2">
-            {scholarshipData && scholarshipData.length > 0 && scholarshipData.some(d => d.value > 0) ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={scholarshipData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={4} dataKey="value">
-                    {scholarshipData.map((e, i) => <Cell key={i} fill={e.color || COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ borderRadius: '10px', border: 'none' }} />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada data</div>
-            )}
-          </div>
-        </div>
-
-        {/* Pie 4: Rentang Gaji Ortu */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
-          <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
-            <Wallet size={16} className="text-purple-500" /> Rentang Gaji Ortu
-          </h4>
-          <div className="h-[180px] my-2">
-            {incomeData && incomeData.length > 0 && incomeData.some(d => d.value > 0) ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={incomeData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={4} dataKey="value">
-                    {incomeData.map((e, i) => <Cell key={i} fill={e.color || COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ borderRadius: '10px', border: 'none' }} />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada data</div>
-            )}
-          </div>
-        </div>
-
-        {/* Pie 5: Status Kepegawaian Guru */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
-          <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
-            <UserCheck size={16} className="text-pink-500" /> Status Guru
-          </h4>
-          <div className="h-[180px] my-2">
-            {guruStatusData && guruStatusData.length > 0 && guruStatusData.some(d => d.value > 0) ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={guruStatusData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={4} dataKey="value">
-                    {guruStatusData.map((e, i) => <Cell key={i} fill={e.color || COLORS[(i + 4) % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ borderRadius: '10px', border: 'none' }} />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada data</div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Row 4: Demografi Usia (Bar Chart) & Unit Activity Log (Timeline) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Bar Chart: Demografi Usia */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm lg:col-span-2 flex flex-col">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-                <Users size={18} className="text-purple-500" />
-                Demografi Rentang Usia Siswa
-              </h3>
-              <p className="text-xs text-gray-500 mt-0.5">Dikalkulasi otomatis berdasarkan tanggal lahir siswa aktif.</p>
-            </div>
-          </div>
-
-          <div className="flex-1 min-h-[260px] mt-4">
-            {ageData && ageData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ageData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="ageGroup" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0' }} 
-                    formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Jumlah']}
-                  />
-                  <Bar dataKey="total" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={36} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                <p className="text-xs text-gray-400">Data tanggal lahir belum dilengkapi.</p>
+                )}
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Timeline: Log Aktivitas Unit */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <h3 className="font-bold text-gray-900 text-lg mb-4 flex items-center gap-2 border-b border-gray-100 pb-3">
-              <Activity size={18} className="text-blue-500" />
-              Log Operasional Unit
-            </h3>
-            
-            <div className="space-y-4 max-h-[240px] overflow-y-auto pr-1">
-              {unitLogs && unitLogs.length > 0 ? (
-                unitLogs.map((log, idx) => (
-                  <div key={idx} className="flex gap-3 text-xs">
-                    <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                    <div>
-                      <p className="font-bold text-gray-800">{log.aksi.replace(/_/g, ' ')}</p>
-                      <p className="text-gray-500 text-[11px] mt-0.5 line-clamp-1">{log.keterangan}</p>
-                      <span className="text-[10px] text-gray-400">Oleh: {log.penggunaName} • {new Date(log.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-10 text-gray-400 text-xs">Belum ada aktivitas terekam.</div>
-              )}
             </div>
           </div>
-
-          <div className="mt-4 pt-3 border-t border-gray-100 text-center">
-            <span className="text-[11px] text-gray-400">Menampilkan 5 aktivitas terakhir di unit ini</span>
-          </div>
         </div>
-      </div>
+      </section>
     </div>
   )
 }

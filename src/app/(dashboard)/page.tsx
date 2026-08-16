@@ -51,7 +51,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
     const { schoolUnits, activeYearId, activeUnitId } = await getActiveContext()
 
     if (activeTab === "yayasan") {
-      const data = await getYayasanDashboardData()
+      const data = await getYayasanDashboardData(activeYearId)
       return (
         <div className="max-w-[1600px] mx-auto w-full">
           <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
@@ -63,7 +63,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
     if (activeTab === "unit") {
       // Jika tab=unit terakses saat mode Semua Unit, arahkan kembali (fallback) ke Yayasan
       if (activeUnitId === "all") {
-        const data = await getYayasanDashboardData()
+        const data = await getYayasanDashboardData(activeYearId)
         return (
           <div className="max-w-[1600px] mx-auto w-full">
             <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
@@ -103,7 +103,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
     }
 
     // Default fallback
-    const data = await getYayasanDashboardData()
+    const data = await getYayasanDashboardData(activeYearId)
     return (
       <div className="max-w-[1600px] mx-auto w-full">
         <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
