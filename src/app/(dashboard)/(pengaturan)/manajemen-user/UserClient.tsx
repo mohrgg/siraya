@@ -47,36 +47,45 @@ export default function UserClient({
       <ConfirmModal isOpen={!!disableUserId} title="Nonaktifkan Akun" message="Yakin ingin menonaktifkan pengguna ini? Mereka tidak akan bisa login lagi ke sistem." onCancel={() => setDisableUserId(null)} onConfirm={handleDisableUser} isLoading={isSubmitting} />
       <ConfirmModal isOpen={!!deleteDivId} title="Hapus Divisi" message="Yakin ingin menghapus divisi ini?" onCancel={() => setDeleteDivId(null)} onConfirm={handleDeleteDivisi} isLoading={isSubmitting} />
 
-      {/* TABS */}
-      <div className="flex gap-1 mb-6 bg-bg rounded-xl p-1.5 w-max">
-        <button onClick={() => setActiveTab("users")} className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === "users" ? "bg-surface shadow-sm text-primary" : "text-text-muted hover:text-text-main"}`}>
-          <Users size={16} /> Pengguna Sistem
-        </button>
-        <button onClick={() => setActiveTab("divisi")} className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === "divisi" ? "bg-surface shadow-sm text-primary" : "text-text-muted hover:text-text-main"}`}>
-          <Building size={16} /> Master Divisi
-        </button>
+      {/* CONTENT CARD */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+        {/* TABS */}
+        <div className="flex border-b border-gray-100 px-6 pt-4 gap-4">
+          <button 
+            onClick={() => setActiveTab("users")} 
+            className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === "users" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-900"}`}
+          >
+            Daftar Pengguna Sistem
+          </button>
+          <button 
+            onClick={() => setActiveTab("divisi")} 
+            className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === "divisi" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-900"}`}
+          >
+            Master Divisi
+          </button>
+        </div>
+
+        {activeTab === "users" && (
+          <UserList 
+            filteredUsers={filteredUsers}
+            searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+            filterRole={filterRole} setFilterRole={setFilterRole}
+            filterUnit={filterUnit} setFilterUnit={setFilterUnit}
+            units={units}
+            openAddUser={openAddUser} openEditUser={openEditUser}
+            setResetUserId={setResetUserId} setDisableUserId={setDisableUserId}
+          />
+        )}
+
+        {activeTab === "divisi" && (
+          <DivisiList 
+            divisis={divisis}
+            setFormDiv={setFormDiv}
+            setShowDivModal={setShowDivModal}
+            setDeleteDivId={setDeleteDivId}
+          />
+        )}
       </div>
-
-      {activeTab === "users" && (
-        <UserList 
-          filteredUsers={filteredUsers}
-          searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-          filterRole={filterRole} setFilterRole={setFilterRole}
-          filterUnit={filterUnit} setFilterUnit={setFilterUnit}
-          units={units}
-          openAddUser={openAddUser} openEditUser={openEditUser}
-          setResetUserId={setResetUserId} setDisableUserId={setDisableUserId}
-        />
-      )}
-
-      {activeTab === "divisi" && (
-        <DivisiList 
-          divisis={divisis}
-          setFormDiv={setFormDiv}
-          setShowDivModal={setShowDivModal}
-          setDeleteDivId={setDeleteDivId}
-        />
-      )}
 
       <UserModal 
         showUserModal={showUserModal} setShowUserModal={setShowUserModal}
