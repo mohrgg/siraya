@@ -83,7 +83,8 @@ export async function getYayasanDashboardData() {
         select: {
           murid: { where: { isActive: true } },
           jurusan: { where: { isDeleted: false } },
-          subKelas: { where: { isDeleted: false } }
+          subKelas: { where: { isDeleted: false } },
+          guru: { where: { isDeleted: false, isActive: true } }
         }
       },
       tingkat: {
@@ -107,14 +108,42 @@ export async function getYayasanDashboardData() {
     _count: u._count
   }))
 
-  const unitDistribution = unitsRaw.map(u => ({
-    name: u.name,
-    total: u._count.murid,
-    classes: u.tingkat.map(t => ({
-      name: t.name,
-      total: t.subKelas.reduce((sum, sk) => sum + sk._count.riwayatKelas, 0)
-    })).filter(t => t.total > 0).sort((a, b) => sortSchoolClasses(a.name, b.name))
-  }))
+  // Hitung kolektibilitas per unit
+  const tagihanUnitRaw = await prisma.tagihan.findMany({
+    select: {
+      jumlah: true,
+      sisaTagihan: true,
+      murid: { select: { unitSekolahId: true } }
+    }
+  })
+
+  const kolektibilitasMap = new Map<string, { jumlah: number, terbayar: number }>()
+  tagihanUnitRaw.forEach(t => {
+    const unitId = t.murid?.unitSekolahId
+    if (unitId) {
+      const data = kolektibilitasMap.get(unitId) || { jumlah: 0, terbayar: 0 }
+      data.jumlah += t.jumlah
+      data.terbayar += (t.jumlah - t.sisaTagihan)
+      kolektibilitasMap.set(unitId, data)
+    }
+  })
+
+  const unitDistribution = unitsRaw.map(u => {
+    const kData = kolektibilitasMap.get(u.id) || { jumlah: 0, terbayar: 0 }
+    const kolektibilitas = kData.jumlah > 0 ? Math.round((kData.terbayar / kData.jumlah) * 100) : null
+    
+    return {
+      name: u.name,
+      total: u._count.murid,
+      rombel: u._count.subKelas,
+      guru: u._count.guru,
+      kolektibilitas,
+      classes: u.tingkat.map(t => ({
+        name: t.name,
+        total: t.subKelas.reduce((sum, sk) => sum + sk._count.riwayatKelas, 0)
+      })).filter(t => t.total > 0).sort((a, b) => sortSchoolClasses(a.name, b.name))
+    }
+  })
 
   // 2. Komposisi Beasiswa
   const scholarshipCount = await prisma.murid.count({ where: { isActive: true, isScholarship: true } })

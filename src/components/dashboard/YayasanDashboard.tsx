@@ -73,14 +73,29 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
   const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
 
-  // Mock data for Performa Unit as requested by user
-  // This should ideally be fetched from the backend (unitData prop)
-  const performaUnitData = [
-    { unit: 'TK', siswa: 320, rombel: 12, guru: 28, kolektibilitas: 96, status: 'sehat' },
-    { unit: 'SD', siswa: 1240, rombel: 42, guru: 82, kolektibilitas: 94, status: 'sehat' },
-    { unit: 'SMP', siswa: 890, rombel: 35, guru: 76, kolektibilitas: 91, status: 'sehat' },
-    { unit: 'SMA', siswa: 795, rombel: 39, guru: 101, kolektibilitas: 88, status: 'perhatian' },
-  ]
+  const performaUnitData = unitData && unitData.length > 0 
+    ? unitData.map(u => {
+        let status = 'sehat'
+        if (u.kolektibilitas === null || u.kolektibilitas === undefined || isNaN(u.kolektibilitas)) {
+          status = 'N/A'
+        } else if (u.kolektibilitas < 50) {
+          status = 'kritis'
+        } else if (u.kolektibilitas < 80) {
+          status = 'perhatian'
+        }
+        
+        return {
+          unit: u.name,
+          siswa: u.total || 0,
+          rombel: u.rombel || 0,
+          guru: u.guru || 0,
+          kolektibilitas: u.kolektibilitas ?? 'N/A',
+          status
+        }
+      })
+    : []
+
+  const activeIncompleteData = incompleteData?.filter(d => d.incompleteCount > 0) || []
 
   return (
     <div className="flex flex-col gap-8 pb-12 animate-in fade-in duration-300">
@@ -305,27 +320,39 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
 
             <div className="flex-1 min-h-[240px] my-4 flex items-center justify-center">
               {genderData && genderData.length > 0 && genderData.some(d => d.value > 0) ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={genderData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={85}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {genderData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0' }} 
-                      formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Total']}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <div className="w-full flex flex-col items-center">
+                  <div className="w-full h-[180px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={genderData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={75}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {genderData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0' }} 
+                          formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Total']}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-3 mt-4 px-2">
+                    {genderData.map((d, i) => (
+                      <div key={i} className="flex items-center gap-1.5 text-xs">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color || COLORS[i % COLORS.length] }}></span>
+                        <span className="text-gray-600">{d.name} <span className="font-bold text-gray-900">({formatNumber(d.value)})</span></span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <p className="text-xs font-semibold text-gray-400">Data gender belum tersedia</p>
@@ -371,10 +398,10 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                     <td className="p-4 text-center font-medium">{formatNumber(row.siswa)}</td>
                     <td className="p-4 text-center font-medium">{formatNumber(row.rombel)}</td>
                     <td className="p-4 text-center font-medium">{formatNumber(row.guru)}</td>
-                    <td className="p-4 text-center font-medium">{row.kolektibilitas}%</td>
+                    <td className="p-4 text-center font-medium">{row.kolektibilitas === 'N/A' ? <span className="text-gray-400">-</span> : `${row.kolektibilitas}%`}</td>
                     <td className="p-4 text-center pr-6">
                       <div className="flex justify-center items-center gap-1.5">
-                        <div className={`w-2.5 h-2.5 rounded-full ${row.status === 'sehat' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                        <div className={`w-2.5 h-2.5 rounded-full ${row.status === 'sehat' ? 'bg-emerald-500' : row.status === 'N/A' ? 'bg-gray-400' : row.status === 'kritis' ? 'bg-rose-500' : 'bg-amber-500'}`} />
                         <span className="text-xs font-medium text-gray-500 capitalize">{row.status}</span>
                       </div>
                     </td>
@@ -539,7 +566,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
       </section>
 
       {/* SECTION 6: Peringatan (Warning) */}
-      {(incompleteData && incompleteData.length > 0) ? (
+      {activeIncompleteData.length > 0 ? (
         <section className="flex flex-col gap-4 mt-2">
           <div className="flex items-center gap-2 px-1">
             <div className="w-1.5 h-6 bg-rose-500 rounded-full"></div>
@@ -553,7 +580,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
               <h3 className="font-bold text-rose-800 text-sm">Data Tidak Lengkap Ditemukan</h3>
               <p className="text-xs text-rose-600 mt-1 mb-3">Beberapa unit memiliki data murid atau guru yang belum lengkap. Harap segera perbarui data untuk menjaga akurasi laporan.</p>
               <div className="flex flex-wrap gap-2">
-                {incompleteData.map((data, idx) => (
+                {activeIncompleteData.map((data, idx) => (
                   <span key={idx} className="bg-white border border-rose-100 text-rose-700 text-[11px] px-2.5 py-1 rounded-md font-semibold shadow-sm">
                     {data.unitName} ({data.incompleteCount} data belum lengkap)
                   </span>
