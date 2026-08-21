@@ -100,13 +100,13 @@ export default function ImportGuruModal({
         
         let statusKepegawaian = (row["Status Kepegawaian *"] || row["Status Kepegawaian"] || "").toString().trim()
         if (!statusKepegawaian) {
-          statusKepegawaian = "GTY"
+          statusKepegawaian = "-"
         }
 
         const errors: string[] = []
         if (!nama) errors.push("Nama Lengkap wajib diisi")
-        if (!["GTY", "GTT", "PNS", "DPK", "PPPK", "Honor", "Staf TU", "Satpam", "OB"].includes(statusKepegawaian)) {
-          errors.push(`Status Kepegawaian '${statusKepegawaian}' tidak valid. Hanya: GTY, GTT, PNS, DPK, PPPK, Honor, Staf TU, Satpam, OB.`)
+        if (!["-", "GTY", "GTT", "PNS", "DPK", "PPPK", "Honor", "Staf TU", "Satpam", "OB"].includes(statusKepegawaian)) {
+          errors.push(`Status Kepegawaian '${statusKepegawaian}' tidak valid. Hanya: -, GTY, GTT, PNS, DPK, PPPK, Honor, Staf TU, Satpam, OB.`)
         }
 
         return {
@@ -160,7 +160,7 @@ export default function ImportGuruModal({
     ]
     
     const sampleData = [
-      ["Budi Santoso, S.Pd", "198001012010011001", "L", "08123456789", "budi@example.com", "GTY", "S1 Pendidikan", "Guru Matematika", "BCA", "1234567890", "Budi Santoso"],
+      ["Budi Santoso, S.Pd", "198001012010011001", "L", "08123456789", "budi@example.com", "-", "S1 Pendidikan", "Guru Matematika", "BCA", "1234567890", "Budi Santoso"],
       ["Siti Aminah, M.Pd", "198502022012012002", "P", "08987654321", "siti@example.com", "GTY", "S2 Pendidikan", "Guru Bahasa Indonesia", "Mandiri", "0987654321", "Siti Aminah"]
     ]
 
@@ -174,6 +174,7 @@ export default function ImportGuruModal({
     
     const refHeaders = ["Status Kepegawaian", "Keterangan"]
     const refData = [
+      ["-", "Tanpa Status / Dikosongkan"],
       ["GTY", "Guru Tetap Yayasan"],
       ["GTT", "Guru Tidak Tetap"],
       ["PNS", "Pegawai Negeri Sipil"],
@@ -285,7 +286,7 @@ export default function ImportGuruModal({
                       Langkah 1: Gunakan Template Excel Resmi
                     </h3>
                     <p className="text-xs text-blue-800/80 leading-relaxed max-w-xl">
-                      Template terbaru memiliki 2 Sheet. Silakan baca Sheet 2 (Referensi) untuk melihat penulisan baku 'Status Kepegawaian' yang tidak boleh salah ketik (contoh: GTY, PNS). <strong>Jika kolom ini dikosongkan pada Excel, sistem otomatis menetapkannya sebagai GTY.</strong>
+                      Template terbaru memiliki 2 Sheet. Silakan baca Sheet 2 (Referensi) untuk melihat penulisan baku 'Status Kepegawaian' yang tidak boleh salah ketik. <strong>Jika kolom ini dikosongkan pada Excel, sistem otomatis menetapkannya sebagai "-" (Tanpa Status).</strong>
                     </p>
                   </div>
                   <button 

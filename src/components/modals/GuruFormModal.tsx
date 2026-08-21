@@ -38,7 +38,7 @@ export default function GuruFormModal({ isOpen, onClose, onSave, initialData, sc
     if (isOpen) {
       setFormData({
         ...initialData,
-        statusKepegawaian: initialData?.statusKepegawaian || "GTY",
+        statusKepegawaian: initialData?.statusKepegawaian || "-",
         pendidikan: initialData?.pendidikan || "S1",
         isActive: initialData?.isActive !== undefined ? initialData.isActive : true,
       })

@@ -1,8 +1,42 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { Building, Award, Briefcase, Hash, CheckCircle2 } from "lucide-react"
 import { Input } from "@/components/ui/Input"
+import { DynamicSelect } from "@/components/ui/DynamicSelect"
+import { getBidangStudiList, createBidangStudi, deleteBidangStudi } from "@/actions/bidang-studi"
 
 export default function TabKepegawaian({ formData, handleChange, schoolUnits }: any) {
+  const [opsiBidangStudi, setOpsiBidangStudi] = useState<any[]>([])
+
+  useEffect(() => {
+    if (formData.unitSekolahId) {
+      loadBidangStudi(formData.unitSekolahId)
+    } else {
+      setOpsiBidangStudi([])
+    }
+  }, [formData.unitSekolahId])
+
+  const loadBidangStudi = async (unitId: string) => {
+    const { data } = await getBidangStudiList(unitId)
+    setOpsiBidangStudi(data || [])
+  }
+
+  const handleAddBidangStudi = async (name: string) => {
+    if (!formData.unitSekolahId) return alert("Pilih Unit Sekolah terlebih dahulu")
+    const { data, error } = await createBidangStudi(name, formData.unitSekolahId)
+    if (error) alert(error)
+    else if (data) {
+      setOpsiBidangStudi(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+      handleChange("bidangStudiId", data.id)
+    }
+  }
+
+  const handleDeleteBidangStudi = async (id: string) => {
+    const { error } = await deleteBidangStudi(id)
+    if (error) alert(error)
+    else {
+      setOpsiBidangStudi(prev => prev.filter(o => o.id !== id))
+    }
+  }
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-start gap-3.5">
@@ -43,10 +77,11 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits }: 
           </label>
           <select 
             className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium text-sm transition-all" 
-            value={formData.statusKepegawaian || "GTY"} 
+            value={formData.statusKepegawaian || "-"} 
             onChange={e => handleChange("statusKepegawaian", e.target.value)}
             required
           >
+            <option value="-">- (Tanpa Status / Kosong)</option>
             <option value="GTY">GTY (Guru Tetap Yayasan)</option>
             <option value="GTT">GTT (Honorer / Tidak Tetap)</option>
             <option value="PNS">PNS / DPK</option>
@@ -59,12 +94,18 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits }: 
             <Briefcase size={15} className="text-primary" />
             Bidang Studi / Tugas Mengajar Utama
           </label>
-          <Input 
-            placeholder="Cth: Guru Kelas 1 / Guru Matematika & Fisika / Staf Administrasi" 
-            value={formData.bidangStudi || ""} 
-            onChange={e => handleChange("bidangStudi", e.target.value)} 
+          <DynamicSelect 
+            value={formData.bidangStudiId || ""}
+            onChange={(val) => handleChange("bidangStudiId", val)}
+            options={opsiBidangStudi}
+            onAdd={handleAddBidangStudi}
+            onDelete={handleDeleteBidangStudi}
+            placeholder="Pilih Bidang Studi..."
+            disabled={!formData.unitSekolahId}
           />
-          <span className="text-[11px] text-text-muted">Jelaskan mata pelajaran yang diampu atau tanggung jawab administrasi.</span>
+          {!formData.unitSekolahId && (
+            <span className="text-[11px] text-amber-500">Pilih unit sekolah terlebih dahulu untuk melihat opsi bidang studi.</span>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">

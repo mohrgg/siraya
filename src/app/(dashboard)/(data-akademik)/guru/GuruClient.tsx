@@ -50,7 +50,8 @@ type Guru = {
   email: string | null
   statusKepegawaian: string
   pendidikan: string | null
-  bidangStudi: string | null
+  bidangStudiId: string | null
+  bidangStudi?: { id: string; name: string } | null
   bankName: string | null
   bankAccount: string | null
   bankAccountName: string | null
@@ -124,9 +125,9 @@ export default function GuruClient({
     gender: "Laki-laki",
     phone: "",
     email: "",
-    statusKepegawaian: "GTY",
+    statusKepegawaian: "-",
     pendidikan: "S1",
-    bidangStudi: "Guru Kelas / Mata Pelajaran",
+    bidangStudiId: "",
     bankName: "",
     bankAccount: "",
     bankAccountName: "",
@@ -152,9 +153,9 @@ export default function GuruClient({
       gender: item.gender || "Laki-laki",
       phone: item.phone || "",
       email: item.email || "",
-      statusKepegawaian: item.statusKepegawaian || "GTY",
+      statusKepegawaian: item.statusKepegawaian || "-",
       pendidikan: item.pendidikan || "S1",
-      bidangStudi: item.bidangStudi || "",
+      bidangStudiId: item.bidangStudiId || "",
       bankName: item.bankName || "",
       bankAccount: item.bankAccount || "",
       bankAccountName: item.bankAccountName || "",
@@ -236,7 +237,7 @@ export default function GuruClient({
         const q = searchTerm.toLowerCase()
         const matchName = item.name.toLowerCase().includes(q)
         const matchNip = (item.nip || "").toLowerCase().includes(q)
-        const matchBidang = (item.bidangStudi || "").toLowerCase().includes(q)
+        const matchBidang = (item.bidangStudi?.name || "").toLowerCase().includes(q)
         if (!matchName && !matchNip && !matchBidang) return false
       }
       return true
@@ -265,7 +266,7 @@ export default function GuruClient({
         "Unit Sekolah": g.unitSekolah?.name || "-",
         "Status": g.statusKepegawaian,
         "Pendidikan": g.pendidikan || "-",
-        "Bidang Studi / Tugas": g.bidangStudi || "-",
+        "Bidang Studi / Tugas": g.bidangStudi?.name || "-",
         "No. WhatsApp": g.phone || "-",
         "Email": g.email || "-",
         "Nama Bank": g.bankName || "-",
@@ -458,8 +459,8 @@ export default function GuruClient({
                         </span>
                       </td>
                       <td className="p-4 hidden lg:table-cell">
-                        <div className="text-sm font-medium text-text-main truncate max-w-[200px]" title={item.bidangStudi || ""}>
-                          {item.bidangStudi || "Belum Ditugaskan"}
+                        <div className="text-sm font-medium text-text-main truncate max-w-[200px]" title={item.bidangStudi?.name || ""}>
+                          {item.bidangStudi?.name || "Belum Ditugaskan"}
                         </div>
                         <div className="text-xs text-text-muted mt-1">
                           Pend. Terakhir: <span className="font-semibold">{item.pendidikan || "-"}</span>

@@ -18,7 +18,7 @@ export async function getGuruList(unitSekolahId?: string) {
   return prisma.guru.findMany({
     where,
     orderBy: { name: "asc" },
-    include: { unitSekolah: true }
+    include: { unitSekolah: true, bidangStudi: true }
   })
 }
 
@@ -51,7 +51,7 @@ export async function getGuruPaginated({
     where.OR = [
       { name: { contains: search, mode: "insensitive" } },
       { nip: { contains: search, mode: "insensitive" } },
-      { bidangStudi: { contains: search, mode: "insensitive" } }
+      { bidangStudi: { name: { contains: search, mode: "insensitive" } } }
     ]
   }
 
@@ -64,6 +64,7 @@ export async function getGuruPaginated({
       take: limit,
       include: {
         unitSekolah: true,
+        bidangStudi: true,
         rombelWali: {
           where: { isDeleted: false },
           select: { id: true, name: true }

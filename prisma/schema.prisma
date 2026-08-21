@@ -66,6 +66,7 @@ model UnitSekolah {
   guru              Guru[]
   murid             Murid[]
   pengguna          Pengguna[]
+  bidangStudi       BidangStudi[]
   akunDetail        AkunDetail[]
   transaksi         Transaksi[]
 }
@@ -128,6 +129,20 @@ model SubKelas {
   riwayatKelas    RiwayatKelas[]
 }
 
+model BidangStudi {
+  id              String      @id @default(cuid())
+  name            String      @db.VarChar(100)
+  unitSekolahId   String
+  isDeleted       Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  unitSekolah     UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  guru            Guru[]
+
+  @@unique([name, unitSekolahId]) // Nama Bidang Studi harus unik per unit sekolah
+}
+
 model Guru {
   id                String      @id @default(cuid())
   nip               String?     @db.VarChar(50)
@@ -135,9 +150,9 @@ model Guru {
   gender            String      @db.VarChar(20)
   phone             String?     @db.VarChar(50)
   email             String?     @db.VarChar(100)
-  statusKepegawaian String      @default("GTY") @db.VarChar(50)
+  statusKepegawaian String      @default("-") @db.VarChar(50)
   pendidikan        String?     @db.VarChar(50)
-  bidangStudi       String?     @db.VarChar(100)
+  bidangStudiId     String?
   bankName          String?     @db.VarChar(50)
   bankAccount       String?     @db.VarChar(50)
   bankAccountName   String?     @db.VarChar(150)
@@ -149,8 +164,10 @@ model Guru {
 
   unitSekolah       UnitSekolah @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
   rombelWali        SubKelas[]  @relation("GuruWaliKelas")
+  bidangStudi       BidangStudi? @relation(fields: [bidangStudiId], references: [id])
 
   @@index([unitSekolahId])
+  @@index([bidangStudiId])
 }
 
 model Murid {

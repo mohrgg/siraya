@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
       const noTelp = (row["No Telepon"] || "").toString().trim()
       const email = (row["Email"] || "").toString().trim()
-      const statusKepegawaian = (row["Status Kepegawaian *"] || row["Status Kepegawaian"] || "GTY").toString().trim()
+      const statusKepegawaian = (row["Status Kepegawaian *"] || row["Status Kepegawaian"] || "-").toString().trim()
       const pendidikan = (row["Pendidikan Terakhir"] || "").toString().trim()
       const bidangStudi = (row["Bidang Studi"] || "").toString().trim()
       
@@ -61,6 +61,26 @@ export async function POST(req: Request) {
       }
 
       try {
+        let bidangStudiId = null;
+        if (bidangStudi) {
+          let bsRecord = await prisma.bidangStudi.findFirst({
+            where: {
+              name: { equals: bidangStudi, mode: 'insensitive' },
+              unitSekolahId: unitId
+            }
+          });
+          
+          if (!bsRecord) {
+            bsRecord = await prisma.bidangStudi.create({
+              data: {
+                name: bidangStudi,
+                unitSekolahId: unitId
+              }
+            });
+          }
+          bidangStudiId = bsRecord.id;
+        }
+
         await prisma.guru.create({
           data: {
             name: nama,
@@ -70,7 +90,7 @@ export async function POST(req: Request) {
             email: email || null,
             statusKepegawaian: statusKepegawaian,
             pendidikan: pendidikan || null,
-            bidangStudi: bidangStudi || null,
+            bidangStudiId: bidangStudiId,
             bankName: bankName || null,
             bankAccount: bankAccount || null,
             bankAccountName: bankAccountName || null,
