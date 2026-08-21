@@ -49,6 +49,7 @@ next-env.d.ts
 # AI tools & agents
 AGENTS.md
 CLAUDE.md
+/.planning
 
 # Dev Tools & Scripts
 .dev-tools/
@@ -59,3 +60,5 @@ CLAUDE.md
 /test-results
 playwright.config.ts
 public/uploads/murid
+
+#

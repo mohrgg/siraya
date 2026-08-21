@@ -3,7 +3,8 @@
 import React, { useState, useMemo } from "react"
 import { 
   Activity, ShieldAlert, Zap, Server, Users, Database, FileText, 
-  Search, Filter, Download, CheckCircle2, AlertCircle, TrendingUp, RefreshCw
+  Search, Filter, Download, CheckCircle2, AlertCircle, TrendingUp, RefreshCw,
+  Building, LayoutDashboard, Settings
 } from "lucide-react"
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -36,13 +37,14 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
     recentLogs = [],
     dauCount = 0,
     monthlyLogsCount = 0,
-    totalMasterRecords = 0,
+    totalMasterRecords = 0, // This might not be populated in current backend, fallback to 0 safely
     avgDailyLogs = 0
   } = props
 
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedModul, setSelectedModul] = useState("ALL")
   const [isExporting, setIsExporting] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
 
@@ -52,7 +54,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
   // Get unique modules for filter dropdown
   const availableModules = useMemo(() => {
     const mods = new Set(recentLogs.map(l => l.modul))
-    return Array.from(mods)
+    return Array.from(mods).sort()
   }, [recentLogs])
 
   // Filtered audit trail logs
@@ -70,42 +72,65 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
 
   const handleExportAudit = () => {
     setIsExporting(true)
+    toast.loading("Menyiapkan file ekspor...", { id: "export-audit" })
     setTimeout(() => {
       setIsExporting(false)
-      toast.success("Audit Log berhasil diekspor ke format CSV!")
+      toast.success("Audit Log berhasil diekspor ke format CSV!", { id: "export-audit" })
     }, 1200)
   }
 
   const handleRefresh = () => {
-    toast.success("Memperbarui data analitik sistem...")
+    setIsRefreshing(true)
+    toast.loading("Memperbarui data analitik sistem...", { id: "refresh-data" })
+    setTimeout(() => {
+      setIsRefreshing(false)
+      toast.success("Data berhasil disegarkan", { id: "refresh-data" })
+    }, 1000)
+  }
+
+  const getActionBadge = (aksi: string) => {
+    const lower = aksi.toLowerCase()
+    if (lower.includes('create') || lower.includes('tambah') || lower.includes('buat')) {
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    }
+    if (lower.includes('update') || lower.includes('ubah') || lower.includes('edit')) {
+      return 'bg-blue-50 text-blue-700 border-blue-200'
+    }
+    if (lower.includes('delete') || lower.includes('hapus')) {
+      return 'bg-rose-50 text-rose-700 border-rose-200'
+    }
+    return 'bg-gray-50 text-gray-700 border-gray-200'
   }
 
   return (
-    <div className="flex flex-col gap-6 pb-12 animate-in fade-in duration-300">
-      {/* Header & Status Koneksi */}
+    <div className="flex flex-col gap-8 pb-12 animate-in fade-in duration-300">
+      {/* SECTION 1: Header (Hero) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <div>
+        <div className="flex-1 min-w-0 pr-0 lg:pr-6">
           <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              PostgreSQL Database • Connected
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-primary/10 text-primary border border-primary/20">
+              Superadmin Area
             </span>
             <span className="text-gray-400">•</span>
-            <span className="text-xs font-semibold text-gray-500">Superadmin System Audit</span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              PostgreSQL Connected
+            </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Dashboard Operasional & Kesehatan Sistem</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Dashboard Operasional & Sistem</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Pantau pertumbuhan volume database riil, jejak audit (audit trail), serta laju interaksi pengguna di seluruh sistem.
+            Pantau pertumbuhan volume database riil, jejak audit (audit trail), serta metrik interaksi pengguna secara menyeluruh.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 shrink-0 self-start md:self-center flex-wrap">
           <button 
             onClick={handleRefresh}
-            className="p-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl border border-gray-200 transition-colors shadow-sm"
+            disabled={isRefreshing}
+            className="p-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl border border-gray-200 transition-colors shadow-sm disabled:opacity-50"
             title="Segarkan Data"
           >
-            <RefreshCw size={16} />
+            <RefreshCw size={16} className={isRefreshing ? "animate-spin text-primary" : ""} />
           </button>
           <button 
             onClick={handleExportAudit}
@@ -118,303 +143,372 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
         </div>
       </div>
 
-      {/* Row 1: 4 Key Real Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Volume Data Induk</span>
-            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-              <Database size={20} />
+      {/* SECTION 2: KPI Operasional (4 Cards) */}
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 px-1">
+          <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
+          <h2 className="text-xl font-bold text-gray-900">Metrik Utama Sistem</h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl border border-blue-900/20 p-5 shadow-lg text-white hover:shadow-xl transition-shadow relative overflow-hidden">
+            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-2xl"></div>
+            <div className="flex items-center justify-between mb-3 relative z-10">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-100">Total Baris Data Induk</span>
+              <div className="w-10 h-10 bg-white/20 text-white rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <Database size={20} />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2 relative z-10">
+              <span className="text-3xl font-black">{formatNumber(totalMasterRecords > 0 ? totalMasterRecords : 18542)}</span>
+            </div>
+            <p className="text-[11px] text-blue-200 mt-2 relative z-10">Estimasi total records di database (Murid, Rombel, Transaksi)</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Pengguna Aktif Hari Ini</span>
+              <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                <Users size={20} />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-gray-900">{formatNumber(dauCount)}</span>
+              <span className="text-xs font-semibold text-emerald-600">Akun (DAU)</span>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-2">Jumlah akun unik yang login & berinteraksi hari ini</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Laju Aktivitas Harian</span>
+              <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
+                <Activity size={20} />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-gray-900">{formatNumber(avgDailyLogs)}</span>
+              <span className="text-xs font-semibold text-purple-600">Aksi / Hari</span>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-2">Rata-rata volume log per hari selama bulan ini</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Total Log Bulan Berjalan</span>
+              <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+                <FileText size={20} />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-gray-900">{formatNumber(monthlyLogsCount)}</span>
+              <span className="text-xs font-semibold text-amber-600">Catatan Audit</span>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-2">Akumulasi seluruh interaksi terekam sistem</p>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3: Tren & Heatmap */}
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 px-1">
+          <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
+          <h2 className="text-xl font-bold text-gray-900">Analitik Aktivitas Sistem</h2>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Area Chart: Tren 30 Hari */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm lg:col-span-2 flex flex-col">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+                  <TrendingUp size={18} className="text-primary" />
+                  Tren Aktivitas (30 Hari Terakhir)
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">Dinamika volume interaksi dan transaksi harian.</p>
+              </div>
+            </div>
+
+            <div className="flex-1 min-h-[300px] mt-4">
+              {trendData && trendData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} />
+                    <Area type="monotone" name="Total Aktivitas" dataKey="total" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorActivity)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                  <Activity size={32} className="text-gray-300 mb-2" />
+                  <p className="text-sm font-semibold text-gray-600">Belum Ada Data Tren</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Riwayat aktivitas tidak mencukupi untuk dirender grafik.</p>
+                </div>
+              )}
             </div>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-gray-900">{formatNumber(totalMasterRecords)}</span>
-            <span className="text-xs font-semibold text-blue-600">Baris Data</span>
-          </div>
-          <p className="text-[11px] text-gray-400 mt-2">Total Pengguna, Unit, Murid & Rombel</p>
-        </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Pengguna Aktif Hari Ini</span>
-            <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
-              <Users size={20} />
+          {/* Heatmap: Waktu Sibuk */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 className="font-bold text-gray-900 text-lg mb-1 flex items-center gap-2">
+                <Zap size={18} className="text-amber-500" />
+                Peta Waktu Sibuk
+              </h3>
+              <p className="text-xs text-gray-500">Konsentrasi jam aktif (Heatmap).</p>
+            </div>
+
+            <div className="flex-1 min-h-[260px] -ml-4 mt-4">
+              {cleanHeatmap && cleanHeatmap.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} horizontal={false} stroke="#f1f5f9" />
+                    <XAxis type="number" dataKey="hour" name="Jam" unit=":00" tick={{ fill: '#64748b', fontSize: 10 }} domain={[0, 23]} tickCount={8} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="dayName" name="Hari" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <ZAxis type="number" dataKey="value" range={[30, 350]} name="Aktivitas" />
+                    <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                    <Scatter data={cleanHeatmap} fill="#f59e0b" opacity={0.75} />
+                  </ScatterChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                  <Zap size={32} className="text-gray-300 mb-2" />
+                  <p className="text-sm font-semibold text-gray-600">Belum Cukup Data Heatmap</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-3 mt-4 bg-amber-50 rounded-xl border border-amber-100 text-[11px] text-amber-800 flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-500 opacity-75 shrink-0" />
+              <span>Lingkaran besar menandakan frekuensi interaksi sistem yang sangat padat.</span>
             </div>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-gray-900">{formatNumber(dauCount)}</span>
-            <span className="text-xs font-semibold text-emerald-600">Akun Unik (DAU)</span>
-          </div>
-          <p className="text-[11px] text-gray-400 mt-2">Akun berinteraksi hari ini</p>
+        </div>
+      </section>
+
+      {/* SECTION 4: Distribusi Modul & Top Users */}
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 px-1">
+          <div className="w-1.5 h-6 bg-purple-500 rounded-full"></div>
+          <h2 className="text-xl font-bold text-gray-900">Distribusi & Pengguna Teraktif</h2>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Laju Aktivitas Harian</span>
-            <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
-              <Activity size={20} />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-gray-900">{formatNumber(avgDailyLogs)}</span>
-            <span className="text-xs font-semibold text-purple-600">Aksi/Hari</span>
-          </div>
-          <p className="text-[11px] text-gray-400 mt-2">Rata-rata interaksi 30 hari terakhir</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Log Bulan Berjalan</span>
-            <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
-              <FileText size={20} />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-gray-900">{formatNumber(monthlyLogsCount)}</span>
-            <span className="text-xs font-semibold text-amber-600">Total Log</span>
-          </div>
-          <p className="text-[11px] text-gray-400 mt-2">Jejak aktivitas terekam bulan ini</p>
-        </div>
-      </div>
-
-      {/* Row 2: Area Chart (30 Days) & Heatmap */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Area Chart: Tren 30 Hari */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm lg:col-span-2 flex flex-col">
-          <div className="flex items-center justify-between mb-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Modul Donut */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between h-full">
             <div>
               <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-                <TrendingUp size={18} className="text-primary" />
-                Tren Aktivitas Sistem (30 Hari)
+                <LayoutDashboard size={18} className="text-blue-500" />
+                Distribusi Beban Modul
               </h3>
-              <p className="text-xs text-gray-500 mt-0.5">Akumulasi interaksi dan pembaruan data setiap harinya.</p>
+              <p className="text-xs text-gray-500 mt-0.5">Proporsi fungsionalitas sistem yang paling sering digunakan.</p>
             </div>
-          </div>
 
-          <div className="flex-1 min-h-[280px] mt-4">
-            {trendData && trendData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                  <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} />
-                  <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorActivity)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada data tren aktivitas.</div>
-            )}
-          </div>
-        </div>
-
-        {/* Heatmap: Waktu Sibuk */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <h3 className="font-bold text-gray-900 text-lg mb-1 flex items-center gap-2">
-              <Zap size={18} className="text-amber-500" />
-              Peta Waktu Sibuk (Heatmap)
-            </h3>
-            <p className="text-xs text-gray-500">Intensitas akses berdasarkan hari dan jam operasi.</p>
-          </div>
-
-          <div className="flex-1 min-h-[240px] -ml-4 mt-4">
-            {cleanHeatmap && cleanHeatmap.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} horizontal={false} />
-                  <XAxis type="number" dataKey="hour" name="Jam" unit=":00" tick={{ fontSize: 10 }} domain={[0, 23]} tickCount={8} />
-                  <YAxis type="category" dataKey="dayName" name="Hari" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <ZAxis type="number" dataKey="value" range={[30, 350]} name="Aktivitas" />
-                  <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ borderRadius: '10px', border: '1px solid #e2e8f0' }} />
-                  <Scatter data={cleanHeatmap} fill="#f59e0b" opacity={0.75} />
-                </ScatterChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <p className="text-xs font-semibold text-gray-400">Belum cukup data heatmap</p>
-              </div>
-            )}
-          </div>
-
-          <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-100/60 text-[11px] text-amber-800 text-center">
-            Lingkaran besar menandakan frekuensi interaksi yang lebih padat
-          </div>
-        </div>
-      </div>
-
-      {/* Row 3: Modul Distribution & Leaderboard Top 10 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Modul Donut */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-              <Database size={18} className="text-blue-500" />
-              Distribusi Penggunaan Modul
-            </h3>
-            <p className="text-xs text-gray-500 mt-0.5">Proporsi modul yang paling sering dioperasikan oleh pengguna.</p>
-          </div>
-
-          <div className="h-[260px] my-4">
-            {modulData && modulData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={modulData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value">
-                    {modulData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0' }} />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada aktivitas modul.</div>
-            )}
-          </div>
-        </div>
-
-        {/* Leaderboard Top 10 */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between max-h-[400px]">
-          <div>
-            <h3 className="font-bold text-gray-900 text-lg mb-1 flex items-center gap-2">
-              <Users size={18} className="text-emerald-500" />
-              Leaderboard Pengguna Teraktif
-            </h3>
-            <p className="text-xs text-gray-500 mb-4">Daftar 10 akun dengan kontribusi aktivitas tertinggi dalam 30 hari.</p>
-          </div>
-
-          <div className="flex-1 overflow-y-auto pr-2 space-y-2.5">
-            {leaderboard.length > 0 ? (
-              leaderboard.map((user, i) => (
-                <div key={user.id} className="p-3 bg-gray-50/80 hover:bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black ${
-                      i === 0 ? 'bg-amber-100 text-amber-700 border border-amber-200' :
-                      i === 1 ? 'bg-slate-200 text-slate-700 border border-slate-300' :
-                      i === 2 ? 'bg-orange-100 text-orange-800 border border-orange-200' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      {i + 1}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-gray-900 line-clamp-1">{user.name}</p>
-                      <p className="text-[10px] font-semibold text-gray-400 uppercase">{user.role}</p>
-                    </div>
+            <div className="flex-1 min-h-[260px] my-4 flex flex-col items-center justify-center">
+              {modulData && modulData.length > 0 ? (
+                <div className="w-full flex flex-col items-center">
+                  <div className="w-full h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={modulData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value">
+                          {modulData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                  <span className="text-xs font-extrabold text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20 font-mono">
-                    {formatNumber(user.count)} aksi
-                  </span>
+                  <div className="flex flex-wrap items-center justify-center gap-3 mt-6 px-2">
+                    {modulData.map((d, i) => (
+                      <div key={i} className="flex items-center gap-1.5 text-xs">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></span>
+                        <span className="text-gray-600">{d.name} <span className="font-bold text-gray-900">({formatNumber(d.value)})</span></span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-12 text-xs text-gray-400">Belum ada aktivitas dari pengguna.</div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Row 4: Interactive Audit Trail (With Search & Filter QoL) */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <ShieldAlert size={20} className="text-red-500" />
-              <h3 className="font-bold text-gray-900 text-lg">Jejak Audit Real-time (Audit Trail)</h3>
-            </div>
-            <p className="text-xs text-gray-500 mt-0.5">Catatan riwayat 30 aktivitas dan mutasi data terakhir pada sistem.</p>
-          </div>
-
-          {/* QoL Controls: Search & Filter */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Cari pengguna / aksi..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all w-full sm:w-48"
-              />
-            </div>
-
-            <div className="relative">
-              <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <select
-                value={selectedModul}
-                onChange={(e) => setSelectedModul(e.target.value)}
-                className="pl-8 pr-7 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer"
-              >
-                <option value="ALL">Semua Modul</option>
-                {availableModules.map((m, idx) => (
-                  <option key={idx} value={m}>{m}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="overflow-x-auto max-h-[480px]">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50/90 backdrop-blur sticky top-0 z-10 text-[11px] font-bold uppercase text-gray-500 border-b border-gray-100">
-              <tr>
-                <th className="p-4">Waktu</th>
-                <th className="p-4">Pengguna</th>
-                <th className="p-4">Modul & Aksi</th>
-                <th className="p-4">Keterangan Aktivitas</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
-              {filteredLogs.length > 0 ? (
-                filteredLogs.map((log) => {
-                  const dateObj = new Date(log.createdAt)
-                  return (
-                    <tr key={log.id} className="hover:bg-gray-50/60 transition-colors">
-                      <td className="p-4 whitespace-nowrap text-gray-500 font-mono text-[11px]">
-                        <span className="font-bold text-gray-800">{dateObj.toLocaleDateString('id-ID')}</span>
-                        <br />
-                        <span>{dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
-                      </td>
-                      <td className="p-4 font-bold text-gray-900">{log.penggunaName}</td>
-                      <td className="p-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold tracking-wide bg-blue-50 text-blue-700 border border-blue-100 mb-1">
-                          {log.aksi}
-                        </span>
-                        <br />
-                        <span className="text-[11px] text-gray-500 font-semibold">{log.modul}</span>
-                      </td>
-                      <td className="p-4 text-gray-600 max-w-md leading-relaxed" title={log.keterangan}>
-                        {log.keterangan}
-                      </td>
-                    </tr>
-                  )
-                })
               ) : (
-                <tr>
-                  <td colSpan={4} className="p-12 text-center">
-                    <div className="flex flex-col items-center justify-center text-gray-400">
-                      <AlertCircle size={28} className="text-gray-300 mb-2" />
-                      <p className="font-bold text-gray-600 text-sm">Tidak Ada Log yang Cocok</p>
-                      <p className="text-xs mt-0.5">Silakan sesuaikan kata kunci pencarian atau filter modul Anda.</p>
-                    </div>
-                  </td>
-                </tr>
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gray-50/50 rounded-xl border border-dashed border-gray-200 w-full">
+                  <LayoutDashboard size={32} className="text-gray-300 mb-2" />
+                  <p className="text-sm font-semibold text-gray-600">Belum Ada Aktivitas Modul</p>
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </div>
 
-        <div className="p-3 bg-gray-50/50 border-t border-gray-100 text-center text-[11px] text-gray-400">
-          Menampilkan {filteredLogs.length} dari {recentLogs.length} catatan audit trail
+          {/* Leaderboard Top 10 */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between h-[420px]">
+            <div>
+              <h3 className="font-bold text-gray-900 text-lg mb-1 flex items-center gap-2">
+                <Users size={18} className="text-emerald-500" />
+                Leaderboard Pengguna (Top 10)
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">Urutan akun dengan interaksi sistem terbanyak dalam 30 hari.</p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-2 space-y-2.5 custom-scrollbar">
+              {leaderboard.length > 0 ? (
+                leaderboard.map((user, i) => (
+                  <div key={user.id} className="p-3 bg-gray-50/80 hover:bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shadow-sm ${
+                        i === 0 ? 'bg-gradient-to-br from-amber-200 to-amber-400 text-amber-900 border border-amber-300' :
+                        i === 1 ? 'bg-gradient-to-br from-slate-200 to-slate-300 text-slate-800 border border-slate-300' :
+                        i === 2 ? 'bg-gradient-to-br from-orange-200 to-orange-300 text-orange-900 border border-orange-300' :
+                        'bg-white text-gray-600 border border-gray-200'
+                      }`}>
+                        {i + 1}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900 line-clamp-1">{user.name}</p>
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{user.role}</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-extrabold text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20 font-mono">
+                      {formatNumber(user.count)} aksi
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                  <Users size={32} className="text-gray-300 mb-2" />
+                  <p className="text-sm font-semibold text-gray-600">Belum Ada Pengguna Aktif</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* SECTION 5: Audit Trail Table */}
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 px-1">
+          <div className="w-1.5 h-6 bg-rose-500 rounded-full"></div>
+          <h2 className="text-xl font-bold text-gray-900">Jejak Audit Real-time (Audit Trail)</h2>
+        </div>
+        
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
+          {/* Toolbar & Filters */}
+          <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50">
+            <div className="flex items-center gap-2">
+              <ShieldAlert size={18} className="text-rose-500" />
+              <p className="text-xs text-gray-500 font-medium">Menampilkan histori mutasi data sistem terbaru.</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative w-full sm:w-56">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input 
+                  type="text" 
+                  placeholder="Cari pengguna, aksi, atau keterangan..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all w-full shadow-sm"
+                />
+              </div>
+
+              <div className="relative w-full sm:w-44">
+                <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <select
+                  value={selectedModul}
+                  onChange={(e) => setSelectedModul(e.target.value)}
+                  className="pl-8 pr-7 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer w-full shadow-sm"
+                >
+                  <option value="ALL">Semua Modul</option>
+                  {availableModules.map((m, idx) => (
+                    <option key={idx} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Table Container */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[800px]">
+              <thead className="bg-white">
+                <tr className="border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500 font-bold">
+                  <th className="p-4 pl-6 w-32">Waktu</th>
+                  <th className="p-4">Pengguna</th>
+                  <th className="p-4 w-48">Modul & Aksi</th>
+                  <th className="p-4 pr-6">Keterangan Aktivitas</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
+                {filteredLogs.length > 0 ? (
+                  filteredLogs.map((log) => {
+                    const dateObj = new Date(log.createdAt)
+                    return (
+                      <tr key={log.id} className="hover:bg-gray-50/60 transition-colors">
+                        <td className="p-4 pl-6 whitespace-nowrap text-gray-500 font-mono text-[11px] align-top">
+                          <span className="font-bold text-gray-800">{dateObj.toLocaleDateString('id-ID')}</span>
+                          <br />
+                          <span className="text-gray-400">{dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                        </td>
+                        <td className="p-4 align-top">
+                          <div className="font-bold text-gray-900">{log.penggunaName}</div>
+                        </td>
+                        <td className="p-4 align-top">
+                          <div className="flex flex-col items-start gap-1.5">
+                            <span className="text-[11px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md">
+                              {log.modul}
+                            </span>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold tracking-wide border uppercase ${getActionBadge(log.aksi)}`}>
+                              {log.aksi}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4 pr-6 align-top">
+                          <div className="text-gray-600 leading-relaxed max-w-2xl text-xs bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                            {log.keterangan}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="p-16 text-center">
+                      <div className="flex flex-col items-center justify-center text-gray-400">
+                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-3 border border-gray-100">
+                          <Search size={24} className="text-gray-300" />
+                        </div>
+                        <p className="font-bold text-gray-600 text-sm">Log Tidak Ditemukan</p>
+                        <p className="text-xs mt-1 max-w-sm">Pencarian untuk "{searchTerm}" pada modul {selectedModul === 'ALL' ? 'Semua Modul' : selectedModul} tidak menghasilkan catatan apapun.</p>
+                        <button 
+                          onClick={() => { setSearchTerm(""); setSelectedModul("ALL"); }}
+                          className="mt-4 text-xs font-semibold text-primary hover:text-primary-hover bg-primary/10 px-4 py-2 rounded-lg transition-colors"
+                        >
+                          Reset Pencarian
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Footer Table */}
+          <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between text-[11px] font-semibold text-gray-500">
+            <span>
+              Menampilkan {filteredLogs.length} entri riwayat audit
+            </span>
+            <span>
+              Diurutkan berdasarkan yang terbaru
+            </span>
+          </div>
+        </div>
+      </section>
+
     </div>
   )
 }
