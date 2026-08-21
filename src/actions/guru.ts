@@ -18,7 +18,7 @@ export async function getGuruList(unitSekolahId?: string) {
   return prisma.guru.findMany({
     where,
     orderBy: { name: "asc" },
-    include: { unitSekolah: true, bidangStudi: true }
+    include: { unitSekolah: true, bidangStudi: true, rombelWali: true } as any
   })
 }
 
@@ -69,7 +69,7 @@ export async function getGuruPaginated({
           where: { isDeleted: false },
           select: { id: true, name: true }
         }
-      }
+      } as any
     })
   ])
 
@@ -89,7 +89,7 @@ export async function tambahGuru(data: {
   email?: string
   statusKepegawaian?: string
   pendidikan?: string
-  bidangStudi?: string
+  bidangStudiId?: string
   bankName?: string
   bankAccount?: string
   bankAccountName?: string
@@ -108,11 +108,11 @@ export async function tambahGuru(data: {
       phone: guruData.phone || null,
       email: guruData.email || null,
       pendidikan: guruData.pendidikan || null,
-      bidangStudi: guruData.bidangStudi || null,
-      bankName: guruData.bankName || null,
+      bidangStudiId: guruData.bidangStudiId || null,
       bankAccount: guruData.bankAccount || null,
       bankAccountName: guruData.bankAccountName || null
-    }
+    },
+    include: { unitSekolah: true, bidangStudi: true } as any
   })
 
   revalidatePath("/guru")
@@ -128,7 +128,7 @@ export async function editGuru(id: string, data: {
   email?: string
   statusKepegawaian?: string
   pendidikan?: string
-  bidangStudi?: string
+  bidangStudiId?: string
   bankName?: string
   bankAccount?: string
   bankAccountName?: string
@@ -149,11 +149,11 @@ export async function editGuru(id: string, data: {
       phone: guruData.phone === "" ? null : guruData.phone,
       email: guruData.email === "" ? null : guruData.email,
       pendidikan: guruData.pendidikan === "" ? null : guruData.pendidikan,
-      bidangStudi: guruData.bidangStudi === "" ? null : guruData.bidangStudi,
-      bankName: guruData.bankName === "" ? null : guruData.bankName,
+      bidangStudiId: guruData.bidangStudiId === "" ? null : guruData.bidangStudiId,
       bankAccount: guruData.bankAccount === "" ? null : guruData.bankAccount,
       bankAccountName: guruData.bankAccountName === "" ? null : guruData.bankAccountName
-    }
+    },
+    include: { unitSekolah: true, bidangStudi: true } as any
   })
 
   // Jika guru ini menjadi wali kelas di rombel, update juga snapshot string-nya

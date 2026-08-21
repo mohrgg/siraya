@@ -1,12 +1,12 @@
 "use server"
 
-import { prisma } from "@/lib/prisma"
+import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
-import { getUserAndRole } from "./user-action"
+import { auth } from "@/lib/auth"
 
 export async function getBidangStudiList(unitSekolahId: string) {
   try {
-    const list = await prisma.bidangStudi.findMany({
+    const list = await (prisma as any).bidangStudi.findMany({
       where: {
         unitSekolahId,
         isDeleted: false
@@ -24,37 +24,41 @@ export async function getBidangStudiList(unitSekolahId: string) {
 
 export async function createBidangStudi(name: string, unitSekolahId: string) {
   try {
-    const session = await getUserAndRole()
+    const session = await auth()
     if (!session?.user) throw new Error("Unauthorized")
 
-    // Cek apakah sudah ada untuk menghindari duplikat
-    const existing = await prisma.bidangStudi.findFirst({
+    // Cek apakah sudah ada untuk menghindari duplikat (termasuk yang soft-deleted)
+    const existing = await (prisma as any).bidangStudi.findFirst({
       where: {
         name: { equals: name, mode: "insensitive" },
-        unitSekolahId,
-        isDeleted: false
-      }
-    })
-
-    if (existing) {
-      return { data: existing, error: null }
-    }
-
-    const created = await prisma.bidangStudi.create({
-      data: {
-        name,
         unitSekolahId
       }
     })
+
+    let created;
+    if (existing) {
+      if (!existing.isDeleted) {
+        return { data: existing, error: null }
+      } else {
+        // Restore soft-deleted record
+        created = await (prisma as any).bidangStudi.update({
+          where: { id: existing.id },
+          data: { isDeleted: false }
+        })
+      }
+    } else {
+      created = await (prisma as any).bidangStudi.create({
+        data: { name, unitSekolahId }
+      })
+    }
 
     // Log aktivitas
     await prisma.logAktivitas.create({
       data: {
         penggunaId: session.user.id,
-        aksi: "CREATE",
-        modul: "GURU_STAFF",
-        keterangan: `Menambahkan referensi Bidang Studi baru: ${name}`,
-        unitSekolahId
+        aksi: "TAMBAH_BIDANG_STUDI",
+        modul: "KEPEGAWAIAN",
+        keterangan: `Menambahkan bidang studi baru: ${name}`
       }
     })
 
@@ -68,14 +72,14 @@ export async function createBidangStudi(name: string, unitSekolahId: string) {
 
 export async function deleteBidangStudi(id: string) {
   try {
-    const session = await getUserAndRole()
+    const session = await auth()
     if (!session?.user) throw new Error("Unauthorized")
 
-    const existing = await prisma.bidangStudi.findUnique({ where: { id } })
+    const existing = await (prisma as any).bidangStudi.findUnique({ where: { id } })
     if (!existing) throw new Error("Data tidak ditemukan")
 
     // Soft delete
-    await prisma.bidangStudi.update({
+    await (prisma as any).bidangStudi.update({
       where: { id },
       data: { isDeleted: true }
     })
@@ -84,10 +88,9 @@ export async function deleteBidangStudi(id: string) {
     await prisma.logAktivitas.create({
       data: {
         penggunaId: session.user.id,
-        aksi: "DELETE",
-        modul: "GURU_STAFF",
-        keterangan: `Menghapus referensi Bidang Studi: ${existing.name}`,
-        unitSekolahId: existing.unitSekolahId
+        aksi: "HAPUS_BIDANG_STUDI",
+        modul: "KEPEGAWAIAN",
+        keterangan: `Menghapus bidang studi: ${existing.name}`
       }
     })
 

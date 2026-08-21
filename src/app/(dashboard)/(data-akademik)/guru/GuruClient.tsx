@@ -22,7 +22,9 @@ import {
   User,
   X,
   Eye,
-  Filter
+  Filter,
+  Mail,
+  BookOpen
 } from "lucide-react"
 import Link from "next/link"
 import { tambahGuru, editGuru, hapusGuru, hapusGuruMassal } from "@/actions/guru"
@@ -58,6 +60,7 @@ type Guru = {
   isActive: boolean
   unitSekolahId: string
   unitSekolah?: { id: string, name: string, level?: string }
+  rombelWali?: { id: string; name: string }[] | null
 }
 
 type UnitSekolah = {
@@ -211,12 +214,12 @@ export default function GuruClient({
       if (modalData.id) {
         const res = await editGuru(modalData.id, modalData)
         const updatedUnit = schoolUnits.find(u => u.id === modalData.unitSekolahId)
-        setData(data.map(d => d.id === modalData.id ? { ...res, unitSekolah: updatedUnit } : d))
+        setData(data.map(d => d.id === modalData.id ? { ...res, unitSekolah: updatedUnit } as unknown as Guru : d))
         toast.success("Data guru berhasil diperbarui")
       } else {
         const res = await tambahGuru(modalData)
         const updatedUnit = schoolUnits.find(u => u.id === modalData.unitSekolahId)
-        setData([...data, { ...res, unitSekolah: updatedUnit }])
+        setData([...data, { ...res, unitSekolah: updatedUnit } as unknown as Guru])
         toast.success("Guru baru berhasil ditambahkan")
       }
       setIsAdding(false)
@@ -331,7 +334,7 @@ export default function GuruClient({
   }
 
   const formatWhatsAppUrl = (phone: string | null) => {
-    if (!phone) return null
+    if (!phone) return undefined
     let clean = phone.replace(/\D/g, "")
     if (clean.startsWith("0")) clean = "62" + clean.slice(1)
     return `https://wa.me/${clean}`
@@ -404,18 +407,18 @@ export default function GuruClient({
           <table className="w-full text-left border-collapse">
             <thead className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
               <tr>
-
                 <th className="p-4 font-semibold text-center w-12">NO</th>
                 <th className="p-4 font-semibold text-left">PROFIL GURU</th>
                 <th className="p-4 font-semibold text-left hidden md:table-cell">UNIT & STATUS</th>
-                <th className="p-4 font-semibold text-left hidden lg:table-cell">TUGAS & KUALIFIKASI</th>
+                <th className="p-4 font-semibold text-left hidden lg:table-cell">PERAN AKADEMIK</th>
+                <th className="p-4 font-semibold text-left hidden xl:table-cell">KONTAK</th>
                 {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-sm">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={isReadOnly ? 4 : 5} className="py-12 text-center">
+                  <td colSpan={isReadOnly ? 5 : 6} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center text-text-muted">
                       <GraduationCap className="w-12 h-12 stroke-[1.2] text-text-muted/40 mb-3" />
                       <p className="font-medium text-text-main">Belum Ada Data Guru</p>
@@ -429,11 +432,14 @@ export default function GuruClient({
                   const waUrl = formatWhatsAppUrl(item.phone)
                   return (
                     <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-
                       <td className="p-4 text-center text-text-main">{absoluteIdx}</td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-emerald-50 flex-shrink-0 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                          <div className={`w-10 h-10 rounded-full flex-shrink-0 border flex items-center justify-center ${
+                            item.gender === "P" 
+                              ? "bg-rose-50 border-rose-100 text-rose-500" 
+                              : "bg-blue-50 border-blue-100 text-blue-500"
+                          }`}>
                             <User size={18} />
                           </div>
                           <div>
@@ -453,17 +459,71 @@ export default function GuruClient({
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
                           item.statusKepegawaian === "GTY" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
                           item.statusKepegawaian === "PNS" ? "bg-purple-50 text-purple-700 border border-purple-200" :
-                          "bg-blue-50 text-blue-700 border border-blue-200"
+                          "bg-indigo-50 text-indigo-700 border border-indigo-200"
                         }`}>
                           {item.statusKepegawaian}
                         </span>
                       </td>
                       <td className="p-4 hidden lg:table-cell">
-                        <div className="text-sm font-medium text-text-main truncate max-w-[200px]" title={item.bidangStudi?.name || ""}>
-                          {item.bidangStudi?.name || "Belum Ditugaskan"}
+                        <div className="flex flex-col gap-1.5 items-start">
+                          <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded text-xs font-semibold">
+                            <BookOpen size={12} />
+                            {item.bidangStudi?.name || "Belum Ditugaskan"}
+                          </div>
+                          <div className="text-xs text-text-muted flex items-center gap-1">
+                            <GraduationCap size={12} />
+                            <span className="font-semibold">{item.pendidikan || "-"}</span>
+                          </div>
+                          {item.rombelWali && item.rombelWali.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-0.5">
+                              {item.rombelWali.map((kelas: any) => (
+                                <Link
+                                  key={kelas.id}
+                                  href={`/kelas/${kelas.id}`}
+                                  className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-full text-[11px] font-semibold transition-colors"
+                                  title="Lihat Detail Kelas"
+                                >
+                                  Wali Kelas {kelas.name}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <div className="text-xs text-text-muted mt-1">
-                          Pend. Terakhir: <span className="font-semibold">{item.pendidikan || "-"}</span>
+                      </td>
+                      <td className="p-4 hidden xl:table-cell">
+                        <div className="space-y-1.5">
+                          {item.phone ? (
+                            <a 
+                              href={waUrl} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
+                            >
+                              <Phone size={12} />
+                              {item.phone}
+                            </a>
+                          ) : (
+                            <div className="flex items-center gap-1.5 text-xs text-text-muted/60">
+                              <Phone size={12} />
+                              -
+                            </div>
+                          )}
+                          
+                          {item.email ? (
+                            <a 
+                              href={`mailto:${item.email}`}
+                              className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline truncate max-w-[150px]"
+                              title={item.email}
+                            >
+                              <Mail size={12} />
+                              {item.email}
+                            </a>
+                          ) : (
+                            <div className="flex items-center gap-1.5 text-xs text-text-muted/60">
+                              <Mail size={12} />
+                              -
+                            </div>
+                          )}
                         </div>
                       </td>
                       {!isReadOnly && (

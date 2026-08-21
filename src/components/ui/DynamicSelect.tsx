@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react"
 import { Plus, Trash2, ChevronDown, Loader2 } from "lucide-react"
+import { ConfirmModal } from "@/components/ui/ConfirmModal"
 
 interface Option {
   id: string
@@ -31,6 +32,7 @@ export function DynamicSelect({
   const [isAdding, setIsAdding] = useState(false)
   const [newOptionName, setNewOptionName] = useState("")
   const [loadingAction, setLoadingAction] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
   // Klik di luar untuk tutup dropdown
@@ -47,8 +49,7 @@ export function DynamicSelect({
 
   const selectedOption = options.find(o => o.id === value)
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleAdd = async () => {
     if (!newOptionName.trim() || loadingAction) return
 
     setLoadingAction(true)
@@ -61,20 +62,30 @@ export function DynamicSelect({
     }
   }
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      handleAdd()
+    }
+  }
+
+  const handleDeleteClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
     if (loadingAction) return
-    
-    if (confirm("Yakin ingin menghapus opsi ini?")) {
-      setLoadingAction(true)
-      try {
-        await onDelete(id)
-        if (value === id) {
-          onChange("") // Reset value jika yang dihapus sedang dipilih
-        }
-      } finally {
-        setLoadingAction(false)
+    setItemToDelete(id)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return
+    setLoadingAction(true)
+    try {
+      await onDelete(itemToDelete)
+      if (value === itemToDelete) {
+        onChange("") // Reset value jika yang dihapus sedang dipilih
       }
+    } finally {
+      setLoadingAction(false)
+      setItemToDelete(null)
     }
   }
 
@@ -117,7 +128,7 @@ export function DynamicSelect({
                   <span className="text-sm font-medium">{opt.name}</span>
                   <button
                     type="button"
-                    onClick={(e) => handleDelete(e, opt.id)}
+                    onClick={(e) => handleDeleteClick(e, opt.id)}
                     className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
                     title="Hapus opsi"
                   >
@@ -130,7 +141,7 @@ export function DynamicSelect({
 
           <div className="border-t border-gray-100 p-2 bg-gray-50">
             {isAdding ? (
-              <form onSubmit={handleAdd} className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <input
                   type="text"
                   autoFocus
@@ -138,10 +149,12 @@ export function DynamicSelect({
                   className="flex-1 px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
                   value={newOptionName}
                   onChange={e => setNewOptionName(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   disabled={loadingAction}
                 />
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleAdd}
                   disabled={!newOptionName.trim() || loadingAction}
                   className="px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg disabled:opacity-50 flex items-center justify-center min-w-[60px]"
                 >
@@ -155,7 +168,7 @@ export function DynamicSelect({
                 >
                   Batal
                 </button>
-              </form>
+              </div>
             ) : (
               <button
                 type="button"
@@ -172,6 +185,18 @@ export function DynamicSelect({
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!itemToDelete}
+        onCancel={() => setItemToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Hapus Opsi"
+        message="Apakah Anda yakin ingin menghapus opsi ini?"
+        confirmText="Ya, Hapus"
+        cancelText="Batal"
+        isLoading={loadingAction}
+      />
     </div>
   )
 }
