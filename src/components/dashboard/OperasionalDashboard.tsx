@@ -13,6 +13,7 @@ import {
 import toast from "react-hot-toast"
 import { format } from "date-fns"
 import { ToolbarExportExcel, ToolbarExportPDF } from "@/components/ui/DataTableToolbar"
+import { getPaginatedAuditLogs, getAllAuditLogsForExport } from "@/actions/audit-log"
 
 const COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#64748b']
 
@@ -54,29 +55,55 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [selectedLogIndex, setSelectedLogIndex] = useState<number | null>(null)
 
+  // Server-side pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
+  
+  const [serverLogs, setServerLogs] = useState<any[]>(recentLogs)
+  const [totalLogs, setTotalLogs] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false)
+
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
 
   // Filter heatmap > 0
   const cleanHeatmap = useMemo(() => heatmapData.filter(d => d.value > 0), [heatmapData])
 
-  // Get unique modules for filter dropdown
   const availableModules = useMemo(() => {
     const mods = new Set(recentLogs.map(l => l.modul))
     return Array.from(mods).sort()
   }, [recentLogs])
 
-  // Filtered audit trail logs
-  const filteredLogs = useMemo(() => {
-    return recentLogs.filter(log => {
-      const matchSearch = 
-        log.penggunaName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.aksi.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.keterangan.toLowerCase().includes(searchTerm.toLowerCase())
-      
-      const matchModul = selectedModul === "ALL" || log.modul === selectedModul
-      return matchSearch && matchModul
-    })
-  }, [recentLogs, searchTerm, selectedModul])
+  React.useEffect(() => {
+    let isMounted = true
+    const fetchLogs = async () => {
+      setIsLoadingLogs(true)
+      try {
+        const result = await getPaginatedAuditLogs({
+          page: currentPage,
+          limit: pageSize,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          modul: selectedModul,
+          search: searchTerm
+        })
+        if (isMounted) {
+          setServerLogs(result.data)
+          setTotalLogs(result.total)
+          setTotalPages(result.totalPages)
+        }
+      } catch (err) {
+        console.error("Failed to fetch logs:", err)
+      } finally {
+        if (isMounted) setIsLoadingLogs(false)
+      }
+    }
+    
+    const timeoutId = setTimeout(() => fetchLogs(), 400)
+    return () => { isMounted = false; clearTimeout(timeoutId) }
+  }, [currentPage, pageSize, startDate, endDate, selectedModul, searchTerm])
 
   const handleExportExcel = async () => {
     setIsExportingExcel(true)
@@ -84,7 +111,14 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
     try {
       const { exportToExcel } = await import("@/lib/excel")
       
-      const exportData = filteredLogs.map((log, index) => ({
+      const allLogs = await getAllAuditLogsForExport({
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        modul: selectedModul,
+        search: searchTerm
+      })
+      
+      const exportData = allLogs.map((log, index) => ({
         "No": index + 1,
         "Waktu": format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss"),
         "Pengguna": log.penggunaName,
@@ -113,8 +147,15 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
       const { exportTablePdf } = await import("@/lib/pdf")
       const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
       
+      const allLogs = await getAllAuditLogsForExport({
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        modul: selectedModul,
+        search: searchTerm
+      })
+      
       const tableColumn = ["No", "Waktu", "Pengguna", "Modul", "Aksi", "Keterangan"]
-      const tableRows = filteredLogs.map((item, index) => [
+      const tableRows = allLogs.map((item, index) => [
         index + 1,
         format(new Date(item.createdAt), "dd/MM/yyyy HH:mm:ss"),
         item.penggunaName,
@@ -126,7 +167,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
       exportTablePdf({
         institutionInfo: buildInstitutionInfo(pengaturan, undefined),
         title: "Laporan Jejak Audit Sistem",
-        subtitle: `Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
+        subtitle: `Periode: ${startDate || 'Awal'} s/d ${endDate || 'Sekarang'} • Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
         headers: tableColumn,
         data: tableRows,
         filename: `AuditLog_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_'),
@@ -459,25 +500,51 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
         
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
           {/* Toolbar & Filters */}
-          <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50">
-            <div className="flex items-center gap-2">
-              <ShieldAlert size={18} className="text-rose-500" />
-              <p className="text-xs text-gray-500 font-medium">Menampilkan histori mutasi data sistem terbaru.</p>
+          <div className="p-4 border-b border-gray-100 flex flex-col gap-4 bg-gray-50/50">
+            {/* Top Row: Title and Actions */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2 px-1">
+                <ShieldAlert size={18} className="text-rose-500" />
+                <p className="text-xs text-gray-500 font-medium">Menampilkan histori mutasi data sistem terbaru.</p>
+              </div>
+              <div className="flex gap-2">
+                <ToolbarExportExcel onClick={handleExportExcel} disabled={serverLogs.length === 0} isExporting={isExportingExcel} />
+                <ToolbarExportPDF onClick={handleExportPDF} disabled={serverLogs.length === 0} isExporting={isExportingPDF} />
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative w-full sm:w-56">
+            {/* Bottom Row: Filters */}
+            <div className="flex flex-col lg:flex-row items-center gap-3">
+              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-1 shadow-sm w-full lg:w-auto">
+                <input 
+                  type="date" 
+                  value={startDate}
+                  onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
+                  className="px-2 py-1.5 bg-transparent text-xs text-gray-800 focus:outline-none w-full lg:w-32 cursor-pointer"
+                  title="Tanggal Mulai"
+                />
+                <span className="text-xs text-gray-400 font-medium">-</span>
+                <input 
+                  type="date" 
+                  value={endDate}
+                  onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
+                  className="px-2 py-1.5 bg-transparent text-xs text-gray-800 focus:outline-none w-full lg:w-32 cursor-pointer"
+                  title="Tanggal Selesai"
+                />
+              </div>
+
+              <div className="relative w-full lg:flex-1">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input 
                   type="text" 
-                  placeholder="Cari pengguna, aksi, atau keterangan..." 
+                  placeholder="Cari riwayat (nama, aksi, keterangan)..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all w-full shadow-sm"
                 />
               </div>
 
-              <div className="relative w-full sm:w-44">
+              <div className="relative w-full lg:w-56">
                 <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <select
                   value={selectedModul}
@@ -489,10 +556,6 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                     <option key={idx} value={m}>{m}</option>
                   ))}
                 </select>
-              </div>
-              <div className="flex gap-2">
-                <ToolbarExportExcel onClick={handleExportExcel} disabled={filteredLogs.length === 0} isExporting={isExportingExcel} />
-                <ToolbarExportPDF onClick={handleExportPDF} disabled={filteredLogs.length === 0} isExporting={isExportingPDF} />
               </div>
             </div>
           </div>
@@ -509,8 +572,8 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
-                {filteredLogs.length > 0 ? (
-                  filteredLogs.map((log, index) => {
+                {serverLogs.length > 0 ? (
+                  serverLogs.map((log, index) => {
                     const dateObj = new Date(log.createdAt)
                     return (
                       <tr 
@@ -570,7 +633,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
           {/* Footer Table */}
           <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between text-[11px] font-semibold text-gray-500">
             <span>
-              Menampilkan {filteredLogs.length} entri riwayat audit
+              Menampilkan {serverLogs.length} entri riwayat audit
             </span>
             <span>
               Diurutkan berdasarkan yang terbaru
@@ -580,7 +643,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
       </section>
 
       {/* SECTION 6: Side Drawer Detail Audit Log */}
-      {selectedLogIndex !== null && filteredLogs[selectedLogIndex] && (
+      {selectedLogIndex !== null && serverLogs[selectedLogIndex] && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div 
             className="absolute inset-0 bg-gray-900/20 backdrop-blur-sm transition-opacity"
@@ -592,7 +655,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
             <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50">
               <div>
                 <h3 className="font-bold text-gray-900">Detail Jejak Audit</h3>
-                <p className="text-xs text-gray-500 font-mono">ID: {filteredLogs[selectedLogIndex].id.split('-')[0]}...</p>
+                <p className="text-xs text-gray-500 font-mono">ID: {serverLogs[selectedLogIndex].id.split('-')[0]}...</p>
               </div>
               <div className="flex items-center gap-1">
                 <button
@@ -604,8 +667,8 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                   <ChevronLeft size={18} />
                 </button>
                 <button
-                  onClick={() => setSelectedLogIndex(Math.min(filteredLogs.length - 1, selectedLogIndex + 1))}
-                  disabled={selectedLogIndex === filteredLogs.length - 1}
+                  onClick={() => setSelectedLogIndex(Math.min(serverLogs.length - 1, selectedLogIndex + 1))}
+                  disabled={selectedLogIndex === serverLogs.length - 1}
                   className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-30"
                   title="Berikutnya"
                 >
@@ -632,10 +695,10 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                 </h4>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-gray-600 bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-200">
-                    {filteredLogs[selectedLogIndex].modul}
+                    {serverLogs[selectedLogIndex].modul}
                   </span>
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-extrabold tracking-wide border uppercase ${getActionBadge(filteredLogs[selectedLogIndex].aksi)}`}>
-                    {filteredLogs[selectedLogIndex].aksi}
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-extrabold tracking-wide border uppercase ${getActionBadge(serverLogs[selectedLogIndex].aksi)}`}>
+                    {serverLogs[selectedLogIndex].aksi}
                   </span>
                 </div>
               </div>
@@ -647,7 +710,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                     <Calendar size={12} /> Tanggal
                   </h4>
                   <p className="text-sm font-semibold text-gray-900">
-                    {new Date(filteredLogs[selectedLogIndex].createdAt).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    {new Date(serverLogs[selectedLogIndex].createdAt).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                   </p>
                 </div>
                 <div>
@@ -655,7 +718,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                     <Clock size={12} /> Waktu
                   </h4>
                   <p className="text-sm font-semibold text-gray-900 font-mono">
-                    {new Date(filteredLogs[selectedLogIndex].createdAt).toLocaleTimeString('id-ID')} WIB
+                    {new Date(serverLogs[selectedLogIndex].createdAt).toLocaleTimeString('id-ID')} WIB
                   </p>
                 </div>
               </div>
@@ -667,10 +730,10 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                 </h4>
                 <div className="flex items-center gap-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100">
                   <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-lg">
-                    {filteredLogs[selectedLogIndex].penggunaName.charAt(0).toUpperCase()}
+                    {serverLogs[selectedLogIndex].penggunaName.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900">{filteredLogs[selectedLogIndex].penggunaName}</p>
+                    <p className="text-sm font-bold text-gray-900">{serverLogs[selectedLogIndex].penggunaName}</p>
                     <p className="text-[11px] font-semibold text-blue-600">Pengguna Sistem</p>
                   </div>
                 </div>
@@ -683,10 +746,10 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                 </h4>
                 <div className="relative group">
                   <div className="text-sm text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    {filteredLogs[selectedLogIndex].keterangan}
+                    {serverLogs[selectedLogIndex].keterangan}
                   </div>
                   <button 
-                    onClick={() => handleCopy(filteredLogs[selectedLogIndex].keterangan, "Deskripsi aktivitas")}
+                    onClick={() => handleCopy(serverLogs[selectedLogIndex].keterangan, "Deskripsi aktivitas")}
                     className="absolute top-2 right-2 p-1.5 bg-white shadow-sm border border-gray-200 rounded-lg text-gray-400 hover:text-primary hover:border-primary opacity-0 group-hover:opacity-100 transition-all"
                     title="Salin Keterangan"
                   >
