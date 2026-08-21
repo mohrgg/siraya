@@ -140,7 +140,7 @@ export async function editGuru(id: string, data: {
     throw new Error("Akses ditolak.")
   }
 
-  const { id: _, unitSekolah, rombelWali, createdAt, updatedAt, ...guruData } = data as any;
+  const { id: _, unitSekolah, rombelWali, createdAt, updatedAt, bidangStudi, ...guruData } = data as any;
   const result = await prisma.guru.update({
     where: { id },
     data: {

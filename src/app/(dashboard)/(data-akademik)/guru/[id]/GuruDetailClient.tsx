@@ -26,6 +26,8 @@ import toast from "react-hot-toast"
 import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
 import PrintFooter from "@/components/shared/print/PrintFooter"
+import GuruFormModal from "@/components/modals/GuruFormModal"
+import { editGuru } from "@/actions/guru"
 
 // Types based on the Prisma schema
 type Rombel = {
@@ -42,7 +44,8 @@ type GuruData = {
   email: string | null
   statusKepegawaian: string
   pendidikan: string | null
-  bidangStudi: string | null
+  bidangStudiId: string | null
+  bidangStudi: { id: string, name: string } | null
   bankName: string | null
   bankAccount: string | null
   bankAccountName: string | null
@@ -51,12 +54,24 @@ type GuruData = {
   rombelWali: Rombel[]
 }
 
-export default function GuruDetailClient({ initialData, isReadOnly = false, pengaturan, userName }: { initialData: GuruData, isReadOnly?: boolean, pengaturan?: any, userName?: string }) {
+export default function GuruDetailClient({ initialData, isReadOnly = false, pengaturan, userName, schoolUnits = [] }: { initialData: GuruData, isReadOnly?: boolean, pengaturan?: any, userName?: string, schoolUnits?: any[] }) {
   const router = useRouter()
 
   const [activeTab, setActiveTab] = useState<"profil" | "keuangan" | "rombel">("profil")
   const [isExportingExcel, setIsExportingExcel] = useState(false)
   const [isExportingPDF, setIsExportingPDF] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+
+  const handleSaveModal = async (formData: any) => {
+    try {
+      await editGuru(formData.id, formData)
+      toast.success("Berhasil mengubah data guru")
+      setIsEditing(false)
+      router.refresh()
+    } catch (error: any) {
+      toast.error(error.message || "Gagal mengubah data")
+    }
+  }
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href)
@@ -90,7 +105,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
         "Jenis Kelamin": initialData.gender,
         "Status Kepegawaian": initialData.statusKepegawaian,
         "Pendidikan Terakhir": initialData.pendidikan || "-",
-        "Bidang Studi": initialData.bidangStudi || "-",
+        "Bidang Studi": initialData.bidangStudi?.name || "-",
         "No. HP / WA": initialData.phone || "-",
         "Email": initialData.email || "-",
         "Bank": initialData.bankName || "-",
@@ -125,7 +140,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
         ["Jenis Kelamin", initialData.gender],
         ["Status Kepegawaian", initialData.statusKepegawaian],
         ["Pendidikan Terakhir", initialData.pendidikan || "-"],
-        ["Bidang Studi", initialData.bidangStudi || "-"],
+        ["Bidang Studi", initialData.bidangStudi?.name || "-"],
         ["No. HP / WA", initialData.phone || "-"],
         ["Email", initialData.email || "-"],
         ["Bank / Rekening", `${initialData.bankName || "-"} / ${initialData.bankAccount || "-"}`],
@@ -199,7 +214,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
           {!isReadOnly && (
             <Button 
               className="gap-2 text-xs font-bold shadow-sm"
-              onClick={() => toast("Silakan gunakan tombol Edit di halaman utama")}
+              onClick={() => setIsEditing(true)}
             >
               <Edit2 size={15} /> Edit Data Guru
             </Button>
@@ -207,73 +222,60 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
         </div>
       </div>
 
-      {/* Hero Banner (360° Profile) */}
-      <div className="relative rounded-3xl overflow-hidden mb-8 shadow-sm border border-border bg-white">
-        {/* Rich Gradient Background */}
-        <div className="h-48 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 relative">
-          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+      {/* Minimalist Profile Header */}
+      <div className="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 relative overflow-hidden">
+        {/* Subtle decorative background */}
+        <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none"></div>
+        
+        <div className="flex items-center gap-5 relative z-10">
+          {/* Initial Avatar */}
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-50 text-emerald-700 border border-emerald-200/50 flex items-center justify-center text-3xl font-black shadow-sm shrink-0">
+            {initialData.name.charAt(0).toUpperCase()}
+          </div>
+
+          {/* Identity Details */}
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                initialData.statusKepegawaian === "GTY" ? "bg-emerald-100 text-emerald-700" :
+                initialData.statusKepegawaian === "PNS" ? "bg-purple-100 text-purple-700" :
+                "bg-blue-100 text-blue-700"
+              } border border-black/5`}>
+                {initialData.statusKepegawaian}
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 text-gray-700 border border-border">
+                {initialData.unitSekolah.name}
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight mb-1">
+              {initialData.name}
+            </h1>
+            <div className="flex items-center gap-1.5 text-sm text-text-muted font-medium">
+              <Briefcase size={16} />
+              <span>NIP/NIK: <span className="font-mono text-text-main font-semibold ml-1">{initialData.nip || "-"}</span></span>
+            </div>
+          </div>
         </div>
 
-        {/* Content Overlapping Banner */}
-        <div className="relative px-6 sm:px-10 pb-8 -mt-20">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            
-            <div className="flex items-end gap-6">
-              {/* Large Avatar */}
-              <div className="w-32 h-32 rounded-2xl bg-white p-1.5 shadow-lg relative z-10 shrink-0">
-                <div className="w-full h-full rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-100 flex items-center justify-center overflow-hidden">
-                  <User size={48} className="text-gray-400" />
-                </div>
-              </div>
-
-              {/* Identity Details */}
-              <div className="pb-2">
-                <div className="flex items-center gap-3 mb-1.5">
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                    initialData.statusKepegawaian === "GTY" ? "bg-emerald-100 text-emerald-700" :
-                    initialData.statusKepegawaian === "PNS" ? "bg-purple-100 text-purple-700" :
-                    "bg-blue-100 text-blue-700"
-                  } shadow-sm backdrop-blur-sm border border-white/20`}>
-                    {initialData.statusKepegawaian}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white shadow-sm backdrop-blur-md border border-white/30">
-                    {initialData.unitSekolah.name}
-                  </span>
-                </div>
-                <h1 className="text-3xl font-extrabold text-text-main flex items-center gap-3">
-                  {initialData.name}
-                </h1>
-                <div className="flex items-center gap-4 mt-2 text-sm text-text-muted font-medium">
-                  <div className="flex items-center gap-1.5">
-                    <Briefcase size={16} />
-                    <span>NIP/NIK: <span className="font-mono text-text-main font-semibold ml-1">{initialData.nip || "-"}</span></span>
-                  </div>
-                </div>
-              </div>
+        {/* Metric KPI Cards */}
+        <div className="flex gap-4 relative z-10">
+          <div className="bg-gray-50 border border-border rounded-xl p-4 shadow-sm min-w-[130px]">
+            <div className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Status</div>
+            <div className="text-lg font-black text-emerald-600 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              Aktif
             </div>
-
-            {/* Hero Metric KPI Cards */}
-            <div className="flex gap-4 pb-2">
-              <div className="bg-white/80 backdrop-blur-md border border-white rounded-2xl p-4 shadow-sm min-w-[140px]">
-                <div className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Status</div>
-                <div className="text-xl font-bold text-emerald-600 flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                  Aktif
-                </div>
-              </div>
-              <div className="bg-white/80 backdrop-blur-md border border-white rounded-2xl p-4 shadow-sm min-w-[140px]">
-                <div className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Tugas Wali</div>
-                <div className="text-xl font-bold text-text-main flex items-center gap-2">
-                  <Building2 size={20} className="text-primary" />
-                  {initialData.rombelWali.length} <span className="text-sm font-medium text-text-muted">Kelas</span>
-                </div>
-              </div>
+          </div>
+          <div className="bg-gray-50 border border-border rounded-xl p-4 shadow-sm min-w-[130px]">
+            <div className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Tugas Wali</div>
+            <div className="text-lg font-black text-text-main flex items-center gap-2">
+              <Building2 size={18} className="text-primary" />
+              {initialData.rombelWali.length} <span className="text-xs font-medium text-text-muted">Kelas</span>
             </div>
           </div>
         </div>
       </div>
-
+      
       {/* Modular Tab Navigation */}
       <div className="bg-surface border border-border rounded-2xl shadow-sm overflow-hidden mb-6">
         <div className="flex border-b border-border overflow-x-auto hide-scrollbar">
@@ -375,7 +377,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
                     <div>
                       <div className="text-xs font-medium text-text-muted mb-1">Bidang Studi / Tugas Tambahan</div>
                       <div className="text-sm font-medium text-text-main bg-gray-50 p-2.5 rounded-lg border border-border mt-1">
-                        {initialData.bidangStudi || "Tidak ada rincian tugas khusus"}
+                        {initialData.bidangStudi?.name || "Tidak ada rincian tugas khusus"}
                       </div>
                     </div>
                   </div>
@@ -485,7 +487,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
               ["Jenis Kelamin", initialData.gender],
               ["Status Kepegawaian", initialData.statusKepegawaian],
               ["Pendidikan Terakhir", initialData.pendidikan || "-"],
-              ["Bidang Studi", initialData.bidangStudi || "-"],
+              ["Bidang Studi", initialData.bidangStudi?.name || "-"],
               ["No. HP / WA", initialData.phone || "-"],
               ["Email", initialData.email || "-"],
               ["Bank / Rekening", `${initialData.bankName || "-"} / ${initialData.bankAccount || "-"}`],
@@ -512,6 +514,16 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
         {/* FOOTER */}
         <PrintFooter pengaturan={pengaturan} className="block" />
       </div>
+
+      {isEditing && (
+        <GuruFormModal
+          isOpen={isEditing}
+          onClose={() => setIsEditing(false)}
+          onSave={handleSaveModal}
+          initialData={initialData}
+          schoolUnits={schoolUnits}
+        />
+      )}
     </>
   )
 }

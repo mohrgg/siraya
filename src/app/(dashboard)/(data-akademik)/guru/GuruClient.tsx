@@ -622,6 +622,7 @@ export default function GuruClient({
           // Data is refreshed via router.refresh() inside the modal
         }}
         schoolUnits={schoolUnits}
+        activeUnitId={activeUnitId}
       />
 
       {/* Delete Confirmation Modal */}

@@ -13,6 +13,7 @@ interface ImportGuruModalProps {
   onClose: () => void
   onSuccess: () => void
   schoolUnits: any[]
+  activeUnitId?: string
 }
 
 interface PreviewRow {
@@ -30,7 +31,8 @@ export default function ImportGuruModal({
   isOpen, 
   onClose, 
   onSuccess,
-  schoolUnits
+  schoolUnits,
+  activeUnitId
 }: ImportGuruModalProps) {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
@@ -49,8 +51,12 @@ export default function ImportGuruModal({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (isOpen && schoolUnits.length > 0 && !selectedUnit) {
-      setSelectedUnit(schoolUnits[0].id)
+    if (isOpen && schoolUnits.length > 0) {
+      if (activeUnitId && activeUnitId !== "ALL") {
+        setSelectedUnit(activeUnitId)
+      } else if (!selectedUnit) {
+        setSelectedUnit(schoolUnits[0].id)
+      }
     }
     if (!isOpen) {
       setCurrentStep(1)
@@ -307,9 +313,10 @@ export default function ImportGuruModal({
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">1. Pilih Unit Sekolah <span className="text-red-500">*</span></label>
                     <select 
-                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-bold text-gray-900 shadow-xs transition-all"
+                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-bold text-gray-900 shadow-xs transition-all disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                       value={selectedUnit}
                       onChange={(e) => setSelectedUnit(e.target.value)}
+                      disabled={!!activeUnitId && activeUnitId !== "ALL"}
                     >
                       <option value="" disabled>-- Pilih Unit Sekolah --</option>
                       {schoolUnits.map(u => (

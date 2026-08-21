@@ -24,12 +24,9 @@ export default function SubKelasFormModal({
       unitSekolah: { name: "Nonaktif" },
       statusKepegawaian: "-"
     }] : []),
-    ...initialTeachers
+    ...initialTeachers.filter((t: any) => t.unitSekolahId === formData.unitSekolahId)
   ].sort((a: any, b: any) => {
     if (a.id === formData.waliKelasGuruId && !isSelectedGuruInList) return -1;
-    const aMatch = a.unitSekolahId === formData.unitSekolahId ? -1 : 1;
-    const bMatch = b.unitSekolahId === formData.unitSekolahId ? -1 : 1;
-    if (aMatch !== bMatch) return aMatch - bMatch;
     return a.name.localeCompare(b.name);
   });
   return (
