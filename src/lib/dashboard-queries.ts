@@ -750,11 +750,12 @@ export async function getAdminOperasionalData() {
   })
 
   // NEW: Kalkulasi Riil Volume Data Induk (Master Data Volume)
-  const [totalPengguna, totalUnit, totalMurid, totalRombel] = await Promise.all([
+  const [totalPengguna, totalUnit, totalMurid, totalRombel, pengaturan] = await Promise.all([
     prisma.pengguna.count(),
     prisma.unitSekolah.count(),
     prisma.murid.count(),
-    prisma.subKelas.count()
+    prisma.subKelas.count(),
+    prisma.pengaturan.findFirst()
   ])
   const totalMasterRecords = totalPengguna + totalUnit + totalMurid + totalRombel
 
@@ -764,7 +765,7 @@ export async function getAdminOperasionalData() {
 
   return { 
     trendData, modulData, roleData, heatmapData, leaderboard, recentLogs, 
-    dauCount, monthlyLogsCount, totalMasterRecords, avgDailyLogs 
+    dauCount, monthlyLogsCount, totalMasterRecords, avgDailyLogs, pengaturan 
   }
 }
 

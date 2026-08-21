@@ -97,7 +97,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
       return (
         <div className="max-w-[1600px] mx-auto w-full">
           <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
-          <OperasionalDashboard {...data} />
+          <OperasionalDashboard userName={session?.user?.name || undefined} {...data} />
         </div>
       )
     }

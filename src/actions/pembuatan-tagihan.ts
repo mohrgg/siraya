@@ -213,6 +213,15 @@ export async function tambahTagihanMassal(data: {
     }
   })
 
+  await prisma.logAktivitas.create({
+    data: {
+      penggunaId: (session.user as any).id,
+      aksi: "CREATE",
+      modul: "PEMBUATAN_TAGIHAN",
+      keterangan: `Generate tagihan massal untuk ${successCount} siswa (Subkelas: ${subKelasId}, Nominal: Rp${jumlah})`
+    }
+  })
+
   revalidatePath("/pembuatan-tagihan")
   return { success: true, message: `Berhasil men-generate tagihan untuk ${successCount} siswa` }
 }
@@ -266,6 +275,15 @@ export async function updateTagihanSiswa(muridId: string, tahunAkademikId: strin
     }
   })
 
+  await prisma.logAktivitas.create({
+    data: {
+      penggunaId: (session.user as any).id,
+      aksi: "UPDATE",
+      modul: "PEMBUATAN_TAGIHAN",
+      keterangan: `Memperbarui tagihan individu siswa (Murid ID: ${muridId})`
+    }
+  })
+
   revalidatePath("/pembuatan-tagihan")
   return { success: true, message: "Perubahan tagihan siswa berhasil disimpan" }
 }
@@ -293,6 +311,15 @@ export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: st
         tahunAkademikId,
         akunId,
         muridId: { in: muridIds }
+      }
+    })
+
+    await prisma.logAktivitas.create({
+      data: {
+        penggunaId: (session.user as any).id,
+        aksi: "DELETE",
+        modul: "PEMBUATAN_TAGIHAN",
+        keterangan: `Menghapus massal tagihan (Akun ID: ${akunId}) untuk Subkelas ${subKelasId}`
       }
     })
   }
@@ -329,6 +356,15 @@ export async function editTagihanMassal(subKelasId: string, tahunAkademikId: str
       data: {
         jumlah: jumlah,
         sisaTagihan: jumlah
+      }
+    })
+
+    await prisma.logAktivitas.create({
+      data: {
+        penggunaId: (session.user as any).id,
+        aksi: "UPDATE",
+        modul: "PEMBUATAN_TAGIHAN",
+        keterangan: `Mengubah nominal tagihan massal (Akun ID: ${akunId}) menjadi Rp${jumlah} untuk Subkelas ${subKelasId}`
       }
     })
   }

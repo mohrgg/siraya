@@ -44,6 +44,16 @@ export async function tambahSubKlasifikasi(data: { kode: string, nama: string, k
   if (existing) throw new Error("Kode subklasifikasi sudah digunakan.")
 
   const result = await prisma.subKlasifikasiAkun.create({ data })
+
+  await prisma.logAktivitas.create({
+    data: {
+      penggunaId: (session.user as any).id,
+      aksi: "CREATE",
+      modul: "AKUN_KEUANGAN",
+      keterangan: `Menambahkan Sub Klasifikasi baru: ${data.kode} - ${data.nama}`
+    }
+  })
+
   revalidatePath("/akun-keuangan")
   return result
 }
@@ -61,6 +71,16 @@ export async function editSubKlasifikasi(id: string, data: { kode?: string, nama
     where: { id },
     data
   })
+
+  await prisma.logAktivitas.create({
+    data: {
+      penggunaId: (session.user as any).id,
+      aksi: "UPDATE",
+      modul: "AKUN_KEUANGAN",
+      keterangan: `Memperbarui Sub Klasifikasi: ${result.kode} - ${result.nama}`
+    }
+  })
+
   revalidatePath("/akun-keuangan")
   return result
 }
@@ -74,6 +94,16 @@ export async function hapusSubKlasifikasi(id: string) {
     const result = await prisma.subKlasifikasiAkun.delete({
       where: { id }
     })
+
+    await prisma.logAktivitas.create({
+      data: {
+        penggunaId: (session.user as any).id,
+        aksi: "DELETE",
+        modul: "AKUN_KEUANGAN",
+        keterangan: `Menghapus Sub Klasifikasi: ${result.kode} - ${result.nama}`
+      }
+    })
+
     revalidatePath("/akun-keuangan")
     return result
   } catch (error: any) {
@@ -124,6 +154,16 @@ export async function tambahAkunDetail(data: { kode: string, nama: string, subKl
   if (existing) throw new Error("Kode akun sudah digunakan.")
 
   const result = await prisma.akunDetail.create({ data })
+
+  await prisma.logAktivitas.create({
+    data: {
+      penggunaId: tenant.user.id,
+      aksi: "CREATE",
+      modul: "AKUN_KEUANGAN",
+      keterangan: `Menambahkan Akun Detail baru: ${data.kode} - ${data.nama}`
+    }
+  })
+
   revalidatePath("/akun-keuangan")
   return result
 }
@@ -153,6 +193,16 @@ export async function editAkunDetail(id: string, data: { kode?: string, nama?: s
     where: { id },
     data
   })
+
+  await prisma.logAktivitas.create({
+    data: {
+      penggunaId: tenant.user.id,
+      aksi: "UPDATE",
+      modul: "AKUN_KEUANGAN",
+      keterangan: `Memperbarui Akun Detail: ${result.kode} - ${result.nama}`
+    }
+  })
+
   revalidatePath("/akun-keuangan")
   return result
 }
@@ -171,6 +221,16 @@ export async function hapusAkunDetail(id: string) {
   const result = await prisma.akunDetail.delete({
     where: { id }
   })
+
+  await prisma.logAktivitas.create({
+    data: {
+      penggunaId: tenant.user.id,
+      aksi: "DELETE",
+      modul: "AKUN_KEUANGAN",
+      keterangan: `Menghapus Akun Detail: ${result.kode} - ${result.nama}`
+    }
+  })
+
   revalidatePath("/akun-keuangan")
   return result
 }

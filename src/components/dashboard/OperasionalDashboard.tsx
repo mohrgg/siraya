@@ -4,13 +4,15 @@ import React, { useState, useMemo } from "react"
 import { 
   Activity, ShieldAlert, Zap, Server, Users, Database, FileText, 
   Search, Filter, Download, CheckCircle2, AlertCircle, TrendingUp, RefreshCw,
-  Building, LayoutDashboard, Settings
+  Building, LayoutDashboard, Settings, X, ChevronLeft, ChevronRight, Copy, Calendar, Clock, User, Tag
 } from "lucide-react"
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, Legend, ScatterChart, Scatter, ZAxis 
 } from 'recharts'
 import toast from "react-hot-toast"
+import { format } from "date-fns"
+import { ToolbarExportExcel, ToolbarExportPDF } from "@/components/ui/DataTableToolbar"
 
 const COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#64748b']
 
@@ -25,6 +27,8 @@ interface OperasionalDashboardProps {
   monthlyLogsCount?: number
   totalMasterRecords?: number
   avgDailyLogs?: number
+  pengaturan?: any
+  userName?: string
 }
 
 export default function OperasionalDashboard(props: OperasionalDashboardProps) {
@@ -37,14 +41,18 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
     recentLogs = [],
     dauCount = 0,
     monthlyLogsCount = 0,
-    totalMasterRecords = 0, // This might not be populated in current backend, fallback to 0 safely
-    avgDailyLogs = 0
+    totalMasterRecords = 0,
+    avgDailyLogs = 0,
+    pengaturan,
+    userName = "Admin"
   } = props
 
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedModul, setSelectedModul] = useState("ALL")
-  const [isExporting, setIsExporting] = useState(false)
+  const [isExportingExcel, setIsExportingExcel] = useState(false)
+  const [isExportingPDF, setIsExportingPDF] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [selectedLogIndex, setSelectedLogIndex] = useState<number | null>(null)
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
 
@@ -70,13 +78,70 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
     })
   }, [recentLogs, searchTerm, selectedModul])
 
-  const handleExportAudit = () => {
-    setIsExporting(true)
-    toast.loading("Menyiapkan file ekspor...", { id: "export-audit" })
-    setTimeout(() => {
-      setIsExporting(false)
-      toast.success("Audit Log berhasil diekspor ke format CSV!", { id: "export-audit" })
-    }, 1200)
+  const handleExportExcel = async () => {
+    setIsExportingExcel(true)
+    toast.loading("Menyiapkan file Excel...", { id: "export-excel" })
+    try {
+      const { exportToExcel } = await import("@/lib/excel")
+      
+      const exportData = filteredLogs.map((log, index) => ({
+        "No": index + 1,
+        "Waktu": format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss"),
+        "Pengguna": log.penggunaName,
+        "Modul": log.modul,
+        "Aksi": log.aksi,
+        "Keterangan": log.keterangan
+      }))
+      
+      exportToExcel(exportData, `AuditLog_${format(new Date(), "yyyyMMdd")}`, {
+        title: "Laporan Jejak Audit (Audit Trail)",
+        unitInfo: pengaturan || { name: "Yayasan Siraya" }
+      })
+      toast.success("Audit Log berhasil diekspor ke Excel!", { id: "export-excel" })
+    } catch (error) {
+      console.error("Export Excel error:", error)
+      toast.error("Gagal mengekspor Excel", { id: "export-excel" })
+    } finally {
+      setIsExportingExcel(false)
+    }
+  }
+
+  const handleExportPDF = async () => {
+    setIsExportingPDF(true)
+    toast.loading("Menyiapkan file PDF...", { id: "export-pdf" })
+    try {
+      const { exportTablePdf } = await import("@/lib/pdf")
+      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
+      
+      const tableColumn = ["No", "Waktu", "Pengguna", "Modul", "Aksi", "Keterangan"]
+      const tableRows = filteredLogs.map((item, index) => [
+        index + 1,
+        format(new Date(item.createdAt), "dd/MM/yyyy HH:mm:ss"),
+        item.penggunaName,
+        item.modul,
+        item.aksi,
+        item.keterangan
+      ])
+
+      exportTablePdf({
+        institutionInfo: buildInstitutionInfo(pengaturan, undefined),
+        title: "Laporan Jejak Audit Sistem",
+        subtitle: `Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
+        headers: tableColumn,
+        data: tableRows,
+        filename: `AuditLog_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_'),
+        config: { orientation: 'landscape' },
+        penandatanganKiri: { jabatan: "Mengetahui, Pimpinan", nama: pengaturan?.namaKepalaSekolah || "____________________" },
+        penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+      })
+
+      toast.success("Audit Log berhasil diekspor ke PDF!", { id: "export-pdf" })
+    } catch (error) {
+      console.error("Export PDF error:", error)
+      toast.error("Gagal mengekspor PDF", { id: "export-pdf" })
+    } finally {
+      setIsExportingPDF(false)
+    }
   }
 
   const handleRefresh = () => {
@@ -100,6 +165,11 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
       return 'bg-rose-50 text-rose-700 border-rose-200'
     }
     return 'bg-gray-50 text-gray-700 border-gray-200'
+  }
+
+  const handleCopy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text)
+    toast.success(`${label} berhasil disalin!`)
   }
 
   return (
@@ -131,14 +201,6 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
             title="Segarkan Data"
           >
             <RefreshCw size={16} className={isRefreshing ? "animate-spin text-primary" : ""} />
-          </button>
-          <button 
-            onClick={handleExportAudit}
-            disabled={isExporting}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 disabled:opacity-50"
-          >
-            <Download size={16} className={isExporting ? "animate-bounce" : ""} />
-            {isExporting ? "Mengekspor..." : "Ekspor Audit Log"}
           </button>
         </div>
       </div>
@@ -428,6 +490,10 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                   ))}
                 </select>
               </div>
+              <div className="flex gap-2">
+                <ToolbarExportExcel onClick={handleExportExcel} disabled={filteredLogs.length === 0} isExporting={isExportingExcel} />
+                <ToolbarExportPDF onClick={handleExportPDF} disabled={filteredLogs.length === 0} isExporting={isExportingPDF} />
+              </div>
             </div>
           </div>
 
@@ -444,10 +510,14 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
               </thead>
               <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
                 {filteredLogs.length > 0 ? (
-                  filteredLogs.map((log) => {
+                  filteredLogs.map((log, index) => {
                     const dateObj = new Date(log.createdAt)
                     return (
-                      <tr key={log.id} className="hover:bg-gray-50/60 transition-colors">
+                      <tr 
+                        key={log.id} 
+                        onClick={() => setSelectedLogIndex(index)}
+                        className="hover:bg-gray-50/60 transition-colors cursor-pointer group"
+                      >
                         <td className="p-4 pl-6 whitespace-nowrap text-gray-500 font-mono text-[11px] align-top">
                           <span className="font-bold text-gray-800">{dateObj.toLocaleDateString('id-ID')}</span>
                           <br />
@@ -508,6 +578,127 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
           </div>
         </div>
       </section>
+
+      {/* SECTION 6: Side Drawer Detail Audit Log */}
+      {selectedLogIndex !== null && filteredLogs[selectedLogIndex] && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div 
+            className="absolute inset-0 bg-gray-900/20 backdrop-blur-sm transition-opacity"
+            onClick={() => setSelectedLogIndex(null)}
+          />
+          
+          <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 border-l border-gray-100">
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50">
+              <div>
+                <h3 className="font-bold text-gray-900">Detail Jejak Audit</h3>
+                <p className="text-xs text-gray-500 font-mono">ID: {filteredLogs[selectedLogIndex].id.split('-')[0]}...</p>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setSelectedLogIndex(Math.max(0, selectedLogIndex - 1))}
+                  disabled={selectedLogIndex === 0}
+                  className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-30"
+                  title="Sebelumnya"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  onClick={() => setSelectedLogIndex(Math.min(filteredLogs.length - 1, selectedLogIndex + 1))}
+                  disabled={selectedLogIndex === filteredLogs.length - 1}
+                  className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-30"
+                  title="Berikutnya"
+                >
+                  <ChevronRight size={18} />
+                </button>
+                <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                <button
+                  onClick={() => setSelectedLogIndex(null)}
+                  className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
+                  title="Tutup"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Drawer Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              
+              {/* Modul & Aksi */}
+              <div>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-1.5">
+                  <Tag size={12} /> Modul & Aksi
+                </h4>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-gray-600 bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-200">
+                    {filteredLogs[selectedLogIndex].modul}
+                  </span>
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-extrabold tracking-wide border uppercase ${getActionBadge(filteredLogs[selectedLogIndex].aksi)}`}>
+                    {filteredLogs[selectedLogIndex].aksi}
+                  </span>
+                </div>
+              </div>
+
+              {/* Timestamp */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-1.5">
+                    <Calendar size={12} /> Tanggal
+                  </h4>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {new Date(filteredLogs[selectedLogIndex].createdAt).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-1.5">
+                    <Clock size={12} /> Waktu
+                  </h4>
+                  <p className="text-sm font-semibold text-gray-900 font-mono">
+                    {new Date(filteredLogs[selectedLogIndex].createdAt).toLocaleTimeString('id-ID')} WIB
+                  </p>
+                </div>
+              </div>
+
+              {/* Aktor / Pengguna */}
+              <div>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-1.5">
+                  <User size={12} /> Dilakukan Oleh
+                </h4>
+                <div className="flex items-center gap-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-lg">
+                    {filteredLogs[selectedLogIndex].penggunaName.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{filteredLogs[selectedLogIndex].penggunaName}</p>
+                    <p className="text-[11px] font-semibold text-blue-600">Pengguna Sistem</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Deskripsi Penuh */}
+              <div>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-1.5">
+                  <FileText size={12} /> Deskripsi Lengkap Aktivitas
+                </h4>
+                <div className="relative group">
+                  <div className="text-sm text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    {filteredLogs[selectedLogIndex].keterangan}
+                  </div>
+                  <button 
+                    onClick={() => handleCopy(filteredLogs[selectedLogIndex].keterangan, "Deskripsi aktivitas")}
+                    className="absolute top-2 right-2 p-1.5 bg-white shadow-sm border border-gray-200 rounded-lg text-gray-400 hover:text-primary hover:border-primary opacity-0 group-hover:opacity-100 transition-all"
+                    title="Salin Keterangan"
+                  >
+                    <Copy size={14} />
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   )

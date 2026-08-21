@@ -225,6 +225,15 @@ export async function prosesPembayaranTagihan(data: {
       return transaksi
     })
 
+    await prisma.logAktivitas.create({
+      data: {
+        penggunaId: (session.user as any).id,
+        aksi: "CREATE",
+        modul: "PEMBAYARAN_TAGIHAN",
+        keterangan: `Memproses pembayaran tagihan sebesar Rp${totalBayar} (Referensi: ${result.noReferensi}) untuk siswa: ${data.muridName}`
+      }
+    })
+
     revalidatePath("/(dashboard)/(keuangan)/pembayaran-tagihan")
     revalidatePath("/(dashboard)/(keuangan)/kas-masuk")
     return { success: true, data: result }
