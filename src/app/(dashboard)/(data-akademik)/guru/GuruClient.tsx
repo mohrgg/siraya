@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import { SortableHeader } from "@/components/ui/SortableHeader"
+import { useSortableData } from "@/hooks/useSortableData"
 import { 
   Edit2, 
   Plus, 
@@ -237,7 +239,13 @@ export default function GuruClient({
     return data.filter(item => {
       if (activeUnitId && activeUnitId !== "all" && item.unitSekolahId !== activeUnitId) return false
       if ((!activeUnitId || activeUnitId === "all") && unitFilter && item.unitSekolahId !== unitFilter) return false
-      if (statusFilter && item.statusKepegawaian !== statusFilter) return false
+      if (statusFilter) {
+        if (statusFilter === "-") {
+          if (item.statusKepegawaian && item.statusKepegawaian !== "-") return false
+        } else {
+          if (item.statusKepegawaian !== statusFilter) return false
+        }
+      }
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase()
         const matchName = item.name.toLowerCase().includes(q)
@@ -249,21 +257,33 @@ export default function GuruClient({
     })
   }, [data, activeUnitId, statusFilter, searchTerm, unitFilter])
 
+  const { items: sortedData, requestSort, sortConfig } = useSortableData(filteredData)
+
   const paginatedData = useMemo(() => {
-    return filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-  }, [filteredData, currentPage, pageSize])
+    return sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  }, [sortedData, currentPage, pageSize])
 
   const availableStatuses = useMemo(() => {
     const statuses = new Set<string>()
+    let hasEmpty = false
     data.forEach(item => {
       if (item.statusKepegawaian && item.statusKepegawaian !== "-") {
         statuses.add(item.statusKepegawaian)
+      } else {
+        hasEmpty = true
       }
     })
-    return Array.from(statuses).sort().map(status => ({
+    
+    const options = Array.from(statuses).sort().map(status => ({
       value: status,
       label: status
     }))
+
+    if (hasEmpty) {
+      options.push({ value: "-", label: "Belum Diisi (-)" })
+    }
+
+    return options
   }, [data])
 
   const computedTotalPages = Math.ceil(filteredData.length / pageSize)
@@ -439,12 +459,12 @@ export default function GuruClient({
                   </th>
                 )}
                 <th className="p-4 font-semibold text-center w-12">NO</th>
-                <th className="p-4 font-semibold text-left">PROFIL GURU</th>
-                <th className="p-4 font-semibold text-center hidden sm:table-cell w-20">GENDER</th>
-                <th className="p-4 font-semibold text-left hidden md:table-cell">UNIT SEKOLAH</th>
-                <th className="p-4 font-semibold text-center hidden lg:table-cell">STATUS PEGAWAI</th>
-                <th className="p-4 font-semibold text-left hidden xl:table-cell">NO. WHATSAPP</th>
-                <th className="p-4 font-semibold text-center hidden xl:table-cell w-28">STATUS</th>
+                <SortableHeader label="PROFIL GURU" sortKey="name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left" />
+                <SortableHeader label="GENDER" sortKey="gender" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-center hidden sm:table-cell w-20" />
+                <SortableHeader label="UNIT SEKOLAH" sortKey="unitSekolah.name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left hidden md:table-cell" />
+                <SortableHeader label="STATUS PEGAWAI" sortKey="statusKepegawaian" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-center hidden lg:table-cell" />
+                <SortableHeader label="NO. WHATSAPP" sortKey="phone" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left hidden xl:table-cell" />
+                <SortableHeader label="STATUS" sortKey="isActive" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-center hidden xl:table-cell w-28" />
                 {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
               </tr>
             </thead>

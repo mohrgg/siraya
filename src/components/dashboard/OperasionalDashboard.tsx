@@ -515,7 +515,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
 
             {/* Bottom Row: Filters */}
             <div className="flex flex-col lg:flex-row items-center gap-3">
-              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-1 shadow-sm w-full lg:w-auto">
+              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-1 shadow-sm w-full lg:w-auto relative pr-2">
                 <input 
                   type="date" 
                   value={startDate}
@@ -531,6 +531,15 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                   className="px-2 py-1.5 bg-transparent text-xs text-gray-800 focus:outline-none w-full lg:w-32 cursor-pointer"
                   title="Tanggal Selesai"
                 />
+                {(startDate || endDate) && (
+                  <button 
+                    onClick={() => { setStartDate(""); setEndDate(""); setCurrentPage(1); }}
+                    className="p-1 hover:bg-rose-50 rounded-md text-gray-400 hover:text-rose-500 transition-colors"
+                    title="Reset Tanggal"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
 
               <div className="relative w-full lg:flex-1">
@@ -630,14 +639,44 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
             </table>
           </div>
           
-          {/* Footer Table */}
-          <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between text-[11px] font-semibold text-gray-500">
-            <span>
-              Menampilkan {serverLogs.length} entri riwayat audit
-            </span>
-            <span>
-              Diurutkan berdasarkan yang terbaru
-            </span>
+          {/* Footer Table & Pagination */}
+          <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-gray-500">
+            <div className="flex items-center gap-3">
+              <span>Tampilkan:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value))
+                  setCurrentPage(1)
+                }}
+                className="px-2 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm cursor-pointer"
+              >
+                {[10, 20, 50, 100].map(size => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+              <span>Total: {formatNumber(totalLogs)} riwayat</span>
+            </div>
+            
+            <div className="flex items-center gap-1.5">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1 || isLoadingLogs}
+                className="px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                Sebelumnya
+              </button>
+              <span className="px-3 py-1.5 font-mono text-[11px] bg-white border border-gray-100 rounded-lg shadow-sm text-gray-700">
+                Hal {currentPage} dari {totalPages || 1}
+              </span>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages || isLoadingLogs}
+                className="px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                Selanjutnya
+              </button>
+            </div>
           </div>
         </div>
       </section>

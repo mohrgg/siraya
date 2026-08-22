@@ -119,11 +119,17 @@ export default function TabMurid({
             <td className="p-4">{(currentPage - 1) * pageSize + i + 1}</td>
             <td className="p-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-100 flex-shrink-0 border border-border overflow-hidden flex items-center justify-center">
+                <div className={`w-10 h-10 rounded-full flex-shrink-0 border flex items-center justify-center overflow-hidden ${
+                  s.photoUrl 
+                    ? "bg-gray-100 border-border" 
+                    : s.gender === "Perempuan" 
+                      ? "bg-rose-50 border-rose-100 text-rose-500" 
+                      : "bg-blue-50 border-blue-100 text-blue-500"
+                }`}>
                   {s.photoUrl ? (
                     <img src={s.photoUrl} alt={s.name} className="w-full h-full object-cover" />
                   ) : (
-                    <User size={20} className="text-gray-400" />
+                    <User size={18} />
                   )}
                 </div>
                 <div>
