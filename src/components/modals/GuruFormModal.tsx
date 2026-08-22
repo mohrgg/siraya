@@ -18,14 +18,14 @@ interface GuruFormModalProps {
 }
 
 const TABS = [
-  { id: "kepegawaian", label: "Informasi Kepegawaian", icon: Briefcase },
   { id: "pribadi", label: "Identitas & Kontak", icon: User },
+  { id: "kepegawaian", label: "Informasi Kepegawaian", icon: Briefcase },
   { id: "pendidikan", label: "Kualifikasi Akademik", icon: GraduationCap },
   { id: "honorarium", label: "Rekening Bank & Honor", icon: CreditCard },
 ]
 
 export default function GuruFormModal({ isOpen, onClose, onSave, initialData, schoolUnits }: GuruFormModalProps) {
-  const [activeTab, setActiveTab] = useState("kepegawaian")
+  const [activeTab, setActiveTab] = useState("pribadi")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<any>({})
   const [mounted, setMounted] = useState(false)
@@ -42,7 +42,7 @@ export default function GuruFormModal({ isOpen, onClose, onSave, initialData, sc
         pendidikan: initialData?.pendidikan || "S1",
         isActive: initialData?.isActive !== undefined ? initialData.isActive : true,
       })
-      setActiveTab("kepegawaian")
+      setActiveTab("pribadi")
     }
   }, [isOpen, initialData])
 
@@ -102,8 +102,8 @@ export default function GuruFormModal({ isOpen, onClose, onSave, initialData, sc
           <div className="flex-1 flex flex-col">
             <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-white">
               <form id="guruForm" onSubmit={handleSubmit}>
-                {activeTab === "kepegawaian" && <TabKepegawaian formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} />}
                 {activeTab === "pribadi" && <TabPribadi formData={formData} handleChange={handleChange} />}
+                {activeTab === "kepegawaian" && <TabKepegawaian formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} />}
                 {activeTab === "pendidikan" && <TabPendidikan formData={formData} handleChange={handleChange} />}
                 {activeTab === "honorarium" && <TabHonorarium formData={formData} handleChange={handleChange} />}
               </form>

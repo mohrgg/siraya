@@ -167,7 +167,8 @@ export async function editGuru(id: string, data: {
     })
   }
 
-  revalidatePath("/guru")
+  revalidatePath(`/guru/${id}`)
+  revalidatePath("/guru", "layout")
   revalidatePath("/kelas")
   return result
 }

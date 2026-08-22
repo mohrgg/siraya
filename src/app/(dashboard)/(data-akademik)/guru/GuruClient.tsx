@@ -436,7 +436,7 @@ export default function GuruClient({
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex-shrink-0 border flex items-center justify-center ${
-                            item.gender === "P" 
+                            item.gender === "Perempuan" 
                               ? "bg-rose-50 border-rose-100 text-rose-500" 
                               : "bg-blue-50 border-blue-100 text-blue-500"
                           }`}>

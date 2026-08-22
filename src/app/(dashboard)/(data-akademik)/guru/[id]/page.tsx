@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma"
 import GuruDetailClient from "./GuruDetailClient"
 import { auth } from "@/lib/auth"
 
+export const dynamic = "force-dynamic"
+
 export default async function GuruDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
   if (!session?.user) redirect("/login")

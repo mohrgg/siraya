@@ -326,7 +326,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
                     </div>
                     <div>
                       <div className="text-xs font-medium text-text-muted mb-1">Jenis Kelamin</div>
-                      <div className="text-sm font-medium text-text-main">{initialData.gender === "L" ? "Laki-laki" : "Perempuan"}</div>
+                      <div className="text-sm font-medium text-text-main">{initialData.gender || "-"}</div>
                     </div>
                     <div>
                       <div className="text-xs font-medium text-text-muted mb-1">Pendidikan Terakhir</div>
