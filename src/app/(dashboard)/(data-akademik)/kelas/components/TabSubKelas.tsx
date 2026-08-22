@@ -58,16 +58,16 @@ export default function TabSubKelas({
             {isReadOnly ? (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setViewDetailSubKelas(c)} className="text-primary hover:bg-primary/10 font-bold gap-1.5">
+                  <button onClick={() => setViewDetailSubKelas(c)} className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors font-bold text-xs">
                     <Info size={16} /> Lihat Detail
-                  </Button>
+                  </button>
                 </div>
               </td>
             ) : (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setViewDetailSubKelas(c)} title="Lihat Detail Rombel & Daftar Siswa"><Info size={16} /></Button>
-                  <Button variant="outline" size="sm" onClick={() => {
+                  <button onClick={() => setViewDetailSubKelas(c)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors" title="Lihat Detail Rombel & Daftar Siswa"><Info size={16} /></button>
+                  <button onClick={() => {
                     setFormSubKelas({ 
                       id: c.id, 
                       name: c.name, 
@@ -80,8 +80,8 @@ export default function TabSubKelas({
                       waliKelasPhone: c.waliKelasPhone || ""
                     })
                     setShowModalSubKelas(true)
-                  }} title="Edit Rombel"><Edit2 size={16} /></Button>
-                  <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: c.id, type: "subkelas" })} title="Hapus Rombel"><Trash2 size={16} /></Button>
+                  }} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg border border-green-200 hover:border-green-600 transition-colors" title="Edit Rombel"><Edit2 size={16} /></button>
+                  <button onClick={() => setDeleteData({ id: c.id, type: "subkelas" })} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" title="Hapus Rombel"><Trash2 size={16} /></button>
                 </div>
               </td>
             )}

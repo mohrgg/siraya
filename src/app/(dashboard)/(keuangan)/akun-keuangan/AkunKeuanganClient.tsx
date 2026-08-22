@@ -460,12 +460,12 @@ export default function AkunKeuanganClient({
                     {!isReadOnly && (
                       <td className="p-4">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEditAkun(item)}>
+                          <button onClick={() => handleEditAkun(item)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg border border-green-200 hover:border-green-600 transition-colors" title="Edit Akun">
                             <Edit2 size={16} />
-                          </Button>
-                          <Button variant="danger" size="sm" onClick={() => setDeleteAkunId(item.id)}>
+                          </button>
+                          <button onClick={() => setDeleteAkunId(item.id)} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" title="Hapus Akun">
                             <Trash2 size={16} />
-                          </Button>
+                          </button>
                         </div>
                       </td>
                     )}
@@ -515,12 +515,12 @@ export default function AkunKeuanganClient({
                     {isAdmin && (
                       <td className="p-4">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEditSubKlas(item)}>
+                          <button onClick={() => handleEditSubKlas(item)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg border border-green-200 hover:border-green-600 transition-colors" title="Edit Subklasifikasi">
                             <Edit2 size={16} />
-                          </Button>
-                          <Button variant="danger" size="sm" onClick={() => setDeleteSubKlasId(item.id)}>
+                          </button>
+                          <button onClick={() => setDeleteSubKlasId(item.id)} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" title="Hapus Subklasifikasi">
                             <Trash2 size={16} />
-                          </Button>
+                          </button>
                         </div>
                       </td>
                     )}

@@ -158,23 +158,23 @@ export default function TabMurid({
             {!isReadOnly && (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => router.push(`/murid/${s.id}`)} title="Lihat Profil 360° Murid"><Info size={16} /></Button>
-                  <Button variant="outline" size="sm" onClick={() => { 
+                  <button onClick={() => router.push(`/murid/${s.id}`)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors" title="Lihat Profil 360° Murid"><Info size={16} /></button>
+                  <button onClick={() => { 
                     setFormMurid({ ...s, subKelasId: s.riwayatKelas?.[0]?.subKelasId || "" }); 
                     setShowModalMurid(true); 
-                  }} title="Edit Murid">
+                  }} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg border border-green-200 hover:border-green-600 transition-colors" title="Edit Murid">
                     <Edit2 size={16} />
-                  </Button>
-                  <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: s.id, type: "murid" })} title="Hapus Murid"><Trash2 size={16} /></Button>
+                  </button>
+                  <button onClick={() => setDeleteData({ id: s.id, type: "murid" })} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" title="Hapus Murid"><Trash2 size={16} /></button>
                 </div>
               </td>
             )}
             {isReadOnly && (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => router.push(`/murid/${s.id}`)} className="text-primary hover:bg-primary/10 font-bold gap-1.5">
+                  <button onClick={() => router.push(`/murid/${s.id}`)} className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors font-bold text-xs">
                     <Info size={16} /> Profil 360°
-                  </Button>
+                  </button>
                 </div>
               </td>
             )}

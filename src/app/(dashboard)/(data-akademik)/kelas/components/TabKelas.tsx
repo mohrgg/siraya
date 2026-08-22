@@ -34,12 +34,12 @@ export default function TabKelas({
             {!isReadOnly && (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => onEditTingkat && onEditTingkat(g)} title="Edit Tingkat">
+                  <button onClick={() => onEditTingkat && onEditTingkat(g)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg border border-green-200 hover:border-green-600 transition-colors" title="Edit Tingkat">
                     <Edit2 size={16} />
-                  </Button>
-                  <Button variant="danger" size="sm" onClick={() => setDeleteData({ id: g.id, type: "tingkat" })} title="Hapus Tingkat">
+                  </button>
+                  <button onClick={() => setDeleteData({ id: g.id, type: "tingkat" })} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" title="Hapus Tingkat">
                     <Trash2 size={16} />
-                  </Button>
+                  </button>
                 </div>
               </td>
             )}

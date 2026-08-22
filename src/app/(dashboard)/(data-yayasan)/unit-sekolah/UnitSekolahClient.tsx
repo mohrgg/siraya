@@ -198,12 +198,12 @@ export default function UnitSekolahClient({ initialData, userRole }: { initialDa
                     {!isReadOnly && (
                       <td className="p-4">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
+                          <button onClick={() => handleEdit(item)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg border border-green-200 hover:border-green-600 transition-colors" title="Edit Unit Sekolah">
                             <Edit2 size={16} />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => setDeleteId(item.id)} className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-border">
+                          </button>
+                          <button onClick={() => setDeleteId(item.id)} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" title="Hapus Unit Sekolah">
                             <Trash2 size={16} />
-                          </Button>
+                          </button>
                         </div>
                       </td>
                     )}

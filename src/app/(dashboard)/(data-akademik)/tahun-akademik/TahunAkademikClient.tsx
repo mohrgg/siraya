@@ -260,12 +260,12 @@ export default function TahunAkademikClient({ initialData, userRole }: { initial
                     {!isReadOnly && (
                       <td className="p-4">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEditClick(item)}>
+                          <button onClick={() => handleEditClick(item)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg border border-green-200 hover:border-green-600 transition-colors" title="Edit Tahun Akademik">
                             <Edit2 size={16} />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => setDeleteId(item.id)} className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-border">
+                          </button>
+                          <button onClick={() => setDeleteId(item.id)} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" title="Hapus Tahun Akademik">
                             <Trash2 size={16} />
-                          </Button>
+                          </button>
                         </div>
                       </td>
                     )}

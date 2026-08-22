@@ -305,7 +305,7 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
                           type="button" 
                           onClick={() => removeLine(line.id)}
                           disabled={lines.length === 1}
-                          className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed mx-auto block"
+                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed mx-auto block"
                         >
                           <Trash2 size={16} />
                         </button>
