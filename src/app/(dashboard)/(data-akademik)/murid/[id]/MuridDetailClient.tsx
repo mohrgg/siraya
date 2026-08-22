@@ -29,17 +29,16 @@ interface MuridDetailClientProps {
 
 const PRIMARY_TABS = [
   { id: "biodata", label: "Biodata & Identitas", icon: User },
-  { id: "keuangan", label: "Keuangan & SPP", icon: CreditCard },
   { id: "akademik", label: "Riwayat Kelas & Akademik", icon: GraduationCap },
   { id: "konseling", label: "Absensi & Konseling BK", icon: FileText },
+  { id: "keuangan", label: "Keuangan & SPP", icon: CreditCard },
 ]
 
 const BIODATA_SUBTABS = [
-  { id: "utama", label: "Informasi Utama", icon: GraduationCap },
   { id: "pribadi", label: "Identitas Pribadi", icon: User },
-  { id: "keluarga", label: "Data Keluarga", icon: Users },
-  { id: "pendidikan", label: "Pendidikan & Fisik", icon: MapPin },
-  { id: "kesehatan", label: "Riwayat Kesehatan", icon: HeartPulse },
+  { id: "keluarga", label: "Keluarga & Wali", icon: Users },
+  { id: "fisik_medis", label: "Fisik & Medis", icon: HeartPulse },
+  { id: "sistem", label: "Registrasi & Sistem", icon: Building },
 ]
 
 export default function MuridDetailClient({ 
@@ -54,7 +53,7 @@ export default function MuridDetailClient({
   const router = useRouter()
   const [murid, setMurid] = useState(initialMurid)
   const [activePrimaryTab, setActivePrimaryTab] = useState("biodata")
-  const [activeBioTab, setActiveBioTab] = useState("utama")
+  const [activeBioTab, setActiveBioTab] = useState("pribadi")
   const [showEditModal, setShowEditModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isExportingExcel, setIsExportingExcel] = useState(false)
@@ -229,88 +228,102 @@ export default function MuridDetailClient({
       </div>
 
       <div className="space-y-6 print:hidden">
-        {/* 360° Hero Banner */}
-        <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-white/10">
-        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute right-1/3 -top-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-white/10 border-2 border-white/30 overflow-hidden flex items-center justify-center shadow-lg shrink-0 backdrop-blur-md">
-              {murid.photoUrl ? (
-                <img src={murid.photoUrl} alt={murid.name} className="w-full h-full object-cover" />
-              ) : (
-                <User size={44} className="text-white/80" />
-              )}
+        {/* Minimalist Profile Header */}
+        <div className="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 relative overflow-hidden">
+          {/* Subtle decorative background */}
+          <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none"></div>
+          
+          <div className="flex items-center gap-5 relative z-10">
+            {/* Initial Avatar */}
+            <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl font-black shadow-sm shrink-0 border ${
+              murid.gender === 'Perempuan' 
+                ? 'bg-gradient-to-br from-rose-100 to-pink-50 text-rose-600 border-rose-200/50' 
+                : 'bg-gradient-to-br from-blue-100 to-indigo-50 text-blue-600 border-blue-200/50'
+            }`}>
+              {murid.name.charAt(0).toUpperCase()}
             </div>
+
+            {/* Identity Details */}
             <div>
               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <span className="px-3 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wide bg-white/20 text-white border border-white/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 text-gray-700 border border-border">
                   {unitName}
                 </span>
-                <span className="px-3 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wide bg-amber-400 text-amber-950 shadow-xs">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                   Rombel: {currentRombel}
                 </span>
-                <span className={`px-3 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wide border ${getStatusBadge(murid.status)}`}>
+                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getStatusBadge(murid.status)}`}>
                   {murid.status || "AKTIF"}
                 </span>
                 {murid.isScholarship && (
-                  <span className="px-3 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wide bg-purple-500 text-white flex items-center gap-1.5 shadow-xs">
-                    <Award size={14} /> Penerima Beasiswa
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
+                    <Award size={12} /> Penerima Beasiswa
                   </span>
                 )}
               </div>
-              <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white">{murid.name}</h1>
-              <p className="text-sm sm:text-base text-blue-100 mt-1 font-mono">
-                NIS: <span className="font-bold text-white">{murid.nis}</span> {murid.nisn ? `• NISN: ${murid.nisn}` : ""}
-              </p>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight mb-1">
+                {murid.name}
+              </h1>
+              <div className="flex items-center gap-1.5 text-sm text-text-muted font-medium">
+                <User size={16} />
+                <span>NIS: <span className="font-mono text-text-main font-semibold ml-1">{murid.nis}</span></span>
+                {murid.nisn && (
+                  <>
+                    <span className="mx-1 text-border">•</span>
+                    <span>NISN: <span className="font-mono text-text-main font-semibold ml-1">{murid.nisn}</span></span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md px-5 py-4 rounded-2xl border border-white/20 self-stretch md:self-auto flex flex-col justify-center min-w-[200px]">
-            <div className="text-xs text-blue-200 font-semibold uppercase tracking-wider">Status Tunggakan SPP</div>
-            <div className="text-xl sm:text-2xl font-black mt-0.5">
-              {summaryKeuangan.sisaTunggakan === 0 ? (
-                <span className="text-emerald-300 flex items-center gap-1.5">
-                  <CheckCircle2 size={20} /> Bebas Tunggakan
-                </span>
-              ) : (
-                <span className="text-amber-300 flex items-center gap-1.5">
-                  <AlertCircle size={20} /> {formatRupiah(summaryKeuangan.sisaTunggakan)}
-                </span>
-              )}
+          {/* Metric KPI Cards */}
+          <div className="flex gap-4 relative z-10 self-stretch md:self-auto min-w-[200px]">
+            <div className="bg-gray-50 border border-border rounded-xl p-4 shadow-sm w-full flex flex-col justify-center">
+              <div className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Status Tunggakan SPP</div>
+              <div className="text-lg font-black mt-0.5">
+                {summaryKeuangan.sisaTunggakan === 0 ? (
+                  <span className="text-emerald-600 flex items-center gap-2">
+                    <CheckCircle2 size={20} /> Bebas Tunggakan
+                  </span>
+                ) : (
+                  <span className="text-amber-600 flex items-center gap-2">
+                    <AlertCircle size={20} /> {formatRupiah(summaryKeuangan.sisaTunggakan)}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Primary Navigation Tabs */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-1.5 shadow-xs flex items-center gap-2 overflow-x-auto print:hidden">
-        {PRIMARY_TABS.map((tab) => {
-          const Icon = tab.icon
-          const isActive = activePrimaryTab === tab.id
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActivePrimaryTab(tab.id)}
-              className={`flex items-center gap-2.5 py-3 px-5 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex-1 justify-center ${
-                isActive
-                  ? "bg-primary text-white shadow-md shadow-primary/20"
-                  : "text-gray-600 hover:bg-gray-100/80 hover:text-gray-900"
-              }`}
-            >
-              <Icon size={18} />
-              {tab.label}
-            </button>
-          )
-        })}
-      </div>
+        {/* Modular Tab Navigation */}
+        <div className="bg-surface border border-border rounded-2xl shadow-sm overflow-hidden mb-6">
+          <div className="flex border-b border-border overflow-x-auto hide-scrollbar">
+            {PRIMARY_TABS.map((tab) => {
+              const Icon = tab.icon
+              const isActive = activePrimaryTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActivePrimaryTab(tab.id)}
+                  className={`flex items-center justify-center gap-2 px-6 py-4 font-semibold text-sm transition-colors whitespace-nowrap flex-1 ${
+                    isActive 
+                      ? "border-b-2 border-primary text-primary bg-primary/5" 
+                      : "text-text-muted hover:text-text-main hover:bg-gray-50"
+                  }`}
+                >
+                  <Icon size={18} />
+                  {tab.label}
+                </button>
+              )
+            })}
+          </div>
 
       {/* Tab Content 1: BIODATA & IDENTITAS */}
       {activePrimaryTab === "biodata" && (
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden animate-in fade-in duration-200">
+        <div className="animate-in fade-in duration-200">
           {/* Sub-tab header for biodata */}
-          <div className="flex border-b border-gray-200 px-6 gap-2 bg-gray-50/70 overflow-x-auto">
+          <div className="flex border-b border-border px-6 gap-2 bg-gray-50/70 overflow-x-auto">
             {BIODATA_SUBTABS.map((tab) => {
               const Icon = tab.icon
               const isActive = activeBioTab === tab.id
@@ -320,8 +333,8 @@ export default function MuridDetailClient({
                   onClick={() => setActiveBioTab(tab.id)}
                   className={`flex items-center gap-2 py-3.5 px-4 font-bold text-xs sm:text-sm border-b-2 transition-all whitespace-nowrap ${
                     isActive
-                      ? "border-primary text-primary bg-white shadow-xs rounded-t-lg"
-                      : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300"
+                      ? "border-primary text-primary bg-surface shadow-sm rounded-t-lg"
+                      : "border-transparent text-text-muted hover:text-text-main hover:border-border"
                   }`}
                 >
                   <Icon size={16} className={isActive ? "text-primary" : "text-gray-400"} />
@@ -332,64 +345,6 @@ export default function MuridDetailClient({
           </div>
 
           <div className="p-6 sm:p-8 text-sm">
-            {activeBioTab === "utama" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-200">
-                <div className="space-y-4">
-                  <h3 className="font-extrabold text-gray-900 border-b border-gray-200 pb-2 text-base flex items-center gap-2">
-                    <GraduationCap size={18} className="text-primary" /> Identitas Akademik
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                    <div>
-                      <label className="text-xs text-gray-400 font-semibold uppercase">Nomor Induk Siswa (NIS)</label>
-                      <p className="font-mono font-bold text-gray-900 text-base mt-0.5">{murid.nis || "-"}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-400 font-semibold uppercase">NISN</label>
-                      <p className="font-mono font-bold text-gray-900 text-base mt-0.5">{murid.nisn || "-"}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-400 font-semibold uppercase">Unit Sekolah</label>
-                      <p className="font-semibold text-gray-800 mt-0.5">{unitName}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-400 font-semibold uppercase">Rombel Saat Ini</label>
-                      <p className="font-bold text-primary mt-0.5">{currentRombel}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-400 font-semibold uppercase">Status Siswa</label>
-                      <p className="font-bold text-gray-800 mt-0.5">{murid.status || "AKTIF"}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-400 font-semibold uppercase">Penerima Beasiswa</label>
-                      <p className="font-bold text-gray-800 mt-0.5">{murid.isScholarship ? "Ya (Aktif)" : "Tidak"}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="font-extrabold text-gray-900 border-b border-gray-200 pb-2 text-base flex items-center gap-2">
-                    <User size={18} className="text-primary" /> Akun & Pendaftaran
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                    <div>
-                      <label className="text-xs text-gray-400 font-semibold uppercase">Username Akun</label>
-                      <p className="font-mono font-bold text-gray-800 mt-0.5">{murid.username || "-"}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-400 font-semibold uppercase">No. Formulir / Daftar</label>
-                      <p className="font-mono font-bold text-gray-800 mt-0.5">{murid.formNo || "-"}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <label className="text-xs text-gray-400 font-semibold uppercase">Tanggal Terdaftar</label>
-                      <p className="font-medium text-gray-700 mt-0.5">
-                        {murid.createdAt ? new Date(murid.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "-"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {activeBioTab === "pribadi" && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-200">
                 <div className="space-y-4">
@@ -587,25 +542,13 @@ export default function MuridDetailClient({
               </div>
             )}
 
-            {activeBioTab === "pendidikan" && (
+            {activeBioTab === "fisik_medis" && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-200">
-                <div className="space-y-4">
-                  <h3 className="font-extrabold text-gray-900 border-b border-gray-200 pb-2 text-base flex items-center gap-2">
-                    <GraduationCap size={18} className="text-primary" /> Pendidikan Sebelumnya
-                  </h3>
-                  <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                    <div>
-                      <label className="text-xs text-gray-400 font-semibold uppercase">Nama Sekolah Asal (SMP/SD/TK)</label>
-                      <p className="font-bold text-gray-800 text-base mt-1">{murid.previousSchool || "-"}</p>
-                    </div>
-                  </div>
-                </div>
-
                 <div className="space-y-4">
                   <h3 className="font-extrabold text-gray-900 border-b border-gray-200 pb-2 text-base flex items-center gap-2">
                     <HeartPulse size={18} className="text-primary" /> Data Periodik & Fisik
                   </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
                     <div>
                       <label className="text-xs text-gray-400 font-semibold uppercase">Tinggi Badan</label>
                       <p className="font-bold text-gray-800 text-base mt-0.5">{murid.height ? `${murid.height} cm` : "-"}</p>
@@ -619,33 +562,99 @@ export default function MuridDetailClient({
                       <p className="font-bold text-gray-800 text-base mt-0.5">{murid.headSize ? `${murid.headSize} cm` : "-"}</p>
                     </div>
                     <div>
+                      <label className="text-xs text-gray-400 font-semibold uppercase">Golongan Darah</label>
+                      <p className="font-bold text-gray-800 text-base mt-0.5">{murid.bloodType || "-"}</p>
+                    </div>
+                    <div>
                       <label className="text-xs text-gray-400 font-semibold uppercase">Jarak ke Sekolah</label>
                       <p className="font-semibold text-gray-800 mt-0.5">{murid.distanceToSchool || "-"}</p>
                     </div>
-                    <div className="col-span-2">
+                    <div>
                       <label className="text-xs text-gray-400 font-semibold uppercase">Waktu Tempuh</label>
                       <p className="font-semibold text-gray-800 mt-0.5">{murid.travelTime || "-"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-extrabold text-rose-800 border-b border-rose-200 pb-2 text-base flex items-center gap-2">
+                    <AlertCircle size={18} className="text-rose-600" /> Riwayat Medis Khusus
+                  </h3>
+                  <div className="bg-rose-50/50 p-5 rounded-2xl border border-rose-100 space-y-4">
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="text-xs text-rose-500 font-semibold uppercase">Penyakit Bawaan / Kronis</label>
+                        <p className="font-bold text-rose-950 text-base mt-0.5">{murid.disease || "Tidak ada riwayat penyakit"}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-rose-500 font-semibold uppercase">Kelainan Fisik / Disabilitas</label>
+                        <p className="font-semibold text-rose-900 mt-0.5">{murid.abnormality || "Tidak ada kelainan fisik"}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-rose-500 font-semibold uppercase">Catatan Tambahan Medis</label>
+                        <p className="font-medium text-rose-800 mt-0.5">{murid.medicalHistory || "-"}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {activeBioTab === "kesehatan" && (
-              <div className="space-y-6 animate-in fade-in duration-200">
-                <div className="bg-rose-50/50 p-6 rounded-3xl border border-rose-100 space-y-4">
-                  <h3 className="font-extrabold text-rose-800 text-base uppercase tracking-wide flex items-center gap-2">
-                    <HeartPulse size={20} /> Data Medis & Kesehatan
+            {activeBioTab === "sistem" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-200">
+                <div className="space-y-4">
+                  <h3 className="font-extrabold text-gray-900 border-b border-gray-200 pb-2 text-base flex items-center gap-2">
+                    <GraduationCap size={18} className="text-primary" /> Identitas Akademik Sekolah
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
                     <div>
-                      <label className="text-xs text-gray-400 font-semibold uppercase">Golongan Darah</label>
-                      <p className="font-black text-rose-600 text-3xl mt-1">{murid.bloodType || "-"}</p>
+                      <label className="text-xs text-gray-400 font-semibold uppercase">Nomor Induk Siswa (NIS)</label>
+                      <p className="font-mono font-bold text-gray-900 text-base mt-0.5">{murid.nis || "-"}</p>
                     </div>
-                    <div className="sm:col-span-2">
-                      <label className="text-xs text-gray-400 font-semibold uppercase">Riwayat Penyakit / Keluhan Kesehatan</label>
-                      <p className="font-medium text-gray-800 mt-1 bg-white p-4 rounded-xl border border-rose-100 shadow-2xs">
-                        {murid.medicalHistory || "Tidak ada riwayat penyakit atau keluhan kesehatan khusus yang dicatatkan."}
+                    <div>
+                      <label className="text-xs text-gray-400 font-semibold uppercase">NISN</label>
+                      <p className="font-mono font-bold text-gray-900 text-base mt-0.5">{murid.nisn || "-"}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400 font-semibold uppercase">Unit Sekolah</label>
+                      <p className="font-semibold text-gray-800 mt-0.5">{unitName}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400 font-semibold uppercase">Rombel Saat Ini</label>
+                      <p className="font-bold text-primary mt-0.5">{currentRombel}</p>
+                    </div>
+                    <div className="col-span-2 border-t border-gray-200 pt-3 mt-1">
+                      <label className="text-xs text-gray-400 font-semibold uppercase">Asal Sekolah Sebelumnya (SD/SMP)</label>
+                      <p className="font-bold text-gray-800 text-base mt-0.5">{murid.previousSchool || "-"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-extrabold text-gray-900 border-b border-gray-200 pb-2 text-base flex items-center gap-2">
+                    <Building size={18} className="text-primary" /> Registrasi & Pendaftaran
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                    <div>
+                      <label className="text-xs text-gray-400 font-semibold uppercase">Username Akun Portal</label>
+                      <p className="font-mono font-bold text-gray-800 mt-0.5">{murid.username || "-"}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400 font-semibold uppercase">No. Formulir / Daftar</label>
+                      <p className="font-mono font-bold text-gray-800 mt-0.5">{murid.formNo || "-"}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs text-gray-400 font-semibold uppercase">Status Siswa</label>
+                      <p className="font-bold text-gray-800 mt-0.5">{murid.status || "AKTIF"}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs text-gray-400 font-semibold uppercase">Penerima Beasiswa Khusus</label>
+                      <p className="font-bold text-gray-800 mt-0.5">{murid.isScholarship ? "Ya (Aktif)" : "Tidak"}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs text-gray-400 font-semibold uppercase">Tanggal Terdaftar Masuk</label>
+                      <p className="font-medium text-gray-700 mt-0.5">
+                        {murid.createdAt ? new Date(murid.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "-"}
                       </p>
                     </div>
                   </div>
@@ -656,9 +665,9 @@ export default function MuridDetailClient({
         </div>
       )}
 
-      {/* Tab Content 2: KEUANGAN & SPP */}
+      {/* Tab Content 2: KEUANGAN & PEMBAYARAN */}
       {activePrimaryTab === "keuangan" && (
-        <div className="space-y-6 animate-in fade-in duration-200">
+        <div className="p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
           {/* Financial Metrik Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm flex items-center gap-4">
@@ -762,9 +771,9 @@ export default function MuridDetailClient({
         </div>
       )}
 
-      {/* Tab Content 3: AKADEMIK & RIWAYAT KELAS */}
+      {/* Tab Content 2: AKADEMIK & RIWAYAT KELAS */}
       {activePrimaryTab === "akademik" && (
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
+        <div className="p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
           <div className="flex items-center justify-between border-b border-gray-100 pb-4">
             <div>
               <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
@@ -817,21 +826,130 @@ export default function MuridDetailClient({
         </div>
       )}
 
-      {/* Tab Content 4: ABSENSI & KONSELING BK */}
+      {/* Tab Content 3: ABSENSI & KONSELING BK */}
       {activePrimaryTab === "konseling" && (
-        <div className="bg-gradient-to-br from-indigo-50/60 via-white to-purple-50/60 rounded-3xl border border-indigo-100 shadow-sm p-8 sm:p-12 text-center animate-in fade-in duration-200">
+        <div className="p-8 sm:p-12 text-center animate-in fade-in duration-200">
           <div className="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center text-white mx-auto mb-5 shadow-lg shadow-indigo-500/20">
             <FileText size={38} />
           </div>
-          <h3 className="text-xl sm:text-2xl font-black text-gray-900">Modul Absensi & Catatan Bimbingan Konseling (BK)</h3>
-          <p className="text-sm text-gray-600 max-w-lg mx-auto mt-2 leading-relaxed">
+          <h3 className="text-xl sm:text-2xl font-black text-text-main">Modul Absensi & Catatan Bimbingan Konseling (BK)</h3>
+          <p className="text-sm text-text-muted max-w-lg mx-auto mt-2 leading-relaxed">
             Halaman profil 360° ini telah disiapkan secara arsitektural untuk menampung grafik kehadiran siswa bulanan (Sakit, Izin, Alpa) serta rekam jejak pembinaan dan konseling oleh guru BK pada rilis modul berikutnya.
           </p>
-          <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-indigo-100/80 text-indigo-800 rounded-full text-xs font-bold">
+          <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100">
             <Clock size={15} /> Coming Soon: Fase Integrasi Kehadiran & BK
           </div>
         </div>
       )}
+
+      {/* Tab Content 4: KEUANGAN & PEMBAYARAN */}
+      {activePrimaryTab === "keuangan" && (
+        <div className="p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
+          {/* Financial Metrik Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                <CreditCard size={26} />
+              </div>
+              <div>
+                <div className="text-xs font-extrabold text-gray-400 uppercase tracking-wide">Total Akumulasi Tagihan</div>
+                <div className="text-2xl font-black text-gray-900 mt-0.5">{formatRupiah(summaryKeuangan.totalTagihan)}</div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <CheckCircle2 size={26} />
+              </div>
+              <div>
+                <div className="text-xs font-extrabold text-gray-400 uppercase tracking-wide">Total Sudah Dibayar</div>
+                <div className="text-2xl font-black text-emerald-600 mt-0.5">{formatRupiah(summaryKeuangan.totalTerbayar)}</div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm flex items-center gap-4">
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold ${
+                summaryKeuangan.sisaTunggakan === 0 ? "bg-gray-100 text-gray-500" : "bg-rose-50 text-rose-600"
+              }`}>
+                {summaryKeuangan.sisaTunggakan === 0 ? <CheckCircle2 size={26} /> : <AlertCircle size={26} />}
+              </div>
+              <div>
+                <div className={`text-xs font-extrabold uppercase tracking-wide ${
+                  summaryKeuangan.sisaTunggakan === 0 ? "text-gray-400" : "text-rose-400"
+                }`}>Sisa Tunggakan SPP</div>
+                <div className={`text-2xl font-black mt-0.5 ${
+                  summaryKeuangan.sisaTunggakan === 0 ? "text-gray-900" : "text-rose-600"
+                }`}>
+                  {formatRupiah(summaryKeuangan.sisaTunggakan)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabel Riwayat Tagihan */}
+          <div>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div>
+                <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
+                  <DollarSign size={20} className="text-primary" /> Rincian Tagihan & Kewajiban
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">Seluruh tagihan yang tercatat atas nama siswa ini pada tahun akademik berjalan.</p>
+              </div>
+            </div>
+
+            {!murid.tagihan || murid.tagihan.length === 0 ? (
+              <div className="bg-gray-50/80 border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center my-6">
+                <CreditCard size={42} className="mx-auto text-gray-300 mb-2" />
+                <div className="font-bold text-gray-700 text-base">Belum Ada Riwayat Tagihan SPP</div>
+                <p className="text-xs text-gray-400 max-w-md mx-auto mt-1">
+                  Siswa ini belum memiliki tagihan SPP, Uang Pangkal, ataupun kewajiban keuangan lainnya yang di-generate dari Modul Tagihan Keuangan.
+                </p>
+              </div>
+            ) : (
+              <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-2xs">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-gray-50/80 border-b border-gray-200 text-xs font-extrabold text-gray-500 uppercase tracking-wider">
+                      <th className="py-3.5 px-5">Jenis Tagihan</th>
+                      <th className="py-3.5 px-5">Nominal Tagihan</th>
+                      <th className="py-3.5 px-5">Terbayar</th>
+                      <th className="py-3.5 px-5">Sisa / Tunggakan</th>
+                      <th className="py-3.5 px-5">Jatuh Tempo</th>
+                      <th className="py-3.5 px-5 text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {murid.tagihan.map((t: any) => (
+                      <tr key={t.id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="py-4 px-5 font-bold text-gray-900">
+                          {t.jenisTagihan?.name || "Tagihan Sekolah"}
+                          <div className="text-[11px] text-gray-400 font-normal mt-0.5">ID: {t.id.slice(-8)}</div>
+                        </td>
+                        <td className="py-4 px-5 font-mono font-semibold text-gray-800">{formatRupiah(t.amount)}</td>
+                        <td className="py-4 px-5 font-mono font-semibold text-emerald-600">{formatRupiah(t.totalPaid)}</td>
+                        <td className="py-4 px-5 font-mono font-bold text-rose-600">{formatRupiah(t.remaining)}</td>
+                        <td className="py-4 px-5 text-gray-600">
+                          {t.dueDate ? new Date(t.dueDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-"}
+                        </td>
+                        <td className="py-4 px-5 text-right">
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-extrabold uppercase ${
+                            t.status === "PAID" ? "bg-emerald-100 text-emerald-800" :
+                            t.status === "PARTIAL" ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"
+                          }`}>
+                            {t.status === "PAID" ? "Lunas" : t.status === "PARTIAL" ? "Nyicil" : "Belum Bayar"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      </div>
       </div>
 
       {/* ========================================================== */}
@@ -848,16 +966,9 @@ export default function MuridDetailClient({
           <p className="text-xs font-mono text-gray-800 mt-0.5">NIS: {murid.nis || "-"} | NISN: {murid.nisn || "-"}</p>
         </div>
 
-        {/* PAS FOTO & IDENTITAS SINGKAT */}
-        <div className="flex items-start justify-between gap-6 border border-gray-300 p-4 rounded-lg">
-          <div className="w-24 h-32 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center text-center p-1 bg-gray-50 shrink-0">
-            {murid.photoUrl ? (
-              <img src={murid.photoUrl} alt="Foto Siswa" className="w-full h-full object-cover rounded" />
-            ) : (
-              <span className="text-[10px] font-bold text-gray-500">PAS FOTO<br/>3 x 4 cm</span>
-            )}
-          </div>
-          <div className="flex-1 grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
+        {/* IDENTITAS SINGKAT */}
+        <div className="border border-gray-300 p-4 rounded-lg">
+          <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
             <div><span className="text-gray-500 font-semibold block">Nama Lengkap:</span><span className="font-bold text-sm text-black">{murid.name}</span></div>
             <div><span className="text-gray-500 font-semibold block">Rombel Saat Ini:</span><span className="font-bold text-sm text-black">{murid.riwayatKelas?.[0]?.subKelas?.name || "-"}</span></div>
             <div><span className="text-gray-500 font-semibold block">Jenis Kelamin:</span><span className="font-semibold">{murid.gender}</span></div>
