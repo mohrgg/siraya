@@ -99,6 +99,7 @@ export default function GuruClient({
   }, [initialData])
 
   const [statusFilter, setStatusFilter] = useState<string>("")
+  const [unitFilter, setUnitFilter] = useState<string>("")
   const [searchTerm, setSearchTerm] = useState<string>("")
   
   const [isAdding, setIsAdding] = useState(false)
@@ -111,7 +112,7 @@ export default function GuruClient({
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [activeUnitId, statusFilter, searchTerm])
+  }, [activeUnitId, statusFilter, searchTerm, unitFilter])
 
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -235,6 +236,7 @@ export default function GuruClient({
   const filteredData = useMemo(() => {
     return data.filter(item => {
       if (activeUnitId && activeUnitId !== "all" && item.unitSekolahId !== activeUnitId) return false
+      if ((!activeUnitId || activeUnitId === "all") && unitFilter && item.unitSekolahId !== unitFilter) return false
       if (statusFilter && item.statusKepegawaian !== statusFilter) return false
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase()
@@ -245,11 +247,24 @@ export default function GuruClient({
       }
       return true
     })
-  }, [data, activeUnitId, statusFilter, searchTerm])
+  }, [data, activeUnitId, statusFilter, searchTerm, unitFilter])
 
   const paginatedData = useMemo(() => {
     return filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   }, [filteredData, currentPage, pageSize])
+
+  const availableStatuses = useMemo(() => {
+    const statuses = new Set<string>()
+    data.forEach(item => {
+      if (item.statusKepegawaian && item.statusKepegawaian !== "-") {
+        statuses.add(item.statusKepegawaian)
+      }
+    })
+    return Array.from(statuses).sort().map(status => ({
+      value: status,
+      label: status
+    }))
+  }, [data])
 
   const computedTotalPages = Math.ceil(filteredData.length / pageSize)
 
@@ -359,19 +374,22 @@ export default function GuruClient({
           />
 
           <ToolbarFilter 
+            icon={<Building2 size={14} />}
+            value={activeUnitId && activeUnitId !== "all" ? activeUnitId : unitFilter}
+            onChange={setUnitFilter}
+            disabled={activeUnitId !== "all" && activeUnitId !== ""}
+            options={[
+              { value: "", label: "Semua Unit" },
+              ...schoolUnits.map(u => ({ value: u.id, label: u.name }))
+            ]}
+          />
+
+          <ToolbarFilter 
             value={statusFilter}
             onChange={setStatusFilter}
             options={[
               { value: "", label: "Semua Status" },
-              { value: "GTY", label: "GTY (Tetap Yayasan)" },
-              { value: "GTT", label: "GTT (Honorer)" },
-              { value: "PNS", label: "PNS (Pegawai Negeri Sipil)" },
-              { value: "DPK", label: "DPK (Diperbantukan)" },
-              { value: "PPPK", label: "PPPK (Perjanjian Kerja)" },
-              { value: "Honor", label: "Honor (Pegawai Lepas)" },
-              { value: "Staf TU", label: "Staf TU (Tata Usaha)" },
-              { value: "Satpam", label: "Satpam (Keamanan)" },
-              { value: "OB", label: "OB (Kebersihan)" }
+              ...availableStatuses
             ]}
           />
 
@@ -407,18 +425,33 @@ export default function GuruClient({
           <table className="w-full text-left border-collapse">
             <thead className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
               <tr>
+                {!isReadOnly && (
+                  <th className="p-4 font-semibold text-center w-12">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                      checked={paginatedData.length > 0 && selectedGurus.length === paginatedData.length}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedGurus(paginatedData.map((g: any) => g.id))
+                        else setSelectedGurus([])
+                      }}
+                    />
+                  </th>
+                )}
                 <th className="p-4 font-semibold text-center w-12">NO</th>
                 <th className="p-4 font-semibold text-left">PROFIL GURU</th>
-                <th className="p-4 font-semibold text-left hidden md:table-cell">UNIT & STATUS</th>
-                <th className="p-4 font-semibold text-left hidden lg:table-cell">PERAN AKADEMIK</th>
-                <th className="p-4 font-semibold text-left hidden xl:table-cell">KONTAK</th>
+                <th className="p-4 font-semibold text-center hidden sm:table-cell w-20">GENDER</th>
+                <th className="p-4 font-semibold text-left hidden md:table-cell">UNIT SEKOLAH</th>
+                <th className="p-4 font-semibold text-center hidden lg:table-cell">STATUS PEGAWAI</th>
+                <th className="p-4 font-semibold text-left hidden xl:table-cell">NO. WHATSAPP</th>
+                <th className="p-4 font-semibold text-center hidden xl:table-cell w-28">STATUS</th>
                 {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-sm">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={isReadOnly ? 5 : 6} className="py-12 text-center">
+                  <td colSpan={isReadOnly ? 7 : 9} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center text-text-muted">
                       <GraduationCap className="w-12 h-12 stroke-[1.2] text-text-muted/40 mb-3" />
                       <p className="font-medium text-text-main">Belum Ada Data Guru</p>
@@ -432,6 +465,19 @@ export default function GuruClient({
                   const waUrl = formatWhatsAppUrl(item.phone)
                   return (
                     <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                      {!isReadOnly && (
+                        <td className="p-4 text-center">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                            checked={selectedGurus.includes(item.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedGurus([...selectedGurus, item.id])
+                              else setSelectedGurus(selectedGurus.filter(id => id !== item.id))
+                            }}
+                          />
+                        </td>
+                      )}
                       <td className="p-4 text-center text-text-main">{absoluteIdx}</td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
@@ -452,79 +498,46 @@ export default function GuruClient({
                           </div>
                         </div>
                       </td>
+                      <td className="p-4 text-center hidden sm:table-cell">
+                        <span className="font-semibold text-text-main">{item.gender === "Perempuan" ? "P" : "L"}</span>
+                      </td>
                       <td className="p-4 hidden md:table-cell">
-                        <div className="font-medium text-text-main mb-1.5">
-                          {item.unitSekolah?.name || "-"}
-                        </div>
+                        <div className="font-medium text-text-main">{item.unitSekolah?.name || "-"}</div>
+                      </td>
+                      <td className="p-4 text-center hidden lg:table-cell">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
                           item.statusKepegawaian === "GTY" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
                           item.statusKepegawaian === "PNS" ? "bg-purple-50 text-purple-700 border border-purple-200" :
                           "bg-indigo-50 text-indigo-700 border border-indigo-200"
                         }`}>
-                          {item.statusKepegawaian}
+                          {item.statusKepegawaian || "-"}
                         </span>
                       </td>
-                      <td className="p-4 hidden lg:table-cell">
-                        <div className="flex flex-col gap-1.5 items-start">
-                          <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded text-xs font-semibold">
-                            <BookOpen size={12} />
-                            {item.bidangStudi?.name || "Belum Ditugaskan"}
-                          </div>
-                          <div className="text-xs text-text-muted flex items-center gap-1">
-                            <GraduationCap size={12} />
-                            <span className="font-semibold">{item.pendidikan || "-"}</span>
-                          </div>
-                          {item.rombelWali && item.rombelWali.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-0.5">
-                              {item.rombelWali.map((kelas: any) => (
-                                <Link
-                                  key={kelas.id}
-                                  href={`/kelas/${kelas.id}`}
-                                  className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-full text-[11px] font-semibold transition-colors"
-                                  title="Lihat Detail Kelas"
-                                >
-                                  Wali Kelas {kelas.name}
-                                </Link>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </td>
                       <td className="p-4 hidden xl:table-cell">
-                        <div className="space-y-1.5">
-                          {item.phone ? (
-                            <a 
-                              href={waUrl} 
-                              target="_blank" 
-                              rel="noreferrer"
-                              className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
-                            >
-                              <Phone size={12} />
-                              {item.phone}
-                            </a>
-                          ) : (
-                            <div className="flex items-center gap-1.5 text-xs text-text-muted/60">
-                              <Phone size={12} />
-                              -
-                            </div>
-                          )}
-                          
-                          {item.email ? (
-                            <a 
-                              href={`mailto:${item.email}`}
-                              className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline truncate max-w-[150px]"
-                              title={item.email}
-                            >
-                              <Mail size={12} />
-                              {item.email}
-                            </a>
-                          ) : (
-                            <div className="flex items-center gap-1.5 text-xs text-text-muted/60">
-                              <Mail size={12} />
-                              -
-                            </div>
-                          )}
-                        </div>
+                        {item.phone ? (
+                          <a 
+                            href={waUrl} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
+                          >
+                            <Phone size={14} />
+                            {item.phone}
+                          </a>
+                        ) : (
+                          <span className="text-text-muted/60 text-xs">-</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-center hidden xl:table-cell">
+                        {item.isActive ? (
+                          <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2 py-0.5 rounded-full text-[11px] font-medium border border-green-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Aktif
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full text-[11px] font-medium border border-rose-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Nonaktif
+                          </span>
+                        )}
                       </td>
                       {!isReadOnly && (
                         <td className="p-4">
@@ -612,6 +625,7 @@ export default function GuruClient({
         onSave={handleSaveModal}
         initialData={formData}
         schoolUnits={schoolUnits}
+        availableStatuses={availableStatuses}
       />
 
       <ImportGuruModal
@@ -623,6 +637,37 @@ export default function GuruClient({
         }}
         schoolUnits={schoolUnits}
         activeUnitId={activeUnitId}
+      />
+
+      {/* Floating Action Bar (Bulk Action) */}
+      {selectedGurus.length > 0 && !isReadOnly && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-border px-4 py-3 flex items-center justify-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-300 z-50 w-max max-w-[98vw] overflow-x-auto hide-scrollbar text-sm">
+          <div className="flex items-center gap-2 font-semibold shrink-0">
+            <span className="flex items-center justify-center bg-primary/10 text-primary w-5 h-5 rounded-full text-[10px]">{selectedGurus.length}</span>
+            <span className="hidden sm:inline">Guru</span> Dipilih
+          </div>
+          <div className="h-6 w-px bg-border shrink-0"></div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 text-xs py-1.5 px-3 shrink-0" onClick={() => setShowBulkDeleteModal(true)} disabled={isDeletingBulk} isLoading={isDeletingBulk}>
+              Hapus Terpilih
+            </Button>
+            <button onClick={() => setSelectedGurus([])} className="text-gray-400 hover:text-gray-600 p-1.5 ml-1 bg-gray-100 rounded-full shrink-0">
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showBulkDeleteModal}
+        onCancel={() => setShowBulkDeleteModal(false)}
+        onConfirm={handleBulkDeleteConfirm}
+        title="Hapus Massal Guru"
+        message={`Apakah Anda yakin ingin menghapus ${selectedGurus.length} guru terpilih secara permanen? Guru yang dihapus tidak akan muncul pada pilihan Wali Kelas.`}
+        confirmText="Ya, Hapus Semua"
+        cancelText="Batal"
+        isLoading={isDeletingBulk}
       />
 
       {/* Delete Confirmation Modal */}

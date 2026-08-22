@@ -4,8 +4,21 @@ import { Input } from "@/components/ui/Input"
 import { DynamicSelect } from "@/components/ui/DynamicSelect"
 import { getBidangStudiList, createBidangStudi, deleteBidangStudi } from "@/actions/bidang-studi"
 
-export default function TabKepegawaian({ formData, handleChange, schoolUnits }: any) {
+export default function TabKepegawaian({ formData, handleChange, schoolUnits, availableStatuses }: any) {
   const [opsiBidangStudi, setOpsiBidangStudi] = useState<any[]>([])
+  const [isCustomStatus, setIsCustomStatus] = useState(false)
+
+  const knownStatuses = Array.from(new Set([
+    "-", "GTY", "GTT", "PNS", "Staf TU", 
+    ...(availableStatuses?.map((s: any) => s.value) || []),
+    formData.statusKepegawaian
+  ])).filter(Boolean)
+
+  useEffect(() => {
+    if (formData.statusKepegawaian === "LAINNYA") {
+      setIsCustomStatus(true)
+    }
+  }, [formData.statusKepegawaian])
 
   useEffect(() => {
     if (formData.unitSekolahId) {
@@ -75,18 +88,48 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits }: 
             <Award size={15} className="text-primary" />
             Status Kepegawaian <span className="text-red-500">*</span>
           </label>
-          <select 
-            className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium text-sm transition-all" 
-            value={formData.statusKepegawaian || "-"} 
-            onChange={e => handleChange("statusKepegawaian", e.target.value)}
-            required
-          >
-            <option value="-">- (Tanpa Status / Kosong)</option>
-            <option value="GTY">GTY (Guru Tetap Yayasan)</option>
-            <option value="GTT">GTT (Honorer / Tidak Tetap)</option>
-            <option value="PNS">PNS / DPK</option>
-            <option value="Staf TU">Staf Tata Usaha</option>
-          </select>
+          {isCustomStatus ? (
+            <div className="flex gap-2">
+              <Input 
+                className="flex-1"
+                placeholder="Ketik status baru..."
+                value={formData.statusKepegawaian === "LAINNYA" ? "" : formData.statusKepegawaian}
+                onChange={e => handleChange("statusKepegawaian", e.target.value)}
+                autoFocus
+              />
+              <button 
+                type="button"
+                onClick={() => {
+                  setIsCustomStatus(false)
+                  handleChange("statusKepegawaian", "-")
+                }}
+                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-semibold transition-colors"
+              >
+                Batal
+              </button>
+            </div>
+          ) : (
+            <select 
+              className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium text-sm transition-all" 
+              value={formData.statusKepegawaian || "-"} 
+              onChange={e => {
+                if (e.target.value === "LAINNYA") {
+                  setIsCustomStatus(true)
+                  handleChange("statusKepegawaian", "")
+                } else {
+                  handleChange("statusKepegawaian", e.target.value)
+                }
+              }}
+              required
+            >
+              {knownStatuses.map(status => (
+                <option key={status as string} value={status as string}>
+                  {status === "-" ? "- (Tanpa Status / Kosong)" : status as string}
+                </option>
+              ))}
+              <option value="LAINNYA" className="font-bold text-primary">➕ Lainnya (Ketik Sendiri)...</option>
+            </select>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5 md:col-span-2">

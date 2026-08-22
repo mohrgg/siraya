@@ -15,6 +15,7 @@ interface GuruFormModalProps {
   onSave: (data: any) => Promise<void>
   initialData: any
   schoolUnits: any[]
+  availableStatuses?: any[]
 }
 
 const TABS = [
@@ -24,7 +25,7 @@ const TABS = [
   { id: "honorarium", label: "Rekening Bank & Honor", icon: CreditCard },
 ]
 
-export default function GuruFormModal({ isOpen, onClose, onSave, initialData, schoolUnits }: GuruFormModalProps) {
+export default function GuruFormModal({ isOpen, onClose, onSave, initialData, schoolUnits, availableStatuses }: GuruFormModalProps) {
   const [activeTab, setActiveTab] = useState("pribadi")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<any>({})
@@ -103,7 +104,7 @@ export default function GuruFormModal({ isOpen, onClose, onSave, initialData, sc
             <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-white">
               <form id="guruForm" onSubmit={handleSubmit}>
                 {activeTab === "pribadi" && <TabPribadi formData={formData} handleChange={handleChange} />}
-                {activeTab === "kepegawaian" && <TabKepegawaian formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} />}
+                {activeTab === "kepegawaian" && <TabKepegawaian formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} availableStatuses={availableStatuses} />}
                 {activeTab === "pendidikan" && <TabPendidikan formData={formData} handleChange={handleChange} />}
                 {activeTab === "honorarium" && <TabHonorarium formData={formData} handleChange={handleChange} />}
               </form>
