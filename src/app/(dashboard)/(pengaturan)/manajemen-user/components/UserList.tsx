@@ -1,5 +1,7 @@
 import { Users, Edit2, Key, XCircle, ShieldCheck, Search, Filter } from "lucide-react"
 import { Toolbar, ToolbarSearch, ToolbarFilter, ToolbarActions, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
+import { useSortableData } from "@/hooks/useSortableData"
+import { SortableHeader } from "@/components/ui/SortableHeader"
 
 export default function UserList({ 
   filteredUsers, 
@@ -10,6 +12,8 @@ export default function UserList({
   setResetUserId, setDisableUserId 
 }: any) {
   
+  const { items: sortedData, requestSort, sortConfig } = useSortableData(filteredUsers, { key: "role", direction: "asc" })
+
   const roleBadge = (role: string) => {
     switch(role) {
       case "ADMIN": return <span className="text-rose-600 text-xs font-bold flex items-center gap-1 w-max"><ShieldCheck size={12} /> SUPER ADMIN</span>
@@ -62,15 +66,15 @@ export default function UserList({
           <thead className="border-b-2 border-border text-text-muted text-xs uppercase tracking-wider bg-surface">
             <tr>
               <th className="p-4 font-semibold text-center w-12">NO</th>
-              <th className="p-4 font-semibold text-left">PENGGUNA</th>
-              <th className="p-4 font-semibold text-left">AKSES & PENUGASAN</th>
-              <th className="p-4 font-semibold text-center">STATUS</th>
+              <SortableHeader label="PENGGUNA" sortKey="name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left" />
+              <SortableHeader label="AKSES & PENUGASAN" sortKey="role" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left" />
+              <SortableHeader label="STATUS" sortKey="isActive" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-center" />
               <th className="p-4 font-semibold text-right">AKSI</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border text-sm">
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((u: any, idx: number) => (
+            {sortedData.length > 0 ? (
+              sortedData.map((u: any, idx: number) => (
                 <tr key={u.id} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="p-4 text-center text-text-main font-medium">{idx + 1}</td>
                   <td className="p-4">
