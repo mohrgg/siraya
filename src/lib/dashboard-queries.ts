@@ -192,10 +192,11 @@ export async function getYayasanDashboardData(yearId?: string) {
   const completeDataCount = await prisma.murid.count({
     where: {
       isActive: true,
-      nik: { not: null, notIn: [''] },
-      nisn: { not: null, notIn: [''] },
-      fatherName: { not: null, notIn: [''] },
-      motherName: { not: null, notIn: [''] }
+      nik: { not: null, notIn: ['', '-', ' - '] },
+      nisn: { not: null, notIn: ['', '-', ' - '] },
+      nis: { not: null, notIn: ['', '-', ' - '] },
+      fatherName: { not: null, notIn: ['', '-', ' - '] },
+      motherName: { not: null, notIn: ['', '-', ' - '] }
     }
   })
   const dataQualityIndex = totalSiswa > 0 ? Math.round((completeDataCount / totalSiswa) * 100) : 0
@@ -210,8 +211,9 @@ export async function getYayasanDashboardData(yearId?: string) {
             where: {
               isActive: true,
               OR: [
-                { nisn: null }, { nisn: '' },
-                { nik: null }, { nik: '' }
+                { nisn: null }, { nisn: '' }, { nisn: '-' }, { nisn: ' - ' },
+                { nik: null }, { nik: '' }, { nik: '-' }, { nik: ' - ' },
+                { nis: null }, { nis: '' }, { nis: '-' }, { nis: ' - ' }
               ]
             }
           }
@@ -461,12 +463,42 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
   // 3. Rombel Data & Capacity Warnings (>35)
   const subKelasList = await prisma.subKelas.findMany({
     where: { isDeleted: false, unitSekolahId: unitId, ...(yearId ? { tahunAkademikId: yearId } : {}) },
-    select: { name: true, _count: { select: { riwayatKelas: { where: { murid: { isActive: true } } } } } }
+    select: { 
+      id: true,
+      name: true, 
+      _count: { select: { riwayatKelas: { where: { murid: { isActive: true } } } } },
+      riwayatKelas: {
+        where: { murid: { isActive: true } },
+        select: {
+          murid: {
+            select: { name: true, gender: true }
+          }
+        },
+        take: 50 // fetch more to get accurate gender count, we'll limit to top 5 for the list
+      }
+    }
   })
+  
   const rombelData = subKelasList
-    .map(sk => ({ name: sk.name, total: sk._count.riwayatKelas }))
+    .map(sk => {
+      const allStudents = sk.riwayatKelas.map(rk => rk.murid).filter(Boolean);
+      const maleCount = allStudents.filter(s => s.gender === "Laki-laki").length;
+      const femaleCount = allStudents.filter(s => s.gender === "Perempuan").length;
+      
+      return { 
+        id: sk.id,
+        name: sk.name, 
+        total: sk._count.riwayatKelas,
+        genderDist: [
+          { name: "Laki-laki", value: maleCount, color: "#3b82f6" },
+          { name: "Perempuan", value: femaleCount, color: "#ec4899" }
+        ],
+        topStudents: allStudents.slice(0, 5)
+      }
+    })
     .filter(sk => sk.total > 0)
     .sort((a, b) => sortSchoolClasses(a.name, b.name))
+    
   const capacityWarnings = rombelData.filter(r => r.total > 35)
 
   // 4. Gender
@@ -542,11 +574,28 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
   const anomalyList = await prisma.murid.findMany({
     where: {
       unitSekolahId: unitId, isActive: true,
-      OR: [ { nisn: null }, { nisn: '' }, { nik: null }, { nik: '' }, { fatherName: null }, { motherName: null } ]
+      OR: [ 
+        { nisn: null }, { nisn: '' }, { nisn: '-' }, { nisn: ' - ' },
+        { nik: null }, { nik: '' }, { nik: '-' }, { nik: ' - ' },
+        { nis: null }, { nis: '' }, { nis: '-' }, { nis: ' - ' },
+        { fatherName: null }, { fatherName: '' }, { fatherName: '-' }, { fatherName: ' - ' },
+        { motherName: null }, { motherName: '' }, { motherName: '-' }, { motherName: ' - ' }
+      ]
     },
     take: 10,
     orderBy: { createdAt: 'desc' },
     select: { id: true, name: true, nis: true, nisn: true, nik: true, fatherName: true, motherName: true }
+  })
+  
+  const incompleteDataCount = await prisma.murid.count({
+    where: {
+      unitSekolahId: unitId, isActive: true,
+      OR: [ 
+        { nisn: null }, { nisn: '' }, { nisn: '-' }, { nisn: ' - ' },
+        { nik: null }, { nik: '' }, { nik: '-' }, { nik: ' - ' },
+        { nis: null }, { nis: '' }, { nis: '-' }, { nis: ' - ' }
+      ]
+    }
   })
 
   const mutationLogs = await prisma.murid.findMany({
@@ -638,6 +687,7 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
     anomalyList, missingParent, mutationLogs, unitLogs, trendData,
     // Ekstra Keuangan Unit
     penerimaanBulanIni, pengeluaranBulanIni, totalTunggakanUnit, tunggakanKritisList, kolektibilitasUnit,
+    incompleteDataCount,
     ...interactiveChartDataU
   }
 }
