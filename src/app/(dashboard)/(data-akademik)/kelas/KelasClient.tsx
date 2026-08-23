@@ -556,7 +556,6 @@ export default function KelasClient({
         initialTeachers={initialTeachers}
       />
       
-      {/* Import Modal */}
       <ImportMuridModal
         isOpen={showModalImportMurid}
         onClose={() => setShowModalImportMurid(false)}
@@ -569,6 +568,7 @@ export default function KelasClient({
         }}
         schoolUnits={schoolUnits}
         classrooms={data.classrooms}
+        activeUnitId={activeUnitId}
       />
 
       {/* Drawer Detail Sub Kelas (Rombel) */}

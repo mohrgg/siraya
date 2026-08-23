@@ -196,14 +196,24 @@ export default function PembuatanTagihanClient({
     }
   }
 
-  const handleModalSubmit = async (data: { akunId: string, jumlah: number }) => {
+  const handleModalSubmit = async (data: { 
+    akunId: string, 
+    jumlah: number,
+    targetType: "tingkat" | "kelas" | "murid",
+    tingkatId?: string,
+    subKelasId?: string,
+    muridIds?: string[]
+  }) => {
     setIsSubmittingModal(true)
     try {
       await tambahTagihanMassal({
-        subKelasId,
         tahunAkademikId: activeTahunAkademikId,
         akunId: data.akunId,
-        jumlah: data.jumlah
+        jumlah: data.jumlah,
+        targetType: data.targetType,
+        tingkatId: data.tingkatId,
+        subKelasId: data.subKelasId,
+        muridIds: data.muridIds
       })
       toast.success("Berhasil membuat tagihan massal!")
       setIsModalOpen(false)
@@ -661,13 +671,16 @@ export default function PembuatanTagihanClient({
         isLoading={isDeletingMassal}
       />
 
-      <ModalTambahTagihan 
+      <ModalTambahTagihan
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleModalSubmit}
         akunPendapatanList={akunPendapatanList}
-        kelasName={activeKelasName}
-        subKelasName={activeSubKelasName}
+        kelasList={kelasList}
+        subKelasList={subKelasList}
+        gridData={gridData}
+        activeKelasId={kelasId}
+        activeSubKelasId={subKelasId}
         isSubmitting={isSubmittingModal}
       />
     </div>

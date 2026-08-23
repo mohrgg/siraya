@@ -13,6 +13,7 @@ interface ImportMuridModalProps {
   onSuccess: () => void
   schoolUnits: any[]
   classrooms: any[]
+  activeUnitId?: string
 }
 
 interface PreviewRow {
@@ -34,7 +35,8 @@ export default function ImportMuridModal({
   onClose, 
   onSuccess,
   schoolUnits,
-  classrooms 
+  classrooms,
+  activeUnitId 
 }: ImportMuridModalProps) {
   const [mounted, setMounted] = useState(false)
 
@@ -53,8 +55,12 @@ export default function ImportMuridModal({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (isOpen && schoolUnits.length > 0 && !selectedUnit) {
-      setSelectedUnit(schoolUnits[0].id)
+    if (isOpen) {
+      if (activeUnitId && activeUnitId !== "ALL") {
+        setSelectedUnit(activeUnitId)
+      } else if (schoolUnits.length > 0 && !selectedUnit) {
+        setSelectedUnit(schoolUnits[0].id)
+      }
     }
     if (!isOpen) {
       setCurrentStep(1)
@@ -63,7 +69,7 @@ export default function ImportMuridModal({
       setResult(null)
       setIsProcessing(false)
     }
-  }, [isOpen, schoolUnits])
+  }, [isOpen, schoolUnits, activeUnitId])
 
   if (!isOpen) return null
 
@@ -276,9 +282,10 @@ export default function ImportMuridModal({
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">1. Pilih Unit Sekolah <span className="text-red-500">*</span></label>
                     <select 
-                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-bold text-gray-900 shadow-xs transition-all"
+                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-bold text-gray-900 shadow-xs transition-all disabled:bg-gray-100 disabled:opacity-70"
                       value={selectedUnit}
                       onChange={(e) => { setSelectedUnit(e.target.value); setSelectedSubKelas("") }}
+                      disabled={Boolean(activeUnitId && activeUnitId !== "ALL")}
                     >
                       <option value="" disabled>-- Pilih Unit Sekolah --</option>
                       {schoolUnits.map(u => (

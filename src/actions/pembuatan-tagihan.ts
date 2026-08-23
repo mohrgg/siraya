@@ -154,24 +154,43 @@ export async function getMuridWithTagihan(subKelasId: string, tahunAkademikId: s
 export async function tambahTagihanMassal(data: {
   tahunAkademikId: string
   akunId: string
-  subKelasId: string
   jumlah: number
+  targetType: "tingkat" | "kelas" | "murid"
+  tingkatId?: string
+  subKelasId?: string
+  muridIds?: string[]
 }) {
   const session = await auth()
   if (!session?.user || !["ADMIN", "TATA_USAHA"].includes((session.user as any).role)) {
     throw new Error("Akses ditolak.")
   }
 
-  const { tahunAkademikId, akunId, subKelasId, jumlah } = data
+  const { tahunAkademikId, akunId, jumlah } = data
 
-  // 1. Cari semua murid di subkelas ini
-  const riwayatKelas = await prisma.riwayatKelas.findMany({
-    where: { subKelasId, tahunAkademikId },
-    select: { muridId: true }
-  })
+  // 1. Cari semua murid sesuai target
+  let riwayatKelas: { muridId: string }[] = []
+
+  if (data.targetType === "kelas" && data.subKelasId) {
+    riwayatKelas = await prisma.riwayatKelas.findMany({
+      where: { subKelasId: data.subKelasId, tahunAkademikId },
+      select: { muridId: true }
+    })
+  } else if (data.targetType === "tingkat" && data.tingkatId) {
+    riwayatKelas = await prisma.riwayatKelas.findMany({
+      where: { 
+        tahunAkademikId,
+        subKelas: {
+          tingkatId: data.tingkatId
+        }
+      },
+      select: { muridId: true }
+    })
+  } else if (data.targetType === "murid" && data.muridIds) {
+    riwayatKelas = data.muridIds.map(id => ({ muridId: id }))
+  }
 
   if (riwayatKelas.length === 0) {
-    throw new Error("Tidak ada siswa di kelas ini pada tahun akademik tersebut")
+    throw new Error("Tidak ada siswa yang sesuai dengan target pada tahun akademik tersebut")
   }
 
   // 2. Buat tagihan dengan mengecek kondisi eksisting agar sisa tagihan valid
@@ -223,7 +242,7 @@ export async function tambahTagihanMassal(data: {
       penggunaId: (session.user as any).id,
       aksi: "CREATE",
       modul: "PEMBUATAN_TAGIHAN",
-      keterangan: `Generate tagihan massal untuk ${successCount} siswa (Subkelas: ${subKelasId}, Nominal: Rp${jumlah})`
+      keterangan: `Generate tagihan massal untuk ${successCount} siswa (Target: ${data.targetType}, Nominal: Rp${jumlah})`
     }
   })
 
