@@ -14,7 +14,8 @@ export default function SubKelasFormModal({
   grades,
   academicYears,
   initialMajors,
-  initialTeachers = []
+  initialTeachers = [],
+  activeUnitId
 }: any) {
   const isSelectedGuruInList = initialTeachers.some((t: any) => t.id === formData.waliKelasGuruId)
   const teachersForUnit = [
@@ -43,7 +44,8 @@ export default function SubKelasFormModal({
           <label className="block text-sm font-semibold text-text-main mb-1.5">Unit Sekolah</label>
           <select 
             required 
-            className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
+            disabled={!!formData.id || (activeUnitId && activeUnitId !== "all")}
+            className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:bg-gray-100 disabled:cursor-not-allowed text-text-main"
             value={formData.unitSekolahId}
             onChange={e => setFormData({ ...formData, unitSekolahId: e.target.value })}
           >

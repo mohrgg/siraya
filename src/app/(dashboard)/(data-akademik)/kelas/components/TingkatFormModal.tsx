@@ -61,7 +61,8 @@ export default function TingkatFormModal({
   setFormData,
   onSave,
   isSubmitting,
-  schoolUnits
+  schoolUnits,
+  activeUnitId
 }: any) {
   const selectedUnit = schoolUnits?.find((u: any) => u.id === formData.unitSekolahId) || schoolUnits?.[0]
   const presets = getPresetsForUnit(selectedUnit?.level)
@@ -115,7 +116,7 @@ export default function TingkatFormModal({
           <label className="block text-sm font-semibold text-text-main mb-1.5">Unit Sekolah</label>
           <select 
             required 
-            disabled={!!formData.id}
+            disabled={!!formData.id || (activeUnitId && activeUnitId !== "all")}
             className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:bg-gray-100 disabled:cursor-not-allowed font-medium text-text-main"
             value={formData.unitSekolahId}
             onChange={e => {

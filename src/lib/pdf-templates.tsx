@@ -136,7 +136,7 @@ export function TableReportHtml({
   penandatanganKanan
 }: TableReportData) {
   return (
-    <div className="font-sans text-slate-900 bg-white min-h-[100vh] flex flex-col">
+    <div className="font-sans text-slate-900 bg-white flex flex-col">
       <PrintHeaderHtml institutionInfo={institutionInfo} />
       
       <div className="text-center mb-6">
@@ -165,7 +165,7 @@ export function TableReportHtml({
             </tr>
           ))}
         </tbody>
-        <tbody style={{ pageBreakInside: 'avoid' }}>
+        <tfoot style={{ display: 'table-row-group' }}>
           {data.length > 0 && (
             <tr className={(data.length - 1) % 2 === 0 ? "bg-white" : "bg-slate-50"}>
               {data[data.length - 1].map((cell, cIdx) => (
@@ -175,19 +175,18 @@ export function TableReportHtml({
               ))}
             </tr>
           )}
-          <tr>
-            <td colSpan={headers.length} className="border-0 pt-8 pb-4">
-              <PrintSignatureHtml 
-                kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
-                tanggalCetak={tanggalCetak}
-                penandatanganKiri={penandatanganKiri}
-                penandatanganKanan={penandatanganKanan}
-                catatanKwitansi={institutionInfo.catatanKwitansi}
-              />
-            </td>
-          </tr>
-        </tbody>
+        </tfoot>
       </table>
+
+      <div className="mt-8 mb-4" style={{ pageBreakInside: 'avoid' }}>
+        <PrintSignatureHtml 
+          kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
+          tanggalCetak={tanggalCetak}
+          penandatanganKiri={penandatanganKiri}
+          penandatanganKanan={penandatanganKanan}
+          catatanKwitansi={institutionInfo.catatanKwitansi}
+        />
+      </div>
     </div>
   )
 }
@@ -229,7 +228,7 @@ export function ResiHtml({
   const formatRp = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val)
 
   return (
-    <div className="font-sans text-slate-900 bg-white min-h-screen flex flex-col">
+    <div className="font-sans text-slate-900 bg-white flex flex-col">
       <PrintHeaderHtml institutionInfo={institutionInfo} />
 
       {/* Header Info: Judul dan Referensi */}
@@ -277,7 +276,7 @@ export function ResiHtml({
             </tr>
           ))}
         </tbody>
-        <tbody style={{ pageBreakInside: 'avoid' }}>
+        <tfoot style={{ display: 'table-row-group' }}>
           {/* Baris Total */}
           <tr className="bg-slate-100">
             <td colSpan={2} className="py-3 px-3 border border-slate-300 text-right font-bold text-slate-800 uppercase">
@@ -287,19 +286,18 @@ export function ResiHtml({
               {formatRp(total)}
             </td>
           </tr>
-          <tr>
-            <td colSpan={3} className="border-0 pt-8 pb-4">
-              <PrintSignatureHtml 
-                kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
-                tanggalCetak={tanggal}
-                penandatanganKiri={penandatanganKiri || { jabatan: "Penyetor / Wali Murid,", nama: penerimaDari }}
-                penandatanganKanan={penandatanganKanan || { jabatan: "Bendahara Penerima,", nama: "Staf Keuangan" }}
-                catatanKwitansi={catatan || "Terima kasih atas pembayaran Anda. Simpan kwitansi ini sebagai bukti pembayaran yang sah."}
-              />
-            </td>
-          </tr>
-        </tbody>
+        </tfoot>
       </table>
+
+      <div className="mt-8 mb-4" style={{ pageBreakInside: 'avoid' }}>
+        <PrintSignatureHtml 
+          kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
+          tanggalCetak={tanggal}
+          penandatanganKiri={penandatanganKiri || { jabatan: "Penyetor / Wali Murid,", nama: penerimaDari }}
+          penandatanganKanan={penandatanganKanan || { jabatan: "Bendahara Penerima,", nama: "Staf Keuangan" }}
+          catatanKwitansi={catatan || "Terima kasih atas pembayaran Anda. Simpan kwitansi ini sebagai bukti pembayaran yang sah."}
+        />
+      </div>
     </div>
   )
 }
@@ -372,7 +370,7 @@ export function JurnalHtml({
             </tr>
           ))}
         </tbody>
-        <tbody style={{ pageBreakInside: 'avoid' }}>
+        <tfoot style={{ display: 'table-row-group' }}>
           {/* Baris Total */}
           <tr className="bg-slate-100">
             <td colSpan={2} className="py-3 px-3 border border-slate-300 text-right font-bold text-slate-800 uppercase">
@@ -385,18 +383,17 @@ export function JurnalHtml({
               {formatRp(detail.reduce((sum, d) => sum + d.kredit, 0))}
             </td>
           </tr>
-          <tr>
-            <td colSpan={4} className="border-0 pt-8 pb-4">
-              <PrintSignatureHtml 
-                kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
-                tanggalCetak={tanggal}
-                penandatanganKiri={penandatanganKiri || { jabatan: "Dibuat Oleh,", nama: "........................" }}
-                penandatanganKanan={penandatanganKanan || { jabatan: "Disetujui Oleh,", nama: "........................" }}
-              />
-            </td>
-          </tr>
-        </tbody>
+        </tfoot>
       </table>
+
+      <div className="mt-8 mb-4" style={{ pageBreakInside: 'avoid' }}>
+        <PrintSignatureHtml 
+          kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
+          tanggalCetak={tanggal}
+          penandatanganKiri={penandatanganKiri || { jabatan: "Dibuat Oleh,", nama: "........................" }}
+          penandatanganKanan={penandatanganKanan || { jabatan: "Disetujui Oleh,", nama: "........................" }}
+        />
+      </div>
     </div>
   )
 }
@@ -508,24 +505,23 @@ export function IncomeStatementHtml({
 
           {/* SALDO BERSIH */}
         </tbody>
-        <tbody style={{ pageBreakInside: 'avoid' }}>
+        <tfoot style={{ display: 'table-row-group' }}>
           <tr className="border-t-2 border-slate-800">
             <td colSpan={2} className="py-3 px-2 font-bold text-slate-900 uppercase">Selisih Pemasukan dan Pengeluaran</td>
             <td className="py-3 px-2 font-bold text-slate-900 text-right w-8 text-base">Rp.</td>
             <td className="py-3 px-2 font-bold text-slate-900 text-right text-base">{formatRp(data.totalPendapatan - data.totalPengeluaran)}</td>
           </tr>
-          <tr>
-            <td colSpan={4} className="border-0 pt-8 pb-4">
-              <PrintSignatureHtml 
-                kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
-                tanggalCetak={tanggalCetak}
-                penandatanganKiri={penandatanganKiri}
-                penandatanganKanan={penandatanganKanan}
-              />
-            </td>
-          </tr>
-        </tbody>
+        </tfoot>
       </table>
+
+      <div className="mt-8 mb-4" style={{ pageBreakInside: 'avoid' }}>
+        <PrintSignatureHtml 
+          kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
+          tanggalCetak={tanggalCetak}
+          penandatanganKiri={penandatanganKiri}
+          penandatanganKanan={penandatanganKanan}
+        />
+      </div>
     </div>
   )
 }

@@ -535,6 +535,7 @@ export default function KelasClient({
         onSave={handleSaveKelas}
         isSubmitting={isSubmitting}
         schoolUnits={schoolUnits}
+        activeUnitId={activeUnitId}
       />
 
       {/* Modal Tambah Sub Kelas */}
@@ -550,6 +551,7 @@ export default function KelasClient({
         academicYears={academicYears}
         initialMajors={initialMajors}
         initialTeachers={initialTeachers}
+        activeUnitId={activeUnitId}
       />
       
       <ImportMuridModal

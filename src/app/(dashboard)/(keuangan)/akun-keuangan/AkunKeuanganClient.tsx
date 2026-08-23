@@ -319,7 +319,12 @@ export default function AkunKeuanganClient({
             {isAdmin ? (
               <>
                 <p className="text-xs text-text-muted mb-2">Kosongkan jika akun ini berlaku Global/Yayasan (semua unit bisa memakai).</p>
-                <select className="w-full px-3 py-2 bg-white border border-border rounded-lg text-text-main" value={akunForm.unitSekolahId} onChange={e => setAkunForm({ ...akunForm, unitSekolahId: e.target.value })}>
+                <select 
+                  className="w-full px-3 py-2 bg-white border border-border rounded-lg text-text-main disabled:bg-gray-100 disabled:cursor-not-allowed" 
+                  value={akunForm.unitSekolahId} 
+                  disabled={userUnitId !== "all" && userUnitId != null}
+                  onChange={e => setAkunForm({ ...akunForm, unitSekolahId: e.target.value })}
+                >
                   <option value="">-- Administrasi Global (Semua Unit) --</option>
                   {unitSekolahList.map(u => <option key={u.id} value={u.id}>Administrasi: {u.name}</option>)}
                 </select>
@@ -394,7 +399,8 @@ export default function AkunKeuanganClient({
               {!isReadOnly && activeTab === 'AKUN' && (
                 <Button onClick={() => {
                   const defaultSubId = subKlasifikasi[0]?.id || ""
-                  setAkunForm({ id: "", kode: generateAkunKode(defaultSubId, akunDetail), nama: "", subKlasifikasiAkunId: defaultSubId, unitSekolahId: "", isKasBank: false, isActive: true })
+                  const defaultUnitId = (userUnitId && userUnitId !== "all") ? userUnitId : ""
+                  setAkunForm({ id: "", kode: generateAkunKode(defaultSubId, akunDetail), nama: "", subKlasifikasiAkunId: defaultSubId, unitSekolahId: defaultUnitId, isKasBank: false, isActive: true })
                   setIsAkunDrawerOpen(true)
                 }} className="shrink-0">
                   <Plus size={16} className="mr-1.5"/> Tambah Akun
