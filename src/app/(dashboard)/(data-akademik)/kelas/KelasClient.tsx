@@ -97,6 +97,7 @@ export default function KelasClient({
       const { getSiswaPaginated } = await import("@/actions/siswa")
       const res = await getSiswaPaginated({
         unitSekolahId: activeUnitId || schoolUnits[0]?.id || "",
+        tahunAkademikId: activeYearId,
         tingkatId: data.filterMuridTingkat,
         jurusanId: data.filterMuridJurusan,
         subKelasId: data.filterMuridSubKelas,
@@ -200,6 +201,7 @@ export default function KelasClient({
         const { getSiswaPaginated } = await import("@/actions/siswa")
         const res = await getSiswaPaginated({
           unitSekolahId: activeUnitId || schoolUnits[0]?.id || "",
+          tahunAkademikId: activeYearId,
           tingkatId: data.filterMuridTingkat,
           jurusanId: data.filterMuridJurusan,
           subKelasId: data.filterMuridSubKelas,

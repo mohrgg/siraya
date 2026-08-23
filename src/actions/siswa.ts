@@ -4,6 +4,15 @@ import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 
+const cleanDash = (val: any) => {
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (trimmed === "-" || trimmed === "") return null;
+    return trimmed;
+  }
+  return val;
+};
+
 export async function getSiswa(unitSekolahId?: string, subKelasId?: string) {
   const session = await auth()
   if (!session) throw new Error("Unauthorized")
@@ -60,8 +69,8 @@ export async function getSiswaPaginated(params: {
     }
   }
 
-  // Filter by RiwayatKelas if there's any academic filter
-  if (params.tahunAkademikId || params.subKelasId || params.tingkatId || params.jurusanId) {
+  // Filter by RiwayatKelas if there's any specific class filter (tingkat, jurusan, subKelas)
+  if (params.subKelasId || params.tingkatId || params.jurusanId) {
     where.riwayatKelas = {
       some: {
         ...(params.tahunAkademikId ? { tahunAkademikId: params.tahunAkademikId } : {}),
@@ -149,6 +158,11 @@ export async function tambahSiswa(data: any) {
     const murid = await tx.murid.create({
       data: {
         ...muridData,
+        nisn: cleanDash(muridData.nisn),
+        nik: cleanDash(muridData.nik),
+        fatherNik: cleanDash(muridData.fatherNik),
+        motherNik: cleanDash(muridData.motherNik),
+        guardianNik: cleanDash(muridData.guardianNik),
         nis: finalNis,
         status: studentStatus || data.status || "AKTIF",
         isActive: data.isActive ?? true,
@@ -189,7 +203,7 @@ export async function editSiswa(id: string, data: {
   const result = await prisma.$transaction(async (tx) => {
     // Exclude subKelasId and rename studentStatus -> status
     // Also exclude relation and metadata objects that might be passed from frontend
-    const { subKelasId, studentStatus, birthDate, riwayatKelas, unitSekolah, subKelas, createdAt, updatedAt, id, parentName, ...muridData } = data as any;
+    const { subKelasId, studentStatus, birthDate, riwayatKelas, unitSekolah, subKelas, tagihan, summaryKeuangan, createdAt, updatedAt, id, parentName, ...muridData } = data as any;
     
     // Handle optional NIS
     let finalNis = muridData.nis?.trim()
@@ -212,6 +226,11 @@ export async function editSiswa(id: string, data: {
       where: { id },
       data: {
         ...muridData,
+        nisn: cleanDash(muridData.nisn),
+        nik: cleanDash(muridData.nik),
+        fatherNik: cleanDash(muridData.fatherNik),
+        motherNik: cleanDash(muridData.motherNik),
+        guardianNik: cleanDash(muridData.guardianNik),
         ...(studentStatus ? { status: studentStatus } : {}),
         ...(birthDate ? { birthDate: new Date(birthDate) } : {})
       }

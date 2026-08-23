@@ -104,20 +104,20 @@ export default function PembuatanTagihanClient({
     })
   }, [activeUnitId])
 
-  // 2. Fetch SubKelas when Kelas or Jurusan changes
+  // 2. Fetch SubKelas when Kelas, Jurusan, or Tahun Akademik changes
   useEffect(() => {
-    if (!kelasId || (jurusanList.length > 0 && !jurusanId)) {
+    if (!kelasId || (jurusanList.length > 0 && !jurusanId) || !activeTahunAkademikId) {
       setSubKelasList([])
       setSubKelasId("")
       return
     }
     
-    getSubKelasByKelas(kelasId, jurusanList.length > 0 ? jurusanId : undefined).then(res => {
+    getSubKelasByKelas(kelasId, jurusanList.length > 0 ? jurusanId : undefined, activeTahunAkademikId).then(res => {
       setSubKelasList(res)
       if (res.length > 0) setSubKelasId(res[0].id)
       else setSubKelasId("")
     })
-  }, [kelasId, jurusanId, jurusanList])
+  }, [kelasId, jurusanId, jurusanList, activeTahunAkademikId])
 
   // Process data to build Grid and Columns
   const processData = (muridList: any[]) => {

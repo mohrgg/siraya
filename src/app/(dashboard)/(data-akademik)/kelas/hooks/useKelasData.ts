@@ -91,6 +91,7 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
       try {
         const res = await getSiswaPaginated({
           unitSekolahId: activeUnitId || schoolUnits[0]?.id || "",
+          tahunAkademikId: activeYearId,
           tingkatId: filterMuridTingkat,
           jurusanId: filterMuridJurusan,
           subKelasId: filterMuridSubKelas,
@@ -115,7 +116,7 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
     fetchStudents()
 
     return () => { isMounted = false }
-  }, [activeTab, activeUnitId, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, debouncedSearchTerm, currentPage, pageSize, muridSort, filterAlumniStatus, schoolUnits, refreshTrigger])
+  }, [activeTab, activeUnitId, activeYearId, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, debouncedSearchTerm, currentPage, pageSize, muridSort, filterAlumniStatus, schoolUnits, refreshTrigger])
 
   // Reset pagination when filter changes
   useEffect(() => {

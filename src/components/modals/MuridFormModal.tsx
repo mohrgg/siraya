@@ -4,11 +4,10 @@ import { createPortal } from "react-dom"
 import { X, User, Users, HeartPulse, GraduationCap, MapPin, Save } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 
-import TabUtama from "./murid-tabs/TabUtama"
-import TabPribadi from "./murid-tabs/TabPribadi"
-import TabPendidikan from "./murid-tabs/TabPendidikan"
+import TabInformasiUmum from "./murid-tabs/TabInformasiUmum"
+import TabIdentitasPribadi from "./murid-tabs/TabIdentitasPribadi"
+import TabFisikMedis from "./murid-tabs/TabFisikMedis"
 import TabKeluarga from "./murid-tabs/TabKeluarga"
-import TabKesehatan from "./murid-tabs/TabKesehatan"
 
 interface MuridFormModalProps {
   isOpen: boolean
@@ -20,11 +19,10 @@ interface MuridFormModalProps {
 }
 
 const TABS = [
-  { id: "utama", label: "Informasi Utama", icon: GraduationCap },
+  { id: "utama", label: "Informasi Umum", icon: GraduationCap },
   { id: "pribadi", label: "Identitas Pribadi", icon: User },
-  { id: "pendidikan", label: "Pendidikan & Periodik", icon: MapPin },
-  { id: "keluarga", label: "Data Keluarga", icon: Users },
-  { id: "kesehatan", label: "Riwayat Kesehatan", icon: HeartPulse },
+  { id: "medis", label: "Fisik & Medis", icon: HeartPulse },
+  { id: "keluarga", label: "Keluarga & Wali", icon: Users },
 ]
 
 export default function MuridFormModal({ isOpen, onClose, onSave, initialData, schoolUnits, classrooms }: MuridFormModalProps) {
@@ -104,11 +102,10 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
           <div className="flex-1 flex flex-col">
             <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-white">
               <form id="muridForm" onSubmit={handleSubmit}>
-                {activeTab === "utama" && <TabUtama formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} classrooms={classrooms} />}
-                {activeTab === "pribadi" && <TabPribadi formData={formData} handleChange={handleChange} />}
-                {activeTab === "pendidikan" && <TabPendidikan formData={formData} handleChange={handleChange} />}
+                {activeTab === "utama" && <TabInformasiUmum formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} classrooms={classrooms} />}
+                {activeTab === "pribadi" && <TabIdentitasPribadi formData={formData} handleChange={handleChange} />}
+                {activeTab === "medis" && <TabFisikMedis formData={formData} handleChange={handleChange} />}
                 {activeTab === "keluarga" && <TabKeluarga formData={formData} handleChange={handleChange} />}
-                {activeTab === "kesehatan" && <TabKesehatan formData={formData} handleChange={handleChange} />}
               </form>
             </div>
             

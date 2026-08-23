@@ -1,92 +1,8 @@
-import { useRef, useState } from "react"
-import { User, Camera, Loader2, Upload } from "lucide-react"
-import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
-import toast from "react-hot-toast"
 
-export default function TabUtama({ formData, handleChange, schoolUnits, classrooms }: any) {
-  const [isUploading, setIsUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("File harus berupa gambar")
-      return
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Ukuran maksimal file adalah 2MB")
-      return
-    }
-
-    setIsUploading(true)
-    try {
-      const uploadData = new FormData()
-      uploadData.append("file", file)
-      uploadData.append("folder", "murid")
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: uploadData,
-      })
-
-      if (!res.ok) {
-        throw new Error("Gagal mengunggah foto")
-      }
-
-      const { url } = await res.json()
-      handleChange("photoUrl", url)
-      toast.success("Foto profil berhasil diunggah")
-    } catch (error: any) {
-      toast.error(error.message || "Gagal mengunggah foto")
-    } finally {
-      setIsUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
-    }
-  }
-
+export default function TabInformasiUmum({ formData, handleChange, schoolUnits, classrooms }: any) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      {/* Avatar Uploader Section */}
-      <div className="flex items-center gap-6 p-4 bg-gray-50/50 rounded-xl border border-border">
-        <div className="relative group shrink-0">
-          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-gray-100 flex items-center justify-center">
-            {formData.photoUrl ? (
-              <img src={formData.photoUrl} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              <User size={40} className="text-gray-300" />
-            )}
-            
-            <label className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
-              {isUploading ? <Loader2 className="animate-spin" size={24} /> : <Camera size={24} />}
-              <span className="text-[10px] font-bold mt-1">{isUploading ? 'Mengunggah...' : 'Ubah Foto'}</span>
-              <input type="file" className="hidden" accept="image/*" ref={fileInputRef} onChange={handleUploadPhoto} disabled={isUploading} />
-            </label>
-          </div>
-        </div>
-        <div>
-          <h4 className="font-bold text-sm text-text-main mb-1">Pas Foto Profil</h4>
-          <p className="text-xs text-text-muted max-w-sm mb-3 leading-relaxed">
-            Unggah foto profil siswa (Rasio 3:4 / Persegi). Format JPG/PNG maksimal 2MB. Foto ini akan muncul di aplikasi dan rapor.
-          </p>
-          <div className="flex gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-              <Upload size={14} className="mr-1.5" /> {formData.photoUrl ? 'Ganti Foto' : 'Unggah Foto'}
-            </Button>
-            {formData.photoUrl && (
-              <Button type="button" size="sm" variant="danger" onClick={() => handleChange("photoUrl", null)}>
-                Hapus
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="col-span-1 md:col-span-2 flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main">Nama Lengkap (Sesuai Akta) <span className="text-red-500">*</span></label>
@@ -122,6 +38,10 @@ export default function TabUtama({ formData, handleChange, schoolUnits, classroo
           <Input placeholder="Contoh: 20240101 atau -" value={formData.nis || ""} onChange={e => handleChange("nis", e.target.value)} />
         </div>
         <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text-main">NISN (10 Digit)</label>
+          <Input placeholder="Contoh: 0012345678" value={formData.nisn || ""} onChange={e => handleChange("nisn", e.target.value)} maxLength={10} />
+        </div>
+        <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main">Jalur Beasiswa?</label>
           <select className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium" value={formData.isScholarship ? "true" : "false"} onChange={e => handleChange("isScholarship", e.target.value === "true")}>
             <option value="false">TIDAK</option>
@@ -137,6 +57,32 @@ export default function TabUtama({ formData, handleChange, schoolUnits, classroo
             <option value="KELUAR">Keluar (Drop Out)</option>
             <option value="CUTI">Cuti</option>
           </select>
+        </div>
+        <div className="col-span-1 md:col-span-2 flex flex-col gap-1.5 pt-2">
+          <h4 className="text-sm font-bold text-text-main border-b border-border pb-1 mb-1">Informasi Registrasi Lainnya</h4>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text-main">Asal Sekolah</label>
+          <Input placeholder="Nama TK/SD/SMP sebelumnya" value={formData.previousSchool || ""} onChange={e => handleChange("previousSchool", e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text-main">No Formulir (Opsional)</label>
+          <Input placeholder="Contoh: REG-2024-001" value={formData.formNo || ""} onChange={e => handleChange("formNo", e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text-main">Jarak Tempuh ke Sekolah</label>
+          <select className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium" value={formData.distanceToSchool || ""} onChange={e => handleChange("distanceToSchool", e.target.value)}>
+            <option value="">-- Pilih --</option>
+            <option value="< 1 km">Kurang dari 1 km</option>
+            <option value="1 - 3 km">1 - 3 km</option>
+            <option value="3 - 5 km">3 - 5 km</option>
+            <option value="5 - 10 km">5 - 10 km</option>
+            <option value="> 10 km">Lebih dari 10 km</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text-main">Waktu Tempuh</label>
+          <Input placeholder="Contoh: 15 Menit" value={formData.travelTime || ""} onChange={e => handleChange("travelTime", e.target.value)} />
         </div>
       </div>
     </div>

@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 
+const cleanDash = (val: any) => (!val || val.trim() === "-" || val.trim() === "") ? null : val.trim();
+
 export async function getGuruList(unitSekolahId?: string) {
   const session = await auth()
   if (!session) throw new Error("Unauthorized")
@@ -104,7 +106,7 @@ export async function tambahGuru(data: {
   const result = await prisma.guru.create({
     data: {
       ...guruData,
-      nip: guruData.nip || null,
+      nip: cleanDash(guruData.nip),
       phone: guruData.phone || null,
       email: guruData.email || null,
       pendidikan: guruData.pendidikan || null,
@@ -145,7 +147,7 @@ export async function editGuru(id: string, data: {
     where: { id },
     data: {
       ...guruData,
-      nip: guruData.nip === "" ? null : guruData.nip,
+      nip: cleanDash(guruData.nip),
       phone: guruData.phone === "" ? null : guruData.phone,
       email: guruData.email === "" ? null : guruData.email,
       pendidikan: guruData.pendidikan === "" ? null : guruData.pendidikan,

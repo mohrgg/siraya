@@ -1,16 +1,12 @@
 import { Input } from "@/components/ui/Input"
 
-export default function TabPribadi({ formData, handleChange }: any) {
+export default function TabIdentitasPribadi({ formData, handleChange }: any) {
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main">Nama Panggilan</label>
           <Input placeholder="Nama Panggilan" value={formData.nickname || ""} onChange={e => handleChange("nickname", e.target.value)} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-text-main">NISN (10 Digit)</label>
-          <Input placeholder="Contoh: 0012345678" value={formData.nisn || ""} onChange={e => handleChange("nisn", e.target.value)} maxLength={10} />
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main">NIK (16 Digit Sesuai KK)</label>
@@ -25,6 +21,14 @@ export default function TabPribadi({ formData, handleChange }: any) {
             <option value="Katolik">Katolik</option>
             <option value="Hindu">Hindu</option>
             <option value="Buddha">Buddha</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text-main">Jenis Kelamin</label>
+          <select className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium" value={formData.gender || ""} onChange={e => handleChange("gender", e.target.value)}>
+            <option value="">-- Pilih --</option>
+            <option value="Laki-laki">Laki-laki</option>
+            <option value="Perempuan">Perempuan</option>
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
@@ -46,14 +50,6 @@ export default function TabPribadi({ formData, handleChange }: any) {
             } 
             onChange={e => handleChange("birthDate", e.target.value)} 
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-text-main">Jenis Kelamin</label>
-          <select className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium" value={formData.gender || ""} onChange={e => handleChange("gender", e.target.value)}>
-            <option value="">-- Pilih --</option>
-            <option value="Laki-laki">Laki-laki</option>
-            <option value="Perempuan">Perempuan</option>
-          </select>
         </div>
         <div className="flex gap-4">
           <div className="flex-1 flex flex-col gap-1.5">

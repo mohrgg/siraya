@@ -47,12 +47,17 @@ export async function getKelasByUnit(unitSekolahId: string) {
   })
 }
 
-export async function getSubKelasByKelas(tingkatId: string, jurusanId?: string) {
+export async function getSubKelasByKelas(tingkatId: string, jurusanId?: string, tahunAkademikId?: string) {
   const where: any = { tingkatId, isDeleted: false }
   
   // Jika jurusan diberikan, filter subkelas berdasarkan jurusan
   if (jurusanId) {
     where.jurusanId = jurusanId
+  }
+
+  // Filter berdasarkan tahun akademik jika diberikan
+  if (tahunAkademikId) {
+    where.tahunAkademikId = tahunAkademikId
   }
 
   return prisma.subKelas.findMany({

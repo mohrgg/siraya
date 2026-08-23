@@ -665,111 +665,7 @@ export default function MuridDetailClient({
         </div>
       )}
 
-      {/* Tab Content 2: KEUANGAN & PEMBAYARAN */}
-      {activePrimaryTab === "keuangan" && (
-        <div className="p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
-          {/* Financial Metrik Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                <CreditCard size={26} />
-              </div>
-              <div>
-                <div className="text-xs font-extrabold text-gray-400 uppercase tracking-wide">Total Akumulasi Tagihan</div>
-                <div className="text-2xl font-black text-gray-900 mt-0.5">{formatRupiah(summaryKeuangan.totalTagihan)}</div>
-              </div>
-            </div>
 
-            <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                <CheckCircle2 size={26} />
-              </div>
-              <div>
-                <div className="text-xs font-extrabold text-gray-400 uppercase tracking-wide">Total Sudah Dibayar</div>
-                <div className="text-2xl font-black text-emerald-600 mt-0.5">{formatRupiah(summaryKeuangan.totalTerbayar)}</div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm flex items-center gap-4">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold ${
-                summaryKeuangan.sisaTunggakan === 0 ? "bg-gray-100 text-gray-500" : "bg-rose-50 text-rose-600"
-              }`}>
-                <AlertCircle size={26} />
-              </div>
-              <div>
-                <div className="text-xs font-extrabold text-gray-400 uppercase tracking-wide">Sisa Tunggakan Aktif</div>
-                <div className={`text-2xl font-black mt-0.5 ${summaryKeuangan.sisaTunggakan === 0 ? "text-gray-500" : "text-rose-600"}`}>
-                  {formatRupiah(summaryKeuangan.sisaTunggakan)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Tabel Daftar Tagihan & Riwayat Cicilan */}
-          <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden p-6 sm:p-8 space-y-6">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-              <div>
-                <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
-                  <DollarSign size={20} className="text-primary" /> Daftar Tagihan & Cicilan SPP Siswa
-                </h3>
-                <p className="text-xs text-gray-500 mt-0.5">Memuat riwayat penagihan bulanan maupun uang pangkal yang tercatat di modul Akuntansi & Keuangan.</p>
-              </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700">
-                Total {murid.tagihan?.length || 0} Item Tagihan
-              </span>
-            </div>
-
-            {!murid.tagihan || murid.tagihan.length === 0 ? (
-              <div className="bg-gray-50/80 border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center my-6">
-                <CreditCard size={42} className="mx-auto text-gray-300 mb-2" />
-                <div className="font-bold text-gray-700 text-base">Belum Ada Riwayat Tagihan SPP</div>
-                <p className="text-xs text-gray-400 max-w-md mx-auto mt-1">
-                  Siswa ini belum memiliki tagihan SPP, Uang Pangkal, ataupun kewajiban keuangan lainnya yang di-generate dari Modul Tagihan Keuangan.
-                </p>
-              </div>
-            ) : (
-              <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-2xs">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-gray-50/80 border-b border-gray-200 text-xs font-extrabold text-gray-500 uppercase tracking-wider">
-                      <th className="py-3.5 px-5">Jenis Tagihan</th>
-                      <th className="py-3.5 px-5">Nominal Tagihan</th>
-                      <th className="py-3.5 px-5">Terbayar</th>
-                      <th className="py-3.5 px-5">Sisa / Tunggakan</th>
-                      <th className="py-3.5 px-5">Jatuh Tempo</th>
-                      <th className="py-3.5 px-5 text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {murid.tagihan.map((t: any) => (
-                      <tr key={t.id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="py-4 px-5 font-bold text-gray-900">
-                          {t.jenisTagihan?.name || "Tagihan Sekolah"}
-                          <div className="text-[11px] text-gray-400 font-normal mt-0.5">ID: {t.id.slice(-8)}</div>
-                        </td>
-                        <td className="py-4 px-5 font-mono font-semibold text-gray-800">{formatRupiah(t.amount)}</td>
-                        <td className="py-4 px-5 font-mono font-semibold text-emerald-600">{formatRupiah(t.totalPaid)}</td>
-                        <td className="py-4 px-5 font-mono font-bold text-rose-600">{formatRupiah(t.remaining)}</td>
-                        <td className="py-4 px-5 text-gray-600">
-                          {t.dueDate ? new Date(t.dueDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-"}
-                        </td>
-                        <td className="py-4 px-5 text-right">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-extrabold uppercase ${
-                            t.status === "PAID" ? "bg-emerald-100 text-emerald-800" :
-                            t.status === "PARTIAL" ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"
-                          }`}>
-                            {t.status === "PAID" ? "Lunas" : t.status === "PARTIAL" ? "Nyicil" : "Belum Bayar"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Tab Content 2: AKADEMIK & RIWAYAT KELAS */}
       {activePrimaryTab === "akademik" && (
@@ -922,21 +818,21 @@ export default function MuridDetailClient({
                     {murid.tagihan.map((t: any) => (
                       <tr key={t.id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="py-4 px-5 font-bold text-gray-900">
-                          {t.jenisTagihan?.name || "Tagihan Sekolah"}
+                          {t.akun?.nama || "Tagihan Sekolah"}
                           <div className="text-[11px] text-gray-400 font-normal mt-0.5">ID: {t.id.slice(-8)}</div>
                         </td>
-                        <td className="py-4 px-5 font-mono font-semibold text-gray-800">{formatRupiah(t.amount)}</td>
-                        <td className="py-4 px-5 font-mono font-semibold text-emerald-600">{formatRupiah(t.totalPaid)}</td>
-                        <td className="py-4 px-5 font-mono font-bold text-rose-600">{formatRupiah(t.remaining)}</td>
+                        <td className="py-4 px-5 font-mono font-semibold text-gray-800">{formatRupiah(t.jumlah)}</td>
+                        <td className="py-4 px-5 font-mono font-semibold text-emerald-600">{formatRupiah(t.jumlah - t.sisaTagihan)}</td>
+                        <td className="py-4 px-5 font-mono font-bold text-rose-600">{formatRupiah(t.sisaTagihan)}</td>
                         <td className="py-4 px-5 text-gray-600">
-                          {t.dueDate ? new Date(t.dueDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-"}
+                          {t.createdAt ? new Date(t.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-"}
                         </td>
                         <td className="py-4 px-5 text-right">
                           <span className={`px-2.5 py-1 rounded-full text-xs font-extrabold uppercase ${
-                            t.status === "PAID" ? "bg-emerald-100 text-emerald-800" :
-                            t.status === "PARTIAL" ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"
+                            t.status === "LUNAS" ? "bg-emerald-100 text-emerald-800" :
+                            t.status === "SEBAGIAN" ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"
                           }`}>
-                            {t.status === "PAID" ? "Lunas" : t.status === "PARTIAL" ? "Nyicil" : "Belum Bayar"}
+                            {t.status === "LUNAS" ? "Lunas" : t.status === "SEBAGIAN" ? "Nyicil" : "Belum Bayar"}
                           </span>
                         </td>
                       </tr>
