@@ -138,9 +138,7 @@ export default function MuridDetailClient({
         headers,
         data: pdfRows,
         filename: `Data_Murid_${murid.nis}_${dateStr}`.replace(/\s+/g, '_'),
-        config: { orientation: 'portrait' },
-        penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
-        penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+        config: { orientation: 'portrait' }
       })
       toast.success("Berhasil mengunduh PDF Profil Siswa")
     } catch (err: any) {
@@ -198,7 +196,6 @@ export default function MuridDetailClient({
           items: [{ keterangan: t.akun?.nama || "Tagihan", nominal: t.jumlah }],
           total: t.jumlah,
           catatan: "Mohon segera melunasi tagihan ini sebelum tanggal jatuh tempo.",
-          penandatanganKiri: { jabatan: "Wali Murid", nama: murid.name },
           penandatanganKanan: { jabatan: "Tata Usaha", nama: userName || "Admin" },
           filename: `Tagihan_${murid.name}_${t.akun?.nama}`
         })
@@ -222,7 +219,6 @@ export default function MuridDetailClient({
           })),
           total: dataResi.total,
           catatan: pengaturan?.catatanKwitansi,
-          penandatanganKiri: { jabatan: "Penyetor / Wali Murid", nama: dataResi.muridName },
           penandatanganKanan: { jabatan: "Bendahara Penerima", nama: userName || pengaturan?.namaBendahara || "Staf Keuangan" },
           filename: `Kwitansi_${dataResi.noReferensi}`
         })

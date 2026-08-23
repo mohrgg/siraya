@@ -153,9 +153,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
         headers,
         data: pdfRows,
         filename: `Profil_Guru_${initialData.name}_${dateStr}`.replace(/\s+/g, '_'),
-        config: { orientation: 'portrait' },
-        penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
-        penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+        config: { orientation: 'portrait' }
       })
       toast.success("Berhasil mengunduh PDF Profil Guru")
     } catch (err: any) {

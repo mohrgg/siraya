@@ -193,9 +193,7 @@ export default function KelasClient({
           headers,
           data: pdfRows,
           filename: `Daftar_Rombel_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
-          config: { orientation: 'landscape' },
-          penandatanganKiri: { jabatan: "Mengetahui, Kepala Sekolah", nama: unitObj?.namaKepalaSekolah || pengaturan?.namaKetuaYayasan || "____________________" },
-          penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+          config: { orientation: 'landscape' }
         })
       } else {
         const { getSiswaPaginated } = await import("@/actions/siswa")
@@ -236,9 +234,7 @@ export default function KelasClient({
           headers,
           data: pdfRows,
           filename: `Daftar_Murid_${unitObj?.name || "Semua"}_${statusName}_${dateStr}`.replace(/\s+/g, '_'),
-          config: { orientation: 'landscape' },
-          penandatanganKiri: { jabatan: "Mengetahui, Kepala Sekolah", nama: unitObj?.namaKepalaSekolah || pengaturan?.namaKetuaYayasan || "____________________" },
-          penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+          config: { orientation: 'landscape' }
         })
       }
       toast.success("Berhasil mengekspor dokumen PDF resmi")

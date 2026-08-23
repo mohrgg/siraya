@@ -55,7 +55,6 @@ export default function ModalResiPembayaran({
         })),
         total: data.total,
         catatan: pengaturan?.catatanKwitansi,
-        penandatanganKiri: { jabatan: "Penyetor / Wali Murid,", nama: data.muridName },
         penandatanganKanan: { jabatan: "Bendahara Penerima,", nama: currentUser?.name || pengaturan?.namaBendahara || "Staf Keuangan" },
         filename: `Kwitansi_${data.noReferensi}`
       })

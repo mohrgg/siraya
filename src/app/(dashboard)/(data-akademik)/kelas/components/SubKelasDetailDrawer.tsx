@@ -141,9 +141,7 @@ export default function SubKelasDetailDrawer({
         headers: tableColumn,
         data: tableRows,
         filename: `Murid_Kelas_${subKelas.nama.replace(/\s+/g, '_')}`,
-        config: { orientation: 'portrait' },
-        penandatanganKiri: { jabatan: "Mengetahui,", nama: "____________________" },
-        penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+        config: { orientation: 'portrait' }
       })
       toast.success("Berhasil mengunduh PDF Daftar Siswa")
     } catch (err: any) {
