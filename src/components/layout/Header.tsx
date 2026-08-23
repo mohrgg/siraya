@@ -68,9 +68,21 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
               {user.role === "ADMIN" && (
                 <option value="all">Semua Unit</option>
               )}
-              {schoolUnits.map(u => (
-                <option key={u.id} value={u.id}>{u.name}</option>
-              ))}
+              {[...schoolUnits]
+                .sort((a, b) => {
+                  const getLvl = (n: string) => {
+                    const str = n.toUpperCase();
+                    if (str.includes("SD")) return 1;
+                    if (str.includes("SMP")) return 2;
+                    if (str.includes("SMA")) return 3;
+                    if (str.includes("SMK")) return 4;
+                    return 5;
+                  };
+                  return getLvl(a.name) - getLvl(b.name);
+                })
+                .map(u => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
             </select>
             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-primary">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
