@@ -35,7 +35,7 @@ export default function ModalTambahTagihan({
   isSubmitting: boolean
 }) {
   const [akunId, setAkunId] = useState("")
-  const [jumlah, setJumlah] = useState<string>("0")
+  const [jumlah, setJumlah] = useState<string>("")
   
   const [targetType, setTargetType] = useState<"tingkat" | "kelas" | "murid">("kelas")
   const [selectedTingkatId, setSelectedTingkatId] = useState(activeKelasId)
@@ -50,7 +50,7 @@ export default function ModalTambahTagihan({
       setTargetType("kelas")
       setSelectedMuridIds([])
       setAkunId("")
-      setJumlah("0")
+      setJumlah("")
     }
   }, [isOpen, activeKelasId, activeSubKelasId])
 
@@ -90,7 +90,12 @@ export default function ModalTambahTagihan({
   }
 
   const handleJumlahChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setJumlah(formatRupiah(e.target.value))
+    const rawVal = e.target.value.replace(/[^0-9]/g, '')
+    if (!rawVal) {
+      setJumlah("")
+      return
+    }
+    setJumlah(formatRupiah(parseInt(rawVal, 10).toString()))
   }
 
   const toggleMurid = (id: string) => {
