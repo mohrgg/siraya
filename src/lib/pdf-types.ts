@@ -36,6 +36,7 @@ export interface ExportTablePdfOptions {
 
 export interface ExportResiPdfOptions {
   institutionInfo: PdfInstitutionInfo
+  title?: string
   noReferensi: string
   tanggal: Date | string
   penerimaDari: string

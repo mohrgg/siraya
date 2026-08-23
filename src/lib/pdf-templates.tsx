@@ -199,6 +199,7 @@ export function TableReportHtml({
 // ============================================================================
 export interface ResiPdfData {
   institutionInfo: PdfInstitutionInfo
+  title?: string
   tanggal: string | Date
   noReferensi: string
   penerimaDari: string
@@ -211,6 +212,7 @@ export interface ResiPdfData {
 
 export function ResiHtml({
   institutionInfo,
+  title,
   tanggal,
   noReferensi,
   penerimaDari,
@@ -236,7 +238,7 @@ export function ResiHtml({
         <div className="flex-1"></div>
         <div className="text-center flex-1">
           <h3 className="text-lg font-bold uppercase tracking-wider text-slate-800 border-b-2 border-slate-400 inline-block pb-1">
-            BUKTI PEMBAYARAN / KWITANSI
+            {title || "BUKTI PEMBAYARAN / KWITANSI"}
           </h3>
         </div>
         <div className="flex-1 text-right text-sm text-slate-600">
