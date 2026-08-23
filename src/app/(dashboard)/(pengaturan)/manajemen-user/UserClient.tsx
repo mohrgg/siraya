@@ -35,7 +35,7 @@ export default function UserClient({
   } = useUserData(initialUsers, initialDivisi, units)
 
   return (
-    <div>
+    <div className="w-full space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Manajemen User & Divisi</h1>
@@ -48,18 +48,18 @@ export default function UserClient({
       <ConfirmModal isOpen={!!deleteDivId} title="Hapus Divisi" message="Yakin ingin menghapus divisi ini?" onCancel={() => setDeleteDivId(null)} onConfirm={handleDeleteDivisi} isLoading={isSubmitting} />
 
       {/* CONTENT CARD */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 flex flex-col mb-6">
         {/* TABS */}
-        <div className="flex border-b border-gray-100 px-6 pt-4 gap-4">
+        <div className="flex gap-2 mb-6 border-b border-border">
           <button 
             onClick={() => setActiveTab("users")} 
-            className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === "users" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-900"}`}
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${activeTab === "users" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text-main"}`}
           >
             Daftar Pengguna Sistem
           </button>
           <button 
             onClick={() => setActiveTab("divisi")} 
-            className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === "divisi" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-900"}`}
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${activeTab === "divisi" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text-main"}`}
           >
             Master Divisi
           </button>

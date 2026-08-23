@@ -12,10 +12,10 @@ export default function UserList({
   
   const roleBadge = (role: string) => {
     switch(role) {
-      case "ADMIN": return <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-lg text-xs font-bold flex items-center gap-1 w-max"><ShieldCheck size={12} /> SUPER ADMIN</span>
-      case "TATA_USAHA": return <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-lg text-xs font-bold w-max">TATA USAHA</span>
-      case "KEPALA_SEKOLAH": return <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-lg text-xs font-bold w-max">KEPALA SEKOLAH</span>
-      default: return <span>{role}</span>
+      case "ADMIN": return <span className="text-rose-600 text-xs font-bold flex items-center gap-1 w-max"><ShieldCheck size={12} /> SUPER ADMIN</span>
+      case "TATA_USAHA": return <span className="text-blue-600 text-xs font-bold w-max">TATA USAHA</span>
+      case "KEPALA_SEKOLAH": return <span className="text-purple-600 text-xs font-bold w-max">KEPALA SEKOLAH</span>
+      default: return <span className="text-text-main text-xs font-bold w-max">{role}</span>
     }
   }
 
@@ -57,68 +57,74 @@ export default function UserList({
         </Toolbar>
       </div>
       
-      <div className="overflow-x-auto bg-white">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50/50 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500 font-semibold">
-              <th className="px-6 py-4">Pengguna</th>
-              <th className="px-6 py-4">Akses & Penugasan</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Aksi</th>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
+          <thead className="border-b-2 border-border text-text-muted text-xs uppercase tracking-wider bg-surface">
+            <tr>
+              <th className="p-4 font-semibold text-center w-12">NO</th>
+              <th className="p-4 font-semibold text-left">PENGGUNA</th>
+              <th className="p-4 font-semibold text-left">AKSES & PENUGASAN</th>
+              <th className="p-4 font-semibold text-center">STATUS</th>
+              <th className="p-4 font-semibold text-right">AKSI</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-border text-sm">
             {filteredUsers.length > 0 ? (
-              filteredUsers.map((u: any) => (
+              filteredUsers.map((u: any, idx: number) => (
                 <tr key={u.id} className="hover:bg-gray-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary font-bold text-sm border border-primary/20 shadow-sm shrink-0">
+                  <td className="p-4 text-center text-text-main font-medium">{idx + 1}</td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border shadow-sm shrink-0 ${
+                        u.role === "ADMIN" ? "bg-rose-50 text-rose-600 border-rose-200" :
+                        u.role === "KEPALA_SEKOLAH" ? "bg-purple-50 text-purple-600 border-purple-200" :
+                        "bg-blue-50 text-blue-600 border-blue-200"
+                      }`}>
                         {u.name.substring(0,2).toUpperCase()}
                       </div>
                       <div>
-                        <div className="font-bold text-gray-900 group-hover:text-primary transition-colors">{u.name}</div>
-                        <div className="text-gray-500 text-xs mt-0.5">{u.email}</div>
+                        <div className="font-bold text-text-main group-hover:text-primary transition-colors">{u.name}</div>
+                        <div className="text-text-muted text-xs font-mono mt-0.5">{u.email}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1.5 items-start">
+                  <td className="p-4">
+                    <div className="flex flex-col gap-0.5 items-start">
                       {roleBadge(u.role)}
                       {u.unitSekolahId ? (
-                        <span className="text-xs font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md border border-gray-200">
+                        <span className="text-xs font-medium text-text-muted">
                           {u.unitSekolah?.name}
                         </span>
                       ) : (
-                        <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                        <span className="text-xs font-medium text-amber-600">
                           Global (Semua Unit)
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="p-4 text-center">
                     {u.isActive ? (
-                      <div className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full flex items-center gap-1.5 text-xs font-bold w-max border border-emerald-100">
-                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div> Aktif
-                      </div>
+                      <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-[11px] font-medium border border-green-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Aktif
+                      </span>
                     ) : (
-                      <div className="bg-red-50 text-red-600 px-2.5 py-1 rounded-full flex items-center gap-1.5 text-xs font-bold w-max border border-red-100">
-                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div> Nonaktif
-                      </div>
+                      <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-700 px-2.5 py-1 rounded-full text-[11px] font-medium border border-rose-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Nonaktif
+                      </span>
                     )}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <td className="p-4">
+                    <div className="flex items-center justify-end gap-2">
                       <button 
                         onClick={() => openEditUser(u)} 
-                        className="p-2 text-amber-600 bg-amber-50 hover:bg-amber-100 hover:text-amber-700 rounded-lg transition-colors" 
+                        className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg border border-green-200 hover:border-green-600 transition-colors" 
                         title="Edit Pengguna"
                       >
                         <Edit2 size={16} />
                       </button>
                       <button 
                         onClick={() => setResetUserId(u.id)} 
-                        className="p-2 text-purple-600 bg-purple-50 hover:bg-purple-100 hover:text-purple-700 rounded-lg transition-colors" 
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors" 
                         title="Reset Password"
                       >
                         <Key size={16} />
@@ -126,7 +132,7 @@ export default function UserList({
                       {u.isActive && (
                         <button 
                           onClick={() => setDisableUserId(u.id)} 
-                          className="p-2 text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 rounded-lg transition-colors" 
+                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" 
                           title="Nonaktifkan Akun"
                         >
                           <XCircle size={16} />
