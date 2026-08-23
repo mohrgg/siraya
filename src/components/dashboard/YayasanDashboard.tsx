@@ -41,6 +41,7 @@ interface YayasanDashboardProps {
   pendapatanHariIniChart?: any[]
   pendapatanMingguIniChart?: any[]
   pendapatanBulanIniChart?: any[]
+  pendapatanPerUnitChart?: any[]
 }
 
 export default function YayasanDashboard(props: YayasanDashboardProps) {
@@ -65,7 +66,8 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
     topUnitTunggakan = [],
     pendapatanHariIniChart = [],
     pendapatanMingguIniChart = [],
-    pendapatanBulanIniChart = []
+    pendapatanBulanIniChart = [],
+    pendapatanPerUnitChart = []
   } = props
 
   const [selectedUnitDrillDown, setSelectedUnitDrillDown] = useState<any>(null)
@@ -560,6 +562,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
               hariIniData={pendapatanHariIniChart}
               mingguIniData={pendapatanMingguIniChart}
               bulanIniData={pendapatanBulanIniChart}
+              perUnitData={pendapatanPerUnitChart}
             />
           </div>
         </div>

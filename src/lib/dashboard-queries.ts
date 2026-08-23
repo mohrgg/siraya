@@ -64,7 +64,16 @@ function generateInteractiveChartData(transactions: any[], todayStart: Date, wee
   })
   const pendapatanBulanIniChart = Array.from(bulanIniMap.entries()).map(([k, v]) => ({ name: `${k}`, value: v }))
 
-  return { pendapatanHariIniChart, pendapatanMingguIniChart, pendapatanBulanIniChart }
+  // Per Unit (Bulan Ini)
+  const unitMap = new Map<string, number>()
+  transactions.forEach(t => {
+    if (t.unitSekolah?.name) {
+      unitMap.set(t.unitSekolah.name, (unitMap.get(t.unitSekolah.name) || 0) + t.totalNilai)
+    }
+  })
+  const pendapatanPerUnitChart = Array.from(unitMap.entries()).map(([k, v]) => ({ name: k, value: v }))
+
+  return { pendapatanHariIniChart, pendapatanMingguIniChart, pendapatanBulanIniChart, pendapatanPerUnitChart }
 }
 
 // ==================== STANDAR YAYASAN (GLOBAL) ====================
@@ -362,7 +371,7 @@ export async function getYayasanDashboardData(yearId?: string) {
   })
   const rawMonthTransactions = await prisma.transaksi.findMany({
     where: { jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: monthStart } },
-    select: { tanggal: true, totalNilai: true }
+    select: { tanggal: true, totalNilai: true, unitSekolah: { select: { name: true } } }
   })
   const interactiveChartData = generateInteractiveChartData(rawMonthTransactions, todayStart, weekStart, monthStart)
 

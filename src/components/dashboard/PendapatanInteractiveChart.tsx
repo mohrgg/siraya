@@ -8,16 +8,17 @@ interface PendapatanInteractiveChartProps {
   hariIniData: any[]
   mingguIniData: any[]
   bulanIniData: any[]
+  perUnitData?: any[]
 }
 
 const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
 
-export default function PendapatanInteractiveChart({ hariIniData, mingguIniData, bulanIniData }: PendapatanInteractiveChartProps) {
-  const [activeTab, setActiveTab] = useState<'hari' | 'minggu' | 'bulan'>('hari')
+export default function PendapatanInteractiveChart({ hariIniData, mingguIniData, bulanIniData, perUnitData = [] }: PendapatanInteractiveChartProps) {
+  const [activeTab, setActiveTab] = useState<'hari' | 'minggu' | 'bulan' | 'unit'>('hari')
 
-  const data = activeTab === 'hari' ? hariIniData : activeTab === 'minggu' ? mingguIniData : bulanIniData
-  const maxBarSize = activeTab === 'bulan' ? 15 : activeTab === 'minggu' ? 40 : 30
-  const color = activeTab === 'hari' ? '#3b82f6' : activeTab === 'minggu' ? '#f59e0b' : '#10b981'
+  const data = activeTab === 'hari' ? hariIniData : activeTab === 'minggu' ? mingguIniData : activeTab === 'bulan' ? bulanIniData : perUnitData
+  const maxBarSize = activeTab === 'unit' ? 40 : activeTab === 'bulan' ? 15 : activeTab === 'minggu' ? 40 : 30
+  const color = activeTab === 'hari' ? '#3b82f6' : activeTab === 'minggu' ? '#f59e0b' : activeTab === 'bulan' ? '#10b981' : '#8b5cf6'
 
   const totalValue = data.reduce((acc, curr) => acc + curr.value, 0)
 
@@ -26,8 +27,8 @@ export default function PendapatanInteractiveChart({ hariIniData, mingguIniData,
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <div>
           <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-            <Wallet size={18} className={activeTab === 'hari' ? "text-blue-500" : activeTab === 'minggu' ? "text-amber-500" : "text-emerald-500"} />
-            Pendapatan {activeTab === 'hari' ? 'Hari Ini' : activeTab === 'minggu' ? 'Minggu Ini' : 'Bulan Ini'}
+            <Wallet size={18} className={activeTab === 'hari' ? "text-blue-500" : activeTab === 'minggu' ? "text-amber-500" : activeTab === 'bulan' ? "text-emerald-500" : "text-purple-500"} />
+            Pendapatan {activeTab === 'hari' ? 'Hari Ini' : activeTab === 'minggu' ? 'Minggu Ini' : activeTab === 'bulan' ? 'Bulan Ini' : 'Per Unit (Bulan Ini)'}
           </h3>
           <p className="text-xs text-gray-500 mt-1">Total: <span className="font-bold text-gray-700">{formatCurrency(totalValue)}</span></p>
         </div>
@@ -54,6 +55,15 @@ export default function PendapatanInteractiveChart({ hariIniData, mingguIniData,
             <CalendarDays size={14} />
             Bulan Ini
           </button>
+          {perUnitData && perUnitData.length > 0 && (
+            <button 
+              onClick={() => setActiveTab('unit')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'unit' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Wallet size={14} />
+              Per Unit
+            </button>
+          )}
         </div>
       </div>
 

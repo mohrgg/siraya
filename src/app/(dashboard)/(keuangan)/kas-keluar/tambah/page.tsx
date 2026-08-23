@@ -3,10 +3,12 @@ import { redirect } from "next/navigation"
 import { getKasBankAccounts, getPengeluaranAccounts, getDivisiList, getPenggunaList } from "@/actions/kas-keluar"
 import { getUnitSekolahList } from "@/actions/pengaturan"
 import TambahKasKeluarClient from "./TambahKasKeluarClient"
+import { getTenantContext } from "@/lib/tenant"
 
 export default async function TambahKasKeluarPage() {
   const session = await auth()
   if (!session || !session.user) redirect("/login")
+  const tenant = await getTenantContext()
   
   const kasBankAccounts = await getKasBankAccounts()
   const pengeluaranAccounts = await getPengeluaranAccounts()
@@ -21,7 +23,7 @@ export default async function TambahKasKeluarPage() {
       divisiList={divisiList}
       penggunaList={penggunaList}
       schoolUnits={schoolUnits}
-      userUnitId={(session.user as any).unitSekolahId}
+      userUnitId={tenant.unitId === "all" || tenant.unitId === null ? undefined : tenant.unitId}
     />
   )
 }

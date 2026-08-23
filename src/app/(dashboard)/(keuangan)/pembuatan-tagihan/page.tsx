@@ -20,6 +20,9 @@ export default async function PembuatanTagihanPage() {
   const cookieStore = await cookies()
   const activeYearIdCookie = cookieStore.get("activeYearId")?.value
   
+  // Resolve active unit first
+  const activeUnitId = tenant.unitId || "all"
+  
   const [
     tahunAkademikAktif,
     unitSekolahList,
@@ -27,11 +30,10 @@ export default async function PembuatanTagihanPage() {
   ] = await Promise.all([
     getTahunAkademikAktif(),
     getUnitSekolah(),
-    getAkunPendapatan()
+    getAkunPendapatan(activeUnitId)
   ])
 
-  // Resolve active unit and year
-  const activeUnitId = tenant.unitId || "all"
+  // Resolve active year
   const activeTahunAkademikId = activeYearIdCookie || (tahunAkademikAktif ? tahunAkademikAktif.id : "")
   
   // Find name for the title

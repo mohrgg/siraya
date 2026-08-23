@@ -73,7 +73,7 @@ export async function getJurusanByUnit(unitSekolahId: string) {
   })
 }
 
-export async function getAkunPendapatan() {
+export async function getAkunPendapatan(activeUnitId?: string) {
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
   const user = session.user as any
@@ -88,7 +88,12 @@ export async function getAkunPendapatan() {
     }
   }
 
-  if (user.role !== "ADMIN" && user.unitSekolahId) {
+  if (activeUnitId && activeUnitId !== "all") {
+    whereClause.OR = [
+      { unitSekolahId: null },
+      { unitSekolahId: activeUnitId }
+    ]
+  } else if (user.role !== "ADMIN" && user.unitSekolahId) {
     whereClause.OR = [
       { unitSekolahId: null },
       { unitSekolahId: user.unitSekolahId }
