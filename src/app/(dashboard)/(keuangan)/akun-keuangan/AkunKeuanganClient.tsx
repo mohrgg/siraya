@@ -32,6 +32,7 @@ export default function AkunKeuanganClient({
 }) {
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
   const isAdmin = userRole === "ADMIN"
+  const canEditKategori = isAdmin && (userUnitId === "all" || userUnitId == null)
 
   const [activeTab, setActiveTab] = useState<"AKUN" | "SUBKLASIFIKASI">("SUBKLASIFIKASI")
   const [searchTerm, setSearchTerm] = useState("")
@@ -406,7 +407,7 @@ export default function AkunKeuanganClient({
                   <Plus size={16} className="mr-1.5"/> Tambah Akun
                 </Button>
               )}
-              {isAdmin && activeTab === 'SUBKLASIFIKASI' && (
+              {canEditKategori && activeTab === 'SUBKLASIFIKASI' && (
                 <Button onClick={() => {
                   const defaultKlasId = klasifikasi[0]?.id || ""
                   setSubKlasForm({ id: "", kode: generateSubKlasKode(defaultKlasId, subKlasifikasi), nama: "", klasifikasiAkunId: defaultKlasId })
@@ -417,6 +418,16 @@ export default function AkunKeuanganClient({
               )}
             </div>
           </div>
+
+        {/* Peringatan Global Kategori */}
+        {activeTab === 'SUBKLASIFIKASI' && !canEditKategori && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start gap-3">
+            <div className="font-bold text-yellow-700 shrink-0">Info:</div>
+            <p className="text-sm text-yellow-800">
+              Kategori Akun bersifat Global (Standar Yayasan). Untuk menambah atau mengubah Kategori, silakan ganti filter Unit Sekolah di header menjadi <b>"Pusat / Yayasan (Semua Unit)"</b>.
+            </p>
+          </div>
+        )}
 
         {/* Tab Content: AKUN */}
         {activeTab === 'AKUN' && (
@@ -502,7 +513,7 @@ export default function AkunKeuanganClient({
                   <th className="p-4 font-semibold">NAMA SUBKLASIFIKASI</th>
                   <th className="p-4 font-semibold">INDUK (KLASIFIKASI)</th>
                   <th className="p-4 font-semibold text-center">JML AKUN</th>
-                  {isAdmin && <th className="p-4 font-semibold text-right">AKSI</th>}
+                  {canEditKategori && <th className="p-4 font-semibold text-right">AKSI</th>}
                 </tr>
               </thead>
               <tbody>
@@ -518,7 +529,7 @@ export default function AkunKeuanganClient({
                     <td className="p-4 text-center font-medium text-text-muted">
                       {item._count?.akunDetail || 0}
                     </td>
-                    {isAdmin && (
+                    {canEditKategori && (
                       <td className="p-4">
                         <div className="flex items-center justify-end gap-2">
                           <button onClick={() => handleEditSubKlas(item)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg border border-green-200 hover:border-green-600 transition-colors" title="Edit Subklasifikasi">
@@ -534,7 +545,7 @@ export default function AkunKeuanganClient({
                 ))}
                 {filteredSubKlas.length === 0 && (
                   <tr>
-                    <td colSpan={isReadOnly ? 4 : 5} className="p-8">
+                    <td colSpan={!canEditKategori ? 4 : 5} className="p-8">
                       <div className="flex flex-col items-center justify-center text-center text-text-muted">
                         <Layers size={40} className="text-gray-300 mb-3" />
                         <p>Belum ada data Subklasifikasi.</p>

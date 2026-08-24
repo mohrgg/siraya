@@ -136,3 +136,91 @@ export async function getLaporanTunggakanSiswa(filterUnitId?: string, filterTing
     sisa: t.sisaTagihan
   }))
 }
+
+export async function getMutasiBank(startDate: string, endDate: string, akunDetailId: string) {
+  const session = await auth()
+  if (!session?.user) throw new Error("Unauthorized")
+
+  if (!akunDetailId) return { saldoAwal: 0, mutasi: [], saldoAkhir: 0 }
+  
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  end.setHours(23, 59, 59, 999)
+
+  const user = session.user as any
+  const restrictedUnitId = user.unitSekolahId
+
+  // Verify account ownership
+  const akun = await prisma.akunDetail.findUnique({ where: { id: akunDetailId } })
+  if (!akun) throw new Error("Akun tidak ditemukan")
+  if (restrictedUnitId && akun.unitSekolahId !== restrictedUnitId) {
+    throw new Error("Akses ditolak")
+  }
+
+  // 1. Calculate Saldo Awal (sebelum start date)
+  const mutasiSebelumnya = await prisma.transaksiDetail.groupBy({
+    by: ['posisi'],
+    where: {
+      akunId: akunDetailId,
+      transaksi: {
+        status: "POSTED",
+        tanggal: { lt: start }
+      }
+    },
+    _sum: {
+      nilai: true
+    }
+  })
+
+  let saldoAwal = 0
+  mutasiSebelumnya.forEach(m => {
+    if (m.posisi === 'DEBIT') saldoAwal += (m._sum.nilai || 0)
+    else if (m.posisi === 'KREDIT') saldoAwal -= (m._sum.nilai || 0)
+  })
+
+  // 2. Ambil mutasi selama periode
+  const mutasi = await prisma.transaksiDetail.findMany({
+    where: {
+      akunId: akunDetailId,
+      transaksi: {
+        status: "POSTED",
+        tanggal: {
+          gte: start,
+          lte: end
+        }
+      }
+    },
+    include: {
+      transaksi: true
+    },
+    orderBy: [
+      { transaksi: { tanggal: 'asc' } },
+      { transaksi: { createdAt: 'asc' } }
+    ]
+  })
+
+  let currentSaldo = saldoAwal
+  const mutasiFormatted = mutasi.map(m => {
+    const isDebit = m.posisi === "DEBIT"
+    const debit = isDebit ? m.nilai : 0
+    const kredit = !isDebit ? m.nilai : 0
+    currentSaldo = currentSaldo + debit - kredit
+
+    return {
+      id: m.id,
+      tanggal: m.transaksi.tanggal.toISOString(),
+      noReferensi: m.transaksi.noReferensi,
+      keterangan: m.deskripsi || m.transaksi.deskripsi,
+      pihakKetiga: m.transaksi.namaPihakKetiga || "-",
+      debit,
+      kredit,
+      saldo: currentSaldo
+    }
+  })
+
+  return {
+    saldoAwal,
+    mutasi: mutasiFormatted,
+    saldoAkhir: currentSaldo
+  }
+}

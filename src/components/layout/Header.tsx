@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, Menu } from "lucide-react"
 import { setGlobalContext } from "@/actions/app-context"
+import { useMobileMenu } from "./MobileMenuContext"
 
 type SchoolUnit = { id: string; name: string }
 type AcademicYear = { id: string; name: string }
@@ -22,6 +23,8 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
   
   const [unit, setUnit] = useState(activeUnitId || schoolUnits[0]?.id || "")
   const [year, setYear] = useState(activeYearId || academicYears[0]?.id || "")
+  
+  const { toggleMobileMenu } = useMobileMenu()
 
   const handleChange = (type: "unit" | "year", value: string) => {
     let newUnit = unit
@@ -50,11 +53,21 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
   const isUnitLocked = schoolUnits.length <= 1;
 
   return (
-    <header className="h-[80px] px-6 bg-surface border-b border-border flex items-center justify-between shadow-sm shrink-0">
-      <div className="flex items-center gap-6">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-1">Unit Sekolah</label>
-          <div className="relative">
+    <header className="h-auto min-h-[80px] py-4 px-4 md:px-6 bg-surface border-b border-border flex flex-col md:flex-row md:items-center justify-between shadow-sm shrink-0 gap-4 md:gap-0">
+        <div className="flex items-center gap-4 w-full md:w-auto">
+          {toggleMobileMenu && (
+            <button 
+              className="md:hidden p-2 -ml-2 rounded-lg text-gray-500 hover:bg-gray-100 shrink-0"
+              onClick={toggleMobileMenu}
+            >
+              <Menu size={24} />
+            </button>
+          )}
+          
+          <div className="flex flex-1 md:flex-none flex-row gap-2 md:gap-6 overflow-x-auto hide-scrollbar">
+            <div className="flex flex-col gap-1.5 shrink-0">
+              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-1">Unit Sekolah</label>
+            <div className="relative">
             <select 
               className={`appearance-none border text-sm font-semibold py-2 pl-4 pr-10 rounded-xl focus:outline-none min-w-[180px] ${
                 isUnitLocked 
@@ -90,10 +103,10 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
               </svg>
             </div>
           </div>
-        </div>
-        
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-1">Tahun Akademik</label>
+          </div>
+          
+          <div className="flex flex-col gap-1.5 shrink-0">
+            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-1">Tahun Akademik</label>
           <div className="relative">
             <select 
               className="appearance-none bg-surface border border-border shadow-sm hover:shadow-md transition-shadow text-sm font-semibold text-text-main py-2 pl-4 pr-10 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-[180px]" 
@@ -113,15 +126,16 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
           </div>
         </div>
       </div>
-
-      <div className="flex items-center gap-4">
+    </div>
+      
+      <div className="flex items-center justify-end w-full md:w-auto mt-4 md:mt-0 gap-3 border-t md:border-t-0 border-border pt-4 md:pt-0">
         <button 
           onClick={handleManualRefresh}
           disabled={isPending}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-text-muted hover:bg-bg hover:text-primary transition-colors disabled:opacity-50"
+          className="p-2.5 rounded-xl bg-gray-50 text-gray-600 hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50 border border-gray-200"
           title="Refresh Data"
         >
-          <RefreshCw size={20} className={isPending ? "animate-spin text-primary" : ""} />
+          <RefreshCw size={18} className={isPending ? "animate-spin" : ""} />
         </button>
       </div>
     </header>

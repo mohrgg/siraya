@@ -7,7 +7,8 @@ import {
   ArrowRight,
   TrendingUp,
   CreditCard,
-  PieChart
+  PieChart,
+  Wallet
 } from "lucide-react"
 
 export default function LaporanMenuClient() {
@@ -70,18 +71,28 @@ export default function LaporanMenuClient() {
           </div>
         </Link>
 
-        {/* Card 3: Coming Soon (Optional) */}
-        <div className="relative bg-surface/50 rounded-2xl border border-border border-dashed p-6 flex flex-col justify-center items-center text-center min-h-[220px]">
-          <div className="w-12 h-12 rounded-2xl bg-gray-100 text-gray-400 flex items-center justify-center mb-4">
-            <PieChart size={24} />
+        {/* Card 3: Mutasi Bank */}
+        <Link href="/laporan/mutasi-bank" className="group relative bg-surface rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between min-h-[220px]">
+          <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-5 transition-opacity duration-500 transform translate-x-4 -translate-y-4 group-hover:translate-x-0 group-hover:translate-y-0">
+            <Wallet size={120} />
           </div>
-          <h3 className="text-lg font-bold text-gray-400 mb-1">
-            Laporan Kustom
-          </h3>
-          <p className="text-sm text-gray-400 max-w-[200px]">
-            Modul laporan tambahan akan segera hadir di sini.
-          </p>
-        </div>
+          
+          <div>
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-5 group-hover:bg-blue-500 group-hover:text-white transition-colors duration-300">
+              <Wallet size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-text-main mb-2">
+              Buku Mutasi Kas / Bank
+            </h3>
+            <p className="text-sm text-text-muted">
+              Pantau rincian mutasi (pemasukan & pengeluaran) beserta akumulasi Saldo Akhir pada setiap akun Kas/Bank Yayasan.
+            </p>
+          </div>
+          
+          <div className="mt-6 flex items-center text-sm font-semibold text-blue-600 group-hover:text-blue-700">
+            Buka Mutasi <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
 
       </div>
     </div>

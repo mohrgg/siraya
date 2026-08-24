@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma"
 import { getTenantContext } from "@/lib/tenant"
 import Sidebar from "@/components/layout/Sidebar"
 import Header from "@/components/layout/Header"
+import { MobileMenuProvider } from "@/components/layout/MobileMenuContext"
 import { UserActivityTracker } from "@/components/UserActivityTracker"
 
 export default async function DashboardLayout({
@@ -40,30 +41,32 @@ export default async function DashboardLayout({
   const activeYearId = cookieStore.get("activeYearId")?.value || academicYears.find((y: any) => y.isActive)?.id || academicYears[0]?.id
 
   return (
-    <div className="flex h-screen w-full bg-bg overflow-hidden">
-      <Sidebar user={{
-        name: tenant.user.name,
-        email: tenant.user.email,
-        role: tenant.role,
-        avatar: tenant.user.avatar
-      }} />
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <Header 
-          user={{
-            name: tenant.user.name,
-            role: tenant.role,
-            avatar: tenant.user.avatar
-          }}
-          schoolUnits={schoolUnits}
-          academicYears={academicYears}
-          activeUnitId={activeUnitId}
-          activeYearId={activeYearId}
-        />
-        <UserActivityTracker />
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto overflow-x-hidden">
-          {children}
-        </main>
+    <MobileMenuProvider>
+      <div className="flex h-screen w-full bg-bg overflow-hidden relative">
+        <Sidebar user={{
+          name: tenant.user.name,
+          email: tenant.user.email,
+          role: tenant.role,
+          avatar: tenant.user.avatar
+        }} />
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          <Header 
+            user={{
+              name: tenant.user.name,
+              role: tenant.role,
+              avatar: tenant.user.avatar
+            }}
+            schoolUnits={schoolUnits}
+            academicYears={academicYears}
+            activeUnitId={activeUnitId}
+            activeYearId={activeYearId}
+          />
+          <UserActivityTracker />
+          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto overflow-x-hidden relative">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </MobileMenuProvider>
   )
 }

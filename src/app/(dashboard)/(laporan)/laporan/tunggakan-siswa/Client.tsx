@@ -20,10 +20,10 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
 
-  const [filterUnitId, setFilterUnitId] = useState(userUnitId || "")
+  const filterUnitId = userUnitId || ""
   const [filterTingkatId, setFilterTingkatId] = useState("")
   const [filterSubKelasId, setFilterSubKelasId] = useState("")
-  const unitName = filterUnitId ? (schoolUnits.find(u => u.id === filterUnitId)?.name || "UNIT") : "YAYASAN"
+  const unitName = filterUnitId ? (schoolUnits?.find(u => u.id === filterUnitId)?.name || "UNIT") : "YAYASAN"
 
   // Pagination
   const [pageSize, setPageSize] = useState(10)
@@ -43,7 +43,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [filterUnitId])
 
   const filteredData = useMemo(() => {
     if (!searchTerm) return data
@@ -194,18 +194,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
         <div className="text-sm font-semibold text-gray-600 mb-2">Filter Laporan</div>
         <div className="flex flex-col md:flex-row items-center gap-4">
           
-          {(userRole === "SUPERADMIN" || userRole === "ADMIN") && (
-            <select 
-              value={filterUnitId}
-              onChange={(e) => { setFilterUnitId(e.target.value); setFilterTingkatId(""); setFilterSubKelasId("") }}
-              className="border border-border rounded-lg px-3 py-2 text-sm w-full md:w-auto bg-gray-50 focus:ring-emerald-500 focus:border-emerald-500"
-            >
-              <option value="">Semua Unit (Yayasan)</option>
-              {schoolUnits.map((u: any) => (
-                <option key={u.id} value={u.id}>{u.name}</option>
-              ))}
-            </select>
-          )}
+
 
           <select 
             value={filterTingkatId}

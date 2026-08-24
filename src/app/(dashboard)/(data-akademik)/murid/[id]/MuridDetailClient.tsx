@@ -403,7 +403,7 @@ export default function MuridDetailClient({
                   <h3 className="font-extrabold text-gray-900 border-b border-gray-200 pb-2 text-base flex items-center gap-2">
                     <User size={18} className="text-primary" /> Biodata Diri
                   </h3>
-                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
                     <div className="col-span-2">
                       <label className="text-xs text-gray-400 font-semibold uppercase">Nama Lengkap</label>
                       <p className="font-bold text-gray-900 text-base mt-0.5">{murid.name}</p>
@@ -449,7 +449,7 @@ export default function MuridDetailClient({
                   <h3 className="font-extrabold text-gray-900 border-b border-gray-200 pb-2 text-base flex items-center gap-2">
                     <MapPin size={18} className="text-primary" /> Kontak & Alamat
                   </h3>
-                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
                     <div>
                       <label className="text-xs text-gray-400 font-semibold uppercase">No. Telepon / WhatsApp</label>
                       <p className="font-mono font-semibold text-gray-800 mt-0.5">{murid.phone || "-"}</p>
@@ -600,7 +600,7 @@ export default function MuridDetailClient({
                   <h3 className="font-extrabold text-gray-900 border-b border-gray-200 pb-2 text-base flex items-center gap-2">
                     <HeartPulse size={18} className="text-primary" /> Data Periodik & Fisik
                   </h3>
-                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
                     <div>
                       <label className="text-xs text-gray-400 font-semibold uppercase">Tinggi Badan</label>
                       <p className="font-bold text-gray-800 text-base mt-0.5">{murid.height ? `${murid.height} cm` : "-"}</p>
@@ -658,7 +658,7 @@ export default function MuridDetailClient({
                   <h3 className="font-extrabold text-gray-900 border-b border-gray-200 pb-2 text-base flex items-center gap-2">
                     <GraduationCap size={18} className="text-primary" /> Identitas Akademik Sekolah
                   </h3>
-                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
                     <div>
                       <label className="text-xs text-gray-400 font-semibold uppercase">Nomor Induk Siswa (NIS)</label>
                       <p className="font-mono font-bold text-gray-900 text-base mt-0.5">{murid.nis || "-"}</p>
@@ -686,7 +686,7 @@ export default function MuridDetailClient({
                   <h3 className="font-extrabold text-gray-900 border-b border-gray-200 pb-2 text-base flex items-center gap-2">
                     <Building size={18} className="text-primary" /> Registrasi & Pendaftaran
                   </h3>
-                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
                     <div>
                       <label className="text-xs text-gray-400 font-semibold uppercase">Username Akun Portal</label>
                       <p className="font-mono font-bold text-gray-800 mt-0.5">{murid.username || "-"}</p>

@@ -13,6 +13,8 @@ import {
 } from "lucide-react"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import ChangePasswordModal from "@/components/modals/ChangePasswordModal"
+import { useMobileMenu } from "./MobileMenuContext"
+import { X } from "lucide-react"
 
 const menuGroups = [
   {
@@ -79,12 +81,37 @@ export default function Sidebar({ user }: { user: any }) {
     return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
   }
 
+  const { isMobileMenuOpen, closeMobileMenu } = useMobileMenu()
+
   return (
     <>
-      <aside className={`bg-[#065f32] text-white h-full border-r border-[#0a753d] flex flex-col transition-all duration-300 relative z-40 ${isCollapsed ? "w-20" : "w-[265px]"}`}>
-        {/* Floating Toggle Button (Right Edge) */}
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
+          onClick={closeMobileMenu}
+        />
+      )}
+      
+      <aside className={`
+        bg-[#065f32] text-white h-full border-r border-[#0a753d] flex flex-col transition-all duration-300 z-50
+        fixed inset-y-0 left-0 md:relative md:z-auto
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        ${isCollapsed ? "w-20" : "w-[265px]"}
+      `}>
+        {/* Mobile Close Button */}
+        {isMobileMenuOpen && (
+          <button 
+            className="absolute top-4 right-4 md:hidden text-white/70 hover:text-white"
+            onClick={closeMobileMenu}
+          >
+            <X size={24} />
+          </button>
+        )}
+        
+        {/* Floating Toggle Button (Right Edge) - Desktop Only */}
         <button 
-          className="absolute -right-3 top-8 w-7 h-7 rounded-full bg-surface border border-border text-primary flex items-center justify-center hover:bg-surface-hover z-50 shadow-md transition-transform"
+          className="absolute -right-3 top-8 w-7 h-7 rounded-full bg-surface border border-border text-primary hidden md:flex items-center justify-center hover:bg-surface-hover z-50 shadow-md transition-transform"
           onClick={() => setIsCollapsed(!isCollapsed)}
           title={isCollapsed ? "Buka Sidebar" : "Tutup Sidebar"}
         >
@@ -181,6 +208,8 @@ export default function Sidebar({ user }: { user: any }) {
               </div>
             )}
           </div>
+          
+
         </div>
       </aside>
 

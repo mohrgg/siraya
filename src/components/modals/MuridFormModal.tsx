@@ -1,8 +1,8 @@
 "use client"
 import { useState, useEffect } from "react"
-import { createPortal } from "react-dom"
-import { X, User, Users, HeartPulse, GraduationCap, MapPin, Save } from "lucide-react"
+import { User, Users, HeartPulse, GraduationCap, Save } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import { SideDrawer } from "@/components/ui/SideDrawer"
 
 import TabInformasiUmum from "./murid-tabs/TabInformasiUmum"
 import TabIdentitasPribadi from "./murid-tabs/TabIdentitasPribadi"
@@ -20,7 +20,7 @@ interface MuridFormModalProps {
 
 const TABS = [
   { id: "utama", label: "Informasi Umum", icon: GraduationCap },
-  { id: "pribadi", label: "Identitas Pribadi", icon: User },
+  { id: "pribadi", label: "Identitas", icon: User },
   { id: "medis", label: "Fisik & Medis", icon: HeartPulse },
   { id: "keluarga", label: "Keluarga & Wali", icon: Users },
 ]
@@ -29,11 +29,6 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
   const [activeTab, setActiveTab] = useState("utama")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<any>({})
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   useEffect(() => {
     if (isOpen) {
@@ -45,8 +40,6 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
       setActiveTab("utama")
     }
   }, [isOpen, initialData])
-
-  if (!isOpen || !mounted) return null
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [field]: value }))
@@ -62,64 +55,65 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
     }
   }
 
-  return createPortal(
-    <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-5xl bg-surface rounded-2xl shadow-xl border border-border flex flex-col h-[90vh]">
-        {/* Header */}
-        <div className="p-5 border-b border-border flex justify-between items-center bg-bg rounded-t-2xl shrink-0">
-          <div>
-            <h3 className="text-lg font-extrabold text-albas-green m-0">
-              {formData.id ? "Edit Data Profil Murid" : "Tambah Murid Baru"}
-            </h3>
-            <p className="text-xs text-text-muted mt-0.5">Kelengkapan data profil sesuai standar Dapodik.</p>
-          </div>
-          <button onClick={onClose} className="p-2 text-text-muted hover:text-text-main hover:bg-gray-100 rounded-xl transition-colors"><X size={20} /></button>
+  const footer = (
+    <div className="flex justify-between items-center w-full">
+      <span className="text-xs text-text-muted hidden sm:inline">
+        Pastikan data wajib telah terisi dengan benar.
+      </span>
+      <div className="flex gap-2.5 ml-auto">
+        <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+          Batal
+        </Button>
+        <Button type="submit" form="muridForm" isLoading={isSubmitting} className="flex items-center gap-2">
+          <Save size={16} /> {formData.id ? "Simpan Perubahan" : "Simpan Data"}
+        </Button>
+      </div>
+    </div>
+  )
+
+  return (
+    <SideDrawer
+      isOpen={isOpen}
+      onClose={onClose}
+      title={formData.id ? "Edit Profil Murid" : "Tambah Murid Baru"}
+      subtitle="Kelengkapan data profil sesuai standar Dapodik."
+      icon={<User className="text-primary" />}
+      widthClassName="max-w-3xl"
+      footer={footer}
+    >
+      <div className="flex flex-col space-y-6">
+        {/* Horizontal Tabs */}
+        <div className="flex overflow-x-auto custom-scrollbar border-b border-border pb-2 shrink-0 gap-2">
+          {TABS.map((tab) => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap
+                  ${isActive 
+                    ? 'bg-primary text-white shadow-md' 
+                    : 'text-text-muted bg-gray-50 border border-transparent hover:bg-gray-100 hover:text-text-main'}`}
+              >
+                <Icon size={16} className={isActive ? 'text-white' : 'text-text-muted'} />
+                <span>{tab.label}</span>
+              </button>
+            )
+          })}
         </div>
-        
-        {/* Body Grid */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar Tabs */}
-          <div className="w-48 md:w-64 border-r border-border bg-gray-50/50 p-3 flex flex-col gap-1 overflow-y-auto shrink-0">
-            {TABS.map((tab) => {
-              const Icon = tab.icon
-              const isActive = activeTab === tab.id
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-left
-                    ${isActive ? 'bg-primary text-white shadow-md' : 'text-text-muted hover:bg-white hover:text-text-main hover:shadow-sm'}`}
-                >
-                  <Icon size={18} className={isActive ? 'text-white' : 'text-text-muted'} />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </button>
-              )
-            })}
-          </div>
-          
-          {/* Main Content Area */}
-          <div className="flex-1 flex flex-col">
-            <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-white">
-              <form id="muridForm" onSubmit={handleSubmit}>
-                {activeTab === "utama" && <TabInformasiUmum formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} classrooms={classrooms} />}
-                {activeTab === "pribadi" && <TabIdentitasPribadi formData={formData} handleChange={handleChange} />}
-                {activeTab === "medis" && <TabFisikMedis formData={formData} handleChange={handleChange} />}
-                {activeTab === "keluarga" && <TabKeluarga formData={formData} handleChange={handleChange} />}
-              </form>
-            </div>
-            
-            {/* Footer Form Actions */}
-            <div className="p-5 border-t border-border bg-gray-50/50 flex justify-end gap-3 shrink-0">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Batal</Button>
-              <Button type="submit" form="muridForm" isLoading={isSubmitting} className="flex items-center gap-2">
-                <Save size={16} /> {formData.id ? "Simpan Perubahan" : "Simpan Data Murid"}
-              </Button>
-            </div>
-          </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1">
+          <form id="muridForm" onSubmit={handleSubmit} className="space-y-6 pb-6">
+            {activeTab === "utama" && <TabInformasiUmum formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} classrooms={classrooms} />}
+            {activeTab === "pribadi" && <TabIdentitasPribadi formData={formData} handleChange={handleChange} />}
+            {activeTab === "medis" && <TabFisikMedis formData={formData} handleChange={handleChange} />}
+            {activeTab === "keluarga" && <TabKeluarga formData={formData} handleChange={handleChange} />}
+          </form>
         </div>
       </div>
-    </div>,
-    document.body
+    </SideDrawer>
   )
 }

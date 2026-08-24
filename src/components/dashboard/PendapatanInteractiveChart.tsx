@@ -70,7 +70,7 @@ export default function PendapatanInteractiveChart({ hariIniData, mingguIniData,
       <div className="flex-1 w-full min-h-0">
         {data && data.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+            <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis 
                 dataKey="name" 
@@ -85,6 +85,7 @@ export default function PendapatanInteractiveChart({ hariIniData, mingguIniData,
                 tick={{ fill: '#64748b', fontSize: 11 }}
                 tickFormatter={(val) => `Rp${(val/1000).toFixed(0)}k`}
                 tickMargin={10}
+                width={70}
               />
               <Tooltip 
                 cursor={{fill: '#f8fafc'}}

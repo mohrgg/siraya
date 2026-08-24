@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 import { getPengaturan } from "@/actions/pengaturan"
 import { getUnitSekolah } from "@/actions/unit-sekolah"
 import { getTingkatan, getKelas } from "@/actions/kelas"
+import { getTenantContext } from "@/lib/tenant"
 
 export const dynamic = 'force-dynamic'
 
@@ -17,14 +18,15 @@ export default async function LaporanTunggakanPage() {
   const schoolUnits = await getUnitSekolah()
   const grades = await getTingkatan()
   const classrooms = await getKelas()
+  const tenant = await getTenantContext()
   
   return <LaporanTunggakanClient 
     pengaturan={pengaturan} 
     schoolUnits={schoolUnits}
     grades={grades}
     classrooms={classrooms}
-    userRole={user.role}
-    userUnitId={user.unitSekolahId}
-    userName={user.name}
+    userRole={tenant.role}
+    userUnitId={tenant.unitId === "all" ? undefined : (tenant.unitId || undefined)}
+    userName={(user.name || undefined) as string | undefined}
   />
 }

@@ -526,3 +526,74 @@ export function IncomeStatementHtml({
   )
 }
 
+export function MutasiBankHtml({ data, institutionInfo, dateRangeStr, accountName, penandatanganKiri, penandatanganKanan }: { data: any, institutionInfo: any, dateRangeStr: string, accountName: string, penandatanganKiri?: any, penandatanganKanan?: any }) {
+  const tanggalCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+  const totalDebit = data.mutasi.reduce((acc: number, curr: any) => acc + curr.debit, 0)
+  const totalKredit = data.mutasi.reduce((acc: number, curr: any) => acc + curr.kredit, 0)
+  const formatRp = (val: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(val)
+
+  return (
+    <div className="bg-white text-[11px] leading-relaxed text-slate-800" style={{ fontFamily: 'Arial, sans-serif' }}>
+      <PrintHeaderHtml institutionInfo={institutionInfo} />
+      
+      <div className="text-center mb-6">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">MUTASI {accountName.toUpperCase()}</h3>
+        <p className="text-[10px] text-slate-500 mt-1">Periode: {dateRangeStr}</p>
+      </div>
+
+      <table className="w-full mb-6 border-collapse">
+        <thead>
+          <tr className="border-b-2 border-slate-800 bg-slate-50 text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+            <th className="py-2 px-2 text-left w-20">Tanggal</th>
+            <th className="py-2 px-2 text-left w-24">No. Ref</th>
+            <th className="py-2 px-2 text-left">Keterangan</th>
+            <th className="py-2 px-2 text-right w-24">Debit (Masuk)</th>
+            <th className="py-2 px-2 text-right w-24">Kredit (Keluar)</th>
+            <th className="py-2 px-2 text-right w-24">Saldo</th>
+          </tr>
+        </thead>
+        <tbody className="text-[11px]">
+          <tr className="border-b border-slate-200 bg-slate-50/50">
+            <td colSpan={5} className="py-2 px-2 text-right font-semibold text-slate-600">Saldo Awal:</td>
+            <td className="py-2 px-2 text-right font-bold text-slate-800">Rp {formatRp(data.saldoAwal)}</td>
+          </tr>
+          
+          {data.mutasi.map((m: any, i: number) => (
+            <tr key={i} className="border-b border-slate-100">
+              <td className="py-1.5 px-2 text-slate-700">{new Date(m.tanggal).toLocaleDateString('id-ID')}</td>
+              <td className="py-1.5 px-2 font-mono text-[9px] text-slate-500">{m.noReferensi}</td>
+              <td className="py-1.5 px-2 text-slate-700">
+                {m.keterangan}
+                {m.pihakKetiga !== "-" && <div className="text-[9px] text-emerald-600 mt-0.5">Mitra/Siswa: {m.pihakKetiga}</div>}
+              </td>
+              <td className="py-1.5 px-2 text-right text-emerald-700">{m.debit > 0 ? `Rp ${formatRp(m.debit)}` : "-"}</td>
+              <td className="py-1.5 px-2 text-right text-rose-700">{m.kredit > 0 ? `Rp ${formatRp(m.kredit)}` : "-"}</td>
+              <td className="py-1.5 px-2 text-right font-medium text-slate-800">Rp {formatRp(m.saldo)}</td>
+            </tr>
+          ))}
+
+          {data.mutasi.length === 0 && (
+            <tr><td colSpan={6} className="py-6 px-2 text-center text-slate-500 italic">Tidak ada mutasi pada periode ini</td></tr>
+          )}
+        </tbody>
+        <tfoot style={{ display: 'table-row-group' }}>
+          <tr className="border-t-2 border-slate-800 bg-slate-50 font-bold">
+            <td colSpan={3} className="py-2 px-2 text-right text-slate-800">Total Mutasi & Saldo Akhir:</td>
+            <td className="py-2 px-2 text-right text-emerald-700">Rp {formatRp(totalDebit)}</td>
+            <td className="py-2 px-2 text-right text-rose-700">Rp {formatRp(totalKredit)}</td>
+            <td className="py-2 px-2 text-right text-blue-800">Rp {formatRp(data.saldoAkhir)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div className="mt-8 mb-4" style={{ pageBreakInside: 'avoid' }}>
+        <PrintSignatureHtml 
+          kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
+          tanggalCetak={tanggalCetak}
+          penandatanganKiri={penandatanganKiri}
+          penandatanganKanan={penandatanganKanan}
+        />
+      </div>
+    </div>
+  )
+}

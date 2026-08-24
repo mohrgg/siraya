@@ -31,6 +31,10 @@ export async function POST(req: NextRequest) {
       const ReactDOMServer = await import("react-dom/server");
       const { IncomeStatementHtml } = await import("@/lib/pdf-templates");
       htmlBody = (ReactDOMServer as any).renderToStaticMarkup(createElement(IncomeStatementHtml, data as any));
+    } else if (type === "mutasi-bank") {
+      const ReactDOMServer = await import("react-dom/server");
+      const { MutasiBankHtml } = await import("@/lib/pdf-templates");
+      htmlBody = (ReactDOMServer as any).renderToStaticMarkup(createElement(MutasiBankHtml, data as any));
     } else {
       return NextResponse.json({ error: "Unsupported template type" }, { status: 400 });
     }

@@ -164,7 +164,7 @@ export default function KasKeluarDetailClient({ transaksi, pengaturan }: { trans
         {activeTab === 'resi' && (
           <div className="p-6 md:p-8">
             
-            <div className="grid grid-cols-2 gap-8 mb-8 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8 text-sm">
               <div>
                 <p className="text-text-muted mb-1">Kas Keluar Dari :</p>
                 <p className="font-semibold text-text-main text-base">{detailKredit[0]?.akun?.nama || "-"}</p>
@@ -218,7 +218,7 @@ export default function KasKeluarDetailClient({ transaksi, pengaturan }: { trans
               </table>
             </div>
 
-            <div className="grid grid-cols-2 gap-8 mt-16 text-center text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mt-16 text-center text-sm">
               <div>
                 <p className="text-text-muted mb-24">Dibuat Oleh</p>
                 <div className="border-b border-border w-48 mx-auto"></div>
@@ -236,7 +236,7 @@ export default function KasKeluarDetailClient({ transaksi, pengaturan }: { trans
         {activeTab === 'jurnal' && (
           <div className="p-6 md:p-8">
             
-            <div className="grid grid-cols-[150px_1fr] gap-y-3 mb-8 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-[150px_1fr] gap-y-3 mb-8 text-sm">
               <div className="text-text-muted">Referensi Nomer</div>
               <div className="font-semibold text-text-main">: {transaksi.noReferensi}</div>
               
