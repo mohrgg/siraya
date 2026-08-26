@@ -7,6 +7,8 @@ import { Plus, Edit2, Trash2, Layers, Book, Search, X } from "lucide-react"
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { SideDrawer } from "@/components/ui/SideDrawer"
+import { SortableHeader } from "@/components/ui/SortableHeader"
+import { useSortableData } from "@/hooks/useSortableData"
 import { tambahSubKlasifikasi, editSubKlasifikasi, hapusSubKlasifikasi, tambahAkunDetail, editAkunDetail, hapusAkunDetail } from "@/actions/akun-keuangan"
 import toast from "react-hot-toast"
 
@@ -63,23 +65,23 @@ export default function AkunKeuanganClient({
   const [isDeleting, setIsDeleting] = useState(false)
 
   // Filtering Logic
-  const filteredSubKlas = subKlasifikasi.filter(s => 
+  const filteredSubKlasBase = subKlasifikasi.filter(s => 
     s.nama.toLowerCase().includes(searchTerm.toLowerCase()) || s.kode.includes(searchTerm)
-  ).sort((a, b) => {
-    const numA = parseInt(a.kode)
-    const numB = parseInt(b.kode)
-    if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB
-    return a.kode.localeCompare(b.kode)
-  })
+  )
 
-  const filteredAkun = akunDetail.filter(a => 
+  const { items: filteredSubKlas, sortConfig: subKlasSort, requestSort: handleSubKlasSort } = useSortableData(
+    filteredSubKlasBase,
+    { key: "kode", direction: "asc" }
+  )
+
+  const filteredAkunBase = akunDetail.filter(a => 
     a.nama.toLowerCase().includes(searchTerm.toLowerCase()) || a.kode.includes(searchTerm)
-  ).sort((a, b) => {
-    const numA = parseInt(a.kode)
-    const numB = parseInt(b.kode)
-    if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB
-    return a.kode.localeCompare(b.kode)
-  })
+  )
+
+  const { items: filteredAkun, sortConfig: akunSort, requestSort: handleAkunSort } = useSortableData(
+    filteredAkunBase,
+    { key: "kode", direction: "asc" }
+  )
 
   // ===================== GENERATOR KODE OTOMATIS =====================
   const generateSubKlasKode = (klasId: string, currentSubKlasList: SubKlasifikasi[]) => {
@@ -424,12 +426,12 @@ export default function AkunKeuanganClient({
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
-                  <th className="p-4 font-semibold">KODE</th>
-                  <th className="p-4 font-semibold">NAMA AKUN</th>
-                  <th className="p-4 font-semibold">KLASIFIKASI</th>
+                  <SortableHeader label="KODE" sortKey="kode" currentSortKey={akunSort?.key as string} currentDirection={akunSort?.direction} onSort={handleAkunSort} />
+                  <SortableHeader label="NAMA AKUN" sortKey="nama" currentSortKey={akunSort?.key as string} currentDirection={akunSort?.direction} onSort={handleAkunSort} />
+                  <SortableHeader label="KLASIFIKASI" sortKey="subKlasifikasi.klasifikasi.kode" currentSortKey={akunSort?.key as string} currentDirection={akunSort?.direction} onSort={handleAkunSort} />
                   <th className="p-4 font-semibold">KEPEMILIKAN (UNIT)</th>
-                  <th className="p-4 font-semibold text-center">KAS/BANK</th>
-                  <th className="p-4 font-semibold text-center">STATUS</th>
+                  <SortableHeader label="KAS/BANK" sortKey="isKasBank" currentSortKey={akunSort?.key as string} currentDirection={akunSort?.direction} onSort={handleAkunSort} className="text-center justify-center" />
+                  <SortableHeader label="STATUS" sortKey="isActive" currentSortKey={akunSort?.key as string} currentDirection={akunSort?.direction} onSort={handleAkunSort} className="text-center justify-center" />
                   {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
                 </tr>
               </thead>
@@ -498,10 +500,10 @@ export default function AkunKeuanganClient({
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
-                  <th className="p-4 font-semibold">KODE</th>
-                  <th className="p-4 font-semibold">NAMA SUBKLASIFIKASI</th>
-                  <th className="p-4 font-semibold">INDUK (KLASIFIKASI)</th>
-                  <th className="p-4 font-semibold text-center">JML AKUN</th>
+                  <SortableHeader label="KODE" sortKey="kode" currentSortKey={subKlasSort?.key as string} currentDirection={subKlasSort?.direction} onSort={handleSubKlasSort} />
+                  <SortableHeader label="NAMA SUBKLASIFIKASI" sortKey="nama" currentSortKey={subKlasSort?.key as string} currentDirection={subKlasSort?.direction} onSort={handleSubKlasSort} />
+                  <SortableHeader label="KEPALA AKUN (LEVEL 1)" sortKey="klasifikasi.kode" currentSortKey={subKlasSort?.key as string} currentDirection={subKlasSort?.direction} onSort={handleSubKlasSort} />
+                  <SortableHeader label="JML AKUN DETAIL" sortKey="_count.akunDetail" currentSortKey={subKlasSort?.key as string} currentDirection={subKlasSort?.direction} onSort={handleSubKlasSort} className="text-center justify-center" />
                   {canEditKategori && <th className="p-4 font-semibold text-right">AKSI</th>}
                 </tr>
               </thead>

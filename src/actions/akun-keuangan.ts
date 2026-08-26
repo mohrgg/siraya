@@ -13,10 +13,36 @@ export async function getKlasifikasiAkun(unitId?: string) {
   const filterUnitId = unitId || tenant.unitId
   const where = filterUnitId ? { unitSekolahId: filterUnitId } : {}
 
-  return prisma.klasifikasiAkun.findMany({
+  const data = await prisma.klasifikasiAkun.findMany({
     where,
     orderBy: { kode: "asc" }
   })
+
+  // Auto-seed if empty and we are filtering by a specific unit
+  if (data.length === 0 && filterUnitId) {
+    const defaultKlasifikasi = [
+      { kode: '1', nama: 'HARTA (ASET)' },
+      { kode: '2', nama: 'KEWAJIBAN (LIABILITAS)' },
+      { kode: '3', nama: 'MODAL (EKUITAS)' },
+      { kode: '4', nama: 'PENDAPATAN' },
+      { kode: '5', nama: 'BEBAN (BIAYA)' },
+    ];
+    
+    await prisma.klasifikasiAkun.createMany({
+      data: defaultKlasifikasi.map(k => ({
+        kode: k.kode,
+        nama: k.nama,
+        unitSekolahId: filterUnitId
+      }))
+    })
+
+    return prisma.klasifikasiAkun.findMany({
+      where,
+      orderBy: { kode: "asc" }
+    })
+  }
+
+  return data
 }
 
 // ==========================================

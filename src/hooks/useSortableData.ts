@@ -15,6 +15,14 @@ export const useSortableData = <T extends Record<string, any>>(items: T[], confi
         const aValue = resolvePath(a, sortConfig.key as string);
         const bValue = resolvePath(b, sortConfig.key as string);
         
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const comp = aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
+          if (comp !== 0) {
+            return sortConfig.direction === 'asc' ? comp : -comp;
+          }
+          return 0;
+        }
+
         if (aValue < bValue) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }
