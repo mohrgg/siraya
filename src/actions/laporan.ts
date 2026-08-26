@@ -84,9 +84,7 @@ export async function getLaporanTunggakanSiswa(filterUnitId?: string, filterTing
   const restrictedUnitId = user.unitSekolahId
   const finalUnitId = restrictedUnitId || filterUnitId
 
-  const tagihanWhereClause: any = {
-    sisaTagihan: { gt: 0 }
-  }
+  const tagihanWhereClause: any = {}
 
   const muridWhereClause: any = {}
   if (finalUnitId) muridWhereClause.unitSekolahId = finalUnitId

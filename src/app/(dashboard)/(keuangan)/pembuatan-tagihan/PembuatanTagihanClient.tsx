@@ -233,7 +233,8 @@ export default function PembuatanTagihanClient({
     setIsSubmittingModal(true)
     try {
       const isSPP = data.isSPP
-      const tagihans = isSPP && data.sppMonths ? data.sppMonths.map(m => `SPP ${m} ${data.sppYear}`) : undefined
+      const baseName = data.namaTagihan || "SPP"
+      const tagihans = isSPP && data.sppMonths ? data.sppMonths.map(m => `${baseName} ${m} ${data.sppYear}`) : undefined
 
       await tambahTagihanMassal({
         tahunAkademikId: activeTahunAkademikId,

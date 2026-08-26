@@ -674,12 +674,17 @@ export function TunggakanMatriksHtml({
               <td className="py-1.5 px-2 border-x border-slate-200">{item.rombel}</td>
               <td className="py-1.5 px-2 text-center border-x border-slate-200 truncate max-w-[80px]" title={item.sppMonthString}>{item.sppMonthString}</td>
               <td className="py-1.5 px-2 text-center border-x border-slate-200">{item.sppCount || "-"}</td>
-              <td className="py-1.5 px-2 text-right border-x border-slate-200">{item.sppAmount ? formatRp(item.sppAmount) : "-"}</td>
-              {dynamicCategories.map(cat => (
-                <td key={cat} className="py-1.5 px-2 text-right border-x border-slate-200">
-                  {item.categories[cat] ? formatRp(item.categories[cat]) : "-"}
-                </td>
-              ))}
+              <td className="py-1.5 px-2 text-right border-x border-slate-200">
+                {item.sppAmount > 0 ? formatRp(item.sppAmount) : (item.sppDibayar > 0 ? "LUNAS" : "-")}
+              </td>
+              {dynamicCategories.map(cat => {
+                const detail = item.categories[cat] || { sisa: 0, dibayar: 0 }
+                return (
+                  <td key={cat} className="py-1.5 px-2 text-right border-x border-slate-200">
+                    {detail.sisa > 0 ? formatRp(detail.sisa) : (detail.dibayar > 0 ? "LUNAS" : "-")}
+                  </td>
+                )
+              })}
               <td className="py-1.5 px-2 text-right font-bold border-x border-slate-200">{formatRp(item.totalTunggakan)}</td>
             </tr>
           ))}
@@ -690,7 +695,7 @@ export function TunggakanMatriksHtml({
             <td className="py-2 px-2 text-right border-x border-slate-300">{formatRp(data.reduce((acc, curr) => acc + curr.sppAmount, 0))}</td>
             {dynamicCategories.map(cat => (
               <td key={cat} className="py-2 px-2 text-right border-x border-slate-300">
-                {formatRp(data.reduce((acc, curr) => acc + (curr.categories[cat] || 0), 0))}
+                {formatRp(data.reduce((acc, curr) => acc + (curr.categories[cat]?.sisa || 0), 0))}
               </td>
             ))}
             <td className="py-2 px-2 text-right border-x border-slate-300">{formatRp(data.reduce((acc, curr) => acc + curr.totalTunggakan, 0))}</td>

@@ -80,7 +80,8 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
           rombel: item.rombel,
           sppMonths: [],
           sppAmount: 0,
-          categories: {} as Record<string, number>,
+          sppDibayar: 0,
+          categories: {} as Record<string, { sisa: number, dibayar: number }>,
           totalTunggakan: 0
         })
       }
@@ -88,28 +89,34 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
       const student = studentMap.get(item.muridId)
       
       if (item.isSPP) {
-        const month = extractMonth(item.deskripsiTagihan || item.kategori || "")
-        if (!student.sppMonths.includes(month)) {
-          student.sppMonths.push(month)
+        if (item.sisa > 0) {
+          const month = extractMonth(item.deskripsiTagihan || item.kategori || "")
+          if (!student.sppMonths.includes(month)) {
+            student.sppMonths.push(month)
+          }
         }
         student.sppAmount += item.sisa
+        student.sppDibayar += item.dibayar
         student.totalTunggakan += item.sisa
       } else {
         const kat = item.kategori || "Lainnya"
         categorySet.add(kat)
-        if (!student.categories[kat]) student.categories[kat] = 0
-        student.categories[kat] += item.sisa
+        if (!student.categories[kat]) student.categories[kat] = { sisa: 0, dibayar: 0 }
+        student.categories[kat].sisa += item.sisa
+        student.categories[kat].dibayar += item.dibayar
         student.totalTunggakan += item.sisa
       }
     })
 
     const categories = Array.from(categorySet).sort()
 
-    const rows = Array.from(studentMap.values()).map(s => ({
-      ...s,
-      sppMonthString: s.sppMonths.join("/") || "-",
-      sppCount: s.sppMonths.length
-    }))
+    const rows = Array.from(studentMap.values())
+      .filter(s => s.totalTunggakan > 0)
+      .map(s => ({
+        ...s,
+        sppMonthString: s.sppMonths.join("/") || "-",
+        sppCount: s.sppMonths.length
+      }))
 
     return { rows, categories }
   }, [filteredData])
@@ -136,7 +143,8 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
         "Nilai SPP": item.sppAmount,
       }
       dynamicCategories.forEach(cat => {
-        row[cat] = item.categories[cat] || 0
+        const detail = item.categories[cat] || { sisa: 0, dibayar: 0 }
+        row[cat] = detail.sisa > 0 ? detail.sisa : (detail.dibayar > 0 ? "LUNAS" : 0)
       })
       row["Total Tunggakan"] = item.totalTunggakan
       return row
@@ -368,15 +376,37 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
                           <td className="p-3 font-mono font-medium border-r border-border/50">{item.nis}</td>
                           <td className="p-3 font-bold text-gray-700 border-r border-border/50">{item.namaSiswa}</td>
                           <td className="p-3 text-gray-600 border-r border-border/50">{item.rombel}</td>
-                          <td className="p-3 text-center text-xs text-primary/80 border-r border-border/50 max-w-[150px] truncate" title={item.sppMonthString}>{item.sppMonthString}</td>
+                          <td className="p-3 text-center text-xs text-primary/80 border-r border-border/50 max-w-[150px] relative group/tooltip cursor-help">
+                            <div className="truncate">
+                              {item.sppMonthString}
+                            </div>
+                            {item.sppMonthString !== "-" && (
+                              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-200 z-50 w-max max-w-[250px] bg-slate-800 text-white text-[11px] rounded-lg px-3 py-2 shadow-xl border border-slate-700 whitespace-normal text-center leading-relaxed">
+                                <span className="font-semibold block mb-1 text-slate-300 border-b border-slate-600 pb-1">Bulan Tunggakan SPP:</span>
+                                {item.sppMonthString.split('/').join(', ')}
+                                <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-slate-800 rotate-45 -mt-1 border-r border-b border-slate-700"></div>
+                              </div>
+                            )}
+                          </td>
                           <td className="p-3 text-center font-mono border-r border-border/50">{item.sppCount || "-"}</td>
-                          <td className="p-3 text-right font-mono text-primary font-medium border-r border-border/50">{item.sppAmount ? new Intl.NumberFormat("id-ID").format(item.sppAmount) : "-"}</td>
+                          <td className="p-3 text-right font-mono font-medium border-r border-border/50">
+                            {item.sppAmount > 0 
+                              ? <span className="text-primary">{new Intl.NumberFormat("id-ID").format(item.sppAmount)}</span>
+                              : (item.sppDibayar > 0 ? <span className="text-emerald-600 font-bold text-xs uppercase tracking-wider">Lunas</span> : "-")
+                            }
+                          </td>
                           
-                          {dynamicCategories.map(cat => (
-                            <td key={cat} className="p-3 text-right font-mono text-gray-600 border-r border-border/50">
-                              {item.categories[cat] ? new Intl.NumberFormat("id-ID").format(item.categories[cat]) : "-"}
-                            </td>
-                          ))}
+                          {dynamicCategories.map(cat => {
+                            const detail = item.categories[cat] || { sisa: 0, dibayar: 0 }
+                            return (
+                              <td key={cat} className="p-3 text-right font-mono text-gray-600 border-r border-border/50">
+                                {detail.sisa > 0 
+                                  ? new Intl.NumberFormat("id-ID").format(detail.sisa)
+                                  : (detail.dibayar > 0 ? <span className="text-emerald-600 font-bold text-xs uppercase tracking-wider">Lunas</span> : "-")
+                                }
+                              </td>
+                            )
+                          })}
                           
                           <td className="p-3 text-right font-mono font-bold text-rose-600 bg-rose-50/30 group-hover:bg-rose-50/50">
                             {new Intl.NumberFormat("id-ID").format(item.totalTunggakan)}
@@ -393,7 +423,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
                       </td>
                       {dynamicCategories.map(cat => (
                         <td key={`total-${cat}`} className="p-3 text-right border-r border-border/50">
-                          {new Intl.NumberFormat("id-ID").format(matrixRows.reduce((acc, curr) => acc + (curr.categories[cat] || 0), 0))}
+                          {new Intl.NumberFormat("id-ID").format(matrixRows.reduce((acc, curr) => acc + (curr.categories[cat]?.sisa || 0), 0))}
                         </td>
                       ))}
                       <td className="p-3 text-right text-rose-700">

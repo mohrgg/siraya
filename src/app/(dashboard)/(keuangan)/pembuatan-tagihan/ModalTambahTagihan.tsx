@@ -84,7 +84,7 @@ export default function ModalTambahTagihan({
 
     onSubmit({
       akunId,
-      namaTagihan: isSPP ? `SPP ${selectedMonths[0]} ${selectedYear}` : namaTagihan,
+      namaTagihan: namaTagihan,
       jumlah: parseFloat(jumlah.replace(/[^0-9]/g, '')) || 0,
       targetType,
       tingkatId: targetType === "tingkat" ? selectedTingkatId : undefined,
@@ -169,19 +169,7 @@ export default function ModalTambahTagihan({
               </select>
             </div>
 
-            {!isSPP ? (
-              <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-center gap-4">
-                <label className="text-sm font-semibold text-text-main">Nama Tagihan</label>
-                <input 
-                  type="text"
-                  placeholder="Contoh: Uang Gedung Cicilan 1"
-                  className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium text-text-main placeholder-text-muted/50"
-                  value={namaTagihan}
-                  onChange={e => setNamaTagihan(e.target.value)}
-                  required={!isSPP}
-                />
-              </div>
-            ) : (
+            {isSPP && (
               <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-start gap-4">
                 <label className="text-sm font-semibold text-text-main mt-2">Bulan Tagihan (SPP)</label>
                 <div className="space-y-3">
@@ -219,6 +207,29 @@ export default function ModalTambahTagihan({
                 </div>
               </div>
             )}
+
+            <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-start gap-4">
+              <label className="text-sm font-semibold text-text-main mt-2">
+                {isSPP ? "Awalan Nama Tagihan" : "Nama Tagihan"}
+              </label>
+              <div>
+                <input 
+                  type="text"
+                  placeholder={isSPP ? "Contoh: SPP Kelas 1" : "Contoh: Uang Gedung Cicilan 1"}
+                  className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium text-text-main placeholder-text-muted/50"
+                  value={namaTagihan}
+                  onChange={e => setNamaTagihan(e.target.value)}
+                  required
+                />
+                {isSPP && (
+                  <p className="mt-2 text-xs text-text-muted">
+                    Nama akhir tagihan akan di-generate secara otomatis menjadi: <br/>
+                    <strong>{namaTagihan || "SPP"} [Bulan] {selectedYear}</strong> <br/>
+                    (Misal: <em>{namaTagihan || "SPP"} Juli {selectedYear}</em>)
+                  </p>
+                )}
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-start gap-4 pt-4 border-t border-border">
               <label className="text-sm font-semibold text-text-main mt-2">Target Penagihan</label>

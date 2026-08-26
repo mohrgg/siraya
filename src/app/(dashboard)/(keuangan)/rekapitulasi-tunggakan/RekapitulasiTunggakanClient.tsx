@@ -478,10 +478,14 @@ export default function RekapitulasiTunggakanClient({
                               </td>
                               
                               {akunList.map(akun => {
-                                const val = row.detailKomponen[akun.id]?.tunggakan || 0
+                                const detail = row.detailKomponen[akun.id]
+                                const tunggakan = detail?.tunggakan || 0
+                                const dibayar = detail?.dibayar || 0
                                 return (
                                   <td key={akun.id} className="p-4 text-right font-medium opacity-80">
-                                    {val > 0 ? `Rp. ${formatRupiah(val)}` : "-"}
+                                    {tunggakan > 0 
+                                      ? `Rp. ${formatRupiah(tunggakan)}` 
+                                      : (dibayar > 0 ? <span className="text-emerald-600 font-semibold text-xs">LUNAS</span> : "-")}
                                   </td>
                                 )
                               })}
@@ -569,10 +573,14 @@ export default function RekapitulasiTunggakanClient({
                             <td className="p-4 text-right font-medium">Rp. {formatRupiah(student.totalDibayar)}</td>
                             <td className="p-4 text-right font-bold text-rose-600">Rp. {formatRupiah(student.totalTunggakan)}</td>
                             {akunList.map(akun => {
-                              const val = student.detailKomponen[akun.id]?.tunggakan || 0
+                              const detail = student.detailKomponen[akun.id]
+                              const tunggakan = detail?.tunggakan || 0
+                              const dibayar = detail?.dibayar || 0
                               return (
                                 <td key={akun.id} className="p-4 text-right font-medium opacity-80">
-                                  {val > 0 ? `Rp. ${formatRupiah(val)}` : "-"}
+                                  {tunggakan > 0 
+                                    ? `Rp. ${formatRupiah(tunggakan)}` 
+                                    : (dibayar > 0 ? <span className="text-emerald-600 font-semibold text-xs">LUNAS</span> : "-")}
                                 </td>
                               )
                             })}
