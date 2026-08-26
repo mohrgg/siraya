@@ -86,8 +86,7 @@ export function downloadSiswaTemplate(schoolUnits: any[] = [], classrooms: any[]
       "Tempat Lahir": "Bandung",
       "Tanggal Lahir (YYYY-MM-DD)": "2008-05-14",
       "No Telepon Ortu": "081234567890",
-      "Alamat": "Jl. Merdeka No 1, Bandung",
-      "ID Sub Kelas (Opsional)": ""
+      "Alamat": "Jl. Merdeka No 1, Bandung"
     },
     {
       "NISN": "0067654321",
@@ -98,35 +97,14 @@ export function downloadSiswaTemplate(schoolUnits: any[] = [], classrooms: any[]
       "Tempat Lahir": "Jakarta",
       "Tanggal Lahir (YYYY-MM-DD)": "2009-01-20",
       "No Telepon Ortu": "081987654321",
-      "Alamat": "Jl. Sudirman No 2, Jakarta",
-      "ID Sub Kelas (Opsional)": ""
-    }
-  ];
-
-  const refData = classrooms && classrooms.length > 0 ? classrooms.map((c: any, index: number) => ({
-    "No": index + 1,
-    "Nama Rombel / Sub Kelas": c.name || "-",
-    "Tingkat": c.tingkat?.name || "-",
-    "Jurusan": c.jurusan?.name || "Umum",
-    "Unit Sekolah": schoolUnits.find((u: any) => u.id === c.unitSekolahId)?.name || "-",
-    "ID Sub Kelas (Salin ke Sheet 1 jika perlu)": c.id
-  })) : [
-    {
-      "No": 1,
-      "Nama Rombel / Sub Kelas": "X IPA 1 (Contoh)",
-      "Tingkat": "Kelas 10",
-      "Jurusan": "IPA",
-      "Unit Sekolah": "SMA SIRAYA",
-      "ID Sub Kelas (Salin ke Sheet 1 jika perlu)": "clx12345exampleid67890"
+      "Alamat": "Jl. Sudirman No 2, Jakarta"
     }
   ];
 
   const workbook = XLSX.utils.book_new();
   const sheet1 = XLSX.utils.json_to_sheet(templateData);
-  const sheet2 = XLSX.utils.json_to_sheet(refData);
 
   XLSX.utils.book_append_sheet(workbook, sheet1, "Data_Impor_Siswa");
-  XLSX.utils.book_append_sheet(workbook, sheet2, "Referensi_ID_Rombel");
 
   XLSX.writeFile(workbook, "Template_Impor_Siswa_Siraya.xlsx");
 }

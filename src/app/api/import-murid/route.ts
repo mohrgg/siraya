@@ -89,6 +89,25 @@ export async function POST(req: Request) {
         continue
       }
 
+      // Resolve SubKelas ID (bisa berupa ID atau Nama Kelas)
+      const subKelas = await prisma.subKelas.findFirst({
+        where: {
+          OR: [
+            { id: targetSubKelasId },
+            { name: targetSubKelasId, unitSekolahId: unitId }
+          ]
+        },
+        select: { id: true, tahunAkademikId: true }
+      })
+
+      if (!subKelas) {
+        failedCount++
+        errors.push({ row: rowNumber, msg: `Kelas "${targetSubKelasId}" tidak ditemukan.` })
+        continue
+      }
+      const resolvedSubKelasId = subKelas.id
+      const resolvedTahunAkademikId = subKelas.tahunAkademikId || activeTahun.id
+
       // Parse Date if exists
       let birthDate = null
       if (tglLahirStr) {
@@ -163,8 +182,8 @@ export async function POST(req: Request) {
           await tx.riwayatKelas.create({
             data: {
               muridId: newMurid.id,
-              subKelasId: targetSubKelasId,
-              tahunAkademikId: activeTahun.id
+              subKelasId: resolvedSubKelasId,
+              tahunAkademikId: resolvedTahunAkademikId
             }
           })
         })

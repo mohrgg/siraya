@@ -109,14 +109,14 @@ export default function ImportMuridModal({
         const gender = (row["Jenis Kelamin"] || "").toString().trim()
         const tglLahir = (row["Tanggal Lahir (YYYY-MM-DD)"] || "").toString().trim()
         const ortuTelp = (row["No Telepon Ortu"] || "").toString().trim()
-        const targetSubKelasId = (row["ID Sub Kelas (Opsional)"] || row["ID Sub Kelas"] || fallbackSubKelasId || "").toString().trim()
+        const targetSubKelasId = fallbackSubKelasId.toString().trim()
 
         const errors: string[] = []
         if (!nama) errors.push("Nama Lengkap wajib diisi")
         if (!targetSubKelasId) errors.push("Rombel tujuan belum ditentukan")
 
         const targetClassObj = classrooms.find(c => c.id === targetSubKelasId)
-        const targetSubKelasName = targetClassObj ? targetClassObj.name : (targetSubKelasId ? "ID Custom / Lainnya" : "-")
+        const targetSubKelasName = targetClassObj ? targetClassObj.name : "-"
 
         return {
           rowNum,
@@ -152,6 +152,10 @@ export default function ImportMuridModal({
         toast.error("Harap pilih Unit Sekolah terlebih dahulu")
         return
       }
+      if (!selectedSubKelas) {
+        toast.error("Harap pilih Rombel / Kelas Tujuan terlebih dahulu")
+        return
+      }
       setFile(selectedFile)
       await parseAndValidateFile(selectedFile, selectedSubKelas)
     }
@@ -167,6 +171,10 @@ export default function ImportMuridModal({
       }
       if (!selectedUnit) {
         toast.error("Harap pilih Unit Sekolah terlebih dahulu")
+        return
+      }
+      if (!selectedSubKelas) {
+        toast.error("Harap pilih Rombel / Kelas Tujuan terlebih dahulu")
         return
       }
       setFile(droppedFile)
@@ -351,19 +359,18 @@ export default function ImportMuridModal({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">2. Rombel / Kelas Tujuan Default <span className="text-gray-400 font-normal">(Opsional)</span></label>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">2. Rombel / Kelas Tujuan <span className="text-red-500">*</span></label>
                   <select 
                     className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-bold text-gray-900 shadow-xs transition-all disabled:opacity-50 disabled:bg-gray-100"
                     value={selectedSubKelas}
                     onChange={(e) => setSelectedSubKelas(e.target.value)}
                     disabled={!selectedUnit}
                   >
-                    <option value="">-- Gunakan ID di File Excel / Pilih Default --</option>
+                    <option value="" disabled>-- Pilih Rombel / Kelas Tujuan --</option>
                     {filteredClassrooms.map((c: any) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
-                  <p className="text-[11px] text-gray-500 mt-1">Kelas ini akan digunakan jika kolom <i>ID Sub Kelas</i> pada baris Excel dikosongkan.</p>
                 </div>
               </div>
             </div>
