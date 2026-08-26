@@ -130,7 +130,7 @@ export default function ModalEditTagihanKolom({
               <option value="" disabled>Pilih akun pendapatan...</option>
               {akunPendapatanList.map((akun) => (
                 <option key={akun.id} value={akun.id}>
-                  {akun.kode} - {akun.name}
+                  [{akun.kode}] {akun.nama}
                 </option>
               ))}
             </select>

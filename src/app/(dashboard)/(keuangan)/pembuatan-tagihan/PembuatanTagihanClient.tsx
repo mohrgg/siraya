@@ -43,6 +43,7 @@ type TagihanColumn = {
   namaTagihan: string
   nama: string
   kode: string
+  jumlah: number
 }
 
 export default function PembuatanTagihanClient({
@@ -144,7 +145,8 @@ export default function PembuatanTagihanClient({
             akunId: t.akunId,
             namaTagihan: t.namaTagihan,
             nama: t.namaTagihan,
-            kode: t.akun.kode
+            kode: t.akun.kode,
+            jumlah: t.jumlah || 0
           })
         }
       })
