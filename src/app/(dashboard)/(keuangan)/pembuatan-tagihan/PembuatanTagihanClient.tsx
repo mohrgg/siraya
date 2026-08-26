@@ -611,17 +611,17 @@ export default function PembuatanTagihanClient({
                             return (
                               <td key={col.id} className="p-4 relative">
                                 {isLocked ? (
-                                  <div className="flex items-center justify-between px-3 py-1.5 w-full min-w-[130px] rounded-lg bg-emerald-100/50 border border-emerald-200 text-emerald-700 font-bold select-none">
-                                    <span className="text-xs opacity-70">Rp.</span>
-                                    <span className="text-sm">0</span>
+                                  <div className="relative flex items-center p-1.5 w-[140px] mx-auto rounded-lg bg-emerald-100/50 border border-emerald-200 text-emerald-700 font-bold select-none transition-all">
+                                    <span className="absolute left-3 text-emerald-700/70 text-xs font-semibold">Rp.</span>
+                                    <span className="text-sm w-full text-right pr-2">{formatRupiah(row.tagihanMap[col.id] || 0)}</span>
                                   </div>
                                 ) : (
-                                  <div className="relative group/input">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/50 text-xs font-semibold z-10">Rp.</span>
+                                  <div className="relative group/input flex items-center w-[140px] mx-auto">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/60 text-xs font-semibold z-10">Rp.</span>
                                     <input 
                                       type="text"
                                       disabled={isReadOnly}
-                                      className="w-full min-w-[130px] pl-9 pr-3 py-1.5 bg-bg border border-border/60 hover:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary focus:bg-white text-sm font-semibold text-right transition-all text-text-main disabled:opacity-70 disabled:bg-gray-50"
+                                      className="w-full pl-8 pr-3 py-1.5 bg-bg border border-border/60 hover:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary focus:bg-white text-sm font-semibold text-right transition-all text-text-main disabled:opacity-70 disabled:bg-gray-50 placeholder:text-text-muted/40"
                                       value={row.tagihanMap[col.id] === undefined ? "" : formatRupiah(row.tagihanMap[col.id])}
                                       onChange={(e) => handleInputChange(row.id, col.id, e.target.value)}
                                       placeholder="0"

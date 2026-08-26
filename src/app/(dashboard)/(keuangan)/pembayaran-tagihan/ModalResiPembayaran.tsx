@@ -12,8 +12,7 @@ export type ReceiptData = {
   noReferensi: string
   tanggal: Date
   muridName: string
-  unitSekolahName?: string
-  items: { namaAkun: string, jumlahBayar: number }[]
+  items: { namaAkun: string, jumlahBayar: number, sisaTagihan?: number }[]
   total: number
 }
 
@@ -51,7 +50,8 @@ export default function ModalResiPembayaran({
         penerimaDari: data.muridName,
         items: data.items.map(item => ({
           keterangan: item.namaAkun,
-          nominal: item.jumlahBayar
+          nominal: item.jumlahBayar,
+          sisaTagihan: item.sisaTagihan
         })),
         total: data.total,
         catatan: pengaturan?.catatanKwitansi,
@@ -147,9 +147,16 @@ export default function ModalResiPembayaran({
               <tbody>
                 {data.items.map((item, idx) => (
                   <tr key={idx} className="border-b border-slate-200">
-                    <td className="py-3 px-4 text-center border-x border-slate-200">{idx + 1}</td>
-                    <td className="py-3 px-4 text-left border-r border-slate-200 font-medium text-slate-800">{item.namaAkun}</td>
-                    <td className="py-3 px-4 text-right border-r border-slate-200 font-medium">{formatRupiah(item.jumlahBayar)}</td>
+                    <td className="py-3 px-4 text-center border-x border-slate-200 align-top">{idx + 1}</td>
+                    <td className="py-3 px-4 text-left border-r border-slate-200 align-top">
+                      <div className="font-medium text-slate-800">{item.namaAkun}</div>
+                      {item.sisaTagihan !== undefined && item.sisaTagihan > 0 && (
+                        <div className="text-[10px] text-slate-500 mt-1 italic leading-tight">
+                          * Pembayaran Sebagian. Sisa Tagihan: {formatRupiah(item.sisaTagihan)}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-right border-r border-slate-200 font-medium align-top">{formatRupiah(item.jumlahBayar)}</td>
                   </tr>
                 ))}
               </tbody>

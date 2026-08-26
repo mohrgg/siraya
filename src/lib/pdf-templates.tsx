@@ -201,7 +201,7 @@ export interface ResiPdfData {
   tanggal: string | Date
   noReferensi: string
   penerimaDari: string
-  items: Array<{ keterangan: string, nominal: number }>
+  items: Array<{ keterangan: string, nominal: number, sisaTagihan?: number }>
   total: number
   penandatanganKiri?: { jabatan: string; nama: string }
   penandatanganKanan?: { jabatan: string; nama: string }
@@ -270,9 +270,18 @@ export function ResiHtml({
         <tbody style={{ display: 'table-row-group' }}>
           {items.map((item, i) => (
             <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}>
-              <td className="py-1 px-1.5 border border-slate-200 text-center text-slate-700">{i + 1}</td>
-              <td className="py-1 px-1.5 border border-slate-200 text-slate-700">{item.keterangan}</td>
-              <td className="py-1 px-1.5 border border-slate-200 text-right text-slate-700 font-medium">{formatRp(item.nominal)}</td>
+              <td className="py-1.5 px-2 border border-slate-200 text-center text-slate-700 align-top">{i + 1}</td>
+              <td className="py-1.5 px-2 border border-slate-200 text-slate-700 align-top">
+                <div className="font-medium text-slate-800">{item.keterangan}</div>
+                {item.sisaTagihan !== undefined && item.sisaTagihan > 0 && (
+                  <div className="text-[9px] text-slate-500 mt-0.5 italic leading-tight">
+                    * Pembayaran Sebagian. Sisa Tagihan: {formatRp(item.sisaTagihan)}
+                  </div>
+                )}
+              </td>
+              <td className="py-1.5 px-2 border border-slate-200 text-right text-slate-700 font-medium align-top">
+                {formatRp(item.nominal)}
+              </td>
             </tr>
           ))}
         </tbody>

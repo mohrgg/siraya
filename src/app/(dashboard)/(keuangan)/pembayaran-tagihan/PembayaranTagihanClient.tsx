@@ -283,12 +283,15 @@ export default function PembayaranTagihanClient({
       // Calculate total
       const totalBayar = payload.items.reduce((sum: number, item: any) => sum + item.jumlahBayar, 0)
       
-      // Open receipt
       setReceiptData({
         noReferensi: res.data?.noReferensi || payload.noReferensi || `INV-${new Date().getTime()}`,
         tanggal: payload.tanggal,
         muridName: payload.muridName,
-        items: payload.items,
+        items: payload.items.map((it: any) => ({
+          namaAkun: it.namaAkun,
+          jumlahBayar: it.jumlahBayar,
+          sisaTagihan: it.sisaTagihan - it.jumlahBayar
+        })),
         total: totalBayar
       })
       
@@ -465,24 +468,27 @@ export default function PembayaranTagihanClient({
                                     )}
                                   </button>
                                 ) : (
-                                  <label className={`
-                                    flex items-center justify-between gap-2 p-2 rounded-lg cursor-pointer border select-none transition-all
-                                    ${row.selectedItems[tagihan.id] 
-                                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700' 
-                                      : 'border-border bg-white hover:bg-gray-50 text-text-main'}
-                                  `}>
-                                    <div className="flex items-center gap-2">
-                                      <input 
-                                        type="checkbox"
-                                        disabled={isReadOnly}
-                                        className={`w-4 h-4 text-emerald-500 rounded border-gray-300 focus:ring-emerald-500 ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                        checked={row.selectedItems[tagihan.id] || false}
-                                        onChange={(e) => handleCheckboxChange(row.id, tagihan.id, e.target.checked)}
-                                      />
-                                      <span className="text-sm font-bold">
-                                        Rp {formatRupiah(tagihan.sisaTagihan)}
-                                      </span>
+                                  <div className="relative flex items-center justify-center w-max mx-auto">
+                                    <div className={`
+                                      flex items-center justify-center p-2 rounded-lg border select-none transition-all w-[140px]
+                                      ${row.selectedItems[tagihan.id] 
+                                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700' 
+                                        : 'border-border bg-white hover:bg-gray-50 text-text-main'}
+                                    `}>
+                                      <label className="flex items-center justify-center gap-2 cursor-pointer w-full">
+                                        <input 
+                                          type="checkbox"
+                                          disabled={isReadOnly}
+                                          className={`w-4 h-4 text-emerald-500 rounded border-gray-300 focus:ring-emerald-500 transition-colors cursor-pointer ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                          checked={row.selectedItems[tagihan.id] || false}
+                                          onChange={(e) => handleCheckboxChange(row.id, tagihan.id, e.target.checked)}
+                                        />
+                                        <span className="text-sm font-bold">
+                                          Rp {formatRupiah(tagihan.sisaTagihan)}
+                                        </span>
+                                      </label>
                                     </div>
+                                    
                                     {tagihan.sisaTagihan < tagihan.jumlah && (
                                       <button
                                         type="button"
@@ -492,7 +498,7 @@ export default function PembayaranTagihanClient({
                                           handlePrintTagihan(tagihan.id)
                                         }}
                                         disabled={isLoadingRiwayat === tagihan.id}
-                                        className="text-text-muted hover:text-emerald-600 transition-colors p-1 rounded-full hover:bg-emerald-100/50 relative group/icon"
+                                        className="absolute -right-7 text-text-muted hover:text-emerald-600 transition-colors p-1 rounded-full hover:bg-emerald-100/50 group/icon flex items-center justify-center"
                                       >
                                         {isLoadingRiwayat === tagihan.id ? (
                                           <Loader2 size={14} className="animate-spin" />
@@ -501,11 +507,11 @@ export default function PembayaranTagihanClient({
                                         )}
                                         {/* Tooltip */}
                                         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none z-[100]">
-                                          Lihat Riwayat Cicilan
+                                          Lihat Riwayat
                                         </span>
                                       </button>
                                     )}
-                                  </label>
+                                  </div>
                                 )
                               ) : (
                                 <div className="text-center text-xs text-text-muted/50 p-2 bg-gray-50 rounded-lg">

@@ -40,7 +40,7 @@ export interface ExportResiPdfOptions {
   noReferensi: string
   tanggal: Date | string
   penerimaDari: string
-  items: { keterangan: string; nominal: number }[]
+  items: { keterangan: string; nominal: number; sisaTagihan?: number }[]
   total: number
   catatan?: string
   penandatanganKiri?: PdfSignatory

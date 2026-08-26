@@ -267,7 +267,8 @@ export async function getRiwayatTransaksiByTagihan(tagihanId: string) {
       // The items in the transaction:
       const items = tx.pembayaranTagihan.map(ptd => ({
         namaAkun: ptd.tagihan.namaTagihan || ptd.tagihan.akun.nama,
-        jumlahBayar: ptd.jumlahDibayar
+        jumlahBayar: ptd.jumlahDibayar,
+        sisaTagihan: ptd.tagihan.sisaTagihan
       }))
 
       return {
