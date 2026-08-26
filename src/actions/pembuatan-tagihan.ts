@@ -153,6 +153,7 @@ export async function getMuridWithTagihan(subKelasId: string, tahunAkademikId: s
 export async function tambahTagihanMassal(data: {
   tahunAkademikId: string
   akunId: string
+  namaTagihan: string
   jumlah: number
   targetType: "tingkat" | "kelas" | "murid"
   tingkatId?: string
@@ -164,7 +165,7 @@ export async function tambahTagihanMassal(data: {
     throw new Error("Akses ditolak.")
   }
 
-  const { tahunAkademikId, akunId, jumlah } = data
+  const { tahunAkademikId, akunId, namaTagihan, jumlah } = data
 
   // 1. Cari semua murid sesuai target
   let riwayatKelas: { muridId: string }[] = []
@@ -199,10 +200,11 @@ export async function tambahTagihanMassal(data: {
     for (const rk of riwayatKelas) {
       const existing = await tx.tagihan.findUnique({
         where: {
-          muridId_akunId_tahunAkademikId: {
+          muridId_akunId_tahunAkademikId_namaTagihan: {
             muridId: rk.muridId,
             akunId: akunId,
-            tahunAkademikId: tahunAkademikId
+            tahunAkademikId: tahunAkademikId,
+            namaTagihan: namaTagihan
           }
         }
       })
@@ -226,6 +228,7 @@ export async function tambahTagihanMassal(data: {
             muridId: rk.muridId,
             akunId: akunId,
             tahunAkademikId: tahunAkademikId,
+            namaTagihan: namaTagihan,
             jumlah: jumlah,
             sisaTagihan: jumlah,
             status: jumlah > 0 ? "BELUM_LUNAS" : "LUNAS"
@@ -252,7 +255,7 @@ export async function tambahTagihanMassal(data: {
 /**
  * Memperbarui tagihan individu seorang siswa dari matriks grid
  */
-export async function updateTagihanSiswa(muridId: string, tahunAkademikId: string, tagihanUpdates: { akunId: string, jumlah: number }[]) {
+export async function updateTagihanSiswa(muridId: string, tahunAkademikId: string, tagihanUpdates: { akunId: string, namaTagihan: string, jumlah: number }[]) {
   const session = await auth()
   if (!session?.user || !["ADMIN", "TATA_USAHA"].includes((session.user as any).role)) {
     throw new Error("Akses ditolak.")
@@ -262,10 +265,11 @@ export async function updateTagihanSiswa(muridId: string, tahunAkademikId: strin
     for (const update of tagihanUpdates) {
       const existing = await tx.tagihan.findUnique({
         where: {
-          muridId_akunId_tahunAkademikId: {
+          muridId_akunId_tahunAkademikId_namaTagihan: {
             muridId: muridId,
             akunId: update.akunId,
-            tahunAkademikId: tahunAkademikId
+            tahunAkademikId: tahunAkademikId,
+            namaTagihan: update.namaTagihan
           }
         }
       })
@@ -289,6 +293,7 @@ export async function updateTagihanSiswa(muridId: string, tahunAkademikId: strin
             muridId: muridId,
             akunId: update.akunId,
             tahunAkademikId: tahunAkademikId,
+            namaTagihan: update.namaTagihan,
             jumlah: update.jumlah,
             sisaTagihan: update.jumlah,
             status: update.jumlah > 0 ? "BELUM_LUNAS" : "LUNAS"
@@ -314,7 +319,7 @@ export async function updateTagihanSiswa(muridId: string, tahunAkademikId: strin
 /**
  * Menghapus komponen tagihan (kolom) secara massal untuk satu subkelas
  */
-export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: string, akunId: string) {
+export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: string, akunId: string, namaTagihan: string) {
   const session = await auth()
   if (!session?.user || !["ADMIN", "TATA_USAHA"].includes((session.user as any).role)) {
     throw new Error("Akses ditolak.")
@@ -333,6 +338,7 @@ export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: st
       where: {
         tahunAkademikId,
         akunId,
+        namaTagihan,
         muridId: { in: muridIds }
       }
     })
@@ -354,7 +360,7 @@ export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: st
 /**
  * Mengubah nominal tagihan secara massal untuk komponen tertentu di satu subkelas
  */
-export async function editTagihanMassal(subKelasId: string, tahunAkademikId: string, akunId: string, jumlah: number) {
+export async function editTagihanMassal(subKelasId: string, tahunAkademikId: string, akunId: string, namaTagihan: string, jumlah: number) {
   const session = await auth()
   if (!session?.user || !["ADMIN", "TATA_USAHA"].includes((session.user as any).role)) {
     throw new Error("Akses ditolak.")
@@ -373,6 +379,7 @@ export async function editTagihanMassal(subKelasId: string, tahunAkademikId: str
       where: {
         tahunAkademikId,
         akunId,
+        namaTagihan,
         muridId: { in: muridIds },
         status: "BELUM_LUNAS" // Hanya ubah yang belum pernah dibayar
       },

@@ -28,9 +28,17 @@ type GridRow = {
   name: string
   nisn: string
   formNo: string
-  tagihanMap: Record<string, number> // akunId -> jumlah
-  lockedMap: Record<string, boolean> // akunId -> is locked (sudah dibayar/dicicil)
+  tagihanMap: Record<string, number> // columnId -> jumlah
+  lockedMap: Record<string, boolean> // columnId -> is locked
   isDirty: boolean
+}
+
+type TagihanColumn = {
+  id: string
+  akunId: string
+  namaTagihan: string
+  nama: string
+  kode: string
 }
 
 export default function PembuatanTagihanClient({
@@ -59,7 +67,7 @@ export default function PembuatanTagihanClient({
   // Data States
   const [isLoading, setIsLoading] = useState(false)
   const [gridData, setGridData] = useState<GridRow[]>([])
-  const [akunColumns, setAkunColumns] = useState<{id: string, nama: string, kode: string}[]>([])
+  const [akunColumns, setAkunColumns] = useState<TagihanColumn[]>([])
   const [searchTerm, setSearchTerm] = useState("")
 
   // Modal States
@@ -72,13 +80,13 @@ export default function PembuatanTagihanClient({
   
   // Edit Massal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [editingCol, setEditingCol] = useState<{id: string, nama: string} | null>(null)
+  const [editingCol, setEditingCol] = useState<TagihanColumn | null>(null)
   const [editNominal, setEditNominal] = useState("0")
   const [isEditingMassal, setIsEditingMassal] = useState(false)
 
   // Delete Massal States
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [deletingCol, setDeletingCol] = useState<{id: string, nama: string} | null>(null)
+  const [deletingCol, setDeletingCol] = useState<TagihanColumn | null>(null)
   const [isDeletingMassal, setIsDeletingMassal] = useState(false)
 
   // Drag and Drop States
@@ -104,7 +112,6 @@ export default function PembuatanTagihanClient({
     })
   }, [activeUnitId])
 
-  // 2. Fetch SubKelas when Kelas, Jurusan, or Tahun Akademik changes
   useEffect(() => {
     if (!kelasId || (jurusanList.length > 0 && !jurusanId) || !activeTahunAkademikId) {
       setSubKelasList([])
@@ -119,17 +126,18 @@ export default function PembuatanTagihanClient({
     })
   }, [kelasId, jurusanId, jurusanList, activeTahunAkademikId])
 
-  // Process data to build Grid and Columns
   const processData = (muridList: any[]) => {
-    const columnsMap = new Map<string, {id: string, nama: string, kode: string}>()
+    const columnsMap = new Map<string, TagihanColumn>()
     
-    // Pass 1: Gather all unique akun columns from tagihan
     muridList.forEach(murid => {
       murid.tagihan?.forEach((t: any) => {
-        if (!columnsMap.has(t.akunId)) {
-          columnsMap.set(t.akunId, {
-            id: t.akun.id,
-            nama: t.akun.nama,
+        const compId = `${t.akunId}::${t.namaTagihan}`
+        if (!columnsMap.has(compId)) {
+          columnsMap.set(compId, {
+            id: compId,
+            akunId: t.akunId,
+            namaTagihan: t.namaTagihan,
+            nama: t.namaTagihan,
             kode: t.akun.kode
           })
         }
@@ -138,7 +146,6 @@ export default function PembuatanTagihanClient({
     
     const columns = Array.from(columnsMap.values()).sort((a, b) => a.kode.localeCompare(b.kode))
     
-    // Terapkan urutan dari localStorage jika ada
     try {
       const savedOrderStr = localStorage.getItem(`tagihanColumnOrder_${activeUnitId}`)
       if (savedOrderStr) {
@@ -158,13 +165,13 @@ export default function PembuatanTagihanClient({
 
     setAkunColumns(columns)
 
-    // Pass 2: Build grid rows
     const rows: GridRow[] = muridList.map(murid => {
       const tMap: Record<string, number> = {}
       const lMap: Record<string, boolean> = {}
       murid.tagihan?.forEach((t: any) => {
-        tMap[t.akunId] = t.jumlah
-        lMap[t.akunId] = t.sisaTagihan < t.jumlah // locked if even 1 rupiah is paid
+        const compId = `${t.akunId}::${t.namaTagihan}`
+        tMap[compId] = t.jumlah
+        lMap[compId] = t.sisaTagihan < t.jumlah 
       })
       return {
         id: murid.id,
@@ -198,6 +205,7 @@ export default function PembuatanTagihanClient({
 
   const handleModalSubmit = async (data: { 
     akunId: string, 
+    namaTagihan: string,
     jumlah: number,
     targetType: "tingkat" | "kelas" | "murid",
     tingkatId?: string,
@@ -209,6 +217,7 @@ export default function PembuatanTagihanClient({
       await tambahTagihanMassal({
         tahunAkademikId: activeTahunAkademikId,
         akunId: data.akunId,
+        namaTagihan: data.namaTagihan,
         jumlah: data.jumlah,
         targetType: data.targetType,
         tingkatId: data.tingkatId,
@@ -217,7 +226,6 @@ export default function PembuatanTagihanClient({
       })
       toast.success("Berhasil membuat tagihan massal!")
       setIsModalOpen(false)
-      // Refresh data
       await handleTampilkan()
     } catch (error: any) {
       toast.error(error.message || "Gagal membuat tagihan")
@@ -229,16 +237,15 @@ export default function PembuatanTagihanClient({
   const handleSimpanBaris = async (row: GridRow) => {
     setSavingRowId(row.id)
     try {
-      // Build array of updates based on current columns
       const updates = akunColumns.map(col => ({
-        akunId: col.id,
+        akunId: col.akunId,
+        namaTagihan: col.namaTagihan,
         jumlah: row.tagihanMap[col.id] || 0
       }))
 
       await updateTagihanSiswa(row.id, activeTahunAkademikId, updates)
       toast.success("Perubahan disimpan")
       
-      // Mark as not dirty
       setGridData(prev => prev.map(r => r.id === row.id ? { ...r, isDirty: false } : r))
     } catch (error: any) {
       toast.error("Gagal menyimpan: " + error.message)
@@ -247,7 +254,7 @@ export default function PembuatanTagihanClient({
     }
   }
 
-  const handleInputChange = (rowId: string, akunId: string, val: string) => {
+  const handleInputChange = (rowId: string, colId: string, val: string) => {
     const num = parseFloat(val.replace(/[^0-9]/g, '')) || 0
     setGridData(prev => prev.map(r => {
       if (r.id === rowId) {
@@ -256,7 +263,7 @@ export default function PembuatanTagihanClient({
           isDirty: true,
           tagihanMap: {
             ...r.tagihanMap,
-            [akunId]: num
+            [colId]: num
           }
         }
       }
@@ -266,12 +273,11 @@ export default function PembuatanTagihanClient({
 
   const handleEditMassalSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!subKelasId || !editingCol) return
-
-    const num = parseFloat(editNominal.replace(/[^0-9]/g, '')) || 0
+    if (!editingCol || !subKelasId || !activeTahunAkademikId) return
     setIsEditingMassal(true)
     try {
-      await editTagihanMassal(subKelasId, activeTahunAkademikId, editingCol.id, num)
+      const numVal = parseInt(editNominal.replace(/[^0-9]/g, '')) || 0
+      await editTagihanMassal(subKelasId, activeTahunAkademikId, editingCol.akunId, editingCol.namaTagihan, numVal)
       toast.success("Berhasil mengubah nominal tagihan massal")
       setIsEditModalOpen(false)
       await handleTampilkan()
@@ -283,10 +289,10 @@ export default function PembuatanTagihanClient({
   }
 
   const handleHapusMassal = async () => {
-    if (!subKelasId || !deletingCol) return
+    if (!deletingCol || !subKelasId || !activeTahunAkademikId) return
     setIsDeletingMassal(true)
     try {
-      await hapusTagihanMassal(subKelasId, activeTahunAkademikId, deletingCol.id)
+      await hapusTagihanMassal(subKelasId, activeTahunAkademikId, deletingCol.akunId, deletingCol.namaTagihan)
       toast.success("Berhasil menghapus komponen tagihan")
       setIsDeleteModalOpen(false)
       await handleTampilkan()
@@ -465,7 +471,7 @@ export default function PembuatanTagihanClient({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveMenuColId(null)
-                                setEditingCol({ id: col.id, nama: col.nama })
+                                setEditingCol(col)
                                 setEditNominal("0")
                                 setIsEditModalOpen(true)
                               }}
@@ -478,7 +484,7 @@ export default function PembuatanTagihanClient({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveMenuColId(null)
-                                setDeletingCol({ id: col.id, nama: col.nama })
+                                setDeletingCol(col)
                                 setIsDeleteModalOpen(true)
                               }}
                             >

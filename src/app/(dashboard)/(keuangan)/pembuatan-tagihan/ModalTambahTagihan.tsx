@@ -20,6 +20,7 @@ export default function ModalTambahTagihan({
   onClose: () => void
   onSubmit: (data: { 
     akunId: string, 
+    namaTagihan: string,
     jumlah: number,
     targetType: "tingkat" | "kelas" | "murid",
     tingkatId?: string,
@@ -35,6 +36,7 @@ export default function ModalTambahTagihan({
   isSubmitting: boolean
 }) {
   const [akunId, setAkunId] = useState("")
+  const [namaTagihan, setNamaTagihan] = useState("")
   const [jumlah, setJumlah] = useState<string>("")
   
   const [targetType, setTargetType] = useState<"tingkat" | "kelas" | "murid">("kelas")
@@ -50,6 +52,7 @@ export default function ModalTambahTagihan({
       setTargetType("kelas")
       setSelectedMuridIds([])
       setAkunId("")
+      setNamaTagihan("")
       setJumlah("")
     }
   }, [isOpen, activeKelasId, activeSubKelasId])
@@ -66,6 +69,7 @@ export default function ModalTambahTagihan({
 
     onSubmit({
       akunId,
+      namaTagihan,
       jumlah: parseFloat(jumlah.replace(/[^0-9]/g, '')) || 0,
       targetType,
       tingkatId: targetType === "tingkat" ? selectedTingkatId : undefined,
@@ -145,6 +149,18 @@ export default function ModalTambahTagihan({
                   <option key={akun.id} value={akun.id}>[{akun.kode}] {akun.nama}</option>
                 ))}
               </select>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-center gap-4">
+              <label className="text-sm font-semibold text-text-main">Nama Tagihan</label>
+              <input 
+                type="text"
+                placeholder="Contoh: SPP Bulan Juli 2026"
+                className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium text-text-main placeholder-text-muted/50"
+                value={namaTagihan}
+                onChange={e => setNamaTagihan(e.target.value)}
+                required
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-start gap-4 pt-4 border-t border-border">

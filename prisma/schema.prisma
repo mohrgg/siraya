@@ -380,6 +380,7 @@ model Tagihan {
   muridId         String
   akunId          String // Komponen biaya (Akun Detail, misal: SPP, PSB)
   tahunAkademikId String
+  namaTagihan     String @db.VarChar(150) // Contoh: "SPP Juli 2026", "Uang Gedung Cicilan 1"
 
   jumlah      Float // Nominal tagihan
   sisaTagihan Float // Sisa belum dibayar (awal = jumlah)
@@ -395,7 +396,7 @@ model Tagihan {
 
   pembayaran PembayaranTagihanDetail[]
 
-  @@unique([muridId, akunId, tahunAkademikId]) // 1 Siswa, 1 Akun, 1 Tahun Akademik
+  @@unique([muridId, akunId, tahunAkademikId, namaTagihan]) // 1 Siswa, 1 Akun, 1 Tahun Akademik, 1 Nama Tagihan
 }
 
 model PembayaranTagihanDetail {
