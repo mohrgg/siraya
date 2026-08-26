@@ -47,7 +47,7 @@ export default function ModalTambahTagihan({
   const [selectedSubKelasId, setSelectedSubKelasId] = useState(activeSubKelasId)
   const [selectedMuridIds, setSelectedMuridIds] = useState<string[]>([])
   const [selectedMonths, setSelectedMonths] = useState<string[]>([])
-  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString())
+  const [selectedYear, setSelectedYear] = useState<string>(`${new Date().getFullYear()}/${new Date().getFullYear() + 1}`)
 
   const selectedAkun = akunPendapatanList.find(a => a.id === akunId)
   const isSPP = selectedAkun?.isSPP || false
@@ -186,16 +186,18 @@ export default function ModalTambahTagihan({
                 <label className="text-sm font-semibold text-text-main mt-2">Bulan Tagihan (SPP)</label>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <select 
-                      className="w-32 px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
-                      value={selectedYear}
-                      onChange={e => setSelectedYear(e.target.value)}
-                    >
-                      {[0, 1, 2].map(offset => {
-                        const yr = new Date().getFullYear() - 1 + offset
-                        return <option key={yr} value={yr}>{yr}</option>
-                      })}
-                    </select>
+                      <select 
+                        className="w-36 px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
+                        value={selectedYear}
+                        onChange={e => setSelectedYear(e.target.value)}
+                      >
+                        {[-1, 0, 1].map(offset => {
+                          const yr1 = new Date().getFullYear() + offset
+                          const yr2 = yr1 + 1
+                          const period = `${yr1}/${yr2}`
+                          return <option key={period} value={period}>{period}</option>
+                        })}
+                      </select>
                     <span className="text-xs text-text-muted">Pilih satu atau beberapa bulan di tahun ini:</span>
                   </div>
                   <div className="grid grid-cols-3 md:grid-cols-4 gap-2">

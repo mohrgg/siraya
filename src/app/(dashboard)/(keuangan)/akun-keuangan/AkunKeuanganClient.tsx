@@ -164,7 +164,7 @@ export default function AkunKeuanganClient({
       subKlasifikasiAkunId: item.subKlasifikasiAkunId,
       unitSekolahId: item.unitSekolahId || "",
       isKasBank: item.isKasBank,
-      isSPP: item.isSPP,
+      isSPP: item.isSPP ?? false,
       isActive: item.isActive
     })
     setIsAkunDrawerOpen(true)
@@ -331,7 +331,7 @@ export default function AkunKeuanganClient({
             </label>
             
             <label className="flex items-center gap-3 cursor-pointer p-3 border border-border rounded-xl hover:bg-bg transition-colors">
-              <input type="checkbox" checked={akunForm.isSPP} onChange={e => setAkunForm({ ...akunForm, isSPP: e.target.checked })} className="w-4 h-4 accent-primary" />
+              <input type="checkbox" checked={akunForm.isSPP || false} onChange={e => setAkunForm({ ...akunForm, isSPP: e.target.checked })} className="w-4 h-4 accent-primary" />
               <div>
                 <span className="text-sm font-semibold text-text-main block">Kategori Tagihan Bulanan (SPP)</span>
                 <span className="text-xs text-text-muted">Centang jika tagihan akun ini rutin per bulan dan akan dikelompokkan secara matriks.</span>
