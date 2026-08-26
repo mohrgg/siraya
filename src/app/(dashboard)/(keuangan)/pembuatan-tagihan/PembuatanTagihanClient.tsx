@@ -107,19 +107,19 @@ export default function PembuatanTagihanClient({
     })
     getJurusanByUnit(activeUnitId).then(res => {
       setJurusanList(res)
-      if (res.length > 0) setJurusanId(res[0].id)
-      else setJurusanId("")
+      setJurusanId("") // Do not auto-select to prevent filtering out classes with null jurusan
     })
   }, [activeUnitId])
 
   useEffect(() => {
-    if (!kelasId || (jurusanList.length > 0 && !jurusanId) || !activeTahunAkademikId) {
+    if (!kelasId || !activeTahunAkademikId) {
       setSubKelasList([])
       setSubKelasId("")
       return
     }
     
-    getSubKelasByKelas(kelasId, jurusanList.length > 0 ? jurusanId : undefined, activeTahunAkademikId).then(res => {
+    const selectedJurusan = jurusanId ? jurusanId : undefined;
+    getSubKelasByKelas(kelasId, selectedJurusan, activeTahunAkademikId).then(res => {
       setSubKelasList(res)
       if (res.length > 0) setSubKelasId(res[0].id)
       else setSubKelasId("")

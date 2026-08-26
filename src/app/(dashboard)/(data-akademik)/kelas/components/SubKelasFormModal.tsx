@@ -71,13 +71,14 @@ export default function SubKelasFormModal({
         
         {initialMajors.filter((m: any) => m.unitSekolahId === formData.unitSekolahId).length > 0 && (
           <div>
-            <label className="block text-sm font-semibold text-text-main mb-1.5">Jurusan (Opsional)</label>
+            <label className="block text-sm font-semibold text-text-main mb-1.5">Jurusan</label>
             <select 
+              required
               className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
               value={formData.jurusanId}
               onChange={e => setFormData({ ...formData, jurusanId: e.target.value })}
             >
-              <option value="">-- Umum / Tanpa Jurusan --</option>
+              <option value="" disabled>-- Pilih Jurusan --</option>
               {initialMajors.filter((m: any) => m.unitSekolahId === formData.unitSekolahId).map((m: any) => (
                 <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
               ))}

@@ -33,7 +33,8 @@ export async function getKlasifikasiAkun(unitId?: string) {
         kode: k.kode,
         nama: k.nama,
         unitSekolahId: filterUnitId
-      }))
+      })),
+      skipDuplicates: true
     })
 
     return prisma.klasifikasiAkun.findMany({

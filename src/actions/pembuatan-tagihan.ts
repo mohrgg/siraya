@@ -41,10 +41,16 @@ export async function getUnitSekolah() {
 }
 
 export async function getKelasByUnit(unitSekolahId: string) {
-  return prisma.tingkat.findMany({
-    where: { unitSekolahId, isDeleted: false },
+  const where: any = { isDeleted: false }
+  if (unitSekolahId && unitSekolahId !== "all") {
+    where.unitSekolahId = unitSekolahId
+  }
+  const result = await prisma.tingkat.findMany({
+    where,
     orderBy: { order: 'asc' }
   })
+  console.log("getKelasByUnit called with", unitSekolahId, "Result length:", result.length)
+  return result
 }
 
 export async function getSubKelasByKelas(tingkatId: string, jurusanId?: string, tahunAkademikId?: string) {
@@ -67,8 +73,12 @@ export async function getSubKelasByKelas(tingkatId: string, jurusanId?: string, 
 }
 
 export async function getJurusanByUnit(unitSekolahId: string) {
+  const where: any = { isDeleted: false }
+  if (unitSekolahId && unitSekolahId !== "all") {
+    where.unitSekolahId = unitSekolahId
+  }
   return prisma.jurusan.findMany({
-    where: { unitSekolahId, isDeleted: false },
+    where,
     orderBy: { name: 'asc' }
   })
 }
