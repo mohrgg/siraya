@@ -621,6 +621,21 @@ export default function KelasClient({
         nextDisabled={!viewDetailSubKelas || !data.classrooms || data.classrooms.findIndex((c: any) => c.id === viewDetailSubKelas.id) >= data.classrooms.length - 1 || data.classrooms.findIndex((c: any) => c.id === viewDetailSubKelas.id) === -1}
       />
 
+      {/* Modal Reaktivasi Siswa */}
+      <ReactivateSiswaModal
+        isOpen={!!reactivateMurid}
+        onClose={() => setReactivateMurid(null)}
+        muridId={reactivateMurid?.id || null}
+        muridName={reactivateMurid?.name || ""}
+        academicYears={academicYears}
+        classrooms={data.classrooms}
+        onSuccess={() => {
+          setReactivateMurid(null)
+          data.refreshData()
+          router.refresh()
+        }}
+      />
+
     </div>
   )
 }
