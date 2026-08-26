@@ -57,6 +57,7 @@ model UnitSekolah {
   kotaPenandatangan String?  @db.VarChar(100)
   logo              String?  @db.VarChar(255)
   isActive          Boolean  @default(true)
+  tagihanColumnOrder String? @db.Text // JSON string of ordered column IDs
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

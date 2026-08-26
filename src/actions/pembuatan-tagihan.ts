@@ -412,3 +412,128 @@ export async function editTagihanMassal(subKelasId: string, tahunAkademikId: str
   revalidatePath("/pembuatan-tagihan")
   return { success: true, message: "Nominal tagihan massal berhasil diubah" }
 }
+
+/**
+ * Mendapatkan urutan kolom tagihan (Global per Unit Sekolah)
+ */
+export async function getColumnOrder(unitSekolahId: string): Promise<string[]> {
+  try {
+    const unit = await prisma.unitSekolah.findUnique({
+      where: { id: unitSekolahId },
+      select: { tagihanColumnOrder: true }
+    })
+    if (unit?.tagihanColumnOrder) {
+      return JSON.parse(unit.tagihanColumnOrder) as string[]
+    }
+  } catch (e) {
+    console.error("Failed to parse column order", e)
+  }
+  return []
+}
+
+/**
+ * Menyimpan urutan kolom tagihan (Global per Unit Sekolah)
+ */
+export async function saveColumnOrder(unitSekolahId: string, order: string[]) {
+  const session = await auth()
+  if (!session?.user || !["ADMIN", "TATA_USAHA"].includes((session.user as any).role)) {
+    throw new Error("Akses ditolak.")
+  }
+
+  await prisma.unitSekolah.update({
+    where: { id: unitSekolahId },
+    data: { tagihanColumnOrder: JSON.stringify(order) }
+  })
+  
+  // revalidatePath("/pembuatan-tagihan")
+  return { success: true }
+}
+
+/**
+ * Mengedit metadata kolom tagihan secara massal (Nama, Akun, Nominal)
+ */
+export async function updateTagihanKolomMassal(
+  subKelasId: string, 
+  tahunAkademikId: string, 
+  oldAkunId: string, 
+  oldNamaTagihan: string, 
+  newAkunId: string, 
+  newNamaTagihan: string, 
+  newJumlah: number
+) {
+  const session = await auth()
+  if (!session?.user || !["ADMIN", "TATA_USAHA"].includes((session.user as any).role)) {
+    throw new Error("Akses ditolak.")
+  }
+
+  const riwayatKelas = await prisma.riwayatKelas.findMany({
+    where: { subKelasId, tahunAkademikId },
+    select: { muridId: true }
+  })
+  const muridIds = riwayatKelas.map(rk => rk.muridId)
+  if (muridIds.length === 0) return { success: true }
+
+  // Cek apakah ada yang sudah dibayar
+  const paidCount = await prisma.tagihan.count({
+    where: {
+      tahunAkademikId,
+      akunId: oldAkunId,
+      namaTagihan: oldNamaTagihan,
+      muridId: { in: muridIds },
+      status: { not: "BELUM_LUNAS" }
+    }
+  })
+
+  if (paidCount > 0 && oldAkunId !== newAkunId) {
+    throw new Error("Tidak dapat mengubah Akun Keuangan karena sudah ada siswa yang melakukan pembayaran pada tagihan ini. Anda hanya diizinkan mengubah Nama Tagihan dan Nominal.")
+  }
+
+  // Gunakan transaction agar konsisten
+  await prisma.$transaction(async (tx) => {
+    // 1. Update namaTagihan dan akunId untuk SEMUA tagihan (agar tidak split kolom)
+    if (oldNamaTagihan !== newNamaTagihan || oldAkunId !== newAkunId) {
+      // Kita harus berhati-hati dengan unique constraint: [muridId, akunId, tahunAkademikId, namaTagihan]
+      // Jika kita updateMany ke nama yang sudah ada, bisa bentrok.
+      // Solusi: Lakukan update bertahap per murid atau updateMany (Prisma akan error jika bentrok, yang mana itu bagus sebagai proteksi)
+      await tx.tagihan.updateMany({
+        where: {
+          tahunAkademikId,
+          akunId: oldAkunId,
+          namaTagihan: oldNamaTagihan,
+          muridId: { in: muridIds }
+        },
+        data: {
+          namaTagihan: newNamaTagihan,
+          akunId: newAkunId
+        }
+      })
+    }
+
+    // 2. Update jumlah hanya untuk yang belum dibayar sama sekali
+    await tx.tagihan.updateMany({
+      where: {
+        tahunAkademikId,
+        akunId: newAkunId,
+        namaTagihan: newNamaTagihan,
+        muridId: { in: muridIds },
+        status: "BELUM_LUNAS"
+      },
+      data: {
+        jumlah: newJumlah,
+        sisaTagihan: newJumlah
+      }
+    })
+
+    await tx.logAktivitas.create({
+      data: {
+        penggunaId: (session.user as any).id,
+        aksi: "UPDATE",
+        modul: "PEMBUATAN_TAGIHAN",
+        keterangan: `Edit kolom tagihan massal dari [${oldNamaTagihan}] ke [${newNamaTagihan}] untuk Subkelas ${subKelasId}`
+      }
+    })
+  })
+
+  revalidatePath("/pembuatan-tagihan")
+  return { success: true }
+}

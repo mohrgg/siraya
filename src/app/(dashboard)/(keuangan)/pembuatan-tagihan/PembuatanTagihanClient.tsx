@@ -9,12 +9,16 @@ import {
   tambahTagihanMassal, 
   updateTagihanSiswa,
   editTagihanMassal,
-  hapusTagihanMassal
+  hapusTagihanMassal,
+  getColumnOrder,
+  saveColumnOrder,
+  updateTagihanKolomMassal
 } from "@/actions/pembuatan-tagihan"
 import { Plus, Search, Filter, Loader2, Save, MoreVertical, Edit2, Trash2, X, GripHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 import ModalTambahTagihan from "./ModalTambahTagihan"
+import ModalEditTagihanKolom from "./ModalEditTagihanKolom"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { 
   Toolbar, 
@@ -81,7 +85,9 @@ export default function PembuatanTagihanClient({
   // Edit Massal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editingCol, setEditingCol] = useState<TagihanColumn | null>(null)
-  const [editNominal, setEditNominal] = useState("0")
+  
+  // Drag and Drop Global State
+  const [globalColumnOrder, setGlobalColumnOrder] = useState<string[]>([])
   const [isEditingMassal, setIsEditingMassal] = useState(false)
 
   // Delete Massal States
@@ -126,7 +132,7 @@ export default function PembuatanTagihanClient({
     })
   }, [kelasId, jurusanId, jurusanList, activeTahunAkademikId])
 
-  const processData = (muridList: any[]) => {
+  const processData = (muridList: any[], order?: string[]) => {
     const columnsMap = new Map<string, TagihanColumn>()
     
     muridList.forEach(murid => {
@@ -146,21 +152,16 @@ export default function PembuatanTagihanClient({
     
     const columns = Array.from(columnsMap.values()).sort((a, b) => a.kode.localeCompare(b.kode))
     
-    try {
-      const savedOrderStr = localStorage.getItem(`tagihanColumnOrder_${activeUnitId}`)
-      if (savedOrderStr) {
-        const savedOrder = JSON.parse(savedOrderStr) as string[]
-        columns.sort((a, b) => {
-          const idxA = savedOrder.indexOf(a.id)
-          const idxB = savedOrder.indexOf(b.id)
-          if (idxA === -1 && idxB === -1) return 0
-          if (idxA === -1) return 1
-          if (idxB === -1) return -1
-          return idxA - idxB
-        })
-      }
-    } catch (e) {
-      console.error("Failed to parse column order from localStorage", e)
+    // Sort based on globalColumnOrder
+    if (order && order.length > 0) {
+      columns.sort((a, b) => {
+        const idxA = order.indexOf(a.id)
+        const idxB = order.indexOf(b.id)
+        if (idxA === -1 && idxB === -1) return 0
+        if (idxA === -1) return 1
+        if (idxB === -1) return -1
+        return idxA - idxB
+      })
     }
 
     setAkunColumns(columns)
@@ -194,8 +195,12 @@ export default function PembuatanTagihanClient({
 
     setIsLoading(true)
     try {
-      const data = await getMuridWithTagihan(subKelasId, activeTahunAkademikId)
-      processData(data)
+      const [data, order] = await Promise.all([
+        getMuridWithTagihan(subKelasId, activeTahunAkademikId),
+        getColumnOrder(activeUnitId)
+      ])
+      setGlobalColumnOrder(order)
+      processData(data, order)
     } catch (error: any) {
       toast.error("Gagal mengambil data: " + error.message)
     } finally {
@@ -271,20 +276,41 @@ export default function PembuatanTagihanClient({
     }))
   }
 
-  const handleEditMassalSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleModalEditKolomSubmit = async (data: { akunId: string, namaTagihan: string, jumlah: number }) => {
     if (!editingCol || !subKelasId || !activeTahunAkademikId) return
-    setIsEditingMassal(true)
+    setIsSubmittingModal(true)
     try {
-      const numVal = parseInt(editNominal.replace(/[^0-9]/g, '')) || 0
-      await editTagihanMassal(subKelasId, activeTahunAkademikId, editingCol.akunId, editingCol.namaTagihan, numVal)
-      toast.success("Berhasil mengubah nominal tagihan massal")
+      await updateTagihanKolomMassal(
+        subKelasId, 
+        activeTahunAkademikId, 
+        editingCol.akunId, 
+        editingCol.namaTagihan, 
+        data.akunId, 
+        data.namaTagihan, 
+        data.jumlah
+      )
+      
+      // Auto replace in global order if ID changed
+      const oldId = editingCol.id
+      const newId = `${data.akunId}::${data.namaTagihan}`
+      let newOrder = [...globalColumnOrder]
+      if (oldId !== newId) {
+        if (newOrder.includes(oldId)) {
+          newOrder = newOrder.map(id => id === oldId ? newId : id)
+        } else {
+          // If neither existed, just add to the end of currently rendered columns with replacement
+          newOrder = akunColumns.map(c => c.id === oldId ? newId : c.id)
+        }
+        await saveColumnOrder(activeUnitId, newOrder)
+      }
+      
+      toast.success("Kolom tagihan berhasil diubah")
       setIsEditModalOpen(false)
-      await handleTampilkan()
+      handleTampilkan() // Reload to get fresh column names and amounts
     } catch (error: any) {
-      toast.error(error.message || "Gagal mengubah tagihan")
+      toast.error("Gagal: " + error.message)
     } finally {
-      setIsEditingMassal(false)
+      setIsSubmittingModal(false)
     }
   }
 
@@ -431,8 +457,13 @@ export default function PembuatanTagihanClient({
                             const [draggedItem] = newCols.splice(draggedIdx, 1)
                             newCols.splice(targetIdx, 0, draggedItem)
                             
+                            const finalOrder = newCols.map(c => c.id)
                             setAkunColumns(newCols)
-                            localStorage.setItem(`tagihanColumnOrder_${activeUnitId}`, JSON.stringify(newCols.map(c => c.id)))
+                            setGlobalColumnOrder(finalOrder)
+                            saveColumnOrder(activeUnitId, finalOrder).catch(e => {
+                              console.error("Failed to save column order", e)
+                              toast.error("Gagal menyimpan urutan kolom")
+                            })
                           }
                           setDraggedColumnId(null)
                         }}
@@ -472,12 +503,11 @@ export default function PembuatanTagihanClient({
                                 e.stopPropagation();
                                 setActiveMenuColId(null)
                                 setEditingCol(col)
-                                setEditNominal("0")
                                 setIsEditModalOpen(true)
                               }}
                             >
                               <Edit2 size={14} className="text-blue-500" />
-                              Ubah Nominal
+                              Edit Tagihan
                             </button>
                             <button 
                               className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
@@ -622,49 +652,19 @@ export default function PembuatanTagihanClient({
       {activeMenuColId && (
         <div className="fixed inset-0 z-[90]" onClick={() => setActiveMenuColId(null)} />
       )}
-
-      {/* Modal Edit Massal */}
-      {isEditModalOpen && editingCol && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsEditModalOpen(false)} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between p-6 border-b border-border">
-              <h2 className="text-xl font-bold text-text-main">Ubah Nominal Massal</h2>
-              <button onClick={() => setIsEditModalOpen(false)} className="p-2 text-text-muted hover:bg-bg rounded-lg">
-                <X size={20} />
-              </button>
-            </div>
-            <form onSubmit={handleEditMassalSubmit} className="p-6 space-y-4">
-              <div>
-                <p className="text-sm text-text-muted mb-4">
-                  Anda akan mengubah tagihan <strong>{editingCol.nama}</strong> untuk seluruh siswa di <strong>Subkelas {activeSubKelasName}</strong>.
-                </p>
-                <label className="text-sm font-semibold text-text-main block mb-2">Nominal Baru</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted font-medium text-sm">Rp.</span>
-                  <input 
-                    type="text" 
-                    className="w-full pl-12 pr-4 py-2 bg-white border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-bold"
-                    value={editNominal}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, '')
-                      setEditNominal(val ? formatRupiah(parseInt(val)) : "")
-                    }}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
-                <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>Batal</Button>
-                <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700" disabled={isEditingMassal}>
-                  {isEditingMassal ? "Menyimpan..." : "Simpan Perubahan"}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
+      {/* Modal Edit Tagihan Kolom */}
+      <ModalEditTagihanKolom
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSubmit={handleModalEditKolomSubmit}
+        akunPendapatanList={akunPendapatanList}
+        editingCol={editingCol}
+        isSubmitting={isSubmittingModal}
+        hasPayments={editingCol ? gridData.some(row => {
+          const compId = `${editingCol.akunId}::${editingCol.namaTagihan}`
+          return row.lockedMap[compId] // true if sisaTagihan < jumlah
+        }) : false}
+      />
       {/* Modal Hapus Massal */}
       <ConfirmModal
         isOpen={isDeleteModalOpen}
