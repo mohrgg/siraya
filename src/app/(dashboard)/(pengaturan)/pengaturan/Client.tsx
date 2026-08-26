@@ -110,7 +110,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
     }
 
     setIsBackingUp(true)
-    const toastId = toast.loading("Sedang menarik data dari database...")
+    const toastId = toast.loading("Sedang menarik & memformat data...")
 
     try {
       const { generateBackupData } = await import("@/actions/backup")
@@ -120,7 +120,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
         throw new Error(result.error)
       }
 
-      toast.loading("Mempersiapkan file Excel...", { id: toastId })
+      toast.loading("Membuat file Excel & mengatur lebar kolom...", { id: toastId })
       const { exportMultiSheetExcel } = await import("@/lib/excel")
       
       const dateStr = new Date().toISOString().replace(/[:.]/g, '-').split('T').join('_').substring(0, 15)
@@ -128,7 +128,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
       
       exportMultiSheetExcel(result.data, `Backup_Siraya_${unitStr}_${dateStr}`)
 
-      toast.success("Backup berhasil diunduh!", { id: toastId })
+      toast.success("File Excel berhasil diunduh!", { id: toastId })
     } catch (error: any) {
       toast.error(error.message || "Gagal melakukan pencadangan data.", { id: toastId })
     } finally {

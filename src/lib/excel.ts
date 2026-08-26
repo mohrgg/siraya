@@ -130,6 +130,22 @@ export function exportMultiSheetExcel(dataMap: Record<string, any[]>, fileName: 
   for (const [sheetName, data] of Object.entries(dataMap)) {
     if (data && data.length > 0) {
       const worksheet = XLSX.utils.json_to_sheet(data);
+      
+      // Calculate dynamic column widths based on headers and data
+      const headers = Object.keys(data[0]);
+      const colWidths = headers.map(h => {
+        let maxLength = Math.max(h.length, 10);
+        data.forEach(row => {
+          const cellValue = row[h] ? row[h].toString() : "";
+          if (cellValue.length > maxLength) {
+            maxLength = cellValue.length;
+          }
+        });
+        // Add padding and cap at 50 chars
+        return { wch: Math.min(maxLength + 2, 50) };
+      });
+      worksheet['!cols'] = colWidths;
+
       // Nama sheet di Excel maksimal 31 karakter
       const validSheetName = sheetName.substring(0, 31);
       XLSX.utils.book_append_sheet(workbook, worksheet, validSheetName);
@@ -137,6 +153,10 @@ export function exportMultiSheetExcel(dataMap: Record<string, any[]>, fileName: 
       // Jika data kosong, buat sheet kosong dengan pesan
       const worksheet = XLSX.utils.json_to_sheet([{ Info: "Tidak ada data untuk modul ini" }]);
       const validSheetName = sheetName.substring(0, 31);
+      
+      // Set width for Info column
+      worksheet['!cols'] = [{ wch: 40 }];
+      
       XLSX.utils.book_append_sheet(workbook, worksheet, validSheetName);
     }
   }

@@ -3,6 +3,35 @@
 import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 
+// Helper Formatters
+const formatRupiah = (angka: number) => {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(angka)
+}
+
+const formatDate = (date: Date | string | null | undefined) => {
+  if (!date) return "-"
+  return new Date(date).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  })
+}
+
+const formatBoolean = (val: boolean | null | undefined, trueText = "Aktif", falseText = "Non-Aktif") => {
+  if (val === null || val === undefined) return "-"
+  return val ? trueText : falseText
+}
+
+const getStatusText = (status: string | null | undefined) => {
+  if (!status) return "-"
+  return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
+}
+
 export async function generateBackupData(selectedModules: string[], unitId: string) {
   try {
     const session = await auth()
@@ -35,23 +64,24 @@ export async function generateBackupData(selectedModules: string[], unitId: stri
           }
         }
       })
-      backupData["Data_Murid"] = muridData.map((m: any) => {
+      backupData["Data_Murid"] = muridData.map((m: any, index: number) => {
         const subKelas = m.riwayatKelas?.[0]?.subKelas
         return {
+          "No.": index + 1,
           NIS: m.nis || "-",
           NISN: m.nisn || "-",
           Nama_Siswa: m.name,
           Jenis_Kelamin: m.gender || "-",
           Agama: m.religion || "-",
           Tempat_Lahir: m.birthPlace || "-",
-          Tanggal_Lahir: m.birthDate ? m.birthDate.toISOString().split('T')[0] : "-",
+          Tanggal_Lahir: formatDate(m.birthDate),
           Unit_Sekolah: m.unitSekolah?.name || "-",
           Tingkat: subKelas?.tingkat?.name || "-",
           Jurusan: subKelas?.jurusan?.name || "-",
           Rombel: subKelas?.name || "-",
           Alamat: m.address || "-",
           No_Telp_Ortu: m.parentPhone || "-",
-          Status: m.status
+          Status: getStatusText(m.status)
         }
       })
 
@@ -62,7 +92,8 @@ export async function generateBackupData(selectedModules: string[], unitId: stri
           unitSekolah: true
         }
       })
-      backupData["Data_Guru"] = guruData.map((g: any) => ({
+      backupData["Data_Guru"] = guruData.map((g: any, index: number) => ({
+        "No.": index + 1,
         NIP: g.nip || "-",
         Nama_Guru: g.name,
         Email: g.email || "-",
@@ -70,15 +101,16 @@ export async function generateBackupData(selectedModules: string[], unitId: stri
         Bidang_Studi: g.bidangStudi || "-",
         Pendidikan: g.pendidikan || "-",
         Status_Pegawai: g.statusPegawai || "-",
-        Status_Aktif: g.status
+        Status_Aktif: formatBoolean(g.isActive)
       }))
 
-      // Kelas & Master Akademik lainnya (Tingkat, Jurusan, SubKelas)
+      // Kelas & Master Akademik lainnya
       const rombelData = await prisma.subKelas.findMany({
         where: unitFilter,
         include: { unitSekolah: true, tingkat: true, jurusan: true }
       })
-      backupData["Daftar_Rombel"] = rombelData.map((r: any) => ({
+      backupData["Daftar_Rombel"] = rombelData.map((r: any, index: number) => ({
+        "No.": index + 1,
         Nama_Rombel: r.name,
         Tingkat: r.tingkat?.name || "-",
         Jurusan: r.jurusan?.name || "-",
@@ -96,7 +128,8 @@ export async function generateBackupData(selectedModules: string[], unitId: stri
           unitSekolah: true
         }
       })
-      backupData["Bagan_Akun"] = akunData.map((a: any) => ({
+      backupData["Bagan_Akun"] = akunData.map((a: any, index: number) => ({
+        "No.": index + 1,
         Kode_Akun: a.code,
         Nama_Akun: a.name,
         Sub_Klasifikasi: a.subKlasifikasi?.name || "-",
@@ -119,19 +152,20 @@ export async function generateBackupData(selectedModules: string[], unitId: stri
         orderBy: { tanggal: 'asc' }
       })
       
-      // Flatten data to make it readable in Excel
       const transaksiExcel: any[] = []
+      let kasIndex = 1
       transaksiData.forEach((t: any) => {
         t.detail.forEach((d: any) => {
           transaksiExcel.push({
+            "No.": kasIndex++,
             No_Referensi: t.noReferensi,
-            Tanggal: t.tanggal.toISOString().split('T')[0],
+            Tanggal: formatDate(t.tanggal),
             Jenis_Transaksi: t.jenis === "KAS_MASUK" ? "Kas Masuk" : "Kas Keluar",
             Keterangan: t.deskripsi,
             Kode_Akun: d.akun?.kode || "-",
             Nama_Akun: d.akun?.nama || "-",
-            Debit_Rp: d.posisi === "DEBIT" ? d.nilai : 0,
-            Kredit_Rp: d.posisi === "KREDIT" ? d.nilai : 0,
+            Debit: d.posisi === "DEBIT" ? formatRupiah(d.nilai) : formatRupiah(0),
+            Kredit: d.posisi === "KREDIT" ? formatRupiah(d.nilai) : formatRupiah(0),
             Unit_Sekolah: t.unitSekolah?.name || "Global",
             Operator: t.pembuat?.name || "-"
           })
@@ -150,14 +184,15 @@ export async function generateBackupData(selectedModules: string[], unitId: stri
           tahunAkademik: true
         }
       })
-      backupData["Daftar_Tagihan"] = tagihanData.map((t: any) => ({
+      backupData["Daftar_Tagihan"] = tagihanData.map((t: any, index: number) => ({
+        "No.": index + 1,
         Nama_Tagihan: t.akun?.nama || "-",
         Siswa: t.murid?.name || "-",
-        Nominal_Rp: t.jumlah,
-        Sisa_Rp: t.sisaTagihan,
+        Nominal: formatRupiah(t.jumlah),
+        Sisa_Tagihan: formatRupiah(t.sisaTagihan),
         Akun_Tujuan: t.akun?.nama || "-",
         Unit_Sekolah: t.murid?.unitSekolah?.name || "-",
-        Status: t.status
+        Status: getStatusText(t.status)
       }))
 
       // Detail Pembayaran Siswa
@@ -169,13 +204,14 @@ export async function generateBackupData(selectedModules: string[], unitId: stri
         },
         orderBy: { createdAt: 'asc' }
       })
-      backupData["Histori_Pembayaran"] = pembayaranData.map((p: any) => ({
+      backupData["Histori_Pembayaran"] = pembayaranData.map((p: any, index: number) => ({
+        "No.": index + 1,
         No_Referensi: p.transaksi?.noReferensi || "-",
-        Tanggal_Bayar: p.createdAt.toISOString().split('T')[0],
+        Tanggal_Bayar: formatDate(p.createdAt),
         NIS_Siswa: p.tagihan?.murid?.nis || "-",
         Nama_Siswa: p.tagihan?.murid?.name || "-",
         Tagihan: p.tagihan?.akun?.nama || "-",
-        Nominal_Bayar_Rp: p.nilaiPembayaran,
+        Nominal_Bayar: formatRupiah(p.nilaiPembayaran),
         Unit_Sekolah: p.tagihan?.murid?.unitSekolah?.name || "-",
         Operator: p.transaksi?.pembuat?.name || "-"
       }))
@@ -183,22 +219,23 @@ export async function generateBackupData(selectedModules: string[], unitId: stri
 
     // 5. SISTEM & AKSES
     if (selectedModules.includes("sistem")) {
-      // Hanya biarkan Superadmin backup sistem secara Global (mengabaikan filter unit agar tidak bingung)
       const usersData = await prisma.pengguna.findMany({
         include: { unitSekolah: true, divisi: true }
       })
-      backupData["Pengguna_Sistem"] = usersData.map((u: any) => ({
+      backupData["Pengguna_Sistem"] = usersData.map((u: any, index: number) => ({
+        "No.": index + 1,
         Nama: u.name,
         Email: u.email,
         Role: u.role,
         Unit_Tugas: u.unitSekolah?.name || "Global",
         Divisi: u.divisi?.name || "-",
-        Status: u.isActive ? "Aktif" : "Nonaktif",
+        Status: formatBoolean(u.isActive),
         Password_Hash: "[DISENSOR]" // Keamanan
       }))
 
       const unitData = await prisma.unitSekolah.findMany()
-      backupData["Master_Unit_Sekolah"] = unitData.map((u: any) => ({
+      backupData["Master_Unit_Sekolah"] = unitData.map((u: any, index: number) => ({
+        "No.": index + 1,
         Kode_Unit: u.id,
         Nama_Unit: u.name,
         Alamat: u.address || "-",
