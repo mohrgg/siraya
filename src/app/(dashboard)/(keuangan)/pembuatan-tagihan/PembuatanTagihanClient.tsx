@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo, useRef } from "react"
 import { 
   getKelasByUnit, 
   getSubKelasByKelas,
@@ -74,11 +74,15 @@ export default function PembuatanTagihanClient({
   const [gridData, setGridData] = useState<GridRow[]>([])
   const [akunColumns, setAkunColumns] = useState<TagihanColumn[]>([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [targetList, setTargetList] = useState<string[]>([])
 
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSubmittingModal, setIsSubmittingModal] = useState(false)
   const [savingRowId, setSavingRowId] = useState<string | null>(null)
+
+  // Auto Scroll Ref
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   // Header Menu States
   const [activeMenuColId, setActiveMenuColId] = useState<string | null>(null)
@@ -90,6 +94,10 @@ export default function PembuatanTagihanClient({
   // Drag and Drop Global State
   const [globalColumnOrder, setGlobalColumnOrder] = useState<string[]>([])
   const [isEditingMassal, setIsEditingMassal] = useState(false)
+
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   // Delete Massal States
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -337,11 +345,49 @@ export default function PembuatanTagihanClient({
   }
 
   const filteredData = useMemo(() => {
-    return gridData.filter(row => 
+    const res = gridData.filter(row => 
       row.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
       row.formNo.toLowerCase().includes(searchTerm.toLowerCase())
     )
+    return res
   }, [gridData, searchTerm])
+
+  // Pagination Logic
+  const computedTotalPages = Math.ceil(filteredData.length / pageSize)
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize
+    return filteredData.slice(startIndex, startIndex + pageSize)
+  }, [filteredData, currentPage, pageSize])
+
+  // Reset pagination when filter or search changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, subKelasId, kelasId, pageSize])
+
+  // Drag Auto-Scroll Logic
+  const handleDragOverContainer = (e: React.DragEvent) => {
+    e.preventDefault()
+    if (!draggedColumnId || !scrollContainerRef.current) return
+
+    const container = scrollContainerRef.current
+    const rect = container.getBoundingClientRect()
+    
+    // Threshold 30% dari lebar layar agar lebih mudah memicu scroll tanpa harus ke ujung banget
+    const scrollThreshold = rect.width * 0.30
+    const maxScrollSpeed = 25 // Max scroll pixels per frame
+
+    const x = e.clientX - rect.left
+
+    if (x < scrollThreshold) {
+      // Scroll left
+      const speed = maxScrollSpeed * (1 - x / scrollThreshold)
+      container.scrollLeft -= speed
+    } else if (x > rect.width - scrollThreshold) {
+      // Scroll right
+      const speed = maxScrollSpeed * (1 - (rect.width - x) / scrollThreshold)
+      container.scrollLeft += speed
+    }
+  }
 
   const activeSubKelasName = subKelasList.find(s => s.id === subKelasId)?.name || ""
   const activeKelasName = kelasList.find(k => k.id === kelasId)?.name || ""
@@ -427,7 +473,11 @@ export default function PembuatanTagihanClient({
         {/* Table / Empty State Container */}
         {gridData.length > 0 ? (
           <>
-            <div className="overflow-x-auto min-h-[400px]">
+            <div 
+              ref={scrollContainerRef}
+              className="overflow-x-auto min-h-[400px]"
+              onDragOver={handleDragOverContainer}
+            >
               <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
@@ -533,14 +583,14 @@ export default function PembuatanTagihanClient({
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredData.length === 0 ? (
+                  {paginatedData.length === 0 ? (
                     <tr>
                       <td colSpan={4 + akunColumns.length} className="p-8 text-center text-text-muted">
                         Tidak ada data murid yang sesuai pencarian.
                       </td>
                     </tr>
                   ) : (
-                    filteredData.map((row, idx) => {
+                    paginatedData.map((row, idx) => {
                       const rowTotal = akunColumns.reduce((acc, col) => {
                         const isLocked = row.lockedMap && row.lockedMap[col.id]
                         return acc + (isLocked ? 0 : (row.tagihanMap[col.id] || 0))
@@ -549,7 +599,7 @@ export default function PembuatanTagihanClient({
                       return (
                         <tr key={row.id} className={`border-b border-border/50 hover:bg-bg/50 transition-colors ${row.isDirty ? 'bg-amber-50/30' : ''}`}>
                           <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-20 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
-                            {idx + 1}.
+                            {(currentPage - 1) * pageSize + idx + 1}.
                           </td>
                           <td className="p-4 sticky left-12 bg-white z-20 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
                             <p className="font-semibold text-text-main leading-tight truncate max-w-[200px]" title={row.name}>{row.name}</p>
@@ -636,6 +686,46 @@ export default function PembuatanTagihanClient({
                 )}
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {computedTotalPages > 0 && (
+              <div className="pt-4 mt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value))
+                    }}
+                    className="px-3 py-1.5 bg-bg border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/50"
+                  >
+                    {[5, 10, 20, 50, 100].map(size => (
+                      <option key={size} value={size}>{size}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="flex items-center gap-1">
+                  <button 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50 transition-colors"
+                  >
+                    Sebelumnya
+                  </button>
+                  <span className="px-4 py-1.5 text-sm font-medium text-text-main">
+                    Hal {currentPage} dari {computedTotalPages}
+                  </span>
+                  <button 
+                    onClick={() => setCurrentPage(p => Math.min(computedTotalPages, p + 1))}
+                    disabled={currentPage === computedTotalPages}
+                    className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50 transition-colors"
+                  >
+                    Berikutnya
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           !isLoading && (

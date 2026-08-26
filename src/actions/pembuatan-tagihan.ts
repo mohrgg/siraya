@@ -203,6 +203,17 @@ export async function tambahTagihanMassal(data: {
     throw new Error("Tidak ada siswa yang sesuai dengan target pada tahun akademik tersebut")
   }
 
+  // Cari unitSekolahId dari murid pertama
+  const firstMurid = await prisma.murid.findUnique({
+    where: { id: riwayatKelas[0].muridId },
+    select: { unitSekolahId: true }
+  })
+  
+  if (!firstMurid?.unitSekolahId) {
+    throw new Error("Gagal mengidentifikasi Unit Sekolah dari target murid.")
+  }
+  const unitSekolahId = firstMurid.unitSekolahId
+
   // 2. Buat tagihan dengan mengecek kondisi eksisting agar sisa tagihan valid
   let successCount = 0
   
@@ -256,6 +267,57 @@ export async function tambahTagihanMassal(data: {
       modul: "PEMBUATAN_TAGIHAN",
       keterangan: `Generate tagihan massal untuk ${successCount} siswa (Target: ${data.targetType}, Nominal: Rp${jumlah})`
     }
+  })
+
+  // 3. Tambahkan riwayat sinkronisasi tagihanColumnOrder untuk UnitSekolah
+  const unitSekolah = await prisma.unitSekolah.findUnique({
+    where: { id: unitSekolahId },
+    select: { tagihanColumnOrder: true }
+  })
+
+  let currentOrder: string[] = []
+  if (unitSekolah?.tagihanColumnOrder) {
+    try {
+      currentOrder = JSON.parse(unitSekolah.tagihanColumnOrder)
+    } catch(e) {}
+  }
+
+  // Cari semua tagihan unik saat ini untuk merapikan urutan lama (jika ada yang bolong)
+  const allTagihans = await prisma.tagihan.findMany({
+    where: { 
+      tahunAkademikId, 
+      murid: { unitSekolahId }
+    },
+    include: { akun: true }
+  })
+
+  const uniqueCols = new Map<string, string>() // compId -> kode
+  allTagihans.forEach(t => {
+    const cid = `${t.akunId}::${t.namaTagihan}`
+    if (!uniqueCols.has(cid)) {
+      uniqueCols.set(cid, t.akun.kode)
+    }
+  })
+
+  // Cari kolom yang sudah ada di database tapi belum masuk ke currentOrder
+  const missingCols = Array.from(uniqueCols.keys()).filter(cid => !currentOrder.includes(cid))
+  
+  // Urutkan yang missing berdasarkan kode (alphabetical fallback)
+  missingCols.sort((a, b) => uniqueCols.get(a)!.localeCompare(uniqueCols.get(b)!))
+  
+  // Masukkan yang missing ke akhir currentOrder
+  currentOrder.push(...missingCols)
+
+  // Terakhir, pastikan tagihan yang BARU DIBUAT diletakkan di Paling Kanan
+  const newCompId = `${akunId}::${namaTagihan}`
+  
+  currentOrder = currentOrder.filter(cid => cid !== newCompId)
+  currentOrder.push(newCompId)
+
+  // Simpan ulang ke database
+  await prisma.unitSekolah.update({
+    where: { id: unitSekolahId },
+    data: { tagihanColumnOrder: JSON.stringify(currentOrder) }
   })
 
   revalidatePath("/pembuatan-tagihan")
