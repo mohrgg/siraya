@@ -89,22 +89,22 @@ export function PrintSignatureHtml({
     if (!signer) return <div className="w-48"></div> // Placeholder
     return (
       <div className="flex flex-col items-center text-sm w-64">
-        <p className="mb-1 h-5">{showDate ? `${kotaPenandatangan}, ${dateStr}` : ""}</p>
-        <p className="mb-12">{signer.jabatan}</p>
+        <p className="mb-0.5 h-5">{showDate ? `${kotaPenandatangan}, ${dateStr}` : ""}</p>
+        <p className="mb-8">{signer.jabatan}</p>
         <p className="font-bold underline underline-offset-4">{signer.nama}</p>
       </div>
     )
   }
 
   return (
-    <div className="mt-6 break-inside-avoid">
+    <div className="mt-2 break-inside-avoid">
       <div className="flex justify-between items-start w-full px-8">
         {renderSigner(penandatanganKiri, false)}
         {renderSigner(penandatanganKanan, true)}
       </div>
       
       {/* Footer / Notes */}
-      <div className="mt-8 pt-4 border-t border-slate-300 text-center text-[10px] text-slate-500 italic">
+      <div className="mt-4 pt-2 border-t border-slate-300 text-center text-[10px] text-slate-500 italic">
         <p>Dicetak melalui Sistem Informasi Siraya pada {new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} WIB</p>
       </div>
     </div>
@@ -178,7 +178,7 @@ export function TableReportHtml({
         </tfoot>
       </table>
 
-      <div className="mt-8 mb-4" style={{ pageBreakInside: 'avoid' }}>
+      <div className="mt-4 mb-2" style={{ pageBreakInside: 'avoid' }}>
         <PrintSignatureHtml 
           kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
           tanggalCetak={tanggalCetak}
@@ -289,7 +289,7 @@ export function ResiHtml({
         </tfoot>
       </table>
 
-      <div className="mt-8 mb-4" style={{ pageBreakInside: 'avoid' }}>
+      <div className="mt-4 mb-2" style={{ pageBreakInside: 'avoid' }}>
         <PrintSignatureHtml 
           kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
           tanggalCetak={tanggal}
@@ -386,7 +386,7 @@ export function JurnalHtml({
         </tfoot>
       </table>
 
-      <div className="mt-8 mb-4" style={{ pageBreakInside: 'avoid' }}>
+      <div className="mt-4 mb-2" style={{ pageBreakInside: 'avoid' }}>
         <PrintSignatureHtml 
           kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
           tanggalCetak={tanggal}
@@ -514,7 +514,7 @@ export function IncomeStatementHtml({
         </tfoot>
       </table>
 
-      <div className="mt-8 mb-4" style={{ pageBreakInside: 'avoid' }}>
+      <div className="mt-4 mb-2" style={{ pageBreakInside: 'avoid' }}>
         <PrintSignatureHtml 
           kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
           tanggalCetak={tanggalCetak}
@@ -586,7 +586,7 @@ export function MutasiBankHtml({ data, institutionInfo, dateRangeStr, accountNam
         </tfoot>
       </table>
 
-      <div className="mt-8 mb-4" style={{ pageBreakInside: 'avoid' }}>
+      <div className="mt-4 mb-2" style={{ pageBreakInside: 'avoid' }}>
         <PrintSignatureHtml 
           kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
           tanggalCetak={tanggalCetak}
