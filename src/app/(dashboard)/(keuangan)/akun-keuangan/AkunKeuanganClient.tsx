@@ -14,7 +14,7 @@ import toast from "react-hot-toast"
 
 type Klasifikasi = { id: string, kode: string, nama: string }
 type SubKlasifikasi = { id: string, kode: string, nama: string, klasifikasiAkunId: string, klasifikasi?: Klasifikasi, _count?: { akunDetail: number } }
-type AkunDetail = { id: string, kode: string, nama: string, subKlasifikasiAkunId: string, unitSekolahId: string | null, isKasBank: boolean, isActive: boolean, subKlasifikasi?: SubKlasifikasi, unitSekolah?: { id: string, name: string } | null }
+type AkunDetail = { id: string, kode: string, nama: string, subKlasifikasiAkunId: string, unitSekolahId: string | null, isKasBank: boolean, isSPP: boolean, isActive: boolean, subKlasifikasi?: SubKlasifikasi, unitSekolah?: { id: string, name: string } | null }
 
 export default function AkunKeuanganClient({ 
   initialKlasifikasi, 
@@ -57,7 +57,7 @@ export default function AkunKeuanganClient({
 
   // Form States
   const [subKlasForm, setSubKlasForm] = useState({ id: "", kode: "", nama: "", klasifikasiAkunId: klasifikasi[0]?.id || "" })
-  const [akunForm, setAkunForm] = useState({ id: "", kode: "", nama: "", subKlasifikasiAkunId: subKlasifikasi[0]?.id || "", unitSekolahId: activeUnitId || "", isKasBank: false, isActive: true })
+  const [akunForm, setAkunForm] = useState({ id: "", kode: "", nama: "", subKlasifikasiAkunId: subKlasifikasi[0]?.id || "", unitSekolahId: activeUnitId || "", isKasBank: false, isSPP: false, isActive: true })
 
   // Delete States
   const [deleteSubKlasId, setDeleteSubKlasId] = useState<string | null>(null)
@@ -164,6 +164,7 @@ export default function AkunKeuanganClient({
       subKlasifikasiAkunId: item.subKlasifikasiAkunId,
       unitSekolahId: item.unitSekolahId || "",
       isKasBank: item.isKasBank,
+      isSPP: item.isSPP,
       isActive: item.isActive
     })
     setIsAkunDrawerOpen(true)
@@ -329,6 +330,14 @@ export default function AkunKeuanganClient({
               </div>
             </label>
             
+            <label className="flex items-center gap-3 cursor-pointer p-3 border border-border rounded-xl hover:bg-bg transition-colors">
+              <input type="checkbox" checked={akunForm.isSPP} onChange={e => setAkunForm({ ...akunForm, isSPP: e.target.checked })} className="w-4 h-4 accent-primary" />
+              <div>
+                <span className="text-sm font-semibold text-text-main block">Kategori Tagihan Bulanan (SPP)</span>
+                <span className="text-xs text-text-muted">Centang jika tagihan akun ini rutin per bulan dan akan dikelompokkan secara matriks.</span>
+              </div>
+            </label>
+            
             {akunForm.id && (
               <label className="flex items-center gap-3 cursor-pointer p-3 border border-border rounded-xl hover:bg-bg transition-colors">
                 <input type="checkbox" checked={akunForm.isActive} onChange={e => setAkunForm({ ...akunForm, isActive: e.target.checked })} className="w-4 h-4 accent-albas-green" />
@@ -402,7 +411,7 @@ export default function AkunKeuanganClient({
               {!isReadOnly && activeTab === 'AKUN' && (
                 <Button onClick={() => {
                   const defaultSubId = subKlasifikasi[0]?.id || ""
-                  setAkunForm({ id: "", kode: generateAkunKode(defaultSubId, akunDetail), nama: "", subKlasifikasiAkunId: defaultSubId, unitSekolahId: activeUnitId || "", isKasBank: false, isActive: true })
+                  setAkunForm({ id: "", kode: generateAkunKode(defaultSubId, akunDetail), nama: "", subKlasifikasiAkunId: defaultSubId, unitSekolahId: activeUnitId || "", isKasBank: false, isSPP: false, isActive: true })
                   setIsAkunDrawerOpen(true)
                 }} className="shrink-0">
                   <Plus size={16} className="mr-1.5"/> Tambah Akun

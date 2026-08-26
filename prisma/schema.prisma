@@ -309,6 +309,7 @@ model AkunDetail {
   unitSekolahId String
 
   isKasBank Boolean @default(false)
+  isSPP     Boolean @default(false)
   isActive  Boolean @default(true)
 
   subKlasifikasi  SubKlasifikasiAkun @relation(fields: [subKlasifikasiAkunId], references: [id], onDelete: Restrict)

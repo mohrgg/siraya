@@ -225,14 +225,21 @@ export default function PembuatanTagihanClient({
     targetType: "tingkat" | "kelas" | "murid",
     tingkatId?: string,
     subKelasId?: string,
-    muridIds?: string[]
+    muridIds?: string[],
+    isSPP?: boolean,
+    sppMonths?: string[],
+    sppYear?: string
   }) => {
     setIsSubmittingModal(true)
     try {
+      const isSPP = data.isSPP
+      const tagihans = isSPP && data.sppMonths ? data.sppMonths.map(m => `SPP ${m} ${data.sppYear}`) : undefined
+
       await tambahTagihanMassal({
         tahunAkademikId: activeTahunAkademikId,
         akunId: data.akunId,
-        namaTagihan: data.namaTagihan,
+        namaTagihan: isSPP ? undefined : data.namaTagihan,
+        namaTagihans: tagihans,
         jumlah: data.jumlah,
         targetType: data.targetType,
         tingkatId: data.tingkatId,

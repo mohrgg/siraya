@@ -126,9 +126,12 @@ export async function getLaporanTunggakanSiswa(filterUnitId?: string, filterTing
   return filteredTagihan.map(t => ({
     id: t.id,
     tanggalBuat: t.createdAt.toISOString(),
+    muridId: t.muridId,
     nis: t.murid.nis,
     namaSiswa: t.murid.name,
-    namaTagihan: t.akun.nama,
+    kategori: t.akun.nama,
+    isSPP: t.akun.isSPP,
+    deskripsiTagihan: t.namaTagihan,
     unitSekolah: t.murid.unitSekolah.name,
     rombel: t.murid.riwayatKelas?.[0]?.subKelas?.name || "-",
     nominal: t.jumlah,

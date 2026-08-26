@@ -208,3 +208,36 @@ export async function exportMutasiBankPdf(data: any) {
     throw error
   }
 }
+
+export async function exportTunggakanMatriksPdf(data: any) {
+  const payload = {
+    type: 'tunggakan-matriks',
+    data: {
+      ...data,
+      config: { orientation: 'landscape', format: 'A4' }
+    }
+  }
+
+  try {
+    const response = await fetch('/api/pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+
+    if (!response.ok) throw new Error(`Gagal mengekspor PDF: ${response.statusText}`)
+
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = data.filename || `Laporan_Tunggakan.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    setTimeout(() => URL.revokeObjectURL(url), 100)
+  } catch (error) {
+    console.error("Export PDF error:", error)
+    throw error
+  }
+}

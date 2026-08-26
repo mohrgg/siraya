@@ -606,3 +606,106 @@ export function MutasiBankHtml({ data, institutionInfo, dateRangeStr, accountNam
     </div>
   )
 }
+
+// ============================================================================
+// 7. KOMPONEN LAPORAN TUNGGAKAN MATRIKS
+// ============================================================================
+export interface TunggakanMatriksHtmlProps {
+  institutionInfo: PdfInstitutionInfo
+  title: string
+  subtitle: string
+  data: any[]
+  dynamicCategories: string[]
+  tanggalCetak: string | Date
+  penandatanganKiri?: { jabatan: string; nama: string }
+  penandatanganKanan?: { jabatan: string; nama: string }
+  config?: any
+}
+
+export function TunggakanMatriksHtml({
+  institutionInfo,
+  title,
+  subtitle,
+  data,
+  dynamicCategories,
+  tanggalCetak,
+  penandatanganKiri,
+  penandatanganKanan
+}: TunggakanMatriksHtmlProps) {
+  const formatRp = (val: number) => new Intl.NumberFormat('id-ID').format(val || 0)
+
+  return (
+    <div className="font-sans text-slate-900 bg-white min-h-screen">
+      <PrintHeaderHtml institutionInfo={institutionInfo} />
+
+      <div className="text-center mb-4 mt-2">
+        <h2 className="text-sm font-bold uppercase tracking-widest">{title}</h2>
+        <p className="text-[10px] text-slate-600 font-medium">{subtitle}</p>
+      </div>
+
+      <table className="w-full text-left text-[9px] border-collapse mt-2">
+        <thead>
+          <tr className="bg-slate-100 border-y border-slate-400">
+            <th className="py-2 px-2 text-center font-bold border-x border-slate-300" rowSpan={2}>NO</th>
+            <th className="py-2 px-2 font-bold border-x border-slate-300" rowSpan={2}>NIS</th>
+            <th className="py-2 px-2 font-bold border-x border-slate-300" rowSpan={2}>NAMA SISWA</th>
+            <th className="py-2 px-2 font-bold border-x border-slate-300" rowSpan={2}>ROMBEL</th>
+            <th className="py-1 px-2 text-center font-bold border-x border-slate-300" colSpan={3}>SPP</th>
+            {dynamicCategories.length > 0 && (
+              <th className="py-1 px-2 text-center font-bold border-x border-slate-300" colSpan={dynamicCategories.length}>TAGIHAN LAINNYA</th>
+            )}
+            <th className="py-2 px-2 text-right font-bold border-x border-slate-300" rowSpan={2}>TOTAL</th>
+          </tr>
+          <tr className="bg-slate-50 border-b border-slate-400">
+            <th className="py-1 px-2 text-center font-medium border-x border-slate-300">Bulan</th>
+            <th className="py-1 px-2 text-center font-medium border-x border-slate-300">Jml</th>
+            <th className="py-1 px-2 text-right font-medium border-x border-slate-300">Nilai SPP</th>
+            {dynamicCategories.map(cat => (
+              <th key={cat} className="py-1 px-2 text-right font-medium border-x border-slate-300">{cat}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-200">
+          {data.map((item, idx) => (
+            <tr key={idx} className="hover:bg-slate-50">
+              <td className="py-1.5 px-2 text-center border-x border-slate-200">{idx + 1}</td>
+              <td className="py-1.5 px-2 font-mono text-[8px] border-x border-slate-200">{item.nis}</td>
+              <td className="py-1.5 px-2 font-semibold border-x border-slate-200">{item.namaSiswa}</td>
+              <td className="py-1.5 px-2 border-x border-slate-200">{item.rombel}</td>
+              <td className="py-1.5 px-2 text-center border-x border-slate-200 truncate max-w-[80px]" title={item.sppMonthString}>{item.sppMonthString}</td>
+              <td className="py-1.5 px-2 text-center border-x border-slate-200">{item.sppCount || "-"}</td>
+              <td className="py-1.5 px-2 text-right border-x border-slate-200">{item.sppAmount ? formatRp(item.sppAmount) : "-"}</td>
+              {dynamicCategories.map(cat => (
+                <td key={cat} className="py-1.5 px-2 text-right border-x border-slate-200">
+                  {item.categories[cat] ? formatRp(item.categories[cat]) : "-"}
+                </td>
+              ))}
+              <td className="py-1.5 px-2 text-right font-bold border-x border-slate-200">{formatRp(item.totalTunggakan)}</td>
+            </tr>
+          ))}
+          {/* Totals Row */}
+          <tr className="bg-slate-100 border-y border-slate-400 font-bold">
+            <td colSpan={4} className="py-2 px-2 text-right border-x border-slate-300">TOTAL KESELURUHAN</td>
+            <td colSpan={2} className="border-x border-slate-300"></td>
+            <td className="py-2 px-2 text-right border-x border-slate-300">{formatRp(data.reduce((acc, curr) => acc + curr.sppAmount, 0))}</td>
+            {dynamicCategories.map(cat => (
+              <td key={cat} className="py-2 px-2 text-right border-x border-slate-300">
+                {formatRp(data.reduce((acc, curr) => acc + (curr.categories[cat] || 0), 0))}
+              </td>
+            ))}
+            <td className="py-2 px-2 text-right border-x border-slate-300">{formatRp(data.reduce((acc, curr) => acc + curr.totalTunggakan, 0))}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div className="mt-4 mb-2" style={{ pageBreakInside: 'avoid' }}>
+        <PrintSignatureHtml 
+          kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
+          tanggalCetak={tanggalCetak}
+          penandatanganKiri={penandatanganKiri}
+          penandatanganKanan={penandatanganKanan}
+        />
+      </div>
+    </div>
+  )
+}

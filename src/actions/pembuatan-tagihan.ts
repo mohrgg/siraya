@@ -163,7 +163,8 @@ export async function getMuridWithTagihan(subKelasId: string, tahunAkademikId: s
 export async function tambahTagihanMassal(data: {
   tahunAkademikId: string
   akunId: string
-  namaTagihan: string
+  namaTagihan?: string
+  namaTagihans?: string[]
   jumlah: number
   targetType: "tingkat" | "kelas" | "murid"
   tingkatId?: string
@@ -175,7 +176,9 @@ export async function tambahTagihanMassal(data: {
     throw new Error("Akses ditolak.")
   }
 
-  const { tahunAkademikId, akunId, namaTagihan, jumlah } = data
+  const { tahunAkademikId, akunId, jumlah } = data
+  const tagihanNames = data.namaTagihans || (data.namaTagihan ? [data.namaTagihan] : [])
+  if (tagihanNames.length === 0) throw new Error("Nama tagihan tidak boleh kosong")
 
   // 1. Cari semua murid sesuai target
   let riwayatKelas: { muridId: string }[] = []
@@ -219,44 +222,46 @@ export async function tambahTagihanMassal(data: {
   
   await prisma.$transaction(async (tx) => {
     for (const rk of riwayatKelas) {
-      const existing = await tx.tagihan.findUnique({
-        where: {
-          muridId_akunId_tahunAkademikId_namaTagihan: {
-            muridId: rk.muridId,
-            akunId: akunId,
-            tahunAkademikId: tahunAkademikId,
-            namaTagihan: namaTagihan
+      for (const tName of tagihanNames) {
+        const existing = await tx.tagihan.findUnique({
+          where: {
+            muridId_akunId_tahunAkademikId_namaTagihan: {
+              muridId: rk.muridId,
+              akunId: akunId,
+              tahunAkademikId: tahunAkademikId,
+              namaTagihan: tName
+            }
           }
+        })
+
+        if (existing) {
+          const totalTelahDibayar = existing.jumlah - existing.sisaTagihan
+          const sisaTagihanBaru = Math.max(0, jumlah - totalTelahDibayar)
+          const statusBaru = sisaTagihanBaru <= 0 ? "LUNAS" : (sisaTagihanBaru < jumlah ? "SEBAGIAN" : "BELUM_LUNAS")
+
+          await tx.tagihan.update({
+            where: { id: existing.id },
+            data: {
+              jumlah: jumlah,
+              sisaTagihan: sisaTagihanBaru,
+              status: statusBaru
+            }
+          })
+        } else {
+          await tx.tagihan.create({
+            data: {
+              muridId: rk.muridId,
+              akunId: akunId,
+              tahunAkademikId: tahunAkademikId,
+              namaTagihan: tName,
+              jumlah: jumlah,
+              sisaTagihan: jumlah,
+              status: "BELUM_LUNAS"
+            }
+          })
         }
-      })
-
-      if (existing) {
-        const totalTelahDibayar = existing.jumlah - existing.sisaTagihan
-        const sisaTagihanBaru = Math.max(0, jumlah - totalTelahDibayar)
-        const statusBaru = sisaTagihanBaru <= 0 ? "LUNAS" : (sisaTagihanBaru < jumlah ? "SEBAGIAN" : "BELUM_LUNAS")
-
-        await tx.tagihan.update({
-          where: { id: existing.id },
-          data: {
-            jumlah: jumlah,
-            sisaTagihan: sisaTagihanBaru,
-            status: statusBaru
-          }
-        })
-      } else {
-        await tx.tagihan.create({
-          data: {
-            muridId: rk.muridId,
-            akunId: akunId,
-            tahunAkademikId: tahunAkademikId,
-            namaTagihan: namaTagihan,
-            jumlah: jumlah,
-            sisaTagihan: jumlah,
-            status: jumlah > 0 ? "BELUM_LUNAS" : "LUNAS"
-          }
-        })
+        successCount++
       }
-      successCount++
     }
   })
 
@@ -309,10 +314,11 @@ export async function tambahTagihanMassal(data: {
   currentOrder.push(...missingCols)
 
   // Terakhir, pastikan tagihan yang BARU DIBUAT diletakkan di Paling Kanan
-  const newCompId = `${akunId}::${namaTagihan}`
-  
-  currentOrder = currentOrder.filter(cid => cid !== newCompId)
-  currentOrder.push(newCompId)
+  tagihanNames.forEach(tName => {
+    const newCompId = `${akunId}::${tName}`
+    currentOrder = currentOrder.filter(cid => cid !== newCompId)
+    currentOrder.push(newCompId)
+  })
 
   // Simpan ulang ke database
   await prisma.unitSekolah.update({

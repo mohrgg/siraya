@@ -5,7 +5,7 @@ import { getLaporanTunggakanSiswa } from "@/actions/laporan"
 import { ArrowLeft, Search, Download, Printer, RefreshCw, FileText, FileSpreadsheet, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { exportToExcel } from "@/lib/excel"
-import { exportTablePdf } from "@/lib/pdf"
+import { exportTunggakanMatriksPdf } from "@/lib/pdf"
 import { buildInstitutionInfo } from "@/lib/pdf-helpers"
 import { Input } from "@/components/ui/Input"
 import { useRouter } from "next/navigation"
@@ -51,101 +51,125 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
     return data.filter(item => 
       (item.namaSiswa || "").toLowerCase().includes(lower) ||
       (item.nis || "").toLowerCase().includes(lower) ||
-      (item.namaTagihan || "").toLowerCase().includes(lower) ||
+      (item.deskripsiTagihan || "").toLowerCase().includes(lower) ||
       (item.rombel || "").toLowerCase().includes(lower)
     )
   }, [data, searchTerm])
 
-  const totalPages = Math.ceil(filteredData.length / pageSize)
-  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const { rows: matrixRows, categories: dynamicCategories } = useMemo(() => {
+    const studentMap = new Map<string, any>()
+    const categorySet = new Set<string>()
+
+    const MONTH_NAMES = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember", "Jan", "Feb", "Mar", "Apr", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"]
+
+    const extractMonth = (text: string) => {
+      for (const month of MONTH_NAMES) {
+        if (new RegExp(`\\b${month}\\b`, 'i').test(text)) {
+          return month
+        }
+      }
+      return text
+    }
+
+    filteredData.forEach(item => {
+      if (!studentMap.has(item.muridId)) {
+        studentMap.set(item.muridId, {
+          muridId: item.muridId,
+          nis: item.nis || "-",
+          namaSiswa: item.namaSiswa,
+          rombel: item.rombel,
+          sppMonths: [],
+          sppAmount: 0,
+          categories: {} as Record<string, number>,
+          totalTunggakan: 0
+        })
+      }
+
+      const student = studentMap.get(item.muridId)
+      
+      if (item.isSPP) {
+        const month = extractMonth(item.deskripsiTagihan || item.kategori || "")
+        if (!student.sppMonths.includes(month)) {
+          student.sppMonths.push(month)
+        }
+        student.sppAmount += item.sisa
+        student.totalTunggakan += item.sisa
+      } else {
+        const kat = item.kategori || "Lainnya"
+        categorySet.add(kat)
+        if (!student.categories[kat]) student.categories[kat] = 0
+        student.categories[kat] += item.sisa
+        student.totalTunggakan += item.sisa
+      }
+    })
+
+    const categories = Array.from(categorySet).sort()
+
+    const rows = Array.from(studentMap.values()).map(s => ({
+      ...s,
+      sppMonthString: s.sppMonths.join("/") || "-",
+      sppCount: s.sppMonths.length
+    }))
+
+    return { rows, categories }
+  }, [filteredData])
+
+  const totalPages = Math.ceil(matrixRows.length / pageSize)
+  const paginatedData = matrixRows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   const handlePrint = () => {
     window.print()
   }
 
   const handleExportExcel = () => {
-    if (filteredData.length === 0) return
+    if (matrixRows.length === 0) return
     const filename = `Laporan_Tunggakan_${unitName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`
     
-    // Flatten data for Excel
-    const excelData = filteredData.map((item, idx) => ({
-      "No": idx + 1,
-      "Tanggal Buat": new Date(item.tanggalBuat).toLocaleDateString("id-ID"),
-      "NIS": item.nis || "-",
-      "Nama Siswa": item.namaSiswa,
-      "Nama Tagihan": item.namaTagihan,
-      "Unit Sekolah": item.unitSekolah,
-      "Rombel": item.rombel,
-      "Nominal (Rp)": item.nominal,
-      "Dibayar (Rp)": item.dibayar,
-      "Sisa Tunggakan (Rp)": item.sisa
-    }))
-
-    // Add totals row
-    excelData.push({} as any)
-    excelData.push({
-      "No": "",
-      "Tanggal Buat": "",
-      "NIS": "",
-      "Nama Siswa": "TOTAL KESELURUHAN",
-      "Nama Tagihan": "",
-      "Unit Sekolah": "",
-      "Rombel": "",
-      "Nominal (Rp)": filteredData.reduce((acc, curr) => acc + curr.nominal, 0),
-      "Dibayar (Rp)": filteredData.reduce((acc, curr) => acc + curr.dibayar, 0),
-      "Sisa Tunggakan (Rp)": filteredData.reduce((acc, curr) => acc + curr.sisa, 0)
-    } as any)
+    const excelData = matrixRows.map((item, idx) => {
+      const row: any = {
+        "No": idx + 1,
+        "NIS": item.nis,
+        "Nama Siswa": item.namaSiswa,
+        "Rombel": item.rombel,
+        "Bulan (SPP)": item.sppMonthString,
+        "Jml Bln": item.sppCount,
+        "Nilai SPP": item.sppAmount,
+      }
+      dynamicCategories.forEach(cat => {
+        row[cat] = item.categories[cat] || 0
+      })
+      row["Total Tunggakan"] = item.totalTunggakan
+      return row
+    })
 
     const unitObjForKop = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
     exportToExcel(excelData, filename, {
-      title: "Laporan Tunggakan Siswa",
+      title: "Laporan Tunggakan Siswa (Matriks)",
       unitInfo: unitObjForKop || { name: pengaturan?.namaYayasan || "Yayasan Siraya" }
     })
     toast.success("Excel berhasil diunduh")
   }
 
   const handleExportPdf = () => {
-    if (filteredData.length === 0) return
+    if (matrixRows.length === 0) return
     
     const filename = `Laporan_Tunggakan_${unitName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`
 
-    // Construct table data
-    const tableData = filteredData.map((item, idx) => [
-      (idx + 1).toString(),
-      new Date(item.tanggalBuat).toLocaleDateString("id-ID"),
-      item.nis || "-",
-      item.namaSiswa,
-      item.namaTagihan,
-      item.unitSekolah,
-      item.rombel,
-      new Intl.NumberFormat("id-ID").format(item.nominal),
-      new Intl.NumberFormat("id-ID").format(item.dibayar),
-      new Intl.NumberFormat("id-ID").format(item.sisa)
-    ])
-
-    // Add totals row
-    tableData.push([
-      "", "", "", "TOTAL KESELURUHAN", "", "", "",
-      new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.nominal, 0)),
-      new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.dibayar, 0)),
-      new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.sisa, 0))
-    ])
-
     const activeUnit = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
 
-    exportTablePdf({
+    exportTunggakanMatriksPdf({
       institutionInfo: buildInstitutionInfo(pengaturan, activeUnit),
       title: "LAPORAN TUNGGAKAN SISWA",
       subtitle: `Per Tanggal: ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}`,
-      headers: ["No", "Tanggal", "NIS", "Nama Siswa", "Tagihan", "Unit", "Rombel", "Nominal (Rp)", "Dibayar (Rp)", "Sisa (Rp)"],
-      data: tableData,
+      data: matrixRows,
+      dynamicCategories,
       filename,
-      config: { orientation: 'landscape' },
+      tanggalCetak: new Date(),
       penandatanganKiri: { jabatan: "Mengetahui,", nama: activeUnit?.namaKepalaSekolah || "____________________" },
       penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
     })
     
-    toast.success("PDF berhasil diunduh")
+    toast.success("Memproses PDF...")
   }
 
   return (
@@ -264,7 +288,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
           <div className="relative z-10">
             <div className="text-sm font-semibold text-rose-500 uppercase tracking-wider mb-1">Sisa Tunggakan</div>
             <div className="text-2xl font-black text-rose-700">
-              Rp {new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.sisa, 0))}
+              Rp {new Intl.NumberFormat("id-ID").format(matrixRows.reduce((acc, curr) => acc + curr.totalTunggakan, 0))}
             </div>
           </div>
         </div>
@@ -305,48 +329,78 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
+              <table className="w-full text-left text-sm border-collapse whitespace-nowrap">
                 <thead>
-                  <tr className="border-b-2 border-gray-200 text-gray-500 text-xs uppercase tracking-wider">
-                    <th className="p-3 font-semibold text-center w-12">NO</th>
-                    <th className="p-3 font-semibold">TANGGAL BUAT</th>
-                    <th className="p-3 font-semibold">NIS</th>
-                    <th className="p-3 font-semibold">NAMA SISWA</th>
-                    <th className="p-3 font-semibold">NAMA TAGIHAN</th>
-                    <th className="p-3 font-semibold">UNIT SEKOLAH</th>
-                    <th className="p-3 font-semibold">ROMBEL</th>
-                    <th className="p-3 font-semibold text-right">NOMINAL</th>
-                    <th className="p-3 font-semibold text-right">DIBAYAR</th>
-                    <th className="p-3 font-semibold text-right">SISA</th>
+                  <tr className="border-b-2 border-gray-200 text-gray-500 text-xs uppercase tracking-wider bg-bg/50">
+                    <th className="p-3 font-semibold text-center w-12 border-r border-border/50" rowSpan={2}>NO</th>
+                    <th className="p-3 font-semibold border-r border-border/50" rowSpan={2}>NIS</th>
+                    <th className="p-3 font-semibold border-r border-border/50 min-w-[200px]" rowSpan={2}>NAMA SISWA</th>
+                    <th className="p-3 font-semibold border-r border-border/50" rowSpan={2}>ROMBEL</th>
+                    <th className="p-3 font-semibold text-center border-r border-border/50 bg-primary/5 text-primary" colSpan={3}>SPP</th>
+                    {dynamicCategories.length > 0 && (
+                      <th className="p-3 font-semibold text-center border-r border-border/50" colSpan={dynamicCategories.length}>TAGIHAN LAINNYA</th>
+                    )}
+                    <th className="p-3 font-semibold text-right text-rose-600" rowSpan={2}>TOTAL TUNGGAKAN</th>
+                  </tr>
+                  <tr className="border-b border-gray-200 text-gray-500 text-xs uppercase tracking-wider bg-bg/30">
+                    <th className="p-2 text-center font-medium border-r border-border/50 text-primary/80">Bulan</th>
+                    <th className="p-2 text-center font-medium border-r border-border/50 text-primary/80">Jml Bln</th>
+                    <th className="p-2 text-right font-medium border-r border-border/50 text-primary/80">Nilai SPP</th>
+                    {dynamicCategories.map(cat => (
+                      <th key={cat} className="p-2 text-right font-medium border-r border-border/50">{cat}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {paginatedData.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="py-12 text-center text-gray-500 italic">
+                      <td colSpan={8 + dynamicCategories.length} className="py-12 text-center text-gray-500 italic">
                         Tidak ada data tunggakan.
                       </td>
                     </tr>
                   ) : (
-                    paginatedData.map((item, idx) => {
+                    <>
+                    {paginatedData.map((item, idx) => {
                       const absoluteIdx = (currentPage - 1) * pageSize + idx + 1
                       return (
-                        <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="p-3 text-center">{absoluteIdx}</td>
-                          <td className="p-3 font-mono text-xs text-gray-500">
-                            {new Date(item.tanggalBuat).toLocaleDateString("id-ID")}
+                        <tr key={item.muridId} className="hover:bg-gray-50/50 transition-colors group">
+                          <td className="p-3 text-center border-r border-border/50">{absoluteIdx}</td>
+                          <td className="p-3 font-mono font-medium border-r border-border/50">{item.nis}</td>
+                          <td className="p-3 font-bold text-gray-700 border-r border-border/50">{item.namaSiswa}</td>
+                          <td className="p-3 text-gray-600 border-r border-border/50">{item.rombel}</td>
+                          <td className="p-3 text-center text-xs text-primary/80 border-r border-border/50 max-w-[150px] truncate" title={item.sppMonthString}>{item.sppMonthString}</td>
+                          <td className="p-3 text-center font-mono border-r border-border/50">{item.sppCount || "-"}</td>
+                          <td className="p-3 text-right font-mono text-primary font-medium border-r border-border/50">{item.sppAmount ? new Intl.NumberFormat("id-ID").format(item.sppAmount) : "-"}</td>
+                          
+                          {dynamicCategories.map(cat => (
+                            <td key={cat} className="p-3 text-right font-mono text-gray-600 border-r border-border/50">
+                              {item.categories[cat] ? new Intl.NumberFormat("id-ID").format(item.categories[cat]) : "-"}
+                            </td>
+                          ))}
+                          
+                          <td className="p-3 text-right font-mono font-bold text-rose-600 bg-rose-50/30 group-hover:bg-rose-50/50">
+                            {new Intl.NumberFormat("id-ID").format(item.totalTunggakan)}
                           </td>
-                          <td className="p-3 font-mono font-medium">{item.nis || "-"}</td>
-                          <td className="p-3 font-bold text-gray-700">{item.namaSiswa}</td>
-                          <td className="p-3 text-gray-600">{item.namaTagihan}</td>
-                          <td className="p-3 text-gray-600">{item.unitSekolah}</td>
-                          <td className="p-3 text-gray-600">{item.rombel}</td>
-                          <td className="p-3 text-right font-mono">{new Intl.NumberFormat("id-ID").format(item.nominal)}</td>
-                          <td className="p-3 text-right font-mono text-emerald-600">{new Intl.NumberFormat("id-ID").format(item.dibayar)}</td>
-                          <td className="p-3 text-right font-mono font-bold text-rose-600">{new Intl.NumberFormat("id-ID").format(item.sisa)}</td>
                         </tr>
                       )
-                    })
+                    })}
+                    {/* Totals Row */}
+                    <tr className="bg-gray-100 font-bold text-gray-800">
+                      <td colSpan={4} className="p-3 text-right border-r border-border/50">TOTAL KESELURUHAN</td>
+                      <td colSpan={2} className="border-r border-border/50"></td>
+                      <td className="p-3 text-right text-primary border-r border-border/50">
+                        {new Intl.NumberFormat("id-ID").format(matrixRows.reduce((acc, curr) => acc + curr.sppAmount, 0))}
+                      </td>
+                      {dynamicCategories.map(cat => (
+                        <td key={`total-${cat}`} className="p-3 text-right border-r border-border/50">
+                          {new Intl.NumberFormat("id-ID").format(matrixRows.reduce((acc, curr) => acc + (curr.categories[cat] || 0), 0))}
+                        </td>
+                      ))}
+                      <td className="p-3 text-right text-rose-700">
+                        Rp {new Intl.NumberFormat("id-ID").format(matrixRows.reduce((acc, curr) => acc + curr.totalTunggakan, 0))}
+                      </td>
+                    </tr>
+                    </>
                   )}
                 </tbody>
               </table>

@@ -197,7 +197,7 @@ export async function getAkunDetail(unitId?: string) {
   })
 }
 
-export async function tambahAkunDetail(data: { kode: string, nama: string, subKlasifikasiAkunId: string, unitSekolahId?: string, isKasBank: boolean, isActive: boolean }) {
+export async function tambahAkunDetail(data: { kode: string, nama: string, subKlasifikasiAkunId: string, unitSekolahId?: string, isKasBank: boolean, isSPP?: boolean, isActive: boolean }) {
   const tenant = await getTenantContext()
   if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
 
@@ -221,6 +221,7 @@ export async function tambahAkunDetail(data: { kode: string, nama: string, subKl
       subKlasifikasiAkunId: data.subKlasifikasiAkunId,
       unitSekolahId: targetUnitId,
       isKasBank: data.isKasBank,
+      isSPP: data.isSPP || false,
       isActive: data.isActive
     } 
   })
@@ -238,7 +239,7 @@ export async function tambahAkunDetail(data: { kode: string, nama: string, subKl
   return result
 }
 
-export async function editAkunDetail(id: string, data: { kode?: string, nama?: string, subKlasifikasiAkunId?: string, unitSekolahId?: string, isKasBank?: boolean, isActive?: boolean }) {
+export async function editAkunDetail(id: string, data: { kode?: string, nama?: string, subKlasifikasiAkunId?: string, unitSekolahId?: string, isKasBank?: boolean, isSPP?: boolean, isActive?: boolean }) {
   const tenant = await getTenantContext()
   if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
 
@@ -265,6 +266,7 @@ export async function editAkunDetail(id: string, data: { kode?: string, nama?: s
       nama: data.nama,
       subKlasifikasiAkunId: data.subKlasifikasiAkunId,
       isKasBank: data.isKasBank,
+      isSPP: data.isSPP !== undefined ? data.isSPP : current.isSPP,
       isActive: data.isActive
     }
   })

@@ -25,7 +25,10 @@ export default function ModalTambahTagihan({
     targetType: "tingkat" | "kelas" | "murid",
     tingkatId?: string,
     subKelasId?: string,
-    muridIds?: string[]
+    muridIds?: string[],
+    isSPP?: boolean,
+    sppMonths?: string[],
+    sppYear?: string
   }) => void
   akunPendapatanList: any[]
   kelasList: any[]
@@ -43,6 +46,11 @@ export default function ModalTambahTagihan({
   const [selectedTingkatId, setSelectedTingkatId] = useState(activeKelasId)
   const [selectedSubKelasId, setSelectedSubKelasId] = useState(activeSubKelasId)
   const [selectedMuridIds, setSelectedMuridIds] = useState<string[]>([])
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([])
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString())
+
+  const selectedAkun = akunPendapatanList.find(a => a.id === akunId)
+  const isSPP = selectedAkun?.isSPP || false
 
   // Reset to default active ids when modal opens
   useEffect(() => {
@@ -54,6 +62,8 @@ export default function ModalTambahTagihan({
       setAkunId("")
       setNamaTagihan("")
       setJumlah("")
+      setSelectedMonths([])
+      setSelectedYear(new Date().getFullYear().toString())
     }
   }, [isOpen, activeKelasId, activeSubKelasId])
 
@@ -67,14 +77,22 @@ export default function ModalTambahTagihan({
       return
     }
 
+    if (isSPP && selectedMonths.length === 0) {
+      alert("Pilih minimal 1 bulan untuk tagihan SPP")
+      return
+    }
+
     onSubmit({
       akunId,
-      namaTagihan,
+      namaTagihan: isSPP ? `SPP ${selectedMonths[0]} ${selectedYear}` : namaTagihan,
       jumlah: parseFloat(jumlah.replace(/[^0-9]/g, '')) || 0,
       targetType,
       tingkatId: targetType === "tingkat" ? selectedTingkatId : undefined,
       subKelasId: targetType === "kelas" ? selectedSubKelasId : undefined,
-      muridIds: targetType === "murid" ? selectedMuridIds : undefined
+      muridIds: targetType === "murid" ? selectedMuridIds : undefined,
+      isSPP,
+      sppMonths: isSPP ? selectedMonths : undefined,
+      sppYear: isSPP ? selectedYear : undefined
     })
   }
 
@@ -151,17 +169,54 @@ export default function ModalTambahTagihan({
               </select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-center gap-4">
-              <label className="text-sm font-semibold text-text-main">Nama Tagihan</label>
-              <input 
-                type="text"
-                placeholder="Contoh: SPP Bulan Juli 2026"
-                className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium text-text-main placeholder-text-muted/50"
-                value={namaTagihan}
-                onChange={e => setNamaTagihan(e.target.value)}
-                required
-              />
-            </div>
+            {!isSPP ? (
+              <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-center gap-4">
+                <label className="text-sm font-semibold text-text-main">Nama Tagihan</label>
+                <input 
+                  type="text"
+                  placeholder="Contoh: Uang Gedung Cicilan 1"
+                  className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium text-text-main placeholder-text-muted/50"
+                  value={namaTagihan}
+                  onChange={e => setNamaTagihan(e.target.value)}
+                  required={!isSPP}
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-start gap-4">
+                <label className="text-sm font-semibold text-text-main mt-2">Bulan Tagihan (SPP)</label>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <select 
+                      className="w-32 px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
+                      value={selectedYear}
+                      onChange={e => setSelectedYear(e.target.value)}
+                    >
+                      {[0, 1, 2].map(offset => {
+                        const yr = new Date().getFullYear() - 1 + offset
+                        return <option key={yr} value={yr}>{yr}</option>
+                      })}
+                    </select>
+                    <span className="text-xs text-text-muted">Pilih satu atau beberapa bulan di tahun ini:</span>
+                  </div>
+                  <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                    {["Juli", "Agustus", "September", "Oktober", "November", "Desember", "Januari", "Februari", "Maret", "April", "Mei", "Juni"].map(bulan => (
+                      <label key={bulan} className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition-colors ${selectedMonths.includes(bulan) ? 'bg-primary/5 border-primary/30' : 'border-border hover:bg-bg'}`}>
+                        <input 
+                          type="checkbox" 
+                          className="w-4 h-4 accent-primary rounded"
+                          checked={selectedMonths.includes(bulan)}
+                          onChange={e => {
+                            if (e.target.checked) setSelectedMonths([...selectedMonths, bulan])
+                            else setSelectedMonths(selectedMonths.filter(m => m !== bulan))
+                          }}
+                        />
+                        <span className="text-sm font-medium text-text-main">{bulan}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-start gap-4 pt-4 border-t border-border">
               <label className="text-sm font-semibold text-text-main mt-2">Target Penagihan</label>
