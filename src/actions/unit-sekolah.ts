@@ -8,8 +8,30 @@ export async function getUnitSekolah() {
   const session = await auth()
   if (!session) throw new Error("Unauthorized")
 
-  return prisma.unitSekolah.findMany({
+  const units = await prisma.unitSekolah.findMany({
     orderBy: { name: "asc" }
+  })
+
+  // Urutan hierarki level sekolah
+  const levelOrder: Record<string, number> = {
+    'TK': 1,
+    'SD': 2,
+    'SMP': 3,
+    'MTS': 3,
+    'SMA': 4,
+    'SMK': 5,
+    'MA': 5,
+  }
+
+  return units.sort((a, b) => {
+    const levelA = levelOrder[a.level?.toUpperCase()] || 99
+    const levelB = levelOrder[b.level?.toUpperCase()] || 99
+    
+    if (levelA !== levelB) {
+      return levelA - levelB
+    }
+    
+    return a.name.localeCompare(b.name)
   })
 }
 
