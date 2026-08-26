@@ -12,7 +12,7 @@ import {
   prosesPembayaranTagihan,
   getRiwayatTransaksiByTagihan
 } from "@/actions/pembayaran-tagihan"
-import { Search, Filter, Loader2, CheckSquare } from "lucide-react"
+import { Search, Filter, Loader2, CheckSquare, History } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 import ModalPembayaranTagihan, { TagihanItem } from "./ModalPembayaranTagihan"
@@ -247,7 +247,8 @@ export default function PembayaranTagihanClient({
           namaAkun: t.namaTagihan,
           kodeAkun: t.akun.kode,
           akunPendapatanId: t.akun.id,
-          jumlahBayar: t.sisaTagihan // Full payment for now
+          sisaTagihan: t.sisaTagihan,
+          jumlahBayar: t.sisaTagihan // Defaults to full payment
         })
       }
     })
@@ -465,21 +466,45 @@ export default function PembayaranTagihanClient({
                                   </button>
                                 ) : (
                                   <label className={`
-                                    flex items-center justify-center gap-2 p-2 rounded-lg cursor-pointer border select-none transition-all
+                                    flex items-center justify-between gap-2 p-2 rounded-lg cursor-pointer border select-none transition-all
                                     ${row.selectedItems[tagihan.id] 
                                       ? 'border-emerald-500 bg-emerald-50 text-emerald-700' 
                                       : 'border-border bg-white hover:bg-gray-50 text-text-main'}
                                   `}>
-                                    <input 
-                                      type="checkbox"
-                                      disabled={isReadOnly}
-                                      className={`w-4 h-4 text-emerald-500 rounded border-gray-300 focus:ring-emerald-500 ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                      checked={row.selectedItems[tagihan.id] || false}
-                                      onChange={(e) => handleCheckboxChange(row.id, tagihan.id, e.target.checked)}
-                                    />
-                                    <span className="text-sm font-bold">
-                                      Rp {formatRupiah(tagihan.sisaTagihan)}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <input 
+                                        type="checkbox"
+                                        disabled={isReadOnly}
+                                        className={`w-4 h-4 text-emerald-500 rounded border-gray-300 focus:ring-emerald-500 ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        checked={row.selectedItems[tagihan.id] || false}
+                                        onChange={(e) => handleCheckboxChange(row.id, tagihan.id, e.target.checked)}
+                                      />
+                                      <span className="text-sm font-bold">
+                                        Rp {formatRupiah(tagihan.sisaTagihan)}
+                                      </span>
+                                    </div>
+                                    {tagihan.sisaTagihan < tagihan.jumlah && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.preventDefault()
+                                          e.stopPropagation()
+                                          handlePrintTagihan(tagihan.id)
+                                        }}
+                                        disabled={isLoadingRiwayat === tagihan.id}
+                                        className="text-text-muted hover:text-emerald-600 transition-colors p-1 rounded-full hover:bg-emerald-100/50 relative group/icon"
+                                      >
+                                        {isLoadingRiwayat === tagihan.id ? (
+                                          <Loader2 size={14} className="animate-spin" />
+                                        ) : (
+                                          <History size={14} />
+                                        )}
+                                        {/* Tooltip */}
+                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none z-[100]">
+                                          Lihat Riwayat Cicilan
+                                        </span>
+                                      </button>
+                                    )}
                                   </label>
                                 )
                               ) : (

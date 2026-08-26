@@ -9,6 +9,7 @@ export type TagihanItem = {
   namaAkun: string
   kodeAkun: string
   akunPendapatanId: string
+  sisaTagihan: number
   jumlahBayar: number
 }
 
@@ -36,13 +37,15 @@ export default function ModalPembayaranTagihan({
   const [tanggal, setTanggal] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [deskripsi, setDeskripsi] = useState("")
   const [noReferensi, setNoReferensi] = useState("")
+  const [localItems, setLocalItems] = useState<TagihanItem[]>([])
   
   // Format currency
   const formatRupiah = (val: number) => {
     return new Intl.NumberFormat('id-ID').format(val)
   }
 
-  const totalTagihan = items.reduce((acc, item) => acc + item.jumlahBayar, 0)
+  const totalSisaTagihan = items.reduce((acc, item) => acc + item.sisaTagihan, 0)
+  const totalBayar = localItems.reduce((acc, item) => acc + item.jumlahBayar, 0)
   
   useEffect(() => {
     if (isOpen) {
@@ -52,8 +55,9 @@ export default function ModalPembayaranTagihan({
       setTanggal(format(new Date(), 'yyyy-MM-dd'))
       setDeskripsi(`Pembayaran Tagihan Siswa: ${muridName}`)
       setNoReferensi(`INV-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`)
+      setLocalItems(items.map(item => ({...item})))
     }
-  }, [isOpen, akunKasBankList, muridName])
+  }, [isOpen, akunKasBankList, muridName, items])
 
   if (!isOpen) return null
 
@@ -64,8 +68,30 @@ export default function ModalPembayaranTagihan({
       tanggal: new Date(tanggal),
       deskripsi,
       noReferensi,
-      items
+      items: localItems
     })
+  }
+
+  const handleItemChange = (tagihanId: string, val: string) => {
+    const numericStr = val.replace(/[^0-9]/g, '')
+    const num = numericStr ? parseInt(numericStr, 10) : 0
+    
+    setLocalItems(prev => prev.map(item => {
+      if (item.tagihanId === tagihanId) {
+        const validNum = Math.min(num, item.sisaTagihan)
+        return { ...item, jumlahBayar: validNum }
+      }
+      return item
+    }))
+  }
+
+  const handleLunasChange = (tagihanId: string, isLunas: boolean) => {
+    setLocalItems(prev => prev.map(item => {
+      if (item.tagihanId === tagihanId) {
+        return { ...item, jumlahBayar: isLunas ? item.sisaTagihan : 0 }
+      }
+      return item
+    }))
   }
 
   return (
@@ -178,17 +204,47 @@ export default function ModalPembayaranTagihan({
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item, idx) => (
-                    <tr key={item.tagihanId} className="border-b border-border last:border-0 bg-white">
-                      <td className="px-4 py-3 text-center text-text-muted">{idx + 1}</td>
-                      <td className="px-4 py-3 font-medium text-text-main">
-                        {item.namaAkun} <span className="text-xs text-text-muted">[{item.kodeAkun}]</span>
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold text-text-main">
-                        Rp {formatRupiah(item.jumlahBayar)}
-                      </td>
-                    </tr>
-                  ))}
+                  {localItems.map((item, idx) => {
+                    const isLunas = item.jumlahBayar === item.sisaTagihan;
+                    
+                    return (
+                      <tr key={item.tagihanId} className="border-b border-border last:border-0 bg-white hover:bg-gray-50/50">
+                        <td className="px-4 py-3 text-center text-text-muted">{idx + 1}</td>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-text-main leading-tight">
+                            {item.namaAkun} <span className="text-xs text-text-muted">[{item.kodeAkun}]</span>
+                          </div>
+                          <div className="text-[10px] text-text-muted font-bold mt-1">Sisa: Rp {formatRupiah(item.sisaTagihan)}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-3">
+                            <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-text-muted hover:text-emerald-600 transition-colors">
+                              <input 
+                                type="checkbox" 
+                                className="w-3.5 h-3.5 rounded border-gray-300 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
+                                checked={isLunas}
+                                onChange={(e) => handleLunasChange(item.tagihanId, e.target.checked)}
+                              />
+                              Lunas
+                            </label>
+                            
+                            <div className="relative w-36">
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-text-muted pointer-events-none">Rp</span>
+                              <input 
+                                type="text"
+                                className={`w-full pl-8 pr-2 py-1.5 text-sm font-bold border rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-colors ${
+                                  isLunas ? 'bg-emerald-50/50 border-emerald-200 text-emerald-700' : 'bg-white border-border text-text-main'
+                                }`}
+                                value={item.jumlahBayar > 0 ? formatRupiah(item.jumlahBayar) : ""}
+                                onChange={(e) => handleItemChange(item.tagihanId, e.target.value)}
+                                placeholder="0"
+                              />
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -197,15 +253,15 @@ export default function ModalPembayaranTagihan({
             <div className="flex justify-end mt-4">
               <div className="w-full sm:w-1/2 space-y-3 bg-bg/50 p-4 rounded-xl border border-border">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-bold text-text-muted">Total Tagihan :</span>
-                  <div className="bg-white border border-border rounded-lg px-3 py-1.5 w-40 text-right font-bold text-text-main">
-                    {formatRupiah(totalTagihan)}
+                  <span className="text-sm font-bold text-text-muted">Total Sisa Tagihan :</span>
+                  <div className="bg-white border border-border rounded-lg px-3 py-1.5 w-40 text-right font-bold text-text-muted">
+                    {formatRupiah(totalSisaTagihan)}
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-bold text-text-main">Total Bayar :</span>
-                  <div className="bg-white border border-emerald-500 rounded-lg px-3 py-1.5 w-40 text-right font-bold text-emerald-600 bg-emerald-50/50">
-                    {formatRupiah(totalTagihan)}
+                  <span className="text-sm font-bold text-text-main">Total Dibayar :</span>
+                  <div className="bg-white border border-emerald-500 rounded-lg px-3 py-1.5 w-40 text-right font-bold text-emerald-600 bg-emerald-50/50 shadow-sm">
+                    {formatRupiah(totalBayar)}
                   </div>
                 </div>
               </div>
