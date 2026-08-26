@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo } from "react"
 import { 
   getKelasByUnit, 
   getSubKelasByKelas,
-  getJurusanByUnit
+  getJurusanByUnit,
+  getColumnOrder
 } from "@/actions/pembuatan-tagihan"
 import { 
   getMuridWithTagihanUnpaid,
@@ -29,6 +30,7 @@ type TagihanData = {
   sisaTagihan: number
   status: string
   akunId: string
+  namaTagihan: string
   akun: { id: string, nama: string, kode: string }
 }
 
@@ -127,15 +129,17 @@ export default function PembayaranTagihanClient({
   }, [kelasId, jurusanId, jurusanList])
 
   // Process data
-  const processData = (muridList: any[]) => {
-    const columnsMap = new Map<string, {id: string, nama: string, kode: string}>()
+  const processData = (muridList: any[], order: string[]) => {
+    const columnsMap = new Map<string, {id: string, namaTagihan: string, nama: string, kode: string}>()
     
     muridList.forEach(murid => {
       murid.tagihan?.forEach((t: TagihanData) => {
-        if (!columnsMap.has(t.akunId)) {
-          columnsMap.set(t.akunId, {
-            id: t.akun.id,
-            nama: t.akun.nama,
+        const compId = `${t.akunId}::${t.namaTagihan}`
+        if (!columnsMap.has(compId)) {
+          columnsMap.set(compId, {
+            id: compId,
+            namaTagihan: t.namaTagihan,
+            nama: t.namaTagihan, // UI Display
             kode: t.akun.kode
           })
         }
@@ -143,6 +147,18 @@ export default function PembayaranTagihanClient({
     })
     
     const columns = Array.from(columnsMap.values()).sort((a, b) => a.kode.localeCompare(b.kode))
+    
+    if (order && order.length > 0) {
+      columns.sort((a, b) => {
+        const idxA = order.indexOf(a.id)
+        const idxB = order.indexOf(b.id)
+        if (idxA === -1 && idxB === -1) return 0
+        if (idxA === -1) return 1
+        if (idxB === -1) return -1
+        return idxA - idxB
+      })
+    }
+    
     setAkunColumns(columns)
 
     const rows: GridRow[] = muridList.map(murid => ({
@@ -165,13 +181,16 @@ export default function PembayaranTagihanClient({
     }
     setIsLoading(true)
     try {
-      const res = await getMuridWithTagihanUnpaid({
-        unitSekolahId: activeUnitId,
-        tahunAkademikId: activeTahunAkademikId,
-        kelasId: kelasId,
-        subKelasId: subKelasId
-      })
-      processData(res)
+      const [res, order] = await Promise.all([
+        getMuridWithTagihanUnpaid({
+          unitSekolahId: activeUnitId,
+          tahunAkademikId: activeTahunAkademikId,
+          kelasId: kelasId,
+          subKelasId: subKelasId
+        }),
+        getColumnOrder(activeUnitId)
+      ])
+      processData(res, order)
     } catch (error: any) {
       toast.error(error.message || "Gagal mengambil data")
     } finally {
@@ -190,6 +209,17 @@ export default function PembayaranTagihanClient({
       row.nisn.toLowerCase().includes(searchTerm.toLowerCase())
     )
   }, [gridData, searchTerm])
+
+  const computedTotalPages = Math.max(1, Math.ceil(filteredData.length / pageSize))
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return filteredData.slice(start, start + pageSize)
+  }, [filteredData, currentPage, pageSize])
+  
+  // reset page if filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filteredData.length, pageSize])
 
   const handleCheckboxChange = (muridId: string, tagihanId: string, checked: boolean) => {
     setGridData(prev => prev.map(row => {
@@ -214,7 +244,7 @@ export default function PembayaranTagihanClient({
       if (row.selectedItems[t.id]) {
         itemsToPay.push({
           tagihanId: t.id,
-          namaAkun: t.akun.nama,
+          namaAkun: t.namaTagihan,
           kodeAkun: t.akun.kode,
           akunPendapatanId: t.akun.id,
           jumlahBayar: t.sisaTagihan // Full payment for now
@@ -358,7 +388,8 @@ export default function PembayaranTagihanClient({
 
         {/* Table Container */}
         {gridData.length > 0 ? (
-          <div className="overflow-x-auto min-h-[400px]">
+          <>
+            <div className="overflow-x-auto min-h-[400px]">
             <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border bg-emerald-500 text-white text-xs uppercase tracking-wider">
@@ -378,14 +409,14 @@ export default function PembayaranTagihanClient({
                 </tr>
               </thead>
               <tbody>
-                {filteredData.length === 0 ? (
+                {paginatedData.length === 0 ? (
                   <tr>
                     <td colSpan={4 + akunColumns.length} className="p-8 text-center text-text-muted">
                       Tidak ada data murid yang sesuai pencarian.
                     </td>
                   </tr>
                 ) : (
-                  filteredData.map((row, idx) => {
+                  paginatedData.map((row, idx) => {
                     // Calculate total of checked items
                     let totalBerjalan = 0;
                     let totalTagihanSiswa = 0;
@@ -400,7 +431,7 @@ export default function PembayaranTagihanClient({
                     return (
                       <tr key={row.id} className="border-b border-border hover:bg-gray-50 transition-colors group">
                         <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
-                          {idx + 1}.
+                          {((currentPage - 1) * pageSize) + idx + 1}.
                         </td>
                         <td className="p-4 sticky left-12 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
                           <p className="font-bold text-text-main leading-tight truncate max-w-[200px]" title={row.name}>{row.name}</p>
@@ -408,7 +439,8 @@ export default function PembayaranTagihanClient({
                         </td>
                         
                         {akunColumns.map(col => {
-                          const tagihan = row.tagihanList.find(t => t.akunId === col.id)
+                          // Match using composite ID
+                          const tagihan = row.tagihanList.find(t => `${t.akunId}::${t.namaTagihan}` === col.id)
                           
                           return (
                             <td key={col.id} className="p-4">
@@ -492,7 +524,7 @@ export default function PembayaranTagihanClient({
                     </td>
                     {akunColumns.map(col => {
                       const colTotal = filteredData.reduce((acc, row) => {
-                        const t = row.tagihanList.find(tag => tag.akunId === col.id)
+                        const t = row.tagihanList.find(tag => `${tag.akunId}::${tag.namaTagihan}` === col.id)
                         return acc + (t ? Math.max(0, t.sisaTagihan) : 0)
                       }, 0)
                       return (
@@ -512,6 +544,47 @@ export default function PembayaranTagihanClient({
               )}
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {computedTotalPages > 0 && (
+            <div className="pt-4 mt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value))
+                  }}
+                  className="px-3 py-1.5 bg-bg border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/50"
+                >
+                  {[5, 10, 20, 50, 100].map(size => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50 transition-colors"
+                >
+                  Sebelumnya
+                </button>
+                <span className="px-4 py-1.5 text-sm font-medium text-text-main">
+                  Hal {currentPage} dari {computedTotalPages}
+                </span>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(computedTotalPages, p + 1))}
+                  disabled={currentPage === computedTotalPages}
+                  className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50 transition-colors"
+                >
+                  Berikutnya
+                </button>
+              </div>
+            </div>
+          )}
+          </>
         ) : (
           !isLoading && (
             <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted">

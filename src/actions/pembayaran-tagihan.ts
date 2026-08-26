@@ -65,6 +65,7 @@ export async function getMuridWithTagihanUnpaid(filters: {
             sisaTagihan: true,
             status: true,
             akunId: true,
+            namaTagihan: true,
             akun: {
               select: {
                 id: true,
@@ -265,7 +266,7 @@ export async function getRiwayatTransaksiByTagihan(tagihanId: string) {
       const tx = d.transaksi
       // The items in the transaction:
       const items = tx.pembayaranTagihan.map(ptd => ({
-        namaAkun: ptd.tagihan.akun.nama,
+        namaAkun: ptd.tagihan.namaTagihan || ptd.tagihan.akun.nama,
         jumlahBayar: ptd.jumlahDibayar
       }))
 
