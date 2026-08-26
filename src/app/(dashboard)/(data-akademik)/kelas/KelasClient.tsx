@@ -20,9 +20,9 @@ import ReactivateSiswaModal from "./components/ReactivateSiswaModal"
 import { tambahKelas, editKelas, hapusKelas, hapusTingkatan, tambahTingkatan, editTingkatan } from "@/actions/kelas"
 import { hapusSiswa, tambahSiswa, editSiswa } from "@/actions/siswa"
 
-export default function KelasClient({ 
+export default function KelasClient({
   activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits, initialTeachers = [], userRole, userName, pengaturan
-}: { 
+}: {
   activeUnitId?: string, activeYearId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[], initialTeachers?: any[], userRole?: string, userName?: string, pengaturan?: any
 }) {
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
@@ -34,11 +34,11 @@ export default function KelasClient({
   const [showModalKelas, setShowModalKelas] = useState(false)
   const [showModalSubKelas, setShowModalSubKelas] = useState(false)
   const [showModalImportMurid, setShowModalImportMurid] = useState(false)
-  
+
   const [viewDetailMurid, setViewDetailMurid] = useState<any>(null)
   const [viewDetailSubKelas, setViewDetailSubKelas] = useState<any>(null)
   const [reactivateMurid, setReactivateMurid] = useState<{ id: string, name: string } | null>(null)
-  
+
   const [deleteData, setDeleteData] = useState<{ id: string, type: "tingkat" | "subkelas" | "murid" } | null>(null)
   const [bulkActionConfirm, setBulkActionConfirm] = useState<{ type: "lulus" | "hapus" } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -144,7 +144,7 @@ export default function KelasClient({
         const s = data.classrooms.find((c: any) => c.id === data.filterMuridSubKelas)
         if (s) filterTags += `_Rombel-${s.name}`
       }
-      
+
       const statusName = data.activeTab === "murid" ? "Aktif" : (data.filterAlumniStatus || "SemuaStatus")
       const finalFileName = `Siswa_${unitName}_${statusName}${filterTags}_${dateStr}`.replace(/\s+/g, '_')
 
@@ -173,7 +173,7 @@ export default function KelasClient({
       const { exportTablePdf } = await import("@/lib/pdf")
       const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
       const unitObj = activeUnitId === 'ALL' ? undefined : schoolUnits.find((u: any) => u.id === activeUnitId)
-      
+
       if (data.activeTab === "sub-kelas") {
         if (!data.classrooms || data.classrooms.length === 0) {
           toast.error("Tidak ada data rombel untuk diekspor")
@@ -275,8 +275,8 @@ export default function KelasClient({
 
   // Handlers Edit/Save
   const handleSaveMurid = async (formData: any) => {
-    if (!formData.nisn || formData.nisn.length !== 10) {
-      toast.error("NISN harus 10 digit angka!")
+    if (formData.nisn && formData.nisn.trim() !== "-" && formData.nisn.length !== 10) {
+      toast.error("NISN harus 10 digit angka atau diisi '-' jika belum ada!")
       return
     }
     setIsSubmitting(true)
@@ -285,7 +285,7 @@ export default function KelasClient({
         const res = await editSiswa(formData.id, formData)
         data.setStudents(data.students.map((s: any) => s.id === formData.id ? res : s))
       } else {
-        const res = await tambahSiswa({ ...formData, nis: formData.nisn || `NIS-${Date.now()}` })
+        const res = await tambahSiswa({ ...formData, nis: formData.nis || formData.nisn || `NIS-${Date.now()}` })
         data.setStudents([{ ...res, riwayatKelas: [{ subKelasId: formData.subKelasId, subKelas: data.classrooms.find((c: any) => c.id === formData.subKelasId) }] }, ...data.students])
       }
       toast.success("Data murid berhasil disimpan")
@@ -322,8 +322,8 @@ export default function KelasClient({
         data.setClassrooms(data.classrooms.map((c: any) => c.id === formSubKelas.id ? { ...res, tingkat: data.grades.find((g: any) => g.id === formSubKelas.tingkatId) } : c))
       } else {
         const res = await tambahKelas(formSubKelas)
-        data.setClassrooms([...data.classrooms, { 
-          ...res, 
+        data.setClassrooms([...data.classrooms, {
+          ...res,
           tingkat: data.grades.find((g: any) => g.id === formSubKelas.tingkatId),
           _count: { murid: 0 }
         }])
@@ -338,7 +338,7 @@ export default function KelasClient({
   const TabButton = ({ id, label }: any) => {
     const isActive = data.activeTab === id
     return (
-      <button 
+      <button
         onClick={() => data.setActiveTab(id)}
         className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${isActive ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text-main hover:border-border"}`}
       >
@@ -349,7 +349,7 @@ export default function KelasClient({
 
   return (
     <div>
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={!!deleteData}
         title="Konfirmasi Hapus Data"
         message="Apakah Anda yakin ingin menghapus data ini? Pastikan data ini tidak terkait dengan data transaksi keuangan lainnya."
@@ -358,7 +358,7 @@ export default function KelasClient({
         isLoading={isDeleting}
       />
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={!!bulkActionConfirm}
         title={bulkActionConfirm?.type === 'lulus' ? 'Luluskan Siswa' : 'Hapus Siswa Permanen'}
         message={bulkActionConfirm?.type === 'lulus' ? 'Yakin ingin meluluskan siswa terpilih? Mereka akan dipindahkan ke tab Alumni.' : 'Yakin ingin menghapus secara permanen siswa terpilih? Data ini tidak dapat dikembalikan.'}
@@ -414,11 +414,11 @@ export default function KelasClient({
             }} isReadOnly={isReadOnly} />}
             {data.activeTab === "sub-kelas" && <TabSubKelas {...data} setDeleteData={setDeleteData} setViewDetailSubKelas={setViewDetailSubKelas} setFormSubKelas={setFormSubKelas} setShowModalSubKelas={setShowModalSubKelas} isReadOnly={isReadOnly} />}
             {(data.activeTab === "murid" || data.activeTab === "alumni") && (
-              <TabMurid 
-                {...data} 
-                setDeleteData={setDeleteData} 
-                setFormMurid={setFormMurid} 
-                setShowModalMurid={setShowModalMurid} 
+              <TabMurid
+                {...data}
+                setDeleteData={setDeleteData}
+                setFormMurid={setFormMurid}
+                setShowModalMurid={setShowModalMurid}
                 setReactivateMurid={setReactivateMurid}
                 getStatusBadge={getStatusBadge}
                 isReadOnly={isReadOnly}
@@ -445,9 +445,9 @@ export default function KelasClient({
                 ))}
               </select>
             </div>
-            
+
             <div className="flex items-center gap-1">
-              <button 
+              <button
                 onClick={() => data.setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={data.currentPage === 1}
                 className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50"
@@ -457,7 +457,7 @@ export default function KelasClient({
               <span className="px-4 py-1.5 text-sm font-medium text-text-main">
                 Hal {data.currentPage} dari {data.computedTotalPages}
               </span>
-              <button 
+              <button
                 onClick={() => data.setCurrentPage(p => Math.min(data.computedTotalPages, p + 1))}
                 disabled={data.currentPage === data.computedTotalPages}
                 className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50"
@@ -477,12 +477,12 @@ export default function KelasClient({
             <span className="flex items-center justify-center bg-primary/10 text-primary w-5 h-5 rounded-full text-[10px]">{data.selectedStudents.length}</span>
             <span className="hidden sm:inline">Siswa</span> Dipilih
           </div>
-          
+
           <div className="h-6 w-px bg-border shrink-0"></div>
-          
+
           {/* Action Group 1: Promote/Move */}
           <div className="flex items-center gap-2 shrink-0">
-            <select 
+            <select
               className="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-xs font-medium w-28 sm:w-32 shrink-0"
               value={data.targetTahunAkademikId}
               onChange={(e) => data.setTargetTahunAkademikId(e.target.value)}
@@ -492,8 +492,8 @@ export default function KelasClient({
                 <option key={y.id} value={y.id}>{y.name}</option>
               ))}
             </select>
-            
-            <select 
+
+            <select
               className="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-xs font-medium w-32 sm:w-36 shrink-0"
               value={data.targetSubKelasId}
               onChange={(e) => data.setTargetSubKelasId(e.target.value)}
@@ -503,24 +503,24 @@ export default function KelasClient({
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
-            
+
             <Button size="sm" className="shrink-0 text-xs py-1.5 px-3" onClick={data.handleBulkPromote} disabled={!data.targetSubKelasId || !data.targetTahunAkademikId || data.isPromoting} isLoading={data.isPromoting}>
               Naik Kelas / Mutasi
             </Button>
           </div>
-          
+
           <div className="h-6 w-px bg-border shrink-0"></div>
-          
+
           {/* Action Group 2: Danger Actions */}
           <div className="flex items-center gap-2 shrink-0">
             <Button size="sm" variant="danger" className="text-xs py-1.5 px-3" onClick={() => setBulkActionConfirm({ type: 'lulus' })} disabled={data.isPromoting} isLoading={data.isPromoting}>
               Luluskan
             </Button>
-            
+
             <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 text-xs py-1.5 px-3 shrink-0" onClick={() => setBulkActionConfirm({ type: 'hapus' })} disabled={data.isPromoting} isLoading={data.isPromoting}>
               Hapus
             </Button>
-            
+
             <button onClick={() => data.setSelectedStudents([])} className="text-gray-400 hover:text-gray-600 p-1.5 ml-1 bg-gray-100 rounded-full shrink-0">
               <X size={14} />
             </button>
@@ -529,7 +529,7 @@ export default function KelasClient({
       )}
 
       {/* Modal Tambah Murid */}
-      <MuridFormModal 
+      <MuridFormModal
         isOpen={showModalMurid}
         onClose={() => setShowModalMurid(false)}
         initialData={formMurid}
@@ -537,7 +537,7 @@ export default function KelasClient({
         schoolUnits={schoolUnits}
         classrooms={data.classrooms}
       />
-      
+
       {/* Modal Tambah Tingkat */}
       <TingkatFormModal
         isOpen={showModalKelas}
@@ -565,7 +565,7 @@ export default function KelasClient({
         initialTeachers={initialTeachers}
         activeUnitId={activeUnitId}
       />
-      
+
       <ImportMuridModal
         isOpen={showModalImportMurid}
         onClose={() => setShowModalImportMurid(false)}
