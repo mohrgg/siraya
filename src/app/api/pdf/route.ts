@@ -39,6 +39,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unsupported template type" }, { status: 400 });
     }
 
+    const marginSize = data.config?.format === 'A5' ? '8mm' : '15mm';
+
     // Build the full HTML document with Tailwind CSS injected
     const fullHtml = `
       <!DOCTYPE html>
@@ -51,8 +53,8 @@ export async function POST(req: NextRequest) {
           <style>
             @media print {
               @page {
-                size: ${data.config?.orientation === 'landscape' ? 'A4 landscape' : 'A4 portrait'};
-                margin: 15mm;
+                size: ${data.config?.format || 'A4'} ${data.config?.orientation || 'portrait'};
+                margin: ${marginSize};
               }
               body {
                 -webkit-print-color-adjust: exact !important;
@@ -80,10 +82,10 @@ export async function POST(req: NextRequest) {
       landscape: data.config?.orientation === "landscape",
       printBackground: true,
       margin: {
-        top: "15mm",
-        right: "15mm",
-        bottom: "15mm",
-        left: "15mm"
+        top: marginSize,
+        right: marginSize,
+        bottom: marginSize,
+        left: marginSize
       }
     });
 

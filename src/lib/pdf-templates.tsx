@@ -17,10 +17,10 @@ export function PrintHeaderHtml({ institutionInfo }: PrintHeaderHtmlProps) {
   const subtitle = parts.join(' \u2022 ')
 
   return (
-    <div className="w-full mb-6">
-      <div className="flex items-center mb-4">
+    <div className="w-full mb-2">
+      <div className="flex items-center mb-1.5">
         {/* Logo */}
-        <div className="w-24 h-24 relative mr-6 flex-shrink-0">
+        <div className="w-12 h-12 relative mr-3 flex-shrink-0">
           {institutionInfo.logoUrl ? (
             <img 
               src={institutionInfo.logoUrl} 
@@ -34,29 +34,29 @@ export function PrintHeaderHtml({ institutionInfo }: PrintHeaderHtmlProps) {
         <div className="flex-1 flex flex-col justify-center text-center">
           {institutionInfo.namaUnit ? (
             <>
-              <h2 className="text-[14px] font-bold uppercase tracking-[0.1em] text-slate-800 mb-1">
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-800 mb-0.5">
                 {institutionInfo.namaYayasan || "YAYASAN AL BASYARIAH"}
               </h2>
-              <h1 className="text-[26px] font-black uppercase tracking-[0.1em] text-slate-900 mb-2 leading-tight">
+              <h1 className="text-[16px] font-black uppercase tracking-[0.1em] text-slate-900 mb-0.5 leading-tight">
                 {institutionInfo.namaUnit}
               </h1>
             </>
           ) : (
-            <h1 className="text-[26px] font-black uppercase tracking-[0.1em] text-slate-900 mb-2 leading-tight mt-2">
+            <h1 className="text-[16px] font-black uppercase tracking-[0.1em] text-slate-900 mb-0.5 leading-tight mt-1">
               {institutionInfo.namaYayasan || "YAYASAN AL BASYARIAH"}
             </h1>
           )}
-          <p className="text-[13px] text-slate-700 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-[9px] text-slate-700 max-w-2xl mx-auto leading-tight">
             {subtitle}
           </p>
         </div>
         
         {/* Balancer for centering (same width as logo + margin) */}
-        <div className="w-24 ml-6 flex-shrink-0"></div>
+        <div className="w-12 ml-3 flex-shrink-0"></div>
       </div>
       
       {/* Double Border Line */}
-      <div className="w-full border-b-[4px] border-slate-900 mb-[2px]"></div>
+      <div className="w-full border-b-[2px] border-slate-900 mb-[1px]"></div>
       <div className="w-full border-b-[1px] border-slate-900"></div>
     </div>
   )
@@ -88,10 +88,10 @@ export function PrintSignatureHtml({
   const renderSigner = (signer?: { jabatan: string; nama: string }, showDate: boolean = false) => {
     if (!signer) return <div className="w-48"></div> // Placeholder
     return (
-      <div className="flex flex-col items-center text-sm w-64">
-        <p className="mb-0.5 h-5">{showDate ? `${kotaPenandatangan}, ${dateStr}` : ""}</p>
-        <p className="mb-8">{signer.jabatan}</p>
-        <p className="font-bold underline underline-offset-4">{signer.nama}</p>
+      <div className="flex flex-col items-center text-[10px] w-64">
+        <p className="mb-0 h-3">{showDate ? `${kotaPenandatangan}, ${dateStr}` : ""}</p>
+        <p className="mb-10">{signer.jabatan}</p>
+        <p className="font-bold underline underline-offset-2">{signer.nama}</p>
       </div>
     )
   }
@@ -104,7 +104,7 @@ export function PrintSignatureHtml({
       </div>
       
       {/* Footer / Notes */}
-      <div className="mt-4 pt-2 border-t border-slate-300 text-center text-[10px] text-slate-500 italic">
+      <div className="mt-2 pt-1 border-t border-slate-300 text-center text-[9px] text-slate-500 italic">
         <p>Dicetak melalui Sistem Informasi Siraya pada {new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} WIB</p>
       </div>
     </div>
@@ -228,68 +228,68 @@ export function ResiHtml({
   const formatRp = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val)
 
   return (
-    <div className="font-sans text-slate-900 bg-white flex flex-col">
+    <div className="font-sans text-slate-900 bg-white flex flex-col min-h-[130mm]">
       <PrintHeaderHtml institutionInfo={institutionInfo} />
 
       {/* Header Info: Judul dan Referensi */}
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex justify-between items-start mb-2">
         <div className="flex-1"></div>
         <div className="text-center flex-1">
-          <h3 className="text-lg font-bold uppercase tracking-wider text-slate-800 border-b-2 border-slate-400 inline-block pb-1">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 border-b border-slate-400 inline-block pb-0.5">
             {title || "BUKTI PEMBAYARAN / KWITANSI"}
           </h3>
         </div>
-        <div className="flex-1 text-right text-sm text-slate-600">
+        <div className="flex-1 text-right text-[10px] text-slate-600 leading-tight">
           <p>Tanggal: {dateStr}</p>
           <p>No. Ref: <span className="font-semibold">{noReferensi}</span></p>
         </div>
       </div>
 
       {/* Identitas */}
-      <div className="mb-6 text-sm">
+      <div className="mb-2 text-[10px]">
         <table className="w-auto">
           <tbody>
             <tr>
-              <td className="py-1 pr-4 text-slate-600">Telah terima dari</td>
-              <td className="py-1 pr-2">:</td>
-              <td className="py-1 font-bold text-slate-800">{penerimaDari}</td>
+              <td className="py-0.5 pr-4 text-slate-600">Telah terima dari</td>
+              <td className="py-0.5 pr-2">:</td>
+              <td className="py-0.5 font-bold text-slate-800">{penerimaDari}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       {/* Tabel Item */}
-      <table className="w-full text-sm border-collapse mb-2">
+      <table className="w-full text-[10px] border-collapse mb-1">
         <thead className="bg-slate-800 text-white">
           <tr>
-            <th className="py-2 px-3 border border-slate-700 text-center font-bold w-12">No</th>
-            <th className="py-2 px-3 border border-slate-700 text-left font-bold">Keterangan Pembayaran</th>
-            <th className="py-2 px-3 border border-slate-700 text-right font-bold w-48">Nominal</th>
+            <th className="py-1 px-1.5 border border-slate-700 text-center font-bold w-10">No</th>
+            <th className="py-1 px-1.5 border border-slate-700 text-left font-bold">Keterangan Pembayaran</th>
+            <th className="py-1 px-1.5 border border-slate-700 text-right font-bold w-32">Nominal</th>
           </tr>
         </thead>
         <tbody style={{ display: 'table-row-group' }}>
           {items.map((item, i) => (
             <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}>
-              <td className="py-2 px-3 border border-slate-200 text-center text-slate-700">{i + 1}</td>
-              <td className="py-2 px-3 border border-slate-200 text-slate-700">{item.keterangan}</td>
-              <td className="py-2 px-3 border border-slate-200 text-right text-slate-700 font-medium">{formatRp(item.nominal)}</td>
+              <td className="py-1 px-1.5 border border-slate-200 text-center text-slate-700">{i + 1}</td>
+              <td className="py-1 px-1.5 border border-slate-200 text-slate-700">{item.keterangan}</td>
+              <td className="py-1 px-1.5 border border-slate-200 text-right text-slate-700 font-medium">{formatRp(item.nominal)}</td>
             </tr>
           ))}
         </tbody>
         <tfoot style={{ display: 'table-row-group' }}>
           {/* Baris Total */}
           <tr className="bg-slate-100">
-            <td colSpan={2} className="py-3 px-3 border border-slate-300 text-right font-bold text-slate-800 uppercase">
+            <td colSpan={2} className="py-1.5 px-1.5 border border-slate-300 text-right font-bold text-slate-800 uppercase">
               Total Pembayaran
             </td>
-            <td className="py-3 px-3 border border-slate-300 text-right font-bold text-slate-900 text-base">
+            <td className="py-1.5 px-1.5 border border-slate-300 text-right font-bold text-slate-900 text-xs">
               {formatRp(total)}
             </td>
           </tr>
         </tfoot>
       </table>
 
-      <div className="mt-4 mb-2" style={{ pageBreakInside: 'avoid' }}>
+      <div className="mt-auto mb-0 pt-4" style={{ pageBreakInside: 'avoid' }}>
         <PrintSignatureHtml 
           kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
           tanggalCetak={tanggal}
