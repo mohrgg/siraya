@@ -8,11 +8,13 @@ import { getTenantContext } from "@/lib/tenant"
 // ==========================================
 // 1. KLASIFIKASI AKUN (Level 1)
 // ==========================================
-export async function getKlasifikasiAkun() {
-  const session = await auth()
-  if (!session) throw new Error("Unauthorized")
+export async function getKlasifikasiAkun(unitId?: string) {
+  const tenant = await getTenantContext()
+  const filterUnitId = unitId || tenant.unitId
+  const where = filterUnitId ? { unitSekolahId: filterUnitId } : {}
 
   return prisma.klasifikasiAkun.findMany({
+    where,
     orderBy: { kode: "asc" }
   })
 }
@@ -20,11 +22,13 @@ export async function getKlasifikasiAkun() {
 // ==========================================
 // 2. SUB KLASIFIKASI AKUN (Level 2)
 // ==========================================
-export async function getSubKlasifikasiAkun() {
-  const session = await auth()
-  if (!session) throw new Error("Unauthorized")
+export async function getSubKlasifikasiAkun(unitId?: string) {
+  const tenant = await getTenantContext()
+  const filterUnitId = unitId || tenant.unitId
+  const where = filterUnitId ? { unitSekolahId: filterUnitId } : {}
 
   return prisma.subKlasifikasiAkun.findMany({
+    where,
     include: {
       klasifikasi: true,
       _count: {
@@ -35,19 +39,35 @@ export async function getSubKlasifikasiAkun() {
   })
 }
 
-export async function tambahSubKlasifikasi(data: { kode: string, nama: string, klasifikasiAkunId: string }) {
-  const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Akses ditolak. Hanya Admin Yayasan yang dapat mengubah struktur klasifikasi.")
+export async function tambahSubKlasifikasi(data: { kode: string, nama: string, klasifikasiAkunId: string, unitSekolahId?: string }) {
+  const tenant = await getTenantContext()
+  if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
 
-  // Check if kode is unique
-  const existing = await prisma.subKlasifikasiAkun.findUnique({ where: { kode: data.kode } })
-  if (existing) throw new Error("Kode subklasifikasi sudah digunakan.")
+  const targetUnitId = data.unitSekolahId || tenant.unitId
+  if (!targetUnitId) throw new Error("Unit sekolah harus dipilih.")
 
-  const result = await prisma.subKlasifikasiAkun.create({ data })
+  const existing = await prisma.subKlasifikasiAkun.findUnique({ 
+    where: { 
+      kode_unitSekolahId: {
+        kode: data.kode,
+        unitSekolahId: targetUnitId
+      }
+    } 
+  })
+  if (existing) throw new Error("Kode subklasifikasi sudah digunakan di unit ini.")
+
+  const result = await prisma.subKlasifikasiAkun.create({ 
+    data: {
+      kode: data.kode,
+      nama: data.nama,
+      klasifikasiAkunId: data.klasifikasiAkunId,
+      unitSekolahId: targetUnitId
+    } 
+  })
 
   await prisma.logAktivitas.create({
     data: {
-      penggunaId: (session.user as any).id,
+      penggunaId: tenant.user.id,
       aksi: "CREATE",
       modul: "AKUN_KEUANGAN",
       keterangan: `Menambahkan Sub Klasifikasi baru: ${data.kode} - ${data.nama}`
@@ -59,12 +79,21 @@ export async function tambahSubKlasifikasi(data: { kode: string, nama: string, k
 }
 
 export async function editSubKlasifikasi(id: string, data: { kode?: string, nama?: string, klasifikasiAkunId?: string }) {
-  const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Akses ditolak. Hanya Admin Yayasan yang dapat mengubah struktur klasifikasi.")
+  const tenant = await getTenantContext()
+  if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
+
+  const current = await prisma.subKlasifikasiAkun.findUnique({ where: { id } })
+  if (!current) throw new Error("Subklasifikasi tidak ditemukan.")
+
+  if (tenant.role === "TATA_USAHA" && current.unitSekolahId !== tenant.unitId) {
+    throw new Error("Anda hanya dapat mengedit data unit Anda sendiri.")
+  }
 
   if (data.kode) {
-    const existing = await prisma.subKlasifikasiAkun.findFirst({ where: { kode: data.kode, id: { not: id } } })
-    if (existing) throw new Error("Kode subklasifikasi sudah digunakan.")
+    const existing = await prisma.subKlasifikasiAkun.findFirst({ 
+      where: { kode: data.kode, unitSekolahId: current.unitSekolahId, id: { not: id } } 
+    })
+    if (existing) throw new Error("Kode subklasifikasi sudah digunakan di unit ini.")
   }
 
   const result = await prisma.subKlasifikasiAkun.update({
@@ -74,7 +103,7 @@ export async function editSubKlasifikasi(id: string, data: { kode?: string, nama
 
   await prisma.logAktivitas.create({
     data: {
-      penggunaId: (session.user as any).id,
+      penggunaId: tenant.user.id,
       aksi: "UPDATE",
       modul: "AKUN_KEUANGAN",
       keterangan: `Memperbarui Sub Klasifikasi: ${result.kode} - ${result.nama}`
@@ -86,8 +115,15 @@ export async function editSubKlasifikasi(id: string, data: { kode?: string, nama
 }
 
 export async function hapusSubKlasifikasi(id: string) {
-  const session = await auth()
-  if (!session || session.user.role !== "ADMIN") throw new Error("Akses ditolak. Hanya Admin Yayasan yang dapat mengubah struktur klasifikasi.")
+  const tenant = await getTenantContext()
+  if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
+
+  const current = await prisma.subKlasifikasiAkun.findUnique({ where: { id } })
+  if (!current) throw new Error("Subklasifikasi tidak ditemukan.")
+
+  if (tenant.role === "TATA_USAHA" && current.unitSekolahId !== tenant.unitId) {
+    throw new Error("Anda hanya dapat menghapus data unit Anda sendiri.")
+  }
 
   // Prisma akan throw error jika ada relasi (karena onDelete: Restrict)
   try {
@@ -97,7 +133,7 @@ export async function hapusSubKlasifikasi(id: string) {
 
     await prisma.logAktivitas.create({
       data: {
-        penggunaId: (session.user as any).id,
+        penggunaId: tenant.user.id,
         aksi: "DELETE",
         modul: "AKUN_KEUANGAN",
         keterangan: `Menghapus Sub Klasifikasi: ${result.kode} - ${result.nama}`
@@ -115,17 +151,10 @@ export async function hapusSubKlasifikasi(id: string) {
 // ==========================================
 // 3. AKUN DETAIL (Level 3)
 // ==========================================
-export async function getAkunDetail() {
+export async function getAkunDetail(unitId?: string) {
   const tenant = await getTenantContext()
-
-  const where = tenant.isGlobal
-    ? {}
-    : {
-        OR: [
-          { unitSekolahId: tenant.unitId },
-          { unitSekolahId: null }
-        ]
-      }
+  const filterUnitId = unitId || tenant.unitId
+  const where = filterUnitId ? { unitSekolahId: filterUnitId } : {}
 
   return prisma.akunDetail.findMany({
     where,
@@ -141,19 +170,33 @@ export async function getAkunDetail() {
   })
 }
 
-export async function tambahAkunDetail(data: { kode: string, nama: string, subKlasifikasiAkunId: string, unitSekolahId?: string | null, isKasBank: boolean, isActive: boolean }) {
+export async function tambahAkunDetail(data: { kode: string, nama: string, subKlasifikasiAkunId: string, unitSekolahId?: string, isKasBank: boolean, isActive: boolean }) {
   const tenant = await getTenantContext()
-  if (!["ADMIN", "TATA_USAHA"].includes(tenant.role)) throw new Error("Akses ditolak.")
+  if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
 
-  if (tenant.role !== "ADMIN") {
-    // Paksa kunci ke unit milik TATA_USAHA
-    data.unitSekolahId = tenant.unitId
-  }
+  const targetUnitId = data.unitSekolahId || tenant.unitId
+  if (!targetUnitId) throw new Error("Unit sekolah harus dipilih.")
 
-  const existing = await prisma.akunDetail.findUnique({ where: { kode: data.kode } })
-  if (existing) throw new Error("Kode akun sudah digunakan.")
+  const existing = await prisma.akunDetail.findUnique({ 
+    where: { 
+      kode_unitSekolahId: {
+        kode: data.kode,
+        unitSekolahId: targetUnitId
+      }
+    } 
+  })
+  if (existing) throw new Error("Kode akun sudah digunakan di unit ini.")
 
-  const result = await prisma.akunDetail.create({ data })
+  const result = await prisma.akunDetail.create({ 
+    data: {
+      kode: data.kode,
+      nama: data.nama,
+      subKlasifikasiAkunId: data.subKlasifikasiAkunId,
+      unitSekolahId: targetUnitId,
+      isKasBank: data.isKasBank,
+      isActive: data.isActive
+    } 
+  })
 
   await prisma.logAktivitas.create({
     data: {
@@ -168,30 +211,35 @@ export async function tambahAkunDetail(data: { kode: string, nama: string, subKl
   return result
 }
 
-export async function editAkunDetail(id: string, data: { kode?: string, nama?: string, subKlasifikasiAkunId?: string, unitSekolahId?: string | null, isKasBank?: boolean, isActive?: boolean }) {
+export async function editAkunDetail(id: string, data: { kode?: string, nama?: string, subKlasifikasiAkunId?: string, unitSekolahId?: string, isKasBank?: boolean, isActive?: boolean }) {
   const tenant = await getTenantContext()
-  if (!["ADMIN", "TATA_USAHA"].includes(tenant.role)) throw new Error("Akses ditolak.")
+  if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
 
   const current = await prisma.akunDetail.findUnique({ where: { id } })
   if (!current) throw new Error("Akun tidak ditemukan")
 
-  if (tenant.role !== "ADMIN") {
-    // Pastikan dia tidak mengedit akun milik unit lain
-    if (current.unitSekolahId !== tenant.unitId) {
-      throw new Error("Anda hanya dapat mengedit akun milik unit Anda sendiri.")
-    }
-    // Paksa unit data yang akan diupdate ke unit miliknya
-    data.unitSekolahId = tenant.unitId
+  if (tenant.role === "TATA_USAHA" && current.unitSekolahId !== tenant.unitId) {
+    throw new Error("Anda hanya dapat mengedit akun milik unit Anda sendiri.")
   }
 
+  const targetUnitId = current.unitSekolahId
+
   if (data.kode) {
-    const existing = await prisma.akunDetail.findFirst({ where: { kode: data.kode, id: { not: id } } })
-    if (existing) throw new Error("Kode akun sudah digunakan.")
+    const existing = await prisma.akunDetail.findFirst({ 
+      where: { kode: data.kode, unitSekolahId: targetUnitId, id: { not: id } } 
+    })
+    if (existing) throw new Error("Kode akun sudah digunakan di unit ini.")
   }
 
   const result = await prisma.akunDetail.update({
     where: { id },
-    data
+    data: {
+      kode: data.kode,
+      nama: data.nama,
+      subKlasifikasiAkunId: data.subKlasifikasiAkunId,
+      isKasBank: data.isKasBank,
+      isActive: data.isActive
+    }
   })
 
   await prisma.logAktivitas.create({
@@ -209,7 +257,7 @@ export async function editAkunDetail(id: string, data: { kode?: string, nama?: s
 
 export async function hapusAkunDetail(id: string) {
   const tenant = await getTenantContext()
-  if (!["ADMIN", "TATA_USAHA"].includes(tenant.role)) throw new Error("Akses ditolak.")
+  if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
 
   const current = await prisma.akunDetail.findUnique({ where: { id } })
   if (!current) throw new Error("Akun tidak ditemukan")

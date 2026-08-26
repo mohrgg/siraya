@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/Button"
 import { Plus, Edit2, Trash2, Layers, Book, Search, X } from "lucide-react"
 import { Input } from "@/components/ui/Input"
@@ -20,7 +21,8 @@ export default function AkunKeuanganClient({
   unitSekolahList = [],
   userRole = "TATA_USAHA",
   userUnitId = "",
-  isGlobal = false
+  isGlobal = false,
+  activeUnitId = ""
 }: { 
   initialKlasifikasi: Klasifikasi[], 
   initialSubKlasifikasi: SubKlasifikasi[], 
@@ -28,11 +30,15 @@ export default function AkunKeuanganClient({
   unitSekolahList?: { id: string, name: string }[],
   userRole?: string,
   userUnitId?: string | null,
-  isGlobal?: boolean
+  isGlobal?: boolean,
+  activeUnitId?: string | null
 }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
-  const isAdmin = userRole === "ADMIN"
-  const canEditKategori = isAdmin && (userUnitId === "all" || userUnitId == null)
+  const canEditKategori = !isReadOnly // TU and Admin can edit Kategori
 
   const [activeTab, setActiveTab] = useState<"AKUN" | "SUBKLASIFIKASI">("SUBKLASIFIKASI")
   const [searchTerm, setSearchTerm] = useState("")
@@ -49,7 +55,7 @@ export default function AkunKeuanganClient({
 
   // Form States
   const [subKlasForm, setSubKlasForm] = useState({ id: "", kode: "", nama: "", klasifikasiAkunId: klasifikasi[0]?.id || "" })
-  const [akunForm, setAkunForm] = useState({ id: "", kode: "", nama: "", subKlasifikasiAkunId: subKlasifikasi[0]?.id || "", unitSekolahId: "", isKasBank: false, isActive: true })
+  const [akunForm, setAkunForm] = useState({ id: "", kode: "", nama: "", subKlasifikasiAkunId: subKlasifikasi[0]?.id || "", unitSekolahId: activeUnitId || "", isKasBank: false, isActive: true })
 
   // Delete States
   const [deleteSubKlasId, setDeleteSubKlasId] = useState<string | null>(null)
@@ -66,19 +72,9 @@ export default function AkunKeuanganClient({
     return a.kode.localeCompare(b.kode)
   })
 
-  const filteredAkun = akunDetail.filter(a => {
-    const matchesSearch = a.nama.toLowerCase().includes(searchTerm.toLowerCase()) || a.kode.includes(searchTerm)
-    
-    // Role-based & Context-based visibility
-    if (!isGlobal && userUnitId) {
-      // If not in Global Mode, we only show accounts matching the active unit OR global accounts
-      const matchesUnit = a.unitSekolahId === null || a.unitSekolahId === userUnitId
-      return matchesSearch && matchesUnit
-    }
-    
-    // If in Global Mode, show everything that matches the search
-    return matchesSearch
-  }).sort((a, b) => {
+  const filteredAkun = akunDetail.filter(a => 
+    a.nama.toLowerCase().includes(searchTerm.toLowerCase()) || a.kode.includes(searchTerm)
+  ).sort((a, b) => {
     const numA = parseInt(a.kode)
     const numB = parseInt(b.kode)
     if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB
@@ -178,7 +174,7 @@ export default function AkunKeuanganClient({
       const { id, ...restForm } = akunForm
       const payload = {
         ...restForm,
-        unitSekolahId: restForm.unitSekolahId === "" ? null : restForm.unitSekolahId
+        unitSekolahId: restForm.unitSekolahId === "" ? undefined : restForm.unitSekolahId
       }
 
       if (akunForm.id) {
@@ -316,25 +312,10 @@ export default function AkunKeuanganClient({
           </div>
           
           <div className="flex flex-col gap-1.5 p-4 bg-primary/5 border border-primary/10 rounded-xl mt-2">
-            <label className="text-sm font-semibold text-primary">Tipe Administrasi (Kepemilikan Akun)</label>
-            {isAdmin ? (
-              <>
-                <p className="text-xs text-text-muted mb-2">Kosongkan jika akun ini berlaku Global/Yayasan (semua unit bisa memakai).</p>
-                <select 
-                  className="w-full px-3 py-2 bg-white border border-border rounded-lg text-text-main disabled:bg-gray-100 disabled:cursor-not-allowed" 
-                  value={akunForm.unitSekolahId} 
-                  disabled={userUnitId !== "all" && userUnitId != null}
-                  onChange={e => setAkunForm({ ...akunForm, unitSekolahId: e.target.value })}
-                >
-                  <option value="">-- Administrasi Global (Semua Unit) --</option>
-                  {unitSekolahList.map(u => <option key={u.id} value={u.id}>Administrasi: {u.name}</option>)}
-                </select>
-              </>
-            ) : (
-              <p className="text-sm text-text-main font-medium mt-1 p-2 bg-white border border-border rounded-lg">
-                Akun ini akan terkunci secara eksklusif untuk Unit Sekolah Anda.
-              </p>
-            )}
+            <label className="text-sm font-semibold text-primary">Kepemilikan Akun</label>
+            <p className="text-sm text-text-main font-medium mt-1 p-2 bg-white border border-border rounded-lg">
+              Terkunci untuk Unit: {unitSekolahList.find(u => u.id === (akunForm.unitSekolahId || activeUnitId))?.name || "Tidak diketahui"}
+            </p>
           </div>
 
           <div className="flex flex-col gap-3 mt-2">
@@ -394,14 +375,32 @@ export default function AkunKeuanganClient({
                   onChange={e => setSearchTerm(e.target.value)}
                 />
               </div>
+              
+              {isGlobal && (
+                <div className="flex-shrink-0">
+                  <select
+                    className="px-3 py-2 bg-bg border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    value={activeUnitId || ""}
+                    onChange={(e) => {
+                      const newUnit = e.target.value;
+                      const url = new URL(window.location.href);
+                      url.searchParams.set("unitId", newUnit);
+                      router.push(pathname + "?" + url.searchParams.toString());
+                    }}
+                  >
+                    {unitSekolahList.map((u) => (
+                      <option key={u.id} value={u.id}>Unit: {u.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2">
               {!isReadOnly && activeTab === 'AKUN' && (
                 <Button onClick={() => {
                   const defaultSubId = subKlasifikasi[0]?.id || ""
-                  const defaultUnitId = (userUnitId && userUnitId !== "all") ? userUnitId : ""
-                  setAkunForm({ id: "", kode: generateAkunKode(defaultSubId, akunDetail), nama: "", subKlasifikasiAkunId: defaultSubId, unitSekolahId: defaultUnitId, isKasBank: false, isActive: true })
+                  setAkunForm({ id: "", kode: generateAkunKode(defaultSubId, akunDetail), nama: "", subKlasifikasiAkunId: defaultSubId, unitSekolahId: activeUnitId || "", isKasBank: false, isActive: true })
                   setIsAkunDrawerOpen(true)
                 }} className="shrink-0">
                   <Plus size={16} className="mr-1.5"/> Tambah Akun
@@ -418,16 +417,6 @@ export default function AkunKeuanganClient({
               )}
             </div>
           </div>
-
-        {/* Peringatan Global Kategori */}
-        {activeTab === 'SUBKLASIFIKASI' && !canEditKategori && (
-          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start gap-3">
-            <div className="font-bold text-yellow-700 shrink-0">Info:</div>
-            <p className="text-sm text-yellow-800">
-              Kategori Akun bersifat Global (Standar Yayasan). Untuk menambah atau mengubah Kategori, silakan ganti filter Unit Sekolah di header menjadi <b>"Pusat / Yayasan (Semua Unit)"</b>.
-            </p>
-          </div>
-        )}
 
         {/* Tab Content: AKUN */}
         {activeTab === 'AKUN' && (

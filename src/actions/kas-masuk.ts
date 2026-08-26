@@ -73,10 +73,7 @@ export async function getKasBankAccounts() {
   }
 
   if (!tenant.isGlobal) {
-    whereClause.OR = [
-      { unitSekolahId: null },
-      { unitSekolahId: tenant.unitId }
-    ]
+    whereClause.unitSekolahId = tenant.unitId
   }
 
   return prisma.akunDetail.findMany({
@@ -105,10 +102,7 @@ export async function getPendapatanAccounts() {
   }
 
   if (!tenant.isGlobal) {
-    whereClause.OR = [
-      { unitSekolahId: null },
-      { unitSekolahId: tenant.unitId }
-    ]
+    whereClause.unitSekolahId = tenant.unitId
   }
 
   return prisma.akunDetail.findMany({
@@ -189,8 +183,7 @@ export async function createKasMasuk(data: KasMasukPayload) {
     where: {
       id: { in: allAccountIds },
       unitSekolahId: {
-        not: null,           // Bukan akun global
-        notIn: unitToSave ? [unitToSave] : [] // Dan bukan milik unit ini
+        notIn: unitToSave ? [unitToSave] : [] // Bukan milik unit ini
       }
     }
   })
@@ -333,7 +326,6 @@ export async function updateKasMasuk(id: string, data: KasMasukPayload) {
     where: {
       id: { in: allAccountIds },
       unitSekolahId: {
-        not: null,
         notIn: unitToSave ? [unitToSave] : []
       }
     }

@@ -11,10 +11,7 @@ export async function getAkunKasBankList(unitSekolahId?: string) {
       where: {
         isKasBank: true,
         isActive: true,
-        OR: [
-          { unitSekolahId: null },
-          { unitSekolahId }
-        ]
+        unitSekolahId: unitSekolahId
       },
       select: {
         id: true,

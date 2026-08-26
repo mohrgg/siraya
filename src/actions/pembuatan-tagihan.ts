@@ -89,15 +89,9 @@ export async function getAkunPendapatan(activeUnitId?: string) {
   }
 
   if (activeUnitId && activeUnitId !== "all") {
-    whereClause.OR = [
-      { unitSekolahId: null },
-      { unitSekolahId: activeUnitId }
-    ]
+    whereClause.unitSekolahId = activeUnitId
   } else if (user.role !== "ADMIN" && user.unitSekolahId) {
-    whereClause.OR = [
-      { unitSekolahId: null },
-      { unitSekolahId: user.unitSekolahId }
-    ]
+    whereClause.unitSekolahId = user.unitSekolahId
   }
 
   return prisma.akunDetail.findMany({

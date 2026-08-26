@@ -45,7 +45,7 @@ async function main() {
       isActive: true,
     }
   })
-  // Seed Akun Keuangan Dasar (Global CoA)
+  // Seed Akun Keuangan Dasar (Per Unit)
   const klasifikasiData = [
     { kode: '1', nama: 'HARTA (ASET)' },
     { kode: '2', nama: 'KEWAJIBAN (LIABILITAS)' },
@@ -56,11 +56,17 @@ async function main() {
 
   for (const k of klasifikasiData) {
     await prisma.klasifikasiAkun.upsert({
-      where: { kode: k.kode },
+      where: { 
+        kode_unitSekolahId: { 
+          kode: k.kode, 
+          unitSekolahId: school.id 
+        } 
+      },
       update: {},
       create: {
         kode: k.kode,
         nama: k.nama,
+        unitSekolahId: school.id
       }
     });
   }
