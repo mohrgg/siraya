@@ -453,7 +453,7 @@ export default function PembayaranTagihanClient({
                                   <button 
                                     onClick={() => handlePrintTagihan(tagihan.id)}
                                     disabled={isLoadingRiwayat === tagihan.id}
-                                    className="flex w-full items-center justify-center p-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition-all hover:bg-emerald-100 hover:shadow-sm group/btn"
+                                    className="flex w-[140px] mx-auto items-center justify-center p-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition-all hover:bg-emerald-100 hover:shadow-sm group/btn"
                                     title="Cetak Ulang Resi"
                                   >
                                     {isLoadingRiwayat === tagihan.id ? (

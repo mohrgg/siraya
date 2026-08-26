@@ -29,14 +29,14 @@ export default function ModalPilihRiwayatTransaksi({
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
         
         {/* Header */}
-        <div className="bg-slate-800 flex items-center justify-between p-4 px-6 text-white shrink-0">
+        <div className="bg-emerald-500 flex items-center justify-between p-4 px-6 text-white shrink-0">
           <div className="flex items-center gap-2">
-            <Receipt size={20} className="text-emerald-400" />
+            <Receipt size={20} className="text-white" />
             <h2 className="text-lg font-bold">Riwayat Pembayaran</h2>
           </div>
           <button 
             onClick={onClose} 
-            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors text-white"
+            className="p-1.5 hover:bg-emerald-600 rounded-lg transition-colors text-white"
           >
             <X size={20} />
           </button>
