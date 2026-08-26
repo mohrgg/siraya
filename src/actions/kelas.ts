@@ -45,14 +45,14 @@ export async function editTingkatan(id: string, data: { name: string, order: num
 }
 
 // --- MAJORS ---
-export async function getJurusan() {
+export async function getJurusan(unitSekolahId?: string) {
   const session = await auth()
   if (!session) throw new Error("Unauthorized")
 
   return prisma.jurusan.findMany({
     where: { 
       isDeleted: false,
-      ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : {})
+      ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId && unitSekolahId !== "all" ? { unitSekolahId } : {}))
     },
     include: { unitSekolah: true },
     orderBy: [

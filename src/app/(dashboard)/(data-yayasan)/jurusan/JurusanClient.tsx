@@ -13,15 +13,12 @@ import toast from "react-hot-toast"
 
 type Major = any
 
-export default function JurusanClient({ initialData, units, userRole }: { initialData: Major[], units: any[], userRole?: string }) {
+export default function JurusanClient({ initialData, userRole, activeUnitId }: { initialData: Major[], userRole?: string, activeUnitId?: string }) {
   const isReadOnly = false
-  const isUnitLocked = !["ADMIN", "KEPALA_SEKOLAH"].includes(userRole || "")
-  const [activeUnitId, setActiveUnitId] = useState<string>(units[0]?.id || "")
   const [data, setData] = useState<Major[]>(initialData)
   const [searchTerm, setSearchTerm] = useState("")
   
   const filteredData = data.filter((d: any) => 
-    d.unitSekolahId === activeUnitId &&
     (d.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
      d.code.toLowerCase().includes(searchTerm.toLowerCase()))
   )
@@ -53,7 +50,7 @@ export default function JurusanClient({ initialData, units, userRole }: { initia
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleAddClick = () => {
-    setFormData({ id: "", name: PRESETS[0].name, code: PRESETS[0].code, unitSekolahId: activeUnitId })
+    setFormData({ id: "", name: PRESETS[0].name, code: PRESETS[0].code, unitSekolahId: activeUnitId || "" })
     setSelectedPreset(PRESETS[0].code)
     setIsCustom(false)
     setIsAdding(true)
@@ -104,20 +101,22 @@ export default function JurusanClient({ initialData, units, userRole }: { initia
     e.preventDefault()
     setIsSubmitting(true)
     try {
-      if (formData.id) {
-        // Edit
-        const res = await editJurusan(formData.id, { name: formData.name, code: formData.code, unitSekolahId: formData.unitSekolahId })
-        const updatedUnit = units.find(u => u.id === formData.unitSekolahId)
-        setData(data.map(d => d.id === formData.id ? { ...res, unitSekolah: updatedUnit } : d))
-        toast.success("Jurusan berhasil diperbarui")
-      } else {
-        // Create
-        const res = await tambahJurusan({ name: formData.name, code: formData.code, unitSekolahId: formData.unitSekolahId })
-        const newUnit = units.find(u => u.id === formData.unitSekolahId)
-        setData([...data, { ...res, unitSekolah: newUnit }])
-        toast.success("Jurusan berhasil ditambahkan")
-      }
-      setIsAdding(false)
+        if (!formData.unitSekolahId) {
+          toast.error("Unit Sekolah tidak tersedia.")
+          return
+        }
+        if (formData.id) {
+          // Edit
+          const res = await editJurusan(formData.id, { name: formData.name, code: formData.code, unitSekolahId: formData.unitSekolahId })
+          setData(data.map(d => d.id === formData.id ? res : d))
+          toast.success("Jurusan berhasil diperbarui")
+        } else {
+          // Create
+          const res = await tambahJurusan({ name: formData.name, code: formData.code, unitSekolahId: formData.unitSekolahId })
+          setData([...data, res])
+          toast.success("Jurusan berhasil ditambahkan")
+        }
+        setIsAdding(false)
     } catch (e: any) {
       toast.error(e.message || "Gagal menyimpan jurusan")
     } finally {
@@ -149,19 +148,7 @@ export default function JurusanClient({ initialData, units, userRole }: { initia
           <div>Jurusan ini hanya akan muncul sebagai pilihan saat Anda membuat kelas pada <b>Unit Sekolah</b> yang bersangkutan.</div>
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5 hidden">
-            <label className="text-sm font-semibold text-text-main">Unit Sekolah <span className="text-red-500">*</span></label>
-            <select 
-              className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
-              value={formData.unitSekolahId}
-              onChange={e => setFormData({ ...formData, unitSekolahId: e.target.value })}
-              required
-            >
-              {units.map(unit => (
-                <option key={unit.id} value={unit.id}>{unit.name}</option>
-              ))}
-            </select>
-          </div>
+          {/* Removed hidden unitSekolahId select, managed automatically */}
           
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text-main">Pilih Preset Jurusan / Program</label>
@@ -219,21 +206,6 @@ export default function JurusanClient({ initialData, units, userRole }: { initia
                   className="w-full pl-10 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
                 />
               </div>
-
-              <select
-                value={activeUnitId}
-                onChange={(e) => setActiveUnitId(e.target.value)}
-                disabled={isUnitLocked}
-                className={`px-3 py-2 border rounded-xl focus:outline-none text-sm font-medium min-w-[180px] ${
-                  isUnitLocked 
-                    ? "cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200" 
-                    : "cursor-pointer bg-bg border-border text-text-main focus:ring-2 focus:ring-primary/50"
-                }`}
-              >
-                {units.map((unit: any) => (
-                  <option key={unit.id} value={unit.id}>{unit.name}</option>
-                ))}
-              </select>
             </div>
 
             {!isReadOnly && (
