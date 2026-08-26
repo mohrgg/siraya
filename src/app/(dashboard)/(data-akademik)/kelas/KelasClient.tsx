@@ -16,6 +16,7 @@ import MuridFormModal from "@/components/modals/MuridFormModal"
 import TingkatFormModal from "./components/TingkatFormModal"
 import SubKelasFormModal from "./components/SubKelasFormModal"
 import SubKelasDetailDrawer from "./components/SubKelasDetailDrawer"
+import ReactivateSiswaModal from "./components/ReactivateSiswaModal"
 import { tambahKelas, editKelas, hapusKelas, hapusTingkatan, tambahTingkatan, editTingkatan } from "@/actions/kelas"
 import { hapusSiswa, tambahSiswa, editSiswa } from "@/actions/siswa"
 
@@ -36,8 +37,10 @@ export default function KelasClient({
   
   const [viewDetailMurid, setViewDetailMurid] = useState<any>(null)
   const [viewDetailSubKelas, setViewDetailSubKelas] = useState<any>(null)
+  const [reactivateMurid, setReactivateMurid] = useState<{ id: string, name: string } | null>(null)
   
   const [deleteData, setDeleteData] = useState<{ id: string, type: "tingkat" | "subkelas" | "murid" } | null>(null)
+  const [bulkActionConfirm, setBulkActionConfirm] = useState<{ type: "lulus" | "hapus" } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isExportingPDF, setIsExportingPDF] = useState(false)
@@ -355,6 +358,22 @@ export default function KelasClient({
         isLoading={isDeleting}
       />
 
+      <ConfirmModal 
+        isOpen={!!bulkActionConfirm}
+        title={bulkActionConfirm?.type === 'lulus' ? 'Luluskan Siswa' : 'Hapus Siswa Permanen'}
+        message={bulkActionConfirm?.type === 'lulus' ? 'Yakin ingin meluluskan siswa terpilih? Mereka akan dipindahkan ke tab Alumni.' : 'Yakin ingin menghapus secara permanen siswa terpilih? Data ini tidak dapat dikembalikan.'}
+        onCancel={() => setBulkActionConfirm(null)}
+        onConfirm={() => {
+          if (bulkActionConfirm?.type === 'lulus') {
+            data.handleBulkGraduation()
+          } else {
+            data.handleBulkDelete()
+          }
+          setBulkActionConfirm(null)
+        }}
+        isLoading={data.isPromoting}
+      />
+
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-6 border-b border-border">
@@ -400,6 +419,7 @@ export default function KelasClient({
                 setDeleteData={setDeleteData} 
                 setFormMurid={setFormMurid} 
                 setShowModalMurid={setShowModalMurid} 
+                setReactivateMurid={setReactivateMurid}
                 getStatusBadge={getStatusBadge}
                 isReadOnly={isReadOnly}
               />
@@ -493,19 +513,11 @@ export default function KelasClient({
           
           {/* Action Group 2: Danger Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <Button size="sm" variant="danger" className="text-xs py-1.5 px-3" onClick={() => {
-              if (window.confirm('Yakin ingin meluluskan siswa terpilih? Mereka akan dipindahkan ke tab Alumni.')) {
-                data.handleBulkGraduation();
-              }
-            }} disabled={data.isPromoting} isLoading={data.isPromoting}>
+            <Button size="sm" variant="danger" className="text-xs py-1.5 px-3" onClick={() => setBulkActionConfirm({ type: 'lulus' })} disabled={data.isPromoting} isLoading={data.isPromoting}>
               Luluskan
             </Button>
             
-            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 text-xs py-1.5 px-3 shrink-0" onClick={() => {
-              if (window.confirm('Yakin ingin menghapus secara permanen siswa terpilih?')) {
-                data.handleBulkDelete();
-              }
-            }} disabled={data.isPromoting} isLoading={data.isPromoting}>
+            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 text-xs py-1.5 px-3 shrink-0" onClick={() => setBulkActionConfirm({ type: 'hapus' })} disabled={data.isPromoting} isLoading={data.isPromoting}>
               Hapus
             </Button>
             

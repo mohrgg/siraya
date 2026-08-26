@@ -334,32 +334,48 @@ export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: strin
 
   let successCount = 0
   
-  await prisma.$transaction(async (tx) => {
-    for (const muridId of muridIds) {
-      const existing = await tx.riwayatKelas.findFirst({
-        where: {
-          muridId,
-          tahunAkademikId
-        }
-      })
+  const targetSubKelas = await prisma.subKelas.findUnique({
+    where: { id: newSubKelasId }
+  })
+  if (!targetSubKelas) throw new Error("Kelas tujuan tidak ditemukan.")
 
-      if (existing) {
-        await tx.riwayatKelas.update({
-          where: { id: existing.id },
-          data: { subKelasId: newSubKelasId }
-        })
-      } else {
-        await tx.riwayatKelas.create({
-          data: {
-            muridId,
-            subKelasId: newSubKelasId,
-            tahunAkademikId
-          }
-        })
-      }
-      successCount++
+  if (session.user.role !== "ADMIN" && targetSubKelas.unitSekolahId !== session.user.unitSekolahId) {
+    throw new Error("Anda tidak memiliki akses ke unit sekolah tujuan.")
+  }
+
+  const existingRecords = await prisma.riwayatKelas.findMany({
+    where: {
+      muridId: { in: muridIds },
+      tahunAkademikId
+    },
+    select: { muridId: true, id: true }
+  })
+
+  const existingMuridIds = new Set(existingRecords.map(r => r.muridId))
+  const recordsToCreate = muridIds.filter(id => !existingMuridIds.has(id)).map(id => ({
+    muridId: id,
+    subKelasId: newSubKelasId,
+    tahunAkademikId
+  }))
+  const recordIdsToUpdate = existingRecords.map(r => r.id)
+
+  await prisma.$transaction(async (tx) => {
+    if (recordIdsToUpdate.length > 0) {
+      await tx.riwayatKelas.updateMany({
+        where: { id: { in: recordIdsToUpdate } },
+        data: { subKelasId: newSubKelasId }
+      })
+    }
+
+    if (recordsToCreate.length > 0) {
+      await tx.riwayatKelas.createMany({
+        data: recordsToCreate,
+        skipDuplicates: true
+      })
     }
   })
+
+  successCount = muridIds.length
 
   revalidatePath("/kelas")
   return { success: successCount }
@@ -368,6 +384,19 @@ export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: strin
 export async function luluskanSiswaBatch(muridIds: string[]) {
   const session = await auth()
   if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+
+  // Cek unit akses
+  if (session.user.role !== "ADMIN") {
+    const muridCount = await prisma.murid.count({
+      where: {
+        id: { in: muridIds },
+        unitSekolahId: { not: session.user.unitSekolahId as string }
+      }
+    })
+    if (muridCount > 0) {
+      throw new Error("Sebagian siswa yang dipilih bukan dari unit Anda.")
+    }
+  }
 
   const result = await prisma.murid.updateMany({
     where: {
@@ -381,4 +410,57 @@ export async function luluskanSiswaBatch(muridIds: string[]) {
 
   revalidatePath("/kelas")
   return { success: result.count }
+}
+
+export async function reactivateSiswa(muridId: string, newSubKelasId: string, targetTahunAkademikId?: string) {
+  const session = await auth()
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+
+  const murid = await prisma.murid.findUnique({ where: { id: muridId } })
+  if (!murid) throw new Error("Siswa tidak ditemukan")
+
+  if (session.user.role !== "ADMIN" && murid.unitSekolahId !== session.user.unitSekolahId) {
+    throw new Error("Anda tidak memiliki akses ke siswa ini.")
+  }
+
+  let tahunAkademikId = targetTahunAkademikId;
+  if (!tahunAkademikId) {
+    const activeTahun = await prisma.tahunAkademik.findFirst({
+      where: { isActive: true },
+      select: { id: true }
+    })
+    if (!activeTahun) throw new Error("Tahun akademik aktif tidak ditemukan")
+    tahunAkademikId = activeTahun.id;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    // 1. Ubah status kembali menjadi AKTIF
+    await tx.murid.update({
+      where: { id: muridId },
+      data: { status: "AKTIF", isActive: true }
+    })
+
+    // 2. Cek riwayat kelas, jika belum ada, buatkan
+    const existing = await tx.riwayatKelas.findFirst({
+      where: { muridId, tahunAkademikId }
+    })
+
+    if (existing) {
+      await tx.riwayatKelas.update({
+        where: { id: existing.id },
+        data: { subKelasId: newSubKelasId }
+      })
+    } else {
+      await tx.riwayatKelas.create({
+        data: {
+          muridId,
+          subKelasId: newSubKelasId,
+          tahunAkademikId
+        }
+      })
+    }
+  })
+
+  revalidatePath("/kelas")
+  return { success: true }
 }

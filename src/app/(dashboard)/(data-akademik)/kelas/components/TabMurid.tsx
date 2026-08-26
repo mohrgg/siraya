@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation"
-import { Info, Edit2, Trash2, User, X } from "lucide-react"
+import { Info, Edit2, Trash2, User, X, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 
@@ -17,6 +17,7 @@ export default function TabMurid({
   setViewDetailMurid,
   setFormMurid,
   setShowModalMurid,
+  setReactivateMurid,
   getStatusBadge,
   // Bulk promote props
   classrooms,
@@ -158,6 +159,11 @@ export default function TabMurid({
             {!isReadOnly && (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
+                  {activeTab === "alumni" && (
+                    <button onClick={() => setReactivateMurid({ id: s.id, name: s.name })} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors" title="Aktifkan Kembali (Reaktivasi)">
+                      <UserPlus size={16} />
+                    </button>
+                  )}
                   <button onClick={() => router.push(`/murid/${s.id}`)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors" title="Lihat Profil 360° Murid"><Info size={16} /></button>
                   <button onClick={() => { 
                     setFormMurid({ ...s, subKelasId: s.riwayatKelas?.[0]?.subKelasId || "" }); 
