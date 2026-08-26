@@ -98,7 +98,7 @@ export default function SubKelasDetailDrawer({
         "Gender": s.gender,
         "Status": s.status || "AKTIF",
         "Asal Sekolah": s.previousSchool || "-",
-        "Nama Orang Tua / Wali": s.parentName || "-",
+        "Nama Orang Tua / Wali": s.fatherName || s.motherName || s.guardianName || "-",
         "No. HP Orang Tua": s.parentPhone || "-"
       }))
       const dateStr = new Date().toISOString().split('T')[0]

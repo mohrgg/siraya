@@ -70,6 +70,14 @@ export default function TabInformasiUmum({ formData, handleChange, schoolUnits, 
           <Input placeholder="Contoh: REG-2024-001" value={formData.formNo || ""} onChange={e => handleChange("formNo", e.target.value)} />
         </div>
         <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text-main">Username Akun Portal</label>
+          <Input placeholder="Belum tersedia" value={formData.username || ""} disabled />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text-main">Password Portal</label>
+          <Input type="password" placeholder="Belum tersedia" value={formData.password || ""} disabled />
+        </div>
+        <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main">Jarak Tempuh ke Sekolah</label>
           <select className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium" value={formData.distanceToSchool || ""} onChange={e => handleChange("distanceToSchool", e.target.value)}>
             <option value="">-- Pilih --</option>

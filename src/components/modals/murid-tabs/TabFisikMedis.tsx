@@ -36,6 +36,14 @@ export default function TabFisikMedis({ formData, handleChange }: any) {
             onChange={e => handleChange("medicalHistory", e.target.value)} 
           />
         </div>
+        <div className="flex flex-col gap-1.5 pt-2">
+          <label className="text-sm font-semibold text-text-main">Penyakit Bawaan / Kronis (Opsional)</label>
+          <Input placeholder="Contoh: Asma, Jantung, dll." value={formData.disease || ""} onChange={e => handleChange("disease", e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1.5 pt-2">
+          <label className="text-sm font-semibold text-text-main">Kelainan Fisik / Disabilitas (Opsional)</label>
+          <Input placeholder="Contoh: Tunanetra, Tunarungu, dll." value={formData.abnormality || ""} onChange={e => handleChange("abnormality", e.target.value)} />
+        </div>
       </div>
     </div>
   )

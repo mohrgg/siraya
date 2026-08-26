@@ -155,8 +155,25 @@ export async function tambahSiswa(data: any) {
 
     const { subKelasId, studentStatus, birthDate, riwayatKelas, unitSekolah, subKelas, createdAt, updatedAt, id, parentName, nis, ...muridData } = data as any;
 
+    // Generate Custom Student ID
+    const currentYear = new Date().getFullYear().toString();
+    const unit = await tx.unitSekolah.findUnique({ where: { id: muridData.unitSekolahId } });
+    const level = unit?.level?.toUpperCase() || "XX";
+    
+    let dobStr = "000000";
+    if (birthDate) {
+      const d = new Date(birthDate);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yy = String(d.getFullYear()).slice(-2);
+      dobStr = `${dd}${mm}${yy}`;
+    }
+    const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const customId = `${currentYear}${level}-${dobStr}-${randomStr}`;
+
     const murid = await tx.murid.create({
       data: {
+        id: customId,
         ...muridData,
         nisn: cleanDash(muridData.nisn),
         nik: cleanDash(muridData.nik),

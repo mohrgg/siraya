@@ -90,7 +90,7 @@ export default function MuridDetailClient({
         "Jenis Kelamin": murid.gender,
         "Agama": murid.religion || "-",
         "Alamat": murid.address || "-",
-        "Nama Orang Tua": murid.parentName || "-",
+        "Nama Orang Tua": murid.fatherName || murid.motherName || murid.guardianName || "-",
         "No. HP Orang Tua": murid.parentPhone || "-",
         "Asal Sekolah": murid.previousSchool || "-"
       }]
@@ -126,7 +126,7 @@ export default function MuridDetailClient({
         ["Tempat, Tgl Lahir", `${murid.birthPlace || "-"}, ${murid.birthDate ? new Date(murid.birthDate).toLocaleDateString("id-ID") : "-"}`],
         ["Jenis Kelamin / Agama", `${murid.gender} / ${murid.religion || "-"}`],
         ["Alamat Tinggal", murid.address || "-"],
-        ["Nama Orang Tua / Wali", murid.parentName || "-"],
+        ["Nama Orang Tua / Wali", murid.fatherName || murid.motherName || murid.guardianName || "-"],
         ["No. HP Orang Tua", murid.parentPhone || "-"],
         ["Asal Sekolah Sebelumnya", murid.previousSchool || "-"]
       ]
@@ -316,15 +316,19 @@ export default function MuridDetailClient({
               <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight mb-1">
                 {murid.name}
               </h1>
-              <div className="flex items-center gap-1.5 text-sm text-text-muted font-medium">
+              <div className="flex items-center gap-1.5 text-sm text-text-muted font-medium flex-wrap mt-1">
                 <User size={16} />
-                <span>NIS: <span className="font-mono text-text-main font-semibold ml-1">{murid.nis}</span></span>
+                <span>NIS: <span className="font-mono text-text-main font-semibold ml-1">{murid.nis || "-"}</span></span>
                 {murid.nisn && (
                   <>
                     <span className="mx-1 text-border">•</span>
                     <span>NISN: <span className="font-mono text-text-main font-semibold ml-1">{murid.nisn}</span></span>
                   </>
                 )}
+                <span className="mx-1 text-border">•</span>
+                <span className="flex items-center gap-1.5 bg-primary/10 text-primary px-2 py-0.5 rounded-md">
+                  ID Sistem: <span className="font-mono font-bold tracking-tight">{murid.id}</span>
+                </span>
               </div>
             </div>
           </div>

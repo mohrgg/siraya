@@ -241,6 +241,8 @@ model Murid {
   // Kesehatan
   bloodType      String? @db.VarChar(5)
   medicalHistory String? @db.Text
+  disease        String? @db.VarChar(255)
+  abnormality    String? @db.VarChar(255)
 
   // Lain-lain
   status   String  @default("AKTIF") @db.VarChar(50)
