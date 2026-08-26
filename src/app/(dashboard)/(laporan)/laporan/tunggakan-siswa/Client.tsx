@@ -131,15 +131,17 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
       new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.sisa, 0))
     ])
 
+    const activeUnit = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
+
     exportTablePdf({
-      institutionInfo: buildInstitutionInfo(pengaturan, filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined),
+      institutionInfo: buildInstitutionInfo(pengaturan, activeUnit),
       title: "LAPORAN TUNGGAKAN SISWA",
       subtitle: `Per Tanggal: ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}`,
       headers: ["No", "Tanggal", "NIS", "Nama Siswa", "Tagihan", "Unit", "Rombel", "Nominal (Rp)", "Dibayar (Rp)", "Sisa (Rp)"],
       data: tableData,
       filename,
       config: { orientation: 'landscape' },
-      penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+      penandatanganKiri: { jabatan: "Mengetahui,", nama: activeUnit?.namaKepalaSekolah || "____________________" },
       penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
     })
     
@@ -357,7 +359,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
                   unitInfo={filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined}
                   tipe="ganda"
                   tanggal={new Date()}
-                  kiri={{ jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" }}
+                  kiri={{ jabatan: "Mengetahui,", nama: (filterUnitId ? schoolUnits.find(u => u.id === filterUnitId)?.namaKepalaSekolah : undefined) || "____________________" }}
                   kanan={{ jabatan: "Petugas,", nama: userName || "____________________" }}
                 />
                 <PrintFooter pengaturan={pengaturan} />

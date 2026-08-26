@@ -219,7 +219,7 @@ export default function MuridDetailClient({
           })),
           total: dataResi.total,
           catatan: pengaturan?.catatanKwitansi,
-          penandatanganKanan: { jabatan: "Bendahara Penerima", nama: userName || pengaturan?.namaBendahara || "Staf Keuangan" },
+          penandatanganKanan: { jabatan: "Bendahara Penerima", nama: userName || "Staf Keuangan" },
           filename: `Kwitansi_${dataResi.noReferensi}`
         })
         toast.success("Bukti Pembayaran berhasil diunduh")
@@ -1040,7 +1040,7 @@ export default function MuridDetailClient({
           tipe="ganda"
           tanggal={new Date()}
           kiri={{ jabatan: "Mengetahui,", nama: "Orang Tua / Wali Siswa" }}
-          kanan={{ jabatan: "Wali Kelas / Kepala Sekolah,", nama: pengaturan?.namaKepalaTU || "____________________" }}
+          kanan={{ jabatan: "Wali Kelas / Kepala Sekolah,", nama: murid.unitSekolah?.namaKepalaSekolah || "____________________" }}
           className="flex"
         />
         <PrintFooter pengaturan={pengaturan} className="block" />

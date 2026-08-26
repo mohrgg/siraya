@@ -147,7 +147,7 @@ export default function RekapitulasiTunggakanClient({
       data,
       filename: `Ringkasan_Tunggakan_${activeUnitName}`,
       config: { orientation: 'landscape' },
-      penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+      penandatanganKiri: { jabatan: "Mengetahui,", nama: unitInfo?.namaKepalaSekolah || "____________________" },
       penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
     })
   }
@@ -202,7 +202,7 @@ export default function RekapitulasiTunggakanClient({
       data,
       filename: `Detail_Tunggakan_${activeUnitName}`,
       config: { orientation: 'landscape' },
-      penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+      penandatanganKiri: { jabatan: "Mengetahui,", nama: unitInfo?.namaKepalaSekolah || "____________________" },
       penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
     })
   }
@@ -260,7 +260,7 @@ export default function RekapitulasiTunggakanClient({
       data,
       filename: `Tunggakan_Kelas_${selectedKelasData.subKelasName}_${activeUnitName}`,
       config: { orientation: 'portrait' },
-      penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+      penandatanganKiri: { jabatan: "Mengetahui,", nama: unitInfo?.namaKepalaSekolah || "____________________" },
       penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
     })
   }

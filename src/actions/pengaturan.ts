@@ -25,8 +25,6 @@ export async function getPengaturan() {
       website: "",
       logoUrl: "",
       kotaPenandatangan: "Bandung",
-      namaKepalaTU: "",
-      namaBendahara: "",
       catatanKwitansi: "",
       rekeningBank: "[]",
       prefixKasMasuk: "KM",
@@ -58,8 +56,6 @@ export async function upsertPengaturan(data: any) {
         website: data.website,
         logoUrl: data.logoUrl,
         kotaPenandatangan: data.kotaPenandatangan,
-        namaKepalaTU: data.namaKepalaTU,
-        namaBendahara: data.namaBendahara,
         catatanKwitansi: data.catatanKwitansi,
         rekeningBank: data.rekeningBank, // JSON string
         prefixKasMasuk: data.prefixKasMasuk || "KM",
@@ -74,8 +70,6 @@ export async function upsertPengaturan(data: any) {
         website: data.website,
         logoUrl: data.logoUrl,
         kotaPenandatangan: data.kotaPenandatangan,
-        namaKepalaTU: data.namaKepalaTU,
-        namaBendahara: data.namaBendahara,
         catatanKwitansi: data.catatanKwitansi,
         rekeningBank: data.rekeningBank, // JSON string
         prefixKasMasuk: data.prefixKasMasuk || "KM",

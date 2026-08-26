@@ -225,10 +225,10 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                   tipe="ganda"
                   tanggal={new Date()}
                   kiri={{
-                    jabatan: activeUnitTab !== "GLOBAL" ? "Kepala Sekolah" : "Kepala TU",
+                    jabatan: activeUnitTab !== "GLOBAL" ? "Kepala Sekolah" : "Mengetahui,",
                     nama: activeUnitTab !== "GLOBAL" 
                       ? (unitData[activeUnitTab]?.namaKepalaSekolah || "____________________")
-                      : (formData.namaKepalaTU || "____________________")
+                      : "____________________"
                   }}
                   kanan={{
                     jabatan: "Petugas",
@@ -322,14 +322,6 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                     <label className="block text-sm font-semibold text-text-main mb-1.5">Kota Tempat Tanda Tangan</label>
                     <input type="text" name="kotaPenandatangan" value={formData.kotaPenandatangan || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50 md:w-1/2" placeholder="Contoh: Bandung, Depok, Jakarta" />
                     <p className="text-xs text-text-muted mt-1">Misal: "Bandung, 12 Agustus 2026"</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Kepala TU</label>
-                    <input type="text" name="namaKepalaTU" value={formData.namaKepalaTU || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Nama Pejabat TU" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Bendahara Yayasan</label>
-                    <input type="text" name="namaBendahara" value={formData.namaBendahara || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Nama Bendahara" />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-text-main mb-1.5">Catatan/Footer Kwitansi Global</label>

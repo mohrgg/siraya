@@ -428,8 +428,6 @@ model Pengaturan {
 
   // Penandatangan & Footer
   kotaPenandatangan String? @default("Bandung") @db.VarChar(100)
-  namaKepalaTU      String? @db.VarChar(150)
-  namaBendahara     String? @db.VarChar(150)
   catatanKwitansi   String? @db.Text
 
   // Pengaturan Rekening Bank (disimpan format JSON String)

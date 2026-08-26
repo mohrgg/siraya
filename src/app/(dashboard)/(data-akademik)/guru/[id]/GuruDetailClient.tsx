@@ -50,7 +50,7 @@ type GuruData = {
   bankAccount: string | null
   bankAccountName: string | null
   isActive: boolean
-  unitSekolah: { id: string; name: string }
+  unitSekolah: { id: string; name: string; namaKepalaSekolah?: string | null }
   rombelWali: Rombel[]
 }
 
@@ -504,7 +504,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
           pengaturan={pengaturan}
           tipe="ganda"
           tanggal={new Date()}
-          kiri={{ jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" }}
+          kiri={{ jabatan: "Mengetahui,", nama: initialData.unitSekolah?.namaKepalaSekolah || "____________________" }}
           kanan={{ jabatan: "Petugas,", nama: userName || "____________________" }}
           className="flex"
         />

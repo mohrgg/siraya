@@ -55,7 +55,7 @@ export default function ModalResiPembayaran({
         })),
         total: data.total,
         catatan: pengaturan?.catatanKwitansi,
-        penandatanganKanan: { jabatan: "Bendahara Penerima,", nama: currentUser?.name || pengaturan?.namaBendahara || "Staf Keuangan" },
+        penandatanganKanan: { jabatan: "Bendahara Penerima,", nama: currentUser?.name || "Staf Keuangan" },
         filename: `Kwitansi_${data.noReferensi}`
       })
       toast.success("Berhasil mengunduh Bukti Pembayaran (PDF)")
@@ -176,7 +176,7 @@ export default function ModalResiPembayaran({
             tipe="ganda"
             tanggal={data.tanggal}
             kiri={{ jabatan: "Penyetor / Wali Murid,", nama: data.muridName }}
-            kanan={{ jabatan: "Bendahara Penerima,", nama: currentUser?.name || pengaturan?.namaBendahara || "Staf Keuangan" }}
+            kanan={{ jabatan: "Bendahara Penerima,", nama: currentUser?.name || "Staf Keuangan" }}
             className="flex"
           />
 

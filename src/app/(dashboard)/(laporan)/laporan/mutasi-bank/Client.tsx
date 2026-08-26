@@ -128,7 +128,8 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
   const handleExportPdf = () => {
     if (!data) return
     
-    const instInfo = buildInstitutionInfo(pengaturan, unitName)
+    const selectedUnit = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
+    const instInfo = buildInstitutionInfo(pengaturan, selectedUnit)
     const filename = `Mutasi_Kas_${selectedAkunName.replace(/\s+/g, '_')}_${startDate}.pdf`
     
     exportMutasiBankPdf({
@@ -137,7 +138,7 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
       dateRangeStr: `${new Date(startDate).toLocaleDateString('id-ID')} - ${new Date(endDate).toLocaleDateString('id-ID')}`,
       accountName: selectedAkunName,
       filename,
-      penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+      penandatanganKiri: { jabatan: "Mengetahui,", nama: selectedUnit?.namaKepalaSekolah || "____________________" },
       penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
     })
     
@@ -376,14 +377,12 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
               )}
             </table>
           </div>
-        </div>
-
-        {/* Print Signatures */}
-        <div className="p-6 hidden print:block">
           <PrintSignature
+            pengaturan={pengaturan}
+            unitInfo={filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined}
             tipe="ganda"
             tanggal={new Date()}
-            kiri={{ jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" }}
+            kiri={{ jabatan: "Mengetahui,", nama: (filterUnitId ? schoolUnits.find(u => u.id === filterUnitId)?.namaKepalaSekolah : undefined) || "____________________" }}
             kanan={{ jabatan: "Petugas,", nama: userName || "____________________" }}
           />
         </div>

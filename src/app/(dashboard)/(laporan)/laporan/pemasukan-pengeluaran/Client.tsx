@@ -139,16 +139,17 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
   const handleExportPdf = () => {
     if (!data) return
     
-    const filename = `Laporan_Arus_Kas_${unitName.replace(/\s+/g, '_')}_${startDate}`
-    const unitObj = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
-
+    const selectedUnit = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
+    const instInfo = buildInstitutionInfo(pengaturan, selectedUnit)
+    const filename = `Laporan_Pemasukan_Pengeluaran_${startDate}.pdf`
+    
     exportIncomeStatementPdf({
-      institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
+      institutionInfo: instInfo,
       startDate: startDate || "",
       endDate: endDate || "",
       data: data,
       filename,
-      penandatanganKiri: { jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" },
+      penandatanganKiri: { jabatan: "Mengetahui,", nama: selectedUnit?.namaKepalaSekolah || "____________________" },
       penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
     })
     
@@ -435,7 +436,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
             unitInfo={filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined}
             tipe="ganda"
             tanggal={new Date()}
-            kiri={{ jabatan: "Mengetahui,", nama: pengaturan?.namaKepalaTU || "____________________" }}
+            kiri={{ jabatan: "Mengetahui,", nama: (filterUnitId ? schoolUnits.find(u => u.id === filterUnitId)?.namaKepalaSekolah : undefined) || "____________________" }}
             kanan={{ jabatan: "Petugas,", nama: userName || "____________________" }}
           />
         )}
