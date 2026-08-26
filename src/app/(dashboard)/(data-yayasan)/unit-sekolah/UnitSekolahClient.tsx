@@ -8,6 +8,8 @@ import { tambahUnitSekolah, editUnitSekolah, hapusUnitSekolah } from "@/actions/
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { Input } from "@/components/ui/Input"
 import { Modal } from "@/components/ui/Modal"
+import { useSortableData } from "@/hooks/useSortableData"
+import { SortableHeader } from "@/components/ui/SortableHeader"
 
 type UnitSekolah = { id: string, name: string, level: string, address: string | null, phone: string | null, logo?: string | null, isActive: boolean, createdAt?: Date, updatedAt?: Date }
 
@@ -28,6 +30,8 @@ export default function UnitSekolahClient({ initialData, userRole }: { initialDa
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     item.level.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const { items: sortedData, requestSort, sortConfig } = useSortableData(filteredData)
 
   const handleEdit = (item: any) => {
     setFormData({ id: item.id, name: item.name, level: item.level || "SD", address: item.address || "", phone: item.phone || "", isActive: item.isActive })
@@ -171,15 +175,15 @@ export default function UnitSekolahClient({ initialData, userRole }: { initialDa
               <thead className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
                 <tr>
                   <th className="p-4 font-semibold text-center w-12">NO</th>
-                  <th className="p-4 font-semibold">NAMA UNIT</th>
-                  <th className="p-4 font-semibold">LEVEL</th>
-                  <th className="p-4 font-semibold">TELEPON</th>
-                  <th className="p-4 font-semibold">STATUS</th>
+                  <SortableHeader label="NAMA UNIT" sortKey="name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left" />
+                  <SortableHeader label="LEVEL" sortKey="level" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left" />
+                  <SortableHeader label="TELEPON" sortKey="phone" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left" />
+                  <SortableHeader label="STATUS" sortKey="isActive" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left" />
                   {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border text-sm">
-                {filteredData.map((item, idx) => (
+                {sortedData.map((item: any, idx: number) => (
                   <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
                     <td className="p-4 text-center font-medium text-text-muted">{idx + 1}</td>
                     <td className="p-4 flex items-center gap-3">
@@ -209,7 +213,7 @@ export default function UnitSekolahClient({ initialData, userRole }: { initialDa
                     )}
                   </tr>
                 ))}
-                {filteredData.length === 0 && (
+                {sortedData.length === 0 && (
                   <tr>
                     <td colSpan={isReadOnly ? 5 : 6} className="py-12 text-center">
                       <div className="flex flex-col items-center justify-center text-text-muted">
