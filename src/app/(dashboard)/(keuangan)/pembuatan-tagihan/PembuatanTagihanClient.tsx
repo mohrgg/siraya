@@ -35,6 +35,8 @@ type GridRow = {
   tagihanMap: Record<string, number> // columnId -> jumlah
   lockedMap: Record<string, boolean> // columnId -> is locked
   isDirty: boolean
+  hasMovedClass: boolean
+  latestClassName: string | null
 }
 
 type TagihanColumn = {
@@ -184,6 +186,10 @@ export default function PembuatanTagihanClient({
         tMap[compId] = t.jumlah
         lMap[compId] = t.sisaTagihan < t.jumlah 
       })
+
+      const latestRiwayat = murid.riwayatKelas?.[0]
+      const hasMoved = latestRiwayat && latestRiwayat.subKelasId !== subKelasId
+
       return {
         id: murid.id,
         name: murid.name,
@@ -191,7 +197,9 @@ export default function PembuatanTagihanClient({
         formNo: murid.formNo || "-",
         tagihanMap: tMap,
         lockedMap: lMap,
-        isDirty: false
+        isDirty: false,
+        hasMovedClass: !!hasMoved,
+        latestClassName: latestRiwayat?.subKelas?.name || null
       }
     })
     setGridData(rows)
@@ -610,7 +618,16 @@ export default function PembuatanTagihanClient({
                             {(currentPage - 1) * pageSize + idx + 1}.
                           </td>
                           <td className="p-4 sticky left-12 bg-white z-20 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
-                            <p className="font-semibold text-text-main leading-tight truncate max-w-[200px]" title={row.name}>{row.name}</p>
+                            <div>
+                              <p className={`font-semibold leading-tight truncate max-w-[200px] ${row.hasMovedClass ? 'text-red-500' : 'text-text-main'}`} title={row.name}>
+                                {row.name}
+                              </p>
+                              {row.hasMovedClass && (
+                                <p className="text-[10px] text-red-500 font-medium bg-red-50 px-1.5 py-0.5 rounded w-fit mt-1 border border-red-100">
+                                  Sudah di {row.latestClassName || "Kelas Lain"}
+                                </p>
+                              )}
+                            </div>
                             <p className="text-xs text-text-muted mt-0.5">{row.nisn} • {row.formNo}</p>
                           </td>
                           

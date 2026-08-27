@@ -42,6 +42,8 @@ type GridRow = {
   tagihanList: TagihanData[]
   // State for checkboxes: Map<tagihanId, boolean>
   selectedItems: Record<string, boolean>
+  hasMovedClass: boolean
+  latestClassName: string | null
 }
 
 export default function PembayaranTagihanClient({
@@ -161,14 +163,21 @@ export default function PembayaranTagihanClient({
     
     setAkunColumns(columns)
 
-    const rows: GridRow[] = muridList.map(murid => ({
-      id: murid.id,
-      name: murid.name,
-      nisn: murid.nisn || "-",
-      formNo: murid.formNo || "-",
-      tagihanList: murid.tagihan || [],
-      selectedItems: {}
-    }))
+    const rows: GridRow[] = muridList.map(murid => {
+      const latestRiwayat = murid.riwayatKelas?.[0]
+      const hasMoved = latestRiwayat && latestRiwayat.subKelasId !== subKelasId
+      
+      return {
+        id: murid.id,
+        name: murid.name,
+        nisn: murid.nisn || "-",
+        formNo: murid.formNo || "-",
+        tagihanList: murid.tagihan || [],
+        selectedItems: {},
+        hasMovedClass: !!hasMoved,
+        latestClassName: latestRiwayat?.subKelas?.name || null
+      }
+    })
     
     setGridData(rows)
     setCurrentPage(1)
@@ -438,7 +447,16 @@ export default function PembayaranTagihanClient({
                           {((currentPage - 1) * pageSize) + idx + 1}.
                         </td>
                         <td className="p-4 sticky left-12 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
-                          <p className="font-bold text-text-main leading-tight truncate max-w-[200px]" title={row.name}>{row.name}</p>
+                          <div>
+                            <p className={`font-bold leading-tight truncate max-w-[200px] ${row.hasMovedClass ? 'text-red-500' : 'text-text-main'}`} title={row.name}>
+                              {row.name}
+                            </p>
+                            {row.hasMovedClass && (
+                              <p className="text-[10px] text-red-500 font-medium bg-red-50 px-1.5 py-0.5 rounded w-fit mt-1 border border-red-100">
+                                Sudah di {row.latestClassName || "Kelas Lain"}
+                              </p>
+                            )}
+                          </div>
                           <p className="text-xs text-text-muted mt-0.5">{row.nisn} • {row.formNo}</p>
                         </td>
                         

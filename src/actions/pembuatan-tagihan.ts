@@ -2,13 +2,14 @@
 
 import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, unstable_noStore } from "next/cache"
 
 // ==========================================
 // MASTER DATA FETCHERS
 // ==========================================
 
 export async function getTahunAkademikAktif() {
+  unstable_noStore()
   return prisma.tahunAkademik.findFirst({
     where: { isActive: true, isDeleted: false },
     orderBy: { createdAt: 'desc' }
@@ -41,6 +42,7 @@ export async function getUnitSekolah() {
 }
 
 export async function getKelasByUnit(unitSekolahId: string) {
+  unstable_noStore()
   const where: any = { isDeleted: false }
   if (unitSekolahId && unitSekolahId !== "all") {
     where.unitSekolahId = unitSekolahId
@@ -54,6 +56,7 @@ export async function getKelasByUnit(unitSekolahId: string) {
 }
 
 export async function getSubKelasByKelas(tingkatId: string, jurusanId?: string, tahunAkademikId?: string) {
+  unstable_noStore()
   const where: any = { tingkatId, isDeleted: false }
   
   // Jika jurusan diberikan, filter subkelas berdasarkan jurusan
@@ -73,6 +76,7 @@ export async function getSubKelasByKelas(tingkatId: string, jurusanId?: string, 
 }
 
 export async function getJurusanByUnit(unitSekolahId: string) {
+  unstable_noStore()
   const where: any = { isDeleted: false }
   if (unitSekolahId && unitSekolahId !== "all") {
     where.unitSekolahId = unitSekolahId
@@ -142,6 +146,11 @@ export async function getMuridWithTagihan(subKelasId: string, tahunAkademikId: s
             include: {
               akun: true
             }
+          },
+          riwayatKelas: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { subKelasId: true, subKelas: { select: { name: true } } }
           }
         }
       }

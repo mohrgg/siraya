@@ -1,11 +1,12 @@
 "use server"
 
 import prisma from "@/lib/prisma"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, unstable_noStore } from "next/cache"
 
 import { auth } from "@/lib/auth"
 
 export async function getAkunKasBankList(unitSekolahId?: string) {
+  unstable_noStore()
   try {
     const data = await prisma.akunDetail.findMany({
       where: {
@@ -35,6 +36,7 @@ export async function getMuridWithTagihanUnpaid(filters: {
   kelasId?: string, 
   subKelasId?: string 
 }) {
+  unstable_noStore()
   try {
     const whereClause: any = {
       unitSekolahId: filters.unitSekolahId,
@@ -74,6 +76,11 @@ export async function getMuridWithTagihanUnpaid(filters: {
               }
             }
           }
+        },
+        riwayatKelas: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { subKelasId: true, subKelas: { select: { name: true } } }
         }
       },
       orderBy: {

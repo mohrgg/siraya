@@ -1,8 +1,10 @@
 "use server"
 
 import prisma from "@/lib/prisma"
+import { unstable_noStore } from "next/cache"
 
 export async function getRekapitulasiTunggakan(unitSekolahId: string, tahunAkademikId: string) {
+  unstable_noStore();
   try {
     // 1. Get all SubKelas in the given unit
     const subKelasList = await prisma.subKelas.findMany({
