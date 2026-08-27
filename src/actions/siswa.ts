@@ -429,6 +429,37 @@ export async function luluskanSiswaBatch(muridIds: string[]) {
   return { success: result.count }
 }
 
+export async function pindahkanSiswaBatch(muridIds: string[]) {
+  const session = await auth()
+  if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+
+  // Cek unit akses
+  if (session.user.role !== "ADMIN") {
+    const muridCount = await prisma.murid.count({
+      where: {
+        id: { in: muridIds },
+        unitSekolahId: { not: session.user.unitSekolahId as string }
+      }
+    })
+    if (muridCount > 0) {
+      throw new Error("Sebagian siswa yang dipilih bukan dari unit Anda.")
+    }
+  }
+
+  const result = await prisma.murid.updateMany({
+    where: {
+      id: { in: muridIds }
+    },
+    data: {
+      status: "PINDAH",
+      isActive: false
+    }
+  })
+
+  revalidatePath("/kelas")
+  return { success: result.count }
+}
+
 export async function reactivateSiswa(muridId: string, newSubKelasId: string, targetTahunAkademikId?: string) {
   const session = await auth()
   if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")

@@ -162,6 +162,22 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
     }
   }
 
+  const handleBulkTransfer = async () => {
+    if (selectedStudents.length === 0) return
+    setIsPromoting(true)
+    try {
+      // @ts-ignore
+      const { pindahkanSiswaBatch } = await import("@/actions/siswa")
+      const res = await pindahkanSiswaBatch(selectedStudents)
+      toast.success(`Berhasil memindahkan ${res.success} murid keluar dari aktif`)
+      setSelectedStudents([])
+    } catch (e: any) {
+      toast.error("Gagal memindahkan murid: " + e.message)
+    } finally {
+      setIsPromoting(false)
+    }
+  }
+
   const handleBulkDelete = async () => {
     if (selectedStudents.length === 0) return
     setIsPromoting(true)
@@ -202,6 +218,7 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
     targetTahunAkademikId, setTargetTahunAkademikId,
     handleBulkPromote,
     handleBulkGraduation,
+    handleBulkTransfer,
     handleBulkDelete,
 
     // Pagination & Sort

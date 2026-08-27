@@ -40,7 +40,7 @@ export default function KelasClient({
   const [reactivateMurid, setReactivateMurid] = useState<{ id: string, name: string } | null>(null)
 
   const [deleteData, setDeleteData] = useState<{ id: string, type: "tingkat" | "subkelas" | "murid" } | null>(null)
-  const [bulkActionConfirm, setBulkActionConfirm] = useState<{ type: "lulus" | "hapus" } | null>(null)
+  const [bulkActionConfirm, setBulkActionConfirm] = useState<{ type: "lulus" | "hapus" | "pindah" } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isExportingPDF, setIsExportingPDF] = useState(false)
@@ -360,12 +360,14 @@ export default function KelasClient({
 
       <ConfirmModal
         isOpen={!!bulkActionConfirm}
-        title={bulkActionConfirm?.type === 'lulus' ? 'Luluskan Siswa' : 'Hapus Siswa Permanen'}
-        message={bulkActionConfirm?.type === 'lulus' ? 'Yakin ingin meluluskan siswa terpilih? Mereka akan dipindahkan ke tab Alumni.' : 'Yakin ingin menghapus secara permanen siswa terpilih? Data ini tidak dapat dikembalikan.'}
+        title={bulkActionConfirm?.type === 'lulus' ? 'Luluskan Siswa' : bulkActionConfirm?.type === 'pindah' ? 'Pindahkan Siswa (Mutasi/Keluar)' : 'Hapus Siswa Permanen'}
+        message={bulkActionConfirm?.type === 'lulus' ? 'Yakin ingin meluluskan siswa terpilih? Mereka akan dipindahkan ke tab Alumni.' : bulkActionConfirm?.type === 'pindah' ? 'Yakin ingin menandai siswa terpilih sebagai Pindah/Keluar? Status mereka tidak akan aktif lagi.' : 'Yakin ingin menghapus secara permanen siswa terpilih? Data ini tidak dapat dikembalikan.'}
         onCancel={() => setBulkActionConfirm(null)}
         onConfirm={() => {
           if (bulkActionConfirm?.type === 'lulus') {
             data.handleBulkGraduation()
+          } else if (bulkActionConfirm?.type === 'pindah') {
+            data.handleBulkTransfer()
           } else {
             data.handleBulkDelete()
           }
@@ -515,6 +517,10 @@ export default function KelasClient({
           <div className="flex items-center gap-2 shrink-0">
             <Button size="sm" variant="danger" className="text-xs py-1.5 px-3" onClick={() => setBulkActionConfirm({ type: 'lulus' })} disabled={data.isPromoting} isLoading={data.isPromoting}>
               Luluskan
+            </Button>
+
+            <Button size="sm" variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50 text-xs py-1.5 px-3 shrink-0" onClick={() => setBulkActionConfirm({ type: 'pindah' })} disabled={data.isPromoting} isLoading={data.isPromoting}>
+              Pindah
             </Button>
 
             <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 text-xs py-1.5 px-3 shrink-0" onClick={() => setBulkActionConfirm({ type: 'hapus' })} disabled={data.isPromoting} isLoading={data.isPromoting}>
