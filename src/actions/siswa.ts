@@ -110,6 +110,8 @@ export async function getSiswaPaginated(params: {
       include: {
         riwayatKelas: {
           where: params.tahunAkademikId ? { tahunAkademikId: params.tahunAkademikId } : undefined,
+          orderBy: { createdAt: 'desc' },
+          take: 1,
           include: {
             subKelas: {
               include: {
@@ -257,22 +259,19 @@ export async function editSiswa(id: string, data: {
     if (subKelasId) {
       const subKelas = await tx.subKelas.findUnique({ where: { id: subKelasId } })
       if (subKelas) {
-        // Upsert RiwayatKelas for this student in this academic year
-        const existingRiwayat = await tx.riwayatKelas.findUnique({
+        // Check current latest RiwayatKelas for this student in this academic year
+        const existingRiwayat = await tx.riwayatKelas.findFirst({
           where: {
-            muridId_tahunAkademikId: {
-              muridId: id,
-              tahunAkademikId: subKelas.tahunAkademikId
-            }
+            muridId: id,
+            tahunAkademikId: subKelas.tahunAkademikId
+          },
+          orderBy: {
+            createdAt: 'desc'
           }
         })
 
-        if (existingRiwayat) {
-          await tx.riwayatKelas.update({
-            where: { id: existingRiwayat.id },
-            data: { subKelasId: subKelas.id }
-          })
-        } else {
+        // Append a new history log ONLY if the subKelasId is different from the current one
+        if (!existingRiwayat || existingRiwayat.subKelasId !== subKelas.id) {
           await tx.riwayatKelas.create({
             data: {
               muridId: id,
@@ -360,37 +359,31 @@ export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: strin
     throw new Error("Anda tidak memiliki akses ke unit sekolah tujuan.")
   }
 
-  const existingRecords = await prisma.riwayatKelas.findMany({
-    where: {
-      muridId: { in: muridIds },
+  // Fetch the latest class for each student
+  const latestRecords = await prisma.riwayatKelas.findMany({
+    where: { muridId: { in: muridIds } },
+    orderBy: { createdAt: 'desc' },
+    distinct: ['muridId']
+  })
+
+  // Filter out students who are already in the target subKelas
+  const alreadyInTargetIds = new Set(
+    latestRecords.filter(r => r.subKelasId === newSubKelasId).map(r => r.muridId)
+  )
+
+  const recordsToCreate = muridIds
+    .filter(id => !alreadyInTargetIds.has(id))
+    .map(id => ({
+      muridId: id,
+      subKelasId: newSubKelasId,
       tahunAkademikId
-    },
-    select: { muridId: true, id: true }
-  })
+    }))
 
-  const existingMuridIds = new Set(existingRecords.map(r => r.muridId))
-  const recordsToCreate = muridIds.filter(id => !existingMuridIds.has(id)).map(id => ({
-    muridId: id,
-    subKelasId: newSubKelasId,
-    tahunAkademikId
-  }))
-  const recordIdsToUpdate = existingRecords.map(r => r.id)
-
-  await prisma.$transaction(async (tx) => {
-    if (recordIdsToUpdate.length > 0) {
-      await tx.riwayatKelas.updateMany({
-        where: { id: { in: recordIdsToUpdate } },
-        data: { subKelasId: newSubKelasId }
-      })
-    }
-
-    if (recordsToCreate.length > 0) {
-      await tx.riwayatKelas.createMany({
-        data: recordsToCreate,
-        skipDuplicates: true
-      })
-    }
-  })
+  if (recordsToCreate.length > 0) {
+    await prisma.riwayatKelas.createMany({
+      data: recordsToCreate
+    })
+  }
 
   successCount = muridIds.length
 
@@ -488,17 +481,13 @@ export async function reactivateSiswa(muridId: string, newSubKelasId: string, ta
       data: { status: "AKTIF", isActive: true }
     })
 
-    // 2. Cek riwayat kelas, jika belum ada, buatkan
+    // 2. Cek riwayat kelas terakhir, jika belum ada atau berbeda kelas, buatkan
     const existing = await tx.riwayatKelas.findFirst({
-      where: { muridId, tahunAkademikId }
+      where: { muridId, tahunAkademikId },
+      orderBy: { createdAt: 'desc' }
     })
 
-    if (existing) {
-      await tx.riwayatKelas.update({
-        where: { id: existing.id },
-        data: { subKelasId: newSubKelasId }
-      })
-    } else {
+    if (!existing || existing.subKelasId !== newSubKelasId) {
       await tx.riwayatKelas.create({
         data: {
           muridId,

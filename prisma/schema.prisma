@@ -269,8 +269,6 @@ model RiwayatKelas {
   murid         Murid         @relation(fields: [muridId], references: [id], onDelete: Cascade)
   subKelas      SubKelas      @relation(fields: [subKelasId], references: [id], onDelete: Cascade)
   tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
-
-  @@unique([muridId, tahunAkademikId])
 }
 
 // ========== AKUN KEUANGAN ==========
