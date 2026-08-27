@@ -17,12 +17,23 @@ export async function getSiswa(unitSekolahId?: string, subKelasId?: string) {
   const session = await auth()
   if (!session) throw new Error("Unauthorized")
 
+  const where: any = {
+    isDeleted: false,
+    ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId ? { unitSekolahId } : {})),
+  }
+
+  if (subKelasId) {
+    const latestRiwayat = await prisma.riwayatKelas.findMany({
+      orderBy: { createdAt: 'desc' },
+      distinct: ['muridId'],
+      select: { muridId: true, subKelasId: true }
+    })
+    const filteredMuridIds = latestRiwayat.filter(r => r.subKelasId === subKelasId).map(r => r.muridId)
+    where.id = { in: filteredMuridIds }
+  }
+
   return prisma.murid.findMany({
-    where: {
-      isDeleted: false,
-      ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId ? { unitSekolahId } : {})),
-      ...(subKelasId ? { riwayatKelas: { some: { subKelasId } } } : {}),
-    },
+    where,
     include: {
       riwayatKelas: {
         include: {
@@ -71,18 +82,37 @@ export async function getSiswaPaginated(params: {
 
   // Filter by RiwayatKelas if there's any specific class filter (tingkat, jurusan, subKelas)
   if (params.subKelasId || params.tingkatId || params.jurusanId) {
-    where.riwayatKelas = {
-      some: {
-        ...(params.tahunAkademikId ? { tahunAkademikId: params.tahunAkademikId } : {}),
-        ...(params.subKelasId ? { subKelasId: params.subKelasId } : {}),
-        ...(params.tingkatId || params.jurusanId ? {
-          subKelas: {
-            ...(params.tingkatId ? { tingkatId: params.tingkatId } : {}),
-            ...(params.jurusanId ? { jurusanId: params.jurusanId } : {})
-          }
-        } : {})
+    const latestRiwayat = await prisma.riwayatKelas.findMany({
+      where: {
+        ...(params.tahunAkademikId ? { tahunAkademikId: params.tahunAkademikId } : {})
+      },
+      orderBy: { createdAt: 'desc' },
+      distinct: ['muridId'],
+      select: {
+        muridId: true,
+        subKelasId: true,
+        subKelas: {
+          select: { tingkatId: true, jurusanId: true }
+        }
       }
-    }
+    })
+
+    const filteredMuridIds = latestRiwayat
+      .filter(r => {
+        if (params.subKelasId && r.subKelasId !== params.subKelasId) return false;
+        if (params.tingkatId && r.subKelas?.tingkatId !== params.tingkatId) return false;
+        if (params.jurusanId && r.subKelas?.jurusanId !== params.jurusanId) return false;
+        return true;
+      })
+      .map(r => r.muridId)
+
+    console.log(`[DEBUG] getSiswaPaginated params:`, params);
+    console.log(`[DEBUG] filteredMuridIds length:`, filteredMuridIds.length);
+    console.log(`[DEBUG] latestRiwayat length:`, latestRiwayat.length);
+    const sample = latestRiwayat.find(r => r.subKelas?.name === 'Kelas 2 A');
+    console.log(`[DEBUG] sample Kelas 2 A in latestRiwayat:`, sample);
+
+    where.id = { in: filteredMuridIds }
   }
 
   if (params.search) {
