@@ -16,6 +16,7 @@ interface MuridFormModalProps {
   initialData: any
   schoolUnits: any[]
   classrooms: any[]
+  activeUnitId?: string
 }
 
 const TABS = [
@@ -25,7 +26,7 @@ const TABS = [
   { id: "keluarga", label: "Keluarga & Wali", icon: Users },
 ]
 
-export default function MuridFormModal({ isOpen, onClose, onSave, initialData, schoolUnits, classrooms }: MuridFormModalProps) {
+export default function MuridFormModal({ isOpen, onClose, onSave, initialData, schoolUnits, classrooms, activeUnitId }: MuridFormModalProps) {
   const [activeTab, setActiveTab] = useState("utama")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<any>({})
@@ -107,7 +108,7 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
         {/* Main Content Area */}
         <div className="flex-1">
           <form id="muridForm" onSubmit={handleSubmit} className="space-y-6 pb-6">
-            {activeTab === "utama" && <TabInformasiUmum formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} classrooms={classrooms} />}
+            {activeTab === "utama" && <TabInformasiUmum formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} classrooms={classrooms} activeUnitId={activeUnitId} />}
             {activeTab === "pribadi" && <TabIdentitasPribadi formData={formData} handleChange={handleChange} />}
             {activeTab === "medis" && <TabFisikMedis formData={formData} handleChange={handleChange} />}
             {activeTab === "keluarga" && <TabKeluarga formData={formData} handleChange={handleChange} />}

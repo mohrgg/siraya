@@ -536,6 +536,7 @@ export default function KelasClient({
         onSave={handleSaveMurid}
         schoolUnits={schoolUnits}
         classrooms={data.classrooms}
+        activeUnitId={activeUnitId}
       />
 
       {/* Modal Tambah Tingkat */}

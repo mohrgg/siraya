@@ -760,7 +760,7 @@ export default function MuridDetailClient({
                     <tr key={rk.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="py-4 px-5 font-bold text-gray-900 flex items-center gap-2">
                         <Calendar size={15} className="text-primary" />
-                        {rk.tahunAkademik?.year || "-"}
+                        {rk.tahunAkademik?.name || "-"}
                         {i === 0 && <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-extrabold rounded-full">Aktif Saat Ini</span>}
                       </td>
                       <td className="py-4 px-5 font-semibold text-gray-700">{rk.subKelas?.tingkat?.name || "-"}</td>
@@ -1001,7 +1001,7 @@ export default function MuridDetailClient({
               {murid.riwayatKelas && murid.riwayatKelas.length > 0 ? (
                 murid.riwayatKelas.map((rk: any, i: number) => (
                   <tr key={rk.id || i}>
-                    <td className="py-1.5 px-3 border-r border-gray-200 font-semibold">{rk.tahunAkademik?.year || "-"}</td>
+                    <td className="py-1.5 px-3 border-r border-gray-200 font-semibold">{rk.tahunAkademik?.name || "-"}</td>
                     <td className="py-1.5 px-3 border-r border-gray-200">{rk.subKelas?.tingkat?.name || "-"}</td>
                     <td className="py-1.5 px-3 border-r border-gray-200 font-bold text-black">{rk.subKelas?.name || "-"}</td>
                     <td className="py-1.5 px-3">{rk.subKelas?.jurusan?.name || "Umum"}</td>

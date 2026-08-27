@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/Input"
 
-export default function TabInformasiUmum({ formData, handleChange, schoolUnits, classrooms }: any) {
+export default function TabInformasiUmum({ formData, handleChange, schoolUnits, classrooms, activeUnitId }: any) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -11,10 +11,11 @@ export default function TabInformasiUmum({ formData, handleChange, schoolUnits, 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main">Unit Sekolah <span className="text-red-500">*</span></label>
           <select 
-            className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium" 
+            className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium disabled:bg-gray-100 disabled:cursor-not-allowed" 
             value={formData.unitSekolahId || ""} 
             onChange={e => handleChange("unitSekolahId", e.target.value)} 
             required
+            disabled={!!activeUnitId && activeUnitId !== "all"}
           >
             <option value="" disabled>-- Pilih Unit --</option>
             {schoolUnits.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}

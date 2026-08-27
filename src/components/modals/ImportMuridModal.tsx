@@ -57,7 +57,7 @@ export default function ImportMuridModal({
 
   useEffect(() => {
     if (isOpen) {
-      if (activeUnitId && activeUnitId !== "ALL") {
+      if (activeUnitId && activeUnitId !== "all") {
         setSelectedUnit(activeUnitId)
       } else if (schoolUnits.length > 0 && !selectedUnit) {
         setSelectedUnit(schoolUnits[0].id)
@@ -350,7 +350,7 @@ export default function ImportMuridModal({
                     className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-bold text-gray-900 shadow-xs transition-all disabled:bg-gray-100 disabled:opacity-70"
                     value={selectedUnit}
                     onChange={(e) => { setSelectedUnit(e.target.value); setSelectedSubKelas("") }}
-                    disabled={Boolean(activeUnitId && activeUnitId !== "ALL")}
+                    disabled={Boolean(activeUnitId && activeUnitId !== "all")}
                   >
                     <option value="" disabled>-- Pilih Unit Sekolah --</option>
                     {schoolUnits.map(u => (

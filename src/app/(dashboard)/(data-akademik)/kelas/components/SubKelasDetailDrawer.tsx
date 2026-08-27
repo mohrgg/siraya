@@ -136,11 +136,11 @@ export default function SubKelasDetailDrawer({
 
       exportTablePdf({
         institutionInfo: buildInstitutionInfo(undefined, subKelas.unitSekolah),
-        title: `Daftar Murid Kelas ${subKelas.nama}`,
+        title: `Daftar Murid Kelas ${subKelas.name}`,
         subtitle: `Tingkat: ${subKelas.tingkat.name} • Tahun Akademik: ${subKelas.tahunAkademik.name}`,
         headers: tableColumn,
         data: tableRows,
-        filename: `Murid_Kelas_${subKelas.nama.replace(/\s+/g, '_')}`,
+        filename: `Murid_Kelas_${subKelas.name.replace(/\s+/g, '_')}`,
         config: { orientation: 'portrait' }
       })
       toast.success("Berhasil mengunduh PDF Daftar Siswa")
@@ -255,7 +255,7 @@ export default function SubKelasDetailDrawer({
           <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Tahun Akademik</label>
           <div className="font-bold text-gray-800 mt-0.5 flex items-center gap-1.5">
             <Calendar size={15} className="text-primary" />
-            {subKelas.tahunAkademik?.year || "Active Year"}
+            {subKelas.tahunAkademik?.name || "Active Year"}
           </div>
         </div>
         <div>

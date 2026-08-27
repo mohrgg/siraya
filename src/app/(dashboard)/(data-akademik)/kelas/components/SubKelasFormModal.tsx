@@ -95,7 +95,7 @@ export default function SubKelasFormModal({
             onChange={e => setFormData({ ...formData, tahunAkademikId: e.target.value })}
           >
             {academicYears.map((y: any) => (
-              <option key={y.id} value={y.id}>{y.year} {y.semester} {y.isActive ? "(Aktif)" : ""}</option>
+              <option key={y.id} value={y.id}>{y.name} {y.isActive ? "(Aktif)" : ""}</option>
             ))}
           </select>
         </div>
