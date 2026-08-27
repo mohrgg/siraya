@@ -34,6 +34,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Tidak ada Tahun Akademik yang aktif. Harap atur terlebih dahulu di menu Tahun Akademik." }, { status: 400 })
     }
 
+    // Get Unit Sekolah
+    const unit = await prisma.unitSekolah.findUnique({
+      where: { id: unitId },
+      select: { level: true }
+    })
+    const unitLevel = unit?.level?.toUpperCase() || "XX"
+
     let successCount = 0
     let failedCount = 0
     let errors: { row: number, msg: string }[] = []
@@ -145,9 +152,23 @@ export async function POST(req: Request) {
 
       try {
         await prisma.$transaction(async (tx) => {
+          // Generate Custom Student ID
+          const currentYear = new Date().getFullYear().toString();
+          let dobStr = "000000";
+          if (birthDate) {
+            const d = new Date(birthDate);
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yy = String(d.getFullYear()).slice(-2);
+            dobStr = `${dd}${mm}${yy}`;
+          }
+          const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+          const customId = `${currentYear}${unitLevel}-${dobStr}-${randomStr}`;
+
           // 1. Create Murid
           const newMurid = await tx.murid.create({
             data: {
+              id: customId,
               nis: finalNis,
               name: nama,
               nisn: nisn || null,
