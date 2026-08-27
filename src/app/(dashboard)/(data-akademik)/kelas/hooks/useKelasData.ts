@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import toast from "react-hot-toast"
 import { useSortableData } from "@/hooks/useSortableData"
 import { getSiswaPaginated, promoteSiswaBatch } from "@/actions/siswa"
+import { getKelas } from "@/actions/kelas"
 
 export function useKelasData({ activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits }: any) {
   const [activeTab, setActiveTab] = useState<"kelas" | "sub-kelas" | "murid" | "alumni">("kelas")
@@ -124,6 +125,35 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
   }, [debouncedSearchTerm, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, filterAlumniStatus, activeTab])
 
   const [targetTahunAkademikId, setTargetTahunAkademikId] = useState("")
+  const [targetClassrooms, setTargetClassrooms] = useState<any[]>([])
+
+  // Fetch target classrooms when targetTahunAkademikId changes
+  useEffect(() => {
+    if (!targetTahunAkademikId || !activeUnitId) {
+      setTargetClassrooms([])
+      setTargetSubKelasId("")
+      return
+    }
+
+    let isMounted = true
+    const fetchTargetClasses = async () => {
+      try {
+        const classes = await getKelas(activeUnitId, targetTahunAkademikId)
+        if (isMounted) {
+          setTargetClassrooms(classes)
+          // Jika kelas tujuan yang dipilih sebelumnya tidak ada di tahun yang baru, reset pilihan
+          if (!classes.find((c: any) => c.id === targetSubKelasId)) {
+            setTargetSubKelasId("")
+          }
+        }
+      } catch (e) {
+        console.error("Gagal mengambil data kelas tujuan", e)
+      }
+    }
+
+    fetchTargetClasses()
+    return () => { isMounted = false }
+  }, [targetTahunAkademikId, activeUnitId])
 
   // Bulk Promote Handler
   const handleBulkPromote = async () => {
@@ -216,6 +246,7 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
     isPromoting, 
     targetSubKelasId, setTargetSubKelasId,
     targetTahunAkademikId, setTargetTahunAkademikId,
+    targetClassrooms,
     handleBulkPromote,
     handleBulkGraduation,
     handleBulkTransfer,

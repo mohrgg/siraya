@@ -501,7 +501,7 @@ export default function KelasClient({
               onChange={(e) => data.setTargetSubKelasId(e.target.value)}
             >
               <option value="">Rombel Tujuan...</option>
-              {data.classrooms.map((c: any) => (
+              {data.targetClassrooms.map((c: any) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
