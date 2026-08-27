@@ -147,10 +147,15 @@ export async function getMuridWithTagihan(subKelasId: string, tahunAkademikId: s
               akun: true
             }
           },
-          riwayatKelas: {
-            orderBy: { createdAt: 'desc' },
-            take: 1,
-            select: { subKelasId: true, subKelas: { select: { name: true } } }
+          _count: {
+            select: {
+              tagihan: {
+                where: {
+                  sisaTagihan: { gt: 0 },
+                  tahunAkademikId: { not: tahunAkademikId }
+                }
+              }
+            }
           }
         }
       }
@@ -161,7 +166,14 @@ export async function getMuridWithTagihan(subKelasId: string, tahunAkademikId: s
   })
 
   // 2. Ekstrak data murid dan tagihannya
-  const muridList = riwayatKelas.map(rk => rk.murid).filter(m => !m.isDeleted && m.isActive)
+  const seenIds = new Set<string>()
+  const muridList = riwayatKelas
+    .map(rk => rk.murid)
+    .filter(m => {
+      if (m.isDeleted || !m.isActive || seenIds.has(m.id)) return false
+      seenIds.add(m.id)
+      return true
+    })
 
   return muridList
 }

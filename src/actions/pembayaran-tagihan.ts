@@ -77,10 +77,15 @@ export async function getMuridWithTagihanUnpaid(filters: {
             }
           }
         },
-        riwayatKelas: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-          select: { subKelasId: true, subKelas: { select: { name: true } } }
+        _count: {
+          select: {
+            tagihan: {
+              where: {
+                sisaTagihan: { gt: 0 },
+                tahunAkademikId: { not: filters.tahunAkademikId }
+              }
+            }
+          }
         }
       },
       orderBy: {

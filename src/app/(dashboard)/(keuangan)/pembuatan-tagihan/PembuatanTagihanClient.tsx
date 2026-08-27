@@ -35,8 +35,7 @@ type GridRow = {
   tagihanMap: Record<string, number> // columnId -> jumlah
   lockedMap: Record<string, boolean> // columnId -> is locked
   isDirty: boolean
-  hasMovedClass: boolean
-  latestClassName: string | null
+  hasOldDebts: boolean
 }
 
 type TagihanColumn = {
@@ -187,8 +186,7 @@ export default function PembuatanTagihanClient({
         lMap[compId] = t.sisaTagihan < t.jumlah 
       })
 
-      const latestRiwayat = murid.riwayatKelas?.[0]
-      const hasMoved = latestRiwayat && latestRiwayat.subKelasId !== subKelasId
+      const hasOldDebts = murid._count?.tagihan > 0
 
       return {
         id: murid.id,
@@ -198,8 +196,7 @@ export default function PembuatanTagihanClient({
         tagihanMap: tMap,
         lockedMap: lMap,
         isDirty: false,
-        hasMovedClass: !!hasMoved,
-        latestClassName: latestRiwayat?.subKelas?.name || null
+        hasOldDebts: hasOldDebts
       }
     })
     setGridData(rows)
@@ -619,12 +616,12 @@ export default function PembuatanTagihanClient({
                           </td>
                           <td className="p-4 sticky left-12 bg-white z-20 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
                             <div>
-                              <p className={`font-semibold leading-tight truncate max-w-[200px] ${row.hasMovedClass ? 'text-red-500' : 'text-text-main'}`} title={row.name}>
+                              <p className={`font-semibold leading-tight truncate max-w-[200px] ${row.hasOldDebts ? 'text-red-500' : 'text-text-main'}`} title={row.name}>
                                 {row.name}
                               </p>
-                              {row.hasMovedClass && (
+                              {row.hasOldDebts && (
                                 <p className="text-[10px] text-red-500 font-medium bg-red-50 px-1.5 py-0.5 rounded w-fit mt-1 border border-red-100">
-                                  Sudah di {row.latestClassName || "Kelas Lain"}
+                                  Ada Tunggakan di Tahun Sebelumnya
                                 </p>
                               )}
                             </div>
