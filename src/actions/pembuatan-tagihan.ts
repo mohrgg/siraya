@@ -185,13 +185,14 @@ export async function tambahTagihanMassal(data: {
 
   if (data.targetType === "kelas" && data.subKelasId) {
     riwayatKelas = await prisma.riwayatKelas.findMany({
-      where: { subKelasId: data.subKelasId, tahunAkademikId },
+      where: { subKelasId: data.subKelasId, tahunAkademikId, isCurrent: true },
       select: { muridId: true }
     })
   } else if (data.targetType === "tingkat" && data.tingkatId) {
     riwayatKelas = await prisma.riwayatKelas.findMany({
       where: { 
         tahunAkademikId,
+        isCurrent: true,
         subKelas: {
           tingkatId: data.tingkatId
         }

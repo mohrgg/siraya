@@ -84,7 +84,7 @@ export async function getYayasanDashboardData(yearId?: string) {
   const totalSiswa = await prisma.murid.count({ 
     where: { 
       isActive: true,
-      ...(yearId ? { riwayatKelas: { some: { tahunAkademikId: yearId } } } : {})
+      ...(yearId ? { riwayatKelas: { some: { isCurrent: true, tahunAkademikId: yearId } } } : {})
     } 
   })
   const totalGuru = await prisma.guru.count({ where: { isDeleted: false, isActive: true } })
@@ -98,7 +98,7 @@ export async function getYayasanDashboardData(yearId?: string) {
           murid: { 
             where: { 
               isActive: true,
-              ...(yearId ? { riwayatKelas: { some: { tahunAkademikId: yearId } } } : {})
+              ...(yearId ? { riwayatKelas: { some: { isCurrent: true, tahunAkademikId: yearId } } } : {})
             } 
           },
           jurusan: { where: { isDeleted: false } },
@@ -112,7 +112,7 @@ export async function getYayasanDashboardData(yearId?: string) {
           subKelas: {
             where: { isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) },
             select: {
-              _count: { select: { riwayatKelas: { where: { murid: { isActive: true }, ...(yearId ? { tahunAkademikId: yearId } : {}) } } } }
+              _count: { select: { riwayatKelas: { where: { isCurrent: true, murid: { isActive: true }, ...(yearId ? { tahunAkademikId: yearId } : {}) } } } }
             }
           }
         }
@@ -177,7 +177,7 @@ export async function getYayasanDashboardData(yearId?: string) {
     by: ['gender'],
     where: { 
       isActive: true,
-      ...(yearId ? { riwayatKelas: { some: { tahunAkademikId: yearId } } } : {})
+      ...(yearId ? { riwayatKelas: { some: { isCurrent: true, tahunAkademikId: yearId } } } : {})
     },
     _count: { _all: true }
   })
@@ -401,7 +401,7 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
     where: { 
       isActive: true, 
       unitSekolahId: unitId,
-      ...(yearId ? { riwayatKelas: { some: { tahunAkademikId: yearId } } } : {})
+      ...(yearId ? { riwayatKelas: { some: { isCurrent: true, tahunAkademikId: yearId } } } : {})
     } 
   })
   const totalRombel = await prisma.subKelas.count({ where: { unitSekolahId: unitId, isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) } })
@@ -449,7 +449,7 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
         where: { isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) },
         select: {
           name: true,
-          _count: { select: { riwayatKelas: { where: { murid: { isActive: true }, ...(yearId ? { tahunAkademikId: yearId } : {}) } } } }
+          _count: { select: { riwayatKelas: { where: { isCurrent: true, murid: { isActive: true }, ...(yearId ? { tahunAkademikId: yearId } : {}) } } } }
         }
       }
     }
@@ -475,9 +475,9 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
     select: { 
       id: true,
       name: true, 
-      _count: { select: { riwayatKelas: { where: { murid: { isActive: true } } } } },
+      _count: { select: { riwayatKelas: { where: { isCurrent: true, murid: { isActive: true } } } } },
       riwayatKelas: {
-        where: { murid: { isActive: true } },
+        where: { isCurrent: true, murid: { isActive: true } },
         select: {
           murid: {
             select: { name: true, gender: true }
@@ -516,7 +516,7 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
     where: { 
       isActive: true, 
       unitSekolahId: unitId,
-      ...(yearId ? { riwayatKelas: { some: { tahunAkademikId: yearId } } } : {})
+      ...(yearId ? { riwayatKelas: { some: { isCurrent: true, tahunAkademikId: yearId } } } : {})
     },
     _count: { _all: true }
   })
@@ -880,7 +880,7 @@ export async function getKepsekData(unitId: string, yearId?: string) {
   // Peringkat Kepadatan Kelas (Top 3 Padat, Top 3 Longgar)
   const rombelDist = await prisma.subKelas.findMany({
     where: { isDeleted: false, unitSekolahId: unitId, ...(yearId ? { tahunAkademikId: yearId } : {}) },
-    select: { name: true, _count: { select: { riwayatKelas: { where: { murid: { isActive: true } } } } } }
+    select: { name: true, _count: { select: { riwayatKelas: { where: { isCurrent: true, murid: { isActive: true } } } } } }
   })
   const sortedRombel = rombelDist.map(sk => ({ name: sk.name, total: sk._count.riwayatKelas })).sort((a,b) => b.total - a.total)
   
@@ -907,7 +907,7 @@ export async function getKepsekData(unitId: string, yearId?: string) {
       name: true,
       subKelas: {
         where: { isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) },
-        select: { _count: { select: { riwayatKelas: { where: { murid: { isActive: true } } } } } }
+        select: { _count: { select: { riwayatKelas: { where: { isCurrent: true, murid: { isActive: true } } } } } }
       }
     }
   })

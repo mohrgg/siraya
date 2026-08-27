@@ -23,13 +23,12 @@ export async function getSiswa(unitSekolahId?: string, subKelasId?: string) {
   }
 
   if (subKelasId) {
-    const latestRiwayat = await prisma.riwayatKelas.findMany({
-      orderBy: { createdAt: 'desc' },
-      distinct: ['muridId'],
-      select: { muridId: true, subKelasId: true }
-    })
-    const filteredMuridIds = latestRiwayat.filter(r => r.subKelasId === subKelasId).map(r => r.muridId)
-    where.id = { in: filteredMuridIds }
+    where.riwayatKelas = {
+      some: {
+        subKelasId,
+        isCurrent: true
+      }
+    }
   }
 
   return prisma.murid.findMany({
@@ -82,37 +81,19 @@ export async function getSiswaPaginated(params: {
 
   // Filter by RiwayatKelas if there's any specific class filter (tingkat, jurusan, subKelas)
   if (params.subKelasId || params.tingkatId || params.jurusanId) {
-    const latestRiwayat = await prisma.riwayatKelas.findMany({
-      where: {
-        ...(params.tahunAkademikId ? { tahunAkademikId: params.tahunAkademikId } : {})
-      },
-      orderBy: { createdAt: 'desc' },
-      distinct: ['muridId'],
-      select: {
-        muridId: true,
-        subKelasId: true,
-        subKelas: {
-          select: { tingkatId: true, jurusanId: true }
-        }
+    where.riwayatKelas = {
+      some: {
+        isCurrent: true,
+        ...(params.tahunAkademikId ? { tahunAkademikId: params.tahunAkademikId } : {}),
+        ...(params.subKelasId ? { subKelasId: params.subKelasId } : {}),
+        ...(params.tingkatId || params.jurusanId ? {
+          subKelas: {
+            ...(params.tingkatId ? { tingkatId: params.tingkatId } : {}),
+            ...(params.jurusanId ? { jurusanId: params.jurusanId } : {})
+          }
+        } : {})
       }
-    })
-
-    const filteredMuridIds = latestRiwayat
-      .filter(r => {
-        if (params.subKelasId && r.subKelasId !== params.subKelasId) return false;
-        if (params.tingkatId && r.subKelas?.tingkatId !== params.tingkatId) return false;
-        if (params.jurusanId && r.subKelas?.jurusanId !== params.jurusanId) return false;
-        return true;
-      })
-      .map(r => r.muridId)
-
-    console.log(`[DEBUG] getSiswaPaginated params:`, params);
-    console.log(`[DEBUG] filteredMuridIds length:`, filteredMuridIds.length);
-    console.log(`[DEBUG] latestRiwayat length:`, latestRiwayat.length);
-    const sample = latestRiwayat.find(r => r.subKelas?.name === 'Kelas 2 A');
-    console.log(`[DEBUG] sample Kelas 2 A in latestRiwayat:`, sample);
-
-    where.id = { in: filteredMuridIds }
+    }
   }
 
   if (params.search) {
@@ -302,11 +283,18 @@ export async function editSiswa(id: string, data: {
 
         // Append a new history log ONLY if the subKelasId is different from the current one
         if (!existingRiwayat || existingRiwayat.subKelasId !== subKelas.id) {
+          // Set all previous records for this student in this academic year to isCurrent = false
+          await tx.riwayatKelas.updateMany({
+            where: { muridId: id, tahunAkademikId: subKelas.tahunAkademikId },
+            data: { isCurrent: false }
+          })
+          
           await tx.riwayatKelas.create({
             data: {
               muridId: id,
               subKelasId: subKelas.id,
-              tahunAkademikId: subKelas.tahunAkademikId
+              tahunAkademikId: subKelas.tahunAkademikId,
+              isCurrent: true
             }
           })
         }
@@ -410,8 +398,18 @@ export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: strin
     }))
 
   if (recordsToCreate.length > 0) {
-    await prisma.riwayatKelas.createMany({
-      data: recordsToCreate
+    await prisma.$transaction(async (tx) => {
+      // Set previous records in this academic year to isCurrent = false
+      const idsToUpdate = recordsToCreate.map(r => r.muridId)
+      await tx.riwayatKelas.updateMany({
+        where: { muridId: { in: idsToUpdate }, tahunAkademikId },
+        data: { isCurrent: false }
+      })
+
+      // Create new active records
+      await tx.riwayatKelas.createMany({
+        data: recordsToCreate.map(r => ({ ...r, isCurrent: true }))
+      })
     })
   }
 
@@ -518,11 +516,17 @@ export async function reactivateSiswa(muridId: string, newSubKelasId: string, ta
     })
 
     if (!existing || existing.subKelasId !== newSubKelasId) {
+      await tx.riwayatKelas.updateMany({
+        where: { muridId, tahunAkademikId },
+        data: { isCurrent: false }
+      })
+
       await tx.riwayatKelas.create({
         data: {
           muridId,
           subKelasId: newSubKelasId,
-          tahunAkademikId
+          tahunAkademikId,
+          isCurrent: true
         }
       })
     }

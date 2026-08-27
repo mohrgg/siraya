@@ -11,7 +11,7 @@ export async function getRekapitulasiTunggakan(unitSekolahId: string, tahunAkade
         id: true,
         name: true,
         riwayatKelas: {
-          where: { tahunAkademikId },
+          where: { tahunAkademikId, isCurrent: true },
           select: {
             muridId: true
           }
