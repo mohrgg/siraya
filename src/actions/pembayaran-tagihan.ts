@@ -280,11 +280,24 @@ export async function getRiwayatTransaksiByTagihan(tagihanId: string) {
     const mapped = details.map(d => {
       const tx = d.transaksi
       // The items in the transaction:
-      const items = tx.pembayaranTagihan.map(ptd => ({
-        namaAkun: ptd.tagihan.namaTagihan || ptd.tagihan.akun.nama,
-        jumlahBayar: ptd.jumlahDibayar,
-        sisaTagihan: ptd.tagihan.sisaTagihan
-      }))
+      const items = tx.pembayaranTagihan.reduce((acc: any[], ptd) => {
+        // Gross amount
+        acc.push({
+          namaAkun: ptd.tagihan.namaTagihan || ptd.tagihan.akun.nama,
+          jumlahBayar: ptd.jumlahDibayar + (ptd.potongan || 0),
+          sisaTagihan: ptd.tagihan.sisaTagihan
+        })
+        
+        // Discount item
+        if (ptd.potongan && ptd.potongan > 0) {
+          acc.push({
+            namaAkun: `Diskon / Potongan: ${ptd.kategoriPotongan || 'Lainnya'}`,
+            jumlahBayar: -ptd.potongan
+          })
+        }
+        
+        return acc
+      }, [])
 
       return {
         transaksiId: tx.id,
