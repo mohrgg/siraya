@@ -408,6 +408,9 @@ model PembayaranTagihanDetail {
   transaksiId   String // Relasi ke Transaksi (Kas Masuk)
   jumlahDibayar Float
 
+  potongan         Float?  @default(0)
+  kategoriPotongan String? @db.VarChar(100)
+
   createdAt DateTime @default(now())
 
   tagihan   Tagihan   @relation(fields: [tagihanId], references: [id], onDelete: Cascade)

@@ -45,10 +45,25 @@ export default function KasMasukDetailClient({ transaksi, pengaturan }: { transa
       const { exportResiPdf } = await import("@/lib/pdf")
       const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
 
-      const items = detailKredit.map((d: any) => ({
-        keterangan: `${d.akun.kode} - ${d.akun.nama} ${d.deskripsi ? `(${d.deskripsi})` : ''}`,
-        nominal: d.nilai
-      }))
+      const items: any[] = []
+      
+      detailKredit.forEach((d: any) => {
+        items.push({
+          keterangan: `${d.akun.kode} - ${d.akun.nama} ${d.deskripsi ? `(${d.deskripsi})` : ''}`,
+          nominal: d.nilai
+        })
+      })
+
+      if (transaksi.pembayaranTagihan && Array.isArray(transaksi.pembayaranTagihan)) {
+        transaksi.pembayaranTagihan.forEach((pt: any) => {
+          if (pt.potongan && pt.potongan > 0) {
+            items.push({
+              keterangan: `Diskon / Potongan: ${pt.kategoriPotongan || 'Lainnya'}`,
+              nominal: -pt.potongan
+            })
+          }
+        })
+      }
 
       exportResiPdf({
         institutionInfo: buildInstitutionInfo(pengaturan, transaksi.unitSekolah),

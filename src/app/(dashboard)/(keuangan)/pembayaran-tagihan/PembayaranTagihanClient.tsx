@@ -254,7 +254,9 @@ export default function PembayaranTagihanClient({
           kodeAkun: t.akun.kode,
           akunPendapatanId: t.akun.id,
           sisaTagihan: t.sisaTagihan,
-          jumlahBayar: t.sisaTagihan // Defaults to full payment
+          jumlahBayar: t.sisaTagihan, // Defaults to full payment
+          potongan: 0,
+          kategoriPotongan: "-"
         })
       }
     })

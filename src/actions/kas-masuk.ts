@@ -290,7 +290,8 @@ export async function getKasMasukById(id: string) {
             select: { kode: true, nama: true }
           }
         }
-      }
+      },
+      pembayaranTagihan: true
     }
   })
 

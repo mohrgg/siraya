@@ -101,15 +101,20 @@ export async function getMuridWithTagihanUnpaid(filters: {
 }
 
 export async function prosesPembayaranTagihan(data: {
-  muridId: string,
-  muridName: string,
-  unitSekolahId: string,
-  pembuatId: string,
-  akunKasId: string,
-  tanggal: Date,
-  noReferensi?: string,
-  deskripsi: string,
-  items: { tagihanId: string, jumlahBayar: number, akunPendapatanId: string }[]
+  akunKasId: string
+  tanggal: Date
+  deskripsi: string
+  noReferensi?: string
+  muridName: string
+  unitSekolahId?: string
+  pembuatId: string
+  items: {
+    tagihanId: string
+    akunPendapatanId: string
+    jumlahBayar: number
+    potongan?: number
+    kategoriPotongan?: string
+  }[]
 }) {
   const session = await auth()
   if (!session?.user || !["ADMIN", "TATA_USAHA"].includes((session.user as any).role)) {
@@ -118,14 +123,15 @@ export async function prosesPembayaranTagihan(data: {
 
   try {
     const totalBayar = data.items.reduce((sum, item) => sum + item.jumlahBayar, 0)
-    if (totalBayar <= 0) {
-      throw new Error("Total pembayaran harus lebih dari 0")
+    const totalPotongan = data.items.reduce((sum, item) => sum + (item.potongan || 0), 0)
+    
+    if (totalBayar + totalPotongan <= 0) {
+      throw new Error("Total pembayaran/potongan harus lebih dari 0")
     }
 
     const result = await prisma.$transaction(async (tx) => {
       let finalNoReferensi = data.noReferensi;
       if (!finalNoReferensi) {
-        // Generate auto no referensi for Kas Masuk
         const latestTx = await tx.transaksi.findFirst({
           where: { 
             jenis: 'KAS_MASUK',
@@ -155,7 +161,6 @@ export async function prosesPembayaranTagihan(data: {
         finalNoReferensi = `KM-${dateStr}-${String(nextSeq).padStart(4, '0')}`;
       }
 
-      // 1. Create Transaksi (KAS_MASUK)
       const transaksi = await tx.transaksi.create({
         data: {
           noReferensi: finalNoReferensi,
@@ -165,54 +170,50 @@ export async function prosesPembayaranTagihan(data: {
           deskripsi: data.deskripsi || `Pembayaran Tagihan Siswa: ${data.muridName}`,
           totalNilai: totalBayar,
           status: "POSTED",
-          namaPihakKetiga: data.muridName, // set penyetor as murid
+          namaPihakKetiga: data.muridName,
           unitSekolahId: data.unitSekolahId,
           pembuatId: data.pembuatId
         }
       })
 
-      // 2. Create Transaksi Detail (Debit Kas, Kredit Pendapatan)
-      // Debit: Kas/Bank
-      await tx.transaksiDetail.create({
-        data: {
-          transaksiId: transaksi.id,
-          akunId: data.akunKasId,
-          posisi: "DEBIT",
-          nilai: totalBayar,
-          deskripsi: `Penerimaan Pembayaran Tagihan: ${data.muridName}`
-        }
-      })
-
-      // Kredit: Akun Pendapatan
-      // We aggregate by akunPendapatanId in case multiple items go to the same akun
-      const creditAgg: Record<string, number> = {}
-      data.items.forEach(item => {
-        creditAgg[item.akunPendapatanId] = (creditAgg[item.akunPendapatanId] || 0) + item.jumlahBayar
-      })
-
-      for (const [akunId, nilai] of Object.entries(creditAgg)) {
+      if (totalBayar > 0) {
         await tx.transaksiDetail.create({
           data: {
             transaksiId: transaksi.id,
-            akunId: akunId,
-            posisi: "KREDIT",
-            nilai: nilai,
-            deskripsi: `Pendapatan Tagihan: ${data.muridName}`
+            akunId: data.akunKasId,
+            posisi: "DEBIT",
+            nilai: totalBayar,
+            deskripsi: `Pembayaran Tagihan Siswa: ${data.muridName}`
           }
         })
       }
 
-      // 3. Update Tagihan & Create PembayaranTagihanDetail
       for (const item of data.items) {
-        // fetch current tagihan to ensure valid sisa
+        const totalNilaiItem = item.jumlahBayar + (item.potongan || 0);
+        if (totalNilaiItem <= 0) continue;
+
+        await tx.transaksiDetail.create({
+          data: {
+            transaksiId: transaksi.id,
+            akunId: item.akunPendapatanId,
+            posisi: "KREDIT",
+            nilai: totalNilaiItem,
+            deskripsi: `Pembayaran Tagihan Siswa: ${data.muridName}`
+          }
+        })
+      }
+
+      for (const item of data.items) {
         const currentTagihan = await tx.tagihan.findUnique({ where: { id: item.tagihanId } })
         if (!currentTagihan) throw new Error(`Tagihan tidak ditemukan: ${item.tagihanId}`)
         
-        if (item.jumlahBayar > currentTagihan.sisaTagihan) {
-          throw new Error("Jumlah pembayaran melebihi sisa tagihan")
+        const totalPengurang = item.jumlahBayar + (item.potongan || 0)
+
+        if (totalPengurang > currentTagihan.sisaTagihan) {
+          throw new Error("Jumlah pembayaran dan potongan melebihi sisa tagihan")
         }
 
-        const newSisa = currentTagihan.sisaTagihan - item.jumlahBayar
+        const newSisa = currentTagihan.sisaTagihan - totalPengurang
         const newStatus = newSisa <= 0 ? "LUNAS" : "SEBAGIAN"
 
         await tx.tagihan.update({
@@ -227,7 +228,9 @@ export async function prosesPembayaranTagihan(data: {
           data: {
             tagihanId: item.tagihanId,
             transaksiId: transaksi.id,
-            jumlahDibayar: item.jumlahBayar
+            jumlahDibayar: item.jumlahBayar,
+            potongan: item.potongan || 0,
+            kategoriPotongan: item.kategoriPotongan === "-" ? null : (item.kategoriPotongan || null)
           }
         })
       }
