@@ -12,7 +12,14 @@ export type ReceiptData = {
   noReferensi: string
   tanggal: Date
   muridName: string
-  items: { namaAkun: string, jumlahBayar: number, sisaTagihan?: number }[]
+  items: { 
+    namaAkun: string; 
+    jumlahBayar: number; 
+    sisaTagihanAwal?: number;
+    potongan?: number;
+    kategoriPotongan?: string;
+    sisaTagihan?: number;
+  }[]
   total: number
 }
 
@@ -51,6 +58,9 @@ export default function ModalResiPembayaran({
         items: data.items.map(item => ({
           keterangan: item.namaAkun,
           nominal: item.jumlahBayar,
+          sisaTagihanAwal: item.sisaTagihanAwal,
+          potongan: item.potongan,
+          kategoriPotongan: item.kategoriPotongan,
           sisaTagihan: item.sisaTagihan
         })),
         total: data.total,
@@ -150,9 +160,22 @@ export default function ModalResiPembayaran({
                     <td className="py-3 px-4 text-center border-x border-slate-200 align-top">{idx + 1}</td>
                     <td className="py-3 px-4 text-left border-r border-slate-200 align-top">
                       <div className="font-medium text-slate-800">{item.namaAkun}</div>
+                      
+                      {item.sisaTagihanAwal !== undefined && item.sisaTagihanAwal > 0 && item.potongan && item.potongan > 0 && (
+                        <div className="text-[10px] text-slate-500 mt-1 italic leading-tight">
+                          Tagihan Awal: {formatRupiah(item.sisaTagihanAwal)}
+                        </div>
+                      )}
+                      
+                      {item.potongan !== undefined && item.potongan > 0 && (
+                        <div className="text-[10px] text-slate-500 mt-1 italic leading-tight">
+                          Diskon ({item.kategoriPotongan || 'Lainnya'}): -{formatRupiah(item.potongan)}
+                        </div>
+                      )}
+                      
                       {item.sisaTagihan !== undefined && item.sisaTagihan > 0 && (
                         <div className="text-[10px] text-slate-500 mt-1 italic leading-tight">
-                          * Pembayaran Sebagian. Sisa Tagihan: {formatRupiah(item.sisaTagihan)}
+                          * Pembayaran Sebagian. Sisa Tagihan Akhir: {formatRupiah(item.sisaTagihan)}
                         </div>
                       )}
                     </td>

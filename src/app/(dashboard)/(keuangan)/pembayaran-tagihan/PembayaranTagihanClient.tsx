@@ -295,24 +295,14 @@ export default function PembayaranTagihanClient({
         noReferensi: res.data?.noReferensi || payload.noReferensi || `INV-${new Date().getTime()}`,
         tanggal: payload.tanggal,
         muridName: payload.muridName,
-        items: payload.items.reduce((acc: any[], it: any) => {
-          // Gross amount
-          acc.push({
-            namaAkun: it.namaAkun,
-            jumlahBayar: it.jumlahBayar + (it.potongan || 0),
-            sisaTagihan: it.sisaTagihan - it.jumlahBayar - (it.potongan || 0)
-          })
-          
-          // Discount item
-          if (it.potongan && it.potongan > 0) {
-            acc.push({
-              namaAkun: `Diskon / Potongan: ${it.kategoriPotongan || 'Lainnya'}`,
-              jumlahBayar: -it.potongan
-            })
-          }
-          
-          return acc
-        }, []),
+        items: payload.items.map((it: any) => ({
+          namaAkun: it.namaAkun,
+          jumlahBayar: it.jumlahBayar,
+          sisaTagihanAwal: it.sisaTagihan,
+          potongan: it.potongan || 0,
+          kategoriPotongan: it.kategoriPotongan,
+          sisaTagihan: it.sisaTagihan - it.jumlahBayar - (it.potongan || 0)
+        })),
         total: totalBayar
       })
       

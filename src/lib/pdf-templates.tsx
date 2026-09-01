@@ -201,7 +201,14 @@ export interface ResiPdfData {
   tanggal: string | Date
   noReferensi: string
   penerimaDari: string
-  items: Array<{ keterangan: string, nominal: number, sisaTagihan?: number }>
+  items: Array<{ 
+    keterangan: string; 
+    nominal: number; 
+    sisaTagihanAwal?: number;
+    potongan?: number;
+    kategoriPotongan?: string;
+    sisaTagihan?: number;
+  }>
   total: number
   penandatanganKiri?: { jabatan: string; nama: string }
   penandatanganKanan?: { jabatan: string; nama: string }
@@ -273,9 +280,22 @@ export function ResiHtml({
               <td className="py-1.5 px-2 border border-slate-200 text-center text-slate-700 align-top">{i + 1}</td>
               <td className="py-1.5 px-2 border border-slate-200 text-slate-700 align-top">
                 <div className="font-medium text-slate-800">{item.keterangan}</div>
+                
+                {item.sisaTagihanAwal !== undefined && item.sisaTagihanAwal > 0 && item.potongan && item.potongan > 0 && (
+                  <div className="text-[9px] text-slate-500 mt-0.5 italic leading-tight">
+                    Tagihan Awal: {formatRp(item.sisaTagihanAwal)}
+                  </div>
+                )}
+                
+                {item.potongan !== undefined && item.potongan > 0 && (
+                  <div className="text-[9px] text-slate-500 mt-0.5 italic leading-tight">
+                    Diskon ({item.kategoriPotongan || 'Lainnya'}): -{formatRp(item.potongan)}
+                  </div>
+                )}
+                
                 {item.sisaTagihan !== undefined && item.sisaTagihan > 0 && (
                   <div className="text-[9px] text-slate-500 mt-0.5 italic leading-tight">
-                    * Pembayaran Sebagian. Sisa Tagihan: {formatRp(item.sisaTagihan)}
+                    * Pembayaran Sebagian. Sisa Tagihan Akhir: {formatRp(item.sisaTagihan)}
                   </div>
                 )}
               </td>
