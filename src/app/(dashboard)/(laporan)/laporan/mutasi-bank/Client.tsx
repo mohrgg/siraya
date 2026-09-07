@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
 import { exportToExcel } from "@/lib/excel"
 import { exportMutasiBankPdf } from "@/lib/pdf"
-import { buildInstitutionInfo } from "@/lib/pdf-helpers"
+import { buildInstitutionInfo, getSignatoryKiri } from "@/lib/pdf-helpers"
 import toast from "react-hot-toast"
 import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
@@ -17,7 +17,8 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
   const router = useRouter()
   
   const filterUnitId = userUnitId || ""
-  const unitName = filterUnitId ? (schoolUnits?.find(u => u.id === filterUnitId)?.name || "UNIT") : "YAYASAN"
+  const selectedUnit = filterUnitId ? schoolUnits?.find(u => u.id === filterUnitId) : undefined
+  const unitName = selectedUnit ? selectedUnit.name : "YAYASAN"
 
   const [isLoading, setIsLoading] = useState(false)
   const [data, setData] = useState<{
@@ -127,8 +128,6 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
 
   const handleExportPdf = () => {
     if (!data) return
-    
-    const selectedUnit = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
     const instInfo = buildInstitutionInfo(pengaturan, selectedUnit)
     const filename = `Mutasi_Kas_${selectedAkunName.replace(/\s+/g, '_')}_${startDate}.pdf`
     
@@ -138,8 +137,8 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
       dateRangeStr: `${new Date(startDate).toLocaleDateString('id-ID')} - ${new Date(endDate).toLocaleDateString('id-ID')}`,
       accountName: selectedAkunName,
       filename,
-      penandatanganKiri: { jabatan: "Mengetahui,", nama: selectedUnit?.namaKepalaSekolah || "____________________" },
-      penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+      penandatanganKiri: getSignatoryKiri(pengaturan, selectedUnit),
+      penandatanganKanan: { jabatan: "Bendahara,", nama: selectedUnit?.namaBendaharaUnit || pengaturan?.namaBendaharaYayasan || userName || "____________________" }
     })
     
     toast.success("PDF berhasil diunduh")
@@ -379,11 +378,11 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
           </div>
           <PrintSignature
             pengaturan={pengaturan}
-            unitInfo={filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined}
+            unitInfo={selectedUnit}
             tipe="ganda"
             tanggal={new Date()}
-            kiri={{ jabatan: "Mengetahui,", nama: (filterUnitId ? schoolUnits.find(u => u.id === filterUnitId)?.namaKepalaSekolah : undefined) || "____________________" }}
-            kanan={{ jabatan: "Petugas,", nama: userName || "____________________" }}
+            kiri={getSignatoryKiri(pengaturan, selectedUnit)}
+            kanan={{ jabatan: "Bendahara,", nama: selectedUnit?.namaBendaharaUnit || pengaturan?.namaBendaharaYayasan || userName || "____________________" }}
           />
         </div>
 

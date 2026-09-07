@@ -20,3 +20,20 @@ export function buildInstitutionInfo(
     catatanKwitansi: pengaturan?.catatanKwitansi || null,
   }
 }
+
+/**
+ * Mendapatkan penandatangan kiri standar (Mengetahui) berbasis konteks Unit vs Yayasan.
+ */
+export function getSignatoryKiri(pengaturan?: any, unitSekolah?: any): { jabatan: string; nama: string } {
+  if (unitSekolah?.namaKepalaSekolah || unitSekolah?.name) {
+    return {
+      jabatan: "Mengetahui, Kepala Sekolah",
+      nama: unitSekolah?.namaKepalaSekolah || "____________________"
+    }
+  }
+  return {
+    jabatan: `Mengetahui, ${pengaturan?.jabatanPimpinanYayasan || "Ketua Yayasan"}`,
+    nama: pengaturan?.namaPimpinanYayasan || "____________________"
+  }
+}
+

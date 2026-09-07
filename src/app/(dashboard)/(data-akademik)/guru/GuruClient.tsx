@@ -334,7 +334,7 @@ export default function GuruClient({
     setIsExportingPDF(true)
     try {
       const { exportTablePdf } = await import("@/lib/pdf")
-      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
+      const { buildInstitutionInfo, getSignatoryKiri } = await import("@/lib/pdf-helpers")
       const unitObj = schoolUnits.find((u: any) => u.id === activeUnitId)
       const dateStr = new Date().toISOString().split('T')[0]
 
@@ -356,7 +356,12 @@ export default function GuruClient({
         headers,
         data: pdfRows,
         filename: `Daftar_Guru_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
-        config: { orientation: 'landscape' }
+        config: { orientation: 'landscape' },
+        penandatanganKiri: getSignatoryKiri(pengaturan, unitObj),
+        penandatanganKanan: {
+          jabatan: "Petugas Administrasi,",
+          nama: userName || "____________________"
+        }
       })
       toast.success("Berhasil mengunduh PDF Daftar Guru")
     } catch (err: any) {

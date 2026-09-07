@@ -7,8 +7,8 @@ interface Signatory {
 }
 
 interface PrintSignatureProps {
-  pengaturan?: Pengaturan | null
-  unitInfo?: UnitSekolah | null
+  pengaturan?: Partial<Pengaturan> | any
+  unitInfo?: Partial<UnitSekolah> | any
   tipe: "tunggal" | "ganda"
   tanggal: Date | string
   kiri?: Signatory

@@ -119,7 +119,7 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
     setIsExportingPDF(true)
     try {
       const { exportTablePdf } = await import("@/lib/pdf")
-      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
+      const { buildInstitutionInfo, getSignatoryKiri } = await import("@/lib/pdf-helpers")
       
       const tableColumn = ["No", "Tgl Transaksi", "No Referensi", "Penerima", "Deskripsi", "Total Nilai", "Pembuat", "Status"]
       const tableRows = filteredData.map((item: any, index: number) => [
@@ -143,8 +143,8 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
         data: tableRows,
         filename: `Kas_Keluar_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_'),
         config: { orientation: 'landscape' },
-        penandatanganKiri: { jabatan: "Mengetahui, Kepala Sekolah", nama: unitObj?.namaKepalaSekolah || "____________________" },
-        penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+        penandatanganKiri: getSignatoryKiri(pengaturan, unitObj),
+        penandatanganKanan: { jabatan: "Bendahara Pengeluaran,", nama: unitObj?.namaBendaharaUnit || pengaturan?.namaBendaharaYayasan || userName || "____________________" }
       })
 
       toast.success("Berhasil mengekspor PDF")

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
 import { exportToExcel } from "@/lib/excel"
 import { exportIncomeStatementPdf } from "@/lib/pdf"
-import { buildInstitutionInfo } from "@/lib/pdf-helpers"
+import { buildInstitutionInfo, getSignatoryKiri } from "@/lib/pdf-helpers"
 import toast from "react-hot-toast"
 import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
@@ -149,8 +149,8 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
       endDate: endDate || "",
       data: data,
       filename,
-      penandatanganKiri: { jabatan: "Mengetahui,", nama: selectedUnit?.namaKepalaSekolah || "____________________" },
-      penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+      penandatanganKiri: getSignatoryKiri(pengaturan, selectedUnit),
+      penandatanganKanan: { jabatan: "Bendahara,", nama: selectedUnit?.namaBendaharaUnit || pengaturan?.namaBendaharaYayasan || userName || "____________________" }
     })
     
     toast.success("PDF berhasil diunduh")
@@ -436,8 +436,8 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
             unitInfo={filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined}
             tipe="ganda"
             tanggal={new Date()}
-            kiri={{ jabatan: "Mengetahui,", nama: (filterUnitId ? schoolUnits.find(u => u.id === filterUnitId)?.namaKepalaSekolah : undefined) || "____________________" }}
-            kanan={{ jabatan: "Petugas,", nama: userName || "____________________" }}
+            kiri={getSignatoryKiri(pengaturan, filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined)}
+            kanan={{ jabatan: "Bendahara,", nama: (filterUnitId ? schoolUnits.find(u => u.id === filterUnitId)?.namaBendaharaUnit : undefined) || pengaturan?.namaBendaharaYayasan || userName || "____________________" }}
           />
         )}
         

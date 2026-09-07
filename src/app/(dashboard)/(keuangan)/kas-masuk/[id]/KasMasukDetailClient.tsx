@@ -92,8 +92,8 @@ export default function KasMasukDetailClient({ transaksi, pengaturan }: { transa
         penerimaDari: transaksi.namaPihakKetiga || "-",
         items,
         total: transaksi.totalNilai,
-        penandatanganKiri: { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "........................" },
-        penandatanganKanan: { jabatan: "Diterima Oleh,", nama: "........................" },
+        penandatanganKiri: { jabatan: "Diterima Dari / Penyetor,", nama: transaksi.namaPihakKetiga || "____________________" },
+        penandatanganKanan: { jabatan: "Bendahara Penerima,", nama: transaksi.pembuat?.name || transaksi.unitSekolah?.namaBendaharaUnit || pengaturan?.namaBendaharaYayasan || "Bendahara Penerima" },
         filename: `Resi_KasMasuk_${transaksi.noReferensi}`
       })
       toast.success("Berhasil mencetak Resi")
@@ -125,8 +125,8 @@ export default function KasMasukDetailClient({ transaksi, pengaturan }: { transa
         tanggal: transaksi.tanggal,
         deskripsi: transaksi.deskripsi || "-",
         detail,
-        penandatanganKiri: { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "........................" },
-        penandatanganKanan: { jabatan: "Disetujui Oleh,", nama: "........................" },
+        penandatanganKiri: { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "Petugas Keuangan" },
+        penandatanganKanan: { jabatan: "Disetujui Oleh,", nama: transaksi.unitSekolah?.namaKepalaSekolah || pengaturan?.namaPimpinanYayasan || "____________________" },
         filename: `Jurnal_KasMasuk_${transaksi.noReferensi}`
       })
       toast.success("Berhasil mencetak Jurnal")

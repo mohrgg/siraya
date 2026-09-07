@@ -171,7 +171,7 @@ export default function KelasClient({
 
     try {
       const { exportTablePdf } = await import("@/lib/pdf")
-      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
+      const { buildInstitutionInfo, getSignatoryKiri } = await import("@/lib/pdf-helpers")
       const unitObj = activeUnitId === 'ALL' ? undefined : schoolUnits.find((u: any) => u.id === activeUnitId)
 
       if (data.activeTab === "sub-kelas") {
@@ -196,7 +196,12 @@ export default function KelasClient({
           headers,
           data: pdfRows,
           filename: `Daftar_Rombel_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
-          config: { orientation: 'landscape' }
+          config: { orientation: 'landscape' },
+          penandatanganKiri: getSignatoryKiri(pengaturan, unitObj),
+          penandatanganKanan: {
+            jabatan: "Kepala Tata Usaha,",
+            nama: unitObj?.namaKepalaTU || userName || "____________________"
+          }
         })
       } else {
         const { getSiswaPaginated } = await import("@/actions/siswa")
@@ -237,7 +242,12 @@ export default function KelasClient({
           headers,
           data: pdfRows,
           filename: `Daftar_Murid_${unitObj?.name || "Semua"}_${statusName}_${dateStr}`.replace(/\s+/g, '_'),
-          config: { orientation: 'landscape' }
+          config: { orientation: 'landscape' },
+          penandatanganKiri: getSignatoryKiri(pengaturan, unitObj),
+          penandatanganKanan: {
+            jabatan: "Petugas Kesiswaan,",
+            nama: userName || "____________________"
+          }
         })
       }
       toast.success("Berhasil mengekspor dokumen PDF resmi")
@@ -595,6 +605,7 @@ export default function KelasClient({
         subKelas={viewDetailSubKelas}
         isReadOnly={isReadOnly}
         userName={userName}
+        pengaturan={pengaturan}
         onManageClass={(sub) => {
           setViewDetailSubKelas(null)
           data.setActiveTab("murid")

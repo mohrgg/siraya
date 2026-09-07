@@ -21,6 +21,7 @@ interface SubKelasDetailDrawerProps {
   nextDisabled?: boolean
   onManageClass?: (subKelas: any) => void
   userName?: string
+  pengaturan?: any
 }
 
 export default function SubKelasDetailDrawer({
@@ -34,7 +35,8 @@ export default function SubKelasDetailDrawer({
   prevDisabled = false,
   nextDisabled = false,
   onManageClass,
-  userName
+  userName,
+  pengaturan
 }: SubKelasDetailDrawerProps) {
   const router = useRouter()
   const [students, setStudents] = useState<any[]>([])
@@ -122,7 +124,7 @@ export default function SubKelasDetailDrawer({
     setIsExportingPDF(true)
     try {
       const { exportTablePdf } = await import("@/lib/pdf")
-      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
+      const { buildInstitutionInfo, getSignatoryKiri } = await import("@/lib/pdf-helpers")
       
       const tableColumn = ["No", "NIS", "NISN", "Nama", "L/P", "Status"]
       const tableRows = students.map((s: any, index: number) => [
@@ -135,13 +137,18 @@ export default function SubKelasDetailDrawer({
       ])
 
       exportTablePdf({
-        institutionInfo: buildInstitutionInfo(undefined, subKelas.unitSekolah),
+        institutionInfo: buildInstitutionInfo(pengaturan, subKelas.unitSekolah),
         title: `Daftar Murid Kelas ${subKelas.name}`,
-        subtitle: `Tingkat: ${subKelas.tingkat.name} • Tahun Akademik: ${subKelas.tahunAkademik.name}`,
+        subtitle: `Tingkat: ${subKelas.tingkat?.name || "-"} • Tahun Akademik: ${subKelas.tahunAkademik?.name || "-"}`,
         headers: tableColumn,
         data: tableRows,
         filename: `Murid_Kelas_${subKelas.name.replace(/\s+/g, '_')}`,
-        config: { orientation: 'portrait' }
+        config: { orientation: 'portrait' },
+        penandatanganKiri: getSignatoryKiri(pengaturan, subKelas.unitSekolah),
+        penandatanganKanan: {
+          jabatan: "Wali Kelas,",
+          nama: subKelas.waliKelas || "____________________"
+        }
       })
       toast.success("Berhasil mengunduh PDF Daftar Siswa")
     } catch (err: any) {

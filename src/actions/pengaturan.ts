@@ -57,6 +57,9 @@ export async function upsertPengaturan(data: any) {
         logoUrl: data.logoUrl,
         kotaPenandatangan: data.kotaPenandatangan,
         catatanKwitansi: data.catatanKwitansi,
+        namaPimpinanYayasan: data.namaPimpinanYayasan,
+        jabatanPimpinanYayasan: data.jabatanPimpinanYayasan || "Ketua Yayasan",
+        namaBendaharaYayasan: data.namaBendaharaYayasan,
         rekeningBank: data.rekeningBank, // JSON string
         prefixKasMasuk: data.prefixKasMasuk || "KM",
         prefixKasKeluar: data.prefixKasKeluar || "KK"
@@ -71,6 +74,9 @@ export async function upsertPengaturan(data: any) {
         logoUrl: data.logoUrl,
         kotaPenandatangan: data.kotaPenandatangan,
         catatanKwitansi: data.catatanKwitansi,
+        namaPimpinanYayasan: data.namaPimpinanYayasan,
+        jabatanPimpinanYayasan: data.jabatanPimpinanYayasan || "Ketua Yayasan",
+        namaBendaharaYayasan: data.namaBendaharaYayasan,
         rekeningBank: data.rekeningBank, // JSON string
         prefixKasMasuk: data.prefixKasMasuk || "KM",
         prefixKasKeluar: data.prefixKasKeluar || "KK"
@@ -124,6 +130,9 @@ export async function updateUnitSekolahKop(id: string, data: any) {
         website: data.website,
         namaKepalaSekolah: data.namaKepalaSekolah,
         nipKepalaSekolah: data.nipKepalaSekolah,
+        namaKepalaTU: data.namaKepalaTU,
+        nipKepalaTU: data.nipKepalaTU,
+        namaBendaharaUnit: data.namaBendaharaUnit,
         kotaPenandatangan: data.kotaPenandatangan,
         // logo: data.logo // if handling image later
       }

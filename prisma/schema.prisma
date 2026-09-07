@@ -54,6 +54,9 @@ model UnitSekolah {
   website           String?  @db.VarChar(100)
   namaKepalaSekolah String?  @db.VarChar(150)
   nipKepalaSekolah  String?  @db.VarChar(50)
+  namaKepalaTU      String?  @db.VarChar(150)
+  nipKepalaTU       String?  @db.VarChar(50)
+  namaBendaharaUnit String?  @db.VarChar(150)
   kotaPenandatangan String?  @db.VarChar(100)
   logo              String?  @db.VarChar(255)
   isActive          Boolean  @default(true)
@@ -430,8 +433,11 @@ model Pengaturan {
   logoUrl     String? @db.VarChar(255)
 
   // Penandatangan & Footer
-  kotaPenandatangan String? @default("Bandung") @db.VarChar(100)
-  catatanKwitansi   String? @db.Text
+  kotaPenandatangan      String? @default("Bandung") @db.VarChar(100)
+  catatanKwitansi        String? @db.Text
+  namaPimpinanYayasan    String? @db.VarChar(150)
+  jabatanPimpinanYayasan String? @default("Ketua Yayasan") @db.VarChar(100)
+  namaBendaharaYayasan   String? @db.VarChar(150)
 
   // Pengaturan Rekening Bank (disimpan format JSON String)
   rekeningBank String? @db.Text

@@ -145,7 +145,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
     toast.loading("Menyiapkan file PDF...", { id: "export-pdf" })
     try {
       const { exportTablePdf } = await import("@/lib/pdf")
-      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
+      const { buildInstitutionInfo, getSignatoryKiri } = await import("@/lib/pdf-helpers")
       
       const allLogs = await getAllAuditLogsForExport({
         startDate: startDate || undefined,
@@ -172,8 +172,8 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
         data: tableRows,
         filename: `AuditLog_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_'),
         config: { orientation: 'landscape' },
-        penandatanganKiri: { jabatan: "Mengetahui, Pimpinan", nama: pengaturan?.namaKepalaSekolah || "____________________" },
-        penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+        penandatanganKiri: getSignatoryKiri(pengaturan, undefined),
+        penandatanganKanan: { jabatan: "Administrator Sistem,", nama: userName || "Administrator" }
       })
 
       toast.success("Audit Log berhasil diekspor ke PDF!", { id: "export-pdf" })

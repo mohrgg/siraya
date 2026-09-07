@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast"
 import { Button } from "@/components/ui/Button"
 import { getRekapitulasiTunggakan } from "@/actions/rekapitulasi-tunggakan"
 import { exportTablePdf } from "@/lib/pdf"
-import { buildInstitutionInfo } from "@/lib/pdf-helpers"
+import { buildInstitutionInfo, getSignatoryKiri } from "@/lib/pdf-helpers"
 import { exportToExcel } from "@/lib/excel"
 import { 
   Toolbar, 
@@ -147,8 +147,8 @@ export default function RekapitulasiTunggakanClient({
       data,
       filename: `Ringkasan_Tunggakan_${activeUnitName}`,
       config: { orientation: 'landscape' },
-      penandatanganKiri: { jabatan: "Mengetahui,", nama: unitInfo?.namaKepalaSekolah || "____________________" },
-      penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+      penandatanganKiri: getSignatoryKiri(pengaturan, unitInfo),
+      penandatanganKanan: { jabatan: "Petugas Tata Usaha,", nama: unitInfo?.namaKepalaTU || userName || "____________________" }
     })
   }
 
@@ -202,8 +202,8 @@ export default function RekapitulasiTunggakanClient({
       data,
       filename: `Detail_Tunggakan_${activeUnitName}`,
       config: { orientation: 'landscape' },
-      penandatanganKiri: { jabatan: "Mengetahui,", nama: unitInfo?.namaKepalaSekolah || "____________________" },
-      penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+      penandatanganKiri: getSignatoryKiri(pengaturan, unitInfo),
+      penandatanganKanan: { jabatan: "Petugas Tata Usaha,", nama: unitInfo?.namaKepalaTU || userName || "____________________" }
     })
   }
 
@@ -260,8 +260,8 @@ export default function RekapitulasiTunggakanClient({
       data,
       filename: `Tunggakan_Kelas_${selectedKelasData.subKelasName}_${activeUnitName}`,
       config: { orientation: 'portrait' },
-      penandatanganKiri: { jabatan: "Mengetahui,", nama: unitInfo?.namaKepalaSekolah || "____________________" },
-      penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+      penandatanganKiri: getSignatoryKiri(pengaturan, unitInfo),
+      penandatanganKanan: { jabatan: "Petugas Tata Usaha,", nama: unitInfo?.namaKepalaTU || userName || "____________________" }
     })
   }
 

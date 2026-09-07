@@ -138,7 +138,7 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
     setIsExportingPDF(true)
     try {
       const { exportTablePdf } = await import("@/lib/pdf")
-      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
+      const { buildInstitutionInfo, getSignatoryKiri } = await import("@/lib/pdf-helpers")
       
       const tableColumn = ["No", "Tgl Transaksi", "No Referensi", "Penyetor", "Deskripsi", "Total Nilai", "Pembuat", "Status"]
       const tableRows = filteredData.map((item: any, index: number) => [
@@ -162,8 +162,8 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
         data: tableRows,
         filename: `Kas_Masuk_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_'),
         config: { orientation: 'landscape' },
-        penandatanganKiri: { jabatan: "Mengetahui, Kepala Sekolah", nama: unitObj?.namaKepalaSekolah || "____________________" },
-        penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+        penandatanganKiri: getSignatoryKiri(pengaturan, unitObj),
+        penandatanganKanan: { jabatan: "Bendahara Penerima,", nama: unitObj?.namaBendaharaUnit || pengaturan?.namaBendaharaYayasan || userName || "____________________" }
       })
 
       toast.success("Berhasil mengekspor PDF")

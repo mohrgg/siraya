@@ -225,14 +225,20 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                   tipe="ganda"
                   tanggal={new Date()}
                   kiri={{
-                    jabatan: activeUnitTab !== "GLOBAL" ? "Kepala Sekolah" : "Mengetahui,",
+                    jabatan: activeUnitTab !== "GLOBAL" 
+                      ? "Mengetahui, Kepala Sekolah" 
+                      : `Mengetahui, ${formData.jabatanPimpinanYayasan || "Ketua Yayasan"}`,
                     nama: activeUnitTab !== "GLOBAL" 
                       ? (unitData[activeUnitTab]?.namaKepalaSekolah || "____________________")
-                      : "____________________"
+                      : (formData.namaPimpinanYayasan || "____________________")
                   }}
                   kanan={{
-                    jabatan: "Petugas",
-                    nama: "(Nama User yang Login)"
+                    jabatan: activeUnitTab !== "GLOBAL" 
+                      ? (unitData[activeUnitTab]?.namaKepalaTU ? "Kepala Tata Usaha" : "Petugas Keuangan")
+                      : (formData.namaBendaharaYayasan ? "Bendahara Yayasan" : "Petugas"),
+                    nama: activeUnitTab !== "GLOBAL"
+                      ? (unitData[activeUnitTab]?.namaKepalaTU || "(Nama User yang Login)")
+                      : (formData.namaBendaharaYayasan || "(Nama User yang Login)")
                   }}
                   className="flex"
                 />
@@ -313,15 +319,30 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                   </div>
 
                   <div className="md:col-span-2 mt-4">
-                    <h3 className="text-lg font-bold text-text-main border-b border-border pb-2 mb-4">3. Penandatangan & Footer Dokumen</h3>
+                    <h3 className="text-lg font-bold text-text-main border-b border-border pb-2 mb-4">3. Penandatangan & Footer Dokumen Yayasan</h3>
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 text-amber-800 text-sm">
-                      <p>Pengaturan ini digunakan untuk mencetak nama pejabat di bawah dokumen laporan dan kwitansi tingkat yayasan.</p>
+                      <p>Pengaturan ini digunakan untuk mencetak nama pejabat di bawah dokumen laporan dan kwitansi tingkat yayasan (semua unit).</p>
                     </div>
                   </div>
-                  <div className="md:col-span-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Ketua / Pimpinan Yayasan</label>
+                    <input type="text" name="namaPimpinanYayasan" value={formData.namaPimpinanYayasan || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Contoh: Drs. H. Ahmad Dahlan, M.Pd." />
+                    <p className="text-xs text-text-muted mt-1">Dicetak di kolom kiri (Mengetahui) pada laporan global.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Titel / Jabatan Pimpinan</label>
+                    <input type="text" name="jabatanPimpinanYayasan" value={formData.jabatanPimpinanYayasan || "Ketua Yayasan"} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Contoh: Ketua Yayasan / Pimpinan Yayasan" />
+                    <p className="text-xs text-text-muted mt-1">Default: Ketua Yayasan</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Bendahara Yayasan</label>
+                    <input type="text" name="namaBendaharaYayasan" value={formData.namaBendaharaYayasan || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Contoh: Hj. Siti Aisyah, S.E." />
+                    <p className="text-xs text-text-muted mt-1">Dicetak di kolom kanan laporan keuangan yayasan.</p>
+                  </div>
+                  <div>
                     <label className="block text-sm font-semibold text-text-main mb-1.5">Kota Tempat Tanda Tangan</label>
-                    <input type="text" name="kotaPenandatangan" value={formData.kotaPenandatangan || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50 md:w-1/2" placeholder="Contoh: Bandung, Depok, Jakarta" />
-                    <p className="text-xs text-text-muted mt-1">Misal: "Bandung, 12 Agustus 2026"</p>
+                    <input type="text" name="kotaPenandatangan" value={formData.kotaPenandatangan || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Contoh: Bandung, Depok, Jakarta" />
+                    <p className="text-xs text-text-muted mt-1">Titimangsa kota (misal: "Bandung, 12 Agustus 2026")</p>
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-text-main mb-1.5">Catatan/Footer Kwitansi Global</label>
@@ -369,6 +390,18 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                   <div>
                     <label className="block text-sm font-semibold text-text-main mb-1.5">NIP Kepala Sekolah</label>
                     <input type="text" name="nipKepalaSekolah" value={unitData[activeUnitTab]?.nipKepalaSekolah || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="NIP (Kosongkan jika tidak ada)" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Kepala Tata Usaha (KTU)</label>
+                    <input type="text" name="namaKepalaTU" value={unitData[activeUnitTab]?.namaKepalaTU || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Nama Kepala TU" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">NIP / NIK Kepala Tata Usaha</label>
+                    <input type="text" name="nipKepalaTU" value={unitData[activeUnitTab]?.nipKepalaTU || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="NIP KTU (Opsional)" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Bendahara / Kasir Unit</label>
+                    <input type="text" name="namaBendaharaUnit" value={unitData[activeUnitTab]?.namaBendaharaUnit || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50 md:w-1/2" placeholder="Nama Bendahara / Staf Keuangan Unit" />
                   </div>
                 </div>
               </div>

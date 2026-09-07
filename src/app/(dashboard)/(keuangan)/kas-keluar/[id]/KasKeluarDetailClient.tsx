@@ -67,8 +67,8 @@ export default function KasKeluarDetailClient({ transaksi, pengaturan }: { trans
         penerimaDari: transaksi.penerima?.name || transaksi.namaPihakKetiga || "-",
         items,
         total: transaksi.totalNilai,
-        penandatanganKiri: { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "........................" },
-        penandatanganKanan: { jabatan: "Diterima Oleh,", nama: "........................" },
+        penandatanganKiri: { jabatan: "Yang Menerima / Penerima Kas,", nama: transaksi.penerima?.name || transaksi.namaPihakKetiga || "Penerima" },
+        penandatanganKanan: { jabatan: "Bendahara Pengeluaran,", nama: transaksi.pembuat?.name || transaksi.unitSekolah?.namaBendaharaUnit || pengaturan?.namaBendaharaYayasan || "Bendahara Pengeluaran" },
         filename: `Resi_KasKeluar_${transaksi.noReferensi}`
       })
       toast.success("Berhasil mencetak Resi")
@@ -100,8 +100,8 @@ export default function KasKeluarDetailClient({ transaksi, pengaturan }: { trans
         tanggal: transaksi.tanggal,
         deskripsi: transaksi.deskripsi || "-",
         detail,
-        penandatanganKiri: { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "........................" },
-        penandatanganKanan: { jabatan: "Disetujui Oleh,", nama: "........................" },
+        penandatanganKiri: { jabatan: "Dibuat Oleh,", nama: transaksi.pembuat?.name || "Petugas Keuangan" },
+        penandatanganKanan: { jabatan: "Disetujui Oleh,", nama: transaksi.unitSekolah?.namaKepalaSekolah || pengaturan?.namaPimpinanYayasan || "____________________" },
         filename: `Jurnal_KasKeluar_${transaksi.noReferensi}`
       })
       toast.success("Berhasil mencetak Jurnal")

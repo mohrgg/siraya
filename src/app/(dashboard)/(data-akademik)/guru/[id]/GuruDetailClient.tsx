@@ -130,7 +130,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
     setIsExportingPDF(true)
     try {
       const { exportTablePdf } = await import("@/lib/pdf")
-      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
+      const { buildInstitutionInfo, getSignatoryKiri } = await import("@/lib/pdf-helpers")
       const dateStr = new Date().toISOString().split('T')[0]
       const headers = ["Keterangan / Field", "Informasi Guru"]
       const pdfRows = [
@@ -153,7 +153,12 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
         headers,
         data: pdfRows,
         filename: `Profil_Guru_${initialData.name}_${dateStr}`.replace(/\s+/g, '_'),
-        config: { orientation: 'portrait' }
+        config: { orientation: 'portrait' },
+        penandatanganKiri: getSignatoryKiri(pengaturan, initialData.unitSekolah),
+        penandatanganKanan: {
+          jabatan: "Petugas Administrasi,",
+          nama: userName || "____________________"
+        }
       })
       toast.success("Berhasil mengunduh PDF Profil Guru")
     } catch (err: any) {
@@ -502,10 +507,11 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
         {/* TANDA TANGAN */}
         <PrintSignature
           pengaturan={pengaturan}
+          unitInfo={initialData.unitSekolah}
           tipe="ganda"
           tanggal={new Date()}
-          kiri={{ jabatan: "Mengetahui,", nama: initialData.unitSekolah?.namaKepalaSekolah || "____________________" }}
-          kanan={{ jabatan: "Petugas,", nama: userName || "____________________" }}
+          kiri={{ jabatan: "Mengetahui, Kepala Sekolah", nama: initialData.unitSekolah?.namaKepalaSekolah || "____________________" }}
+          kanan={{ jabatan: "Petugas Administrasi,", nama: userName || "____________________" }}
           className="flex"
         />
 

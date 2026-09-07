@@ -6,7 +6,7 @@ import { ArrowLeft, Search, Download, Printer, RefreshCw, FileText, FileSpreadsh
 import { Button } from "@/components/ui/Button"
 import { exportToExcel } from "@/lib/excel"
 import { exportTunggakanMatriksPdf } from "@/lib/pdf"
-import { buildInstitutionInfo } from "@/lib/pdf-helpers"
+import { buildInstitutionInfo, getSignatoryKiri } from "@/lib/pdf-helpers"
 import { Input } from "@/components/ui/Input"
 import { useRouter } from "next/navigation"
 import toast from "react-hot-toast"
@@ -21,9 +21,10 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
   const [searchTerm, setSearchTerm] = useState("")
 
   const filterUnitId = userUnitId || ""
+  const activeUnit = filterUnitId ? schoolUnits?.find(u => u.id === filterUnitId) : undefined
   const [filterTingkatId, setFilterTingkatId] = useState("")
   const [filterSubKelasId, setFilterSubKelasId] = useState("")
-  const unitName = filterUnitId ? (schoolUnits?.find(u => u.id === filterUnitId)?.name || "UNIT") : "YAYASAN"
+  const unitName = activeUnit ? activeUnit.name : "YAYASAN"
 
   // Pagination
   const [pageSize, setPageSize] = useState(10)
@@ -163,8 +164,6 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
     
     const filename = `Laporan_Tunggakan_${unitName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`
 
-    const activeUnit = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
-
     exportTunggakanMatriksPdf({
       institutionInfo: buildInstitutionInfo(pengaturan, activeUnit),
       title: "LAPORAN TUNGGAKAN SISWA",
@@ -173,8 +172,8 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
       dynamicCategories,
       filename,
       tanggalCetak: new Date(),
-      penandatanganKiri: { jabatan: "Mengetahui,", nama: activeUnit?.namaKepalaSekolah || "____________________" },
-      penandatanganKanan: { jabatan: "Petugas,", nama: userName || "____________________" }
+      penandatanganKiri: getSignatoryKiri(pengaturan, activeUnit),
+      penandatanganKanan: { jabatan: "Petugas Tata Usaha,", nama: activeUnit?.namaKepalaTU || userName || "____________________" }
     })
     
     toast.success("Memproses PDF...")
@@ -440,11 +439,11 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
               <>
                 <PrintSignature
                   pengaturan={pengaturan}
-                  unitInfo={filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined}
+                  unitInfo={activeUnit}
                   tipe="ganda"
                   tanggal={new Date()}
-                  kiri={{ jabatan: "Mengetahui,", nama: (filterUnitId ? schoolUnits.find(u => u.id === filterUnitId)?.namaKepalaSekolah : undefined) || "____________________" }}
-                  kanan={{ jabatan: "Petugas,", nama: userName || "____________________" }}
+                  kiri={getSignatoryKiri(pengaturan, activeUnit)}
+                  kanan={{ jabatan: "Petugas Tata Usaha,", nama: activeUnit?.namaKepalaTU || userName || "____________________" }}
                 />
                 <PrintFooter pengaturan={pengaturan} />
               </>
