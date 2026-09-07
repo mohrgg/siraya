@@ -281,21 +281,21 @@ export function ResiHtml({
               <td className="py-1.5 px-2 border border-slate-200 text-slate-700 align-top">
                 <div className="font-medium text-slate-800">{item.keterangan}</div>
                 
-                {item.sisaTagihanAwal !== undefined && item.sisaTagihanAwal > 0 && item.potongan && item.potongan > 0 && (
+                {Boolean(((item.potongan && item.potongan > 0) || (item.sisaTagihan && item.sisaTagihan > 0)) && item.sisaTagihanAwal && item.sisaTagihanAwal > 0) && (
                   <div className="text-[9px] text-slate-500 mt-0.5 italic leading-tight">
-                    Tagihan Awal: {formatRp(item.sisaTagihanAwal)}
+                    Tagihan Awal: {formatRp(item.sisaTagihanAwal || 0)}
                   </div>
                 )}
                 
-                {item.potongan !== undefined && item.potongan > 0 && (
+                {Boolean(item.potongan && item.potongan > 0) && (
                   <div className="text-[9px] text-slate-500 mt-0.5 italic leading-tight">
-                    Diskon ({item.kategoriPotongan || 'Lainnya'}): -{formatRp(item.potongan)}
+                    Diskon ({item.kategoriPotongan || 'Lainnya'}): -{formatRp(item.potongan || 0)}
                   </div>
                 )}
                 
-                {item.sisaTagihan !== undefined && item.sisaTagihan > 0 && (
+                {Boolean(item.sisaTagihan && item.sisaTagihan > 0) && (
                   <div className="text-[9px] text-slate-500 mt-0.5 italic leading-tight">
-                    * Pembayaran Sebagian. Sisa Tagihan Akhir: {formatRp(item.sisaTagihan)}
+                    * Pembayaran Sebagian. Sisa Tagihan Akhir: {formatRp(item.sisaTagihan || 0)}
                   </div>
                 )}
               </td>

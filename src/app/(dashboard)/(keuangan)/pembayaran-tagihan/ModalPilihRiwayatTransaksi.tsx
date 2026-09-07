@@ -60,7 +60,7 @@ export default function ModalPilihRiwayatTransaksi({
           <div className="space-y-3">
             {riwayat.map((tx, idx) => {
               const mainItem = tx.items?.[0]
-              const hasPotongan = mainItem && mainItem.potongan && mainItem.potongan > 0
+              const hasPotongan = Boolean(mainItem && mainItem.potongan && mainItem.potongan > 0)
               const sisa = mainItem ? mainItem.sisaTagihan : undefined
 
               return (
