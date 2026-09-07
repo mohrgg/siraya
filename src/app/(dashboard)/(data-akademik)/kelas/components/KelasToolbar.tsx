@@ -1,4 +1,3 @@
-import { Search, Loader2, FileSpreadsheet, FileIcon as FilePdf, Upload, Plus } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { 
   Toolbar, 
@@ -43,20 +42,13 @@ export default function KelasToolbar({
 }: any) {
   return (
     <Toolbar>
-      {/* Search dengan custom loading icon support (pakai relative div custom wrapper) */}
-      <div className="relative w-full sm:w-44 flex-shrink-0">
-        <ToolbarSearch 
-          value={searchTerm}
-          onChange={(e: any) => setSearchTerm(e.target.value)}
-          placeholder="Cari..."
-          className="w-full"
-        />
-        {isLoadingStudents && (
-          <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-            <Loader2 size={16} className="text-primary animate-spin" />
-          </div>
-        )}
-      </div>
+      <ToolbarSearch 
+        value={searchTerm}
+        onChange={(e: any) => setSearchTerm(e.target.value)}
+        placeholder="Cari..."
+        isLoading={isLoadingStudents}
+        onClear={() => setSearchTerm("")}
+      />
 
       {activeTab === "sub-kelas" && initialMajors.length > 0 && (
         <ToolbarFilter

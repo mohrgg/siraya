@@ -1,3 +1,6 @@
+"use client"
+import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { X, Printer, Share2, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { format } from "date-fns"
@@ -40,7 +43,13 @@ export default function ModalResiPembayaran({
   unitInfo,
   currentUser
 }: ModalResiPembayaranProps) {
-  if (!isOpen || !data) return null
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!isOpen || !data || !mounted) return null
 
   const formatRupiah = (val: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val)
@@ -89,8 +98,8 @@ export default function ModalResiPembayaran({
     window.open(`https://wa.me/?text=${encodedText}`, '_blank')
   }
 
-  return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 print:p-0">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 print:p-0">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm print:hidden" onClick={onClose} />
       
       {/* Container */}
@@ -221,6 +230,7 @@ export default function ModalResiPembayaran({
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

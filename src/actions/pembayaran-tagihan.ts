@@ -405,6 +405,11 @@ export async function prosesPembayaranTagihan(data: {
 
 export async function getRiwayatTransaksiByTagihan(tagihanId: string) {
   try {
+    const tagihan = await prisma.tagihan.findUnique({
+      where: { id: tagihanId },
+      include: { akun: true, murid: true }
+    })
+
     const details = await prisma.pembayaranTagihanDetail.findMany({
       where: { tagihanId },
       include: {
@@ -420,34 +425,52 @@ export async function getRiwayatTransaksiByTagihan(tagihanId: string) {
           }
         }
       },
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "asc" }
     })
 
-    // Map this to a structured format for UI
-    const mapped = details.map(d => {
+    // Hitung saldo berjalan (running balance) historis per termin
+    let currentBalance = tagihan?.jumlah || 0
+    const detailBalanceMap = new Map<string, { sisaTagihanAwal: number, sisaTagihan: number }>()
+
+    for (const d of details) {
+      const sisaAwal = currentBalance
+      const totalPengurang = d.jumlahDibayar + (d.potongan || 0)
+      const sisaAkhir = Math.max(0, sisaAwal - totalPengurang)
+      detailBalanceMap.set(d.id, {
+        sisaTagihanAwal: sisaAwal,
+        sisaTagihan: sisaAkhir
+      })
+      currentBalance = sisaAkhir
+    }
+
+    // Map ke format terstruktur dengan nomor termin
+    const mapped = details.map((d, index) => {
       const tx = d.transaksi
-      // The items in the transaction:
-      const items = tx.pembayaranTagihan.map(ptd => ({
-        namaAkun: ptd.tagihan.namaTagihan || ptd.tagihan.akun.nama,
-        jumlahBayar: ptd.jumlahDibayar,
-        sisaTagihanAwal: ptd.tagihan.sisaTagihan + ptd.jumlahDibayar + (ptd.potongan || 0),
-        potongan: ptd.potongan || 0,
-        kategoriPotongan: ptd.kategoriPotongan,
-        sisaTagihan: ptd.tagihan.sisaTagihan
-      }))
+      const items = tx.pembayaranTagihan.map(ptd => {
+        const historicalBalance = detailBalanceMap.get(ptd.id)
+        return {
+          namaAkun: ptd.tagihan.namaTagihan || ptd.tagihan.akun.nama,
+          jumlahBayar: ptd.jumlahDibayar,
+          sisaTagihanAwal: historicalBalance ? historicalBalance.sisaTagihanAwal : (ptd.tagihan.sisaTagihan + ptd.jumlahDibayar + (ptd.potongan || 0)),
+          potongan: ptd.potongan || 0,
+          kategoriPotongan: ptd.kategoriPotongan,
+          sisaTagihan: historicalBalance ? historicalBalance.sisaTagihan : ptd.tagihan.sisaTagihan
+        }
+      })
 
       return {
         transaksiId: tx.id,
         noReferensi: tx.noReferensi,
         tanggal: tx.tanggal,
-        muridName: tx.namaPihakKetiga || "Unknown",
+        muridName: tx.namaPihakKetiga || tagihan?.murid?.name || "Unknown",
+        terminKe: index + 1,
         items,
-        total: tx.totalNilai
+        total: tx.totalNilai,
+        createdAt: tx.createdAt
       }
     })
 
-    // Because a single transaction might have multiple PembayaranTagihanDetail records (e.g. paying 2 months of SPP in 1 transaction),
-    // and both records are returned if the query was for tagihanId, we should deduplicate by transaksiId
+    // Deduplikasi berdasarkan transaksiId
     const uniqueMap = new Map<string, any>()
     mapped.forEach(m => {
       if (!uniqueMap.has(m.transaksiId)) {
@@ -455,7 +478,8 @@ export async function getRiwayatTransaksiByTagihan(tagihanId: string) {
       }
     })
 
-    return Array.from(uniqueMap.values())
+    // Kembalikan terurut terbaru (descending)
+    return Array.from(uniqueMap.values()).reverse()
   } catch (error: any) {
     console.error("Error getRiwayatTransaksiByTagihan:", error)
     return []
