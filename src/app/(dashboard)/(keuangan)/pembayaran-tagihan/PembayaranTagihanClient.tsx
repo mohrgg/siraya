@@ -12,7 +12,7 @@ import {
   prosesPembayaranTagihan,
   getRiwayatTransaksiByTagihan
 } from "@/actions/pembayaran-tagihan"
-import { Search, Filter, Loader2, CheckSquare, History } from "lucide-react"
+import { Search, Filter, Loader2, CheckSquare, History, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 import ModalPembayaranTagihan, { TagihanItem } from "./ModalPembayaranTagihan"
@@ -106,29 +106,26 @@ export default function PembayaranTagihanClient({
     }
     getKelasByUnit(activeUnitId).then(res => {
       setKelasList(res)
-      if (res.length > 0) setKelasId(res[0].id)
-      else setKelasId("")
+      setKelasId("")
     })
     getJurusanByUnit(activeUnitId).then(res => {
       setJurusanList(res)
-      if (res.length > 0) setJurusanId(res[0].id)
-      else setJurusanId("")
+      setJurusanId("")
     })
   }, [activeUnitId])
 
   useEffect(() => {
-    if (!kelasId || (jurusanList.length > 0 && !jurusanId)) {
+    if (!kelasId) {
       setSubKelasList([])
       setSubKelasId("")
       return
     }
     
-    getSubKelasByKelas(kelasId, jurusanList.length > 0 ? jurusanId : undefined).then(res => {
+    getSubKelasByKelas(kelasId, jurusanList.length > 0 && jurusanId ? jurusanId : undefined).then(res => {
       setSubKelasList(res)
-      if (res.length > 0) setSubKelasId(res[0].id)
-      else setSubKelasId("")
+      setSubKelasId("")
     })
-  }, [kelasId, jurusanId, jurusanList])
+  }, [kelasId, jurusanId, jurusanList.length])
 
   // Process data
   const processData = (muridList: any[], order: string[]) => {
@@ -183,6 +180,16 @@ export default function PembayaranTagihanClient({
     setCurrentPage(1)
   }
 
+  const handleResetFilter = () => {
+    setSearchTerm("")
+    setKelasId("")
+    setJurusanId("")
+    setSubKelasId("")
+    setSubKelasList([])
+    setGridData([])
+    setCurrentPage(1)
+  }
+
   const handleTampilkan = async (overrideSearch?: string) => {
     const querySearch = typeof overrideSearch === "string" ? overrideSearch : searchTerm
     const hasSearch = querySearch.trim().length > 0
@@ -201,8 +208,8 @@ export default function PembayaranTagihanClient({
         getMuridWithTagihanUnpaid({
           unitSekolahId: activeUnitId,
           tahunAkademikId: activeTahunAkademikId,
-          kelasId: kelasId || undefined,
-          subKelasId: subKelasId || undefined,
+          kelasId: hasSearch ? undefined : (kelasId || undefined),
+          subKelasId: hasSearch ? undefined : (subKelasId || undefined),
           searchName: querySearch.trim() || undefined
         }),
         getColumnOrder(activeUnitId)
@@ -376,16 +383,19 @@ export default function PembayaranTagihanClient({
                 handleTampilkan(searchTerm)
               }
             }}
-            onClear={() => setSearchTerm("")}
+            onClear={handleResetFilter}
             placeholder="Cari siswa atau NISN..." 
           />
 
           <ToolbarFilter
             icon={<Filter size={14} />}
             value={kelasId}
-            onChange={(val) => setKelasId(val as string)}
+            onChange={(val) => {
+              setKelasId(val as string)
+              setSubKelasId("")
+            }}
             options={[
-              { label: "Kelas...", value: "" },
+              { label: "Pilih Kelas...", value: "" },
               ...kelasList.map(kelas => ({ label: kelas.name, value: kelas.id }))
             ]}
           />
@@ -393,9 +403,12 @@ export default function PembayaranTagihanClient({
           {jurusanList.length > 0 && (
             <ToolbarFilter
               value={jurusanId}
-              onChange={(val) => setJurusanId(val as string)}
+              onChange={(val) => {
+                setJurusanId(val as string)
+                setSubKelasId("")
+              }}
               options={[
-                { label: "Jurusan...", value: "" },
+                { label: "Semua Jurusan", value: "" },
                 ...jurusanList.map(jurusan => ({ label: jurusan.name, value: jurusan.id }))
               ]}
             />
@@ -406,7 +419,7 @@ export default function PembayaranTagihanClient({
             onChange={(val) => setSubKelasId(val as string)}
             disabled={!kelasId}
             options={[
-              { label: "Subkelas...", value: "" },
+              { label: kelasId ? "Pilih Subkelas..." : "Pilih Kelas Dulu", value: "" },
               ...subKelasList.map(sk => ({ label: sk.name, value: sk.id }))
             ]}
           />
@@ -419,6 +432,20 @@ export default function PembayaranTagihanClient({
           >
             {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
           </Button>
+
+          {(searchTerm || kelasId || subKelasId || gridData.length > 0) && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleResetFilter}
+              disabled={isLoading}
+              title="Reset filter dan pencarian"
+              className="px-3 py-1.5 h-auto whitespace-nowrap text-text-muted hover:text-text-main border-border hover:bg-gray-50"
+            >
+              <RotateCcw size={14} className="mr-1.5" />
+              Reset
+            </Button>
+          )}
         </Toolbar>
 
         {/* Table Container */}
