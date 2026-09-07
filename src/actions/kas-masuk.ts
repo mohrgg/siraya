@@ -291,7 +291,16 @@ export async function getKasMasukById(id: string) {
           }
         }
       },
-      pembayaranTagihan: true
+      pembayaranTagihan: {
+        include: {
+          tagihan: {
+            include: {
+              akun: true,
+              murid: true
+            }
+          }
+        }
+      }
     }
   })
 

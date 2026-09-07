@@ -30,11 +30,21 @@ export default function KasKeluarDetailClient({ transaksi, pengaturan }: { trans
   const detailDebit = transaksi.detail.filter((d: any) => d.posisi === "DEBIT")
   const detailKredit = transaksi.detail.filter((d: any) => d.posisi === "KREDIT")
 
-  // Helper untuk Terbilang (Sederhana)
-  const terbilang = (angka: number) => {
-    // Fungsi terbilang sederhana, in real app you might want a proper package
-    // For now we'll just format it or provide a dummy terbilang if needed
-    // Or we can just leave it as standard format
+  // Helper untuk Terbilang Bahasa Indonesia
+  const terbilang = (n: number): string => {
+    if (n === 0) return "Nol"
+    const bil = ["", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas"]
+    if (n < 0) return "Minus " + terbilang(-n)
+    if (n < 12) return bil[n]
+    if (n < 20) return terbilang(n - 10) + " Belas"
+    if (n < 100) return terbilang(Math.floor(n / 10)) + " Puluh" + (n % 10 !== 0 ? " " + terbilang(n % 10) : "")
+    if (n < 200) return "Seratus" + (n % 100 !== 0 ? " " + terbilang(n % 100) : "")
+    if (n < 1000) return terbilang(Math.floor(n / 100)) + " Ratus" + (n % 100 !== 0 ? " " + terbilang(n % 100) : "")
+    if (n < 2000) return "Seribu" + (n % 1000 !== 0 ? " " + terbilang(n % 1000) : "")
+    if (n < 1000000) return terbilang(Math.floor(n / 1000)) + " Ribu" + (n % 1000 !== 0 ? " " + terbilang(n % 1000) : "")
+    if (n < 1000000000) return terbilang(Math.floor(n / 1000000)) + " Juta" + (n % 1000000 !== 0 ? " " + terbilang(n % 1000000) : "")
+    if (n < 1000000000000) return terbilang(Math.floor(n / 1000000000)) + " Miliar" + (n % 1000000000 !== 0 ? " " + terbilang(n % 1000000000) : "")
+    return terbilang(Math.floor(n / 1000000000000)) + " Triliun" + (n % 1000000000000 !== 0 ? " " + terbilang(n % 1000000000000) : "")
   }
   
   const [isExportingPDF, setIsExportingPDF] = useState(false)
@@ -211,7 +221,7 @@ export default function KasKeluarDetailClient({ transaksi, pengaturan }: { trans
                   </tr>
                   <tr>
                     <td colSpan={4} className="p-3 italic text-text-muted bg-white border-t border-border">
-                      Terbilang : (Fungsi terbilang belum aktif)
+                      Terbilang : {terbilang(transaksi.totalNilai)} Rupiah
                     </td>
                   </tr>
                 </tbody>
