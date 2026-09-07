@@ -46,20 +46,21 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
   let totalPengeluaran = 0
 
   transaksiDetails.forEach(detail => {
-    // KAS_MASUK means income (debit to bank, credit to income account usually)
-    // Actually, in this app:
-    // If it's KAS_MASUK, the income account is credited.
-    // Wait, let's just use the `transaksi.jenis` to simplify, and find the non-KasBank account.
-    if (detail.akun.isKasBank) return // We only want the income/expense account, not the cash/bank account.
+    // Abaikan akun Kas/Bank (hanya menghitung akun nominal: pendapatan dan beban/pengeluaran)
+    if (detail.akun.isKasBank) return
 
     const akunId = detail.akun.id
-    if (detail.transaksi.jenis === "KAS_MASUK") {
+
+    // Kaidah Akuntansi:
+    // - Posisi KREDIT pada akun nominal = Pendapatan / Pemasukan
+    // - Posisi DEBIT pada akun nominal = Beban / Pengeluaran (termasuk Beban Beasiswa & Potongan Siswa)
+    if (detail.posisi === "KREDIT") {
       if (!pendapatan[akunId]) {
         pendapatan[akunId] = { kode: detail.akun.kode, nama: detail.akun.nama, total: 0 }
       }
       pendapatan[akunId].total += detail.nilai
       totalPendapatan += detail.nilai
-    } else if (detail.transaksi.jenis === "KAS_KELUAR") {
+    } else if (detail.posisi === "DEBIT") {
       if (!pengeluaran[akunId]) {
         pengeluaran[akunId] = { kode: detail.akun.kode, nama: detail.akun.nama, total: 0 }
       }

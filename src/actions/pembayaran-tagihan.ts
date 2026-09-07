@@ -126,6 +126,100 @@ export async function getMuridWithTagihanUnpaid(filters: {
   }
 }
 
+async function getOrCreateAkunPotongan(tx: any, unitSekolahId: string) {
+  // 1. Cari apakah sudah ada akun Beban Potongan/Beasiswa di unit ini
+  const existing = await tx.akunDetail.findFirst({
+    where: {
+      unitSekolahId,
+      isActive: true,
+      OR: [
+        { kode: "5199" },
+        { nama: { contains: "Potongan", mode: "insensitive" } },
+        { nama: { contains: "Beasiswa", mode: "insensitive" } }
+      ],
+      subKlasifikasi: {
+        klasifikasi: {
+          kode: "5" // Kelompok BEBAN
+        }
+      }
+    }
+  })
+
+  if (existing) return existing
+
+  // 2. Jika belum ada, pastikan Klasifikasi '5' (BEBAN (BIAYA)) ada
+  let klasifikasiBeban = await tx.klasifikasiAkun.findFirst({
+    where: {
+      kode: "5",
+      unitSekolahId
+    }
+  })
+
+  if (!klasifikasiBeban) {
+    klasifikasiBeban = await tx.klasifikasiAkun.create({
+      data: {
+        kode: "5",
+        nama: "BEBAN (BIAYA)",
+        unitSekolahId
+      }
+    })
+  }
+
+  // 3. Pastikan SubKlasifikasi '51' (Beban Operasional / Beban) ada
+  let subBeban = await tx.subKlasifikasiAkun.findFirst({
+    where: {
+      kode: "51",
+      unitSekolahId
+    }
+  })
+
+  if (!subBeban) {
+    subBeban = await tx.subKlasifikasiAkun.findFirst({
+      where: {
+        klasifikasiAkunId: klasifikasiBeban.id,
+        unitSekolahId
+      }
+    })
+  }
+
+  if (!subBeban) {
+    subBeban = await tx.subKlasifikasiAkun.create({
+      data: {
+        kode: "51",
+        nama: "Beban Operasional",
+        klasifikasiAkunId: klasifikasiBeban.id,
+        unitSekolahId
+      }
+    })
+  }
+
+  // 4. Buat AkunDetail '5199'
+  let kodeAkun = "5199"
+  const kodeUsed = await tx.akunDetail.findUnique({
+    where: {
+      kode_unitSekolahId: {
+        kode: kodeAkun,
+        unitSekolahId
+      }
+    }
+  })
+  if (kodeUsed) {
+    kodeAkun = "5198"
+  }
+
+  return await tx.akunDetail.create({
+    data: {
+      kode: kodeAkun,
+      nama: "Beban Beasiswa & Potongan Siswa",
+      subKlasifikasiAkunId: subBeban.id,
+      unitSekolahId,
+      isKasBank: false,
+      isSPP: false,
+      isActive: true
+    }
+  })
+}
+
 export async function prosesPembayaranTagihan(data: {
   akunKasId: string
   tanggal: Date
@@ -202,6 +296,7 @@ export async function prosesPembayaranTagihan(data: {
         }
       })
 
+      // 1. DEBIT Kas/Bank jika ada uang tunai yang diterima
       if (totalBayar > 0) {
         await tx.transaksiDetail.create({
           data: {
@@ -214,6 +309,32 @@ export async function prosesPembayaranTagihan(data: {
         })
       }
 
+      // 2. DEBIT Beban Potongan/Beasiswa jika ada potongan yang diberikan
+      if (totalPotongan > 0) {
+        let targetUnitId: string | undefined = data.unitSekolahId || transaksi.unitSekolahId || undefined;
+        if (!targetUnitId && data.items.length > 0) {
+          const t = await tx.tagihan.findUnique({
+            where: { id: data.items[0].tagihanId },
+            include: { murid: true }
+          });
+          targetUnitId = t?.murid?.unitSekolahId || undefined;
+        }
+
+        if (targetUnitId) {
+          const akunBebanPotongan = await getOrCreateAkunPotongan(tx, targetUnitId);
+          await tx.transaksiDetail.create({
+            data: {
+              transaksiId: transaksi.id,
+              akunId: akunBebanPotongan.id,
+              posisi: "DEBIT",
+              nilai: totalPotongan,
+              deskripsi: `Potongan/Beasiswa Tagihan Siswa: ${data.muridName}`
+            }
+          })
+        }
+      }
+
+      // 3. KREDIT Pendapatan Bruto per item tagihan (Jumlah Bayar + Potongan)
       for (const item of data.items) {
         const totalNilaiItem = item.jumlahBayar + (item.potongan || 0);
         if (totalNilaiItem <= 0) continue;

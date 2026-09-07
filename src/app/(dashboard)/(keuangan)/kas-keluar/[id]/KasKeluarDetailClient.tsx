@@ -270,11 +270,17 @@ export default function KasKeluarDetailClient({ transaksi, pengaturan }: { trans
                       </td>
                     </tr>
                   ))}
-                  <tr className="bg-bg/50 border-t border-border">
-                    <td colSpan={2} className="p-3 font-bold text-text-muted text-right">Total</td>
-                    <td className="p-3 text-right font-bold text-text-main">Rp {transaksi.totalNilai.toLocaleString('id-ID')}</td>
-                    <td className="p-3 text-right font-bold text-text-main">Rp {transaksi.totalNilai.toLocaleString('id-ID')}</td>
-                  </tr>
+                  {(() => {
+                    const totalDebit = transaksi.detail?.filter((d: any) => d.posisi === "DEBIT").reduce((sum: number, d: any) => sum + d.nilai, 0) || 0
+                    const totalKredit = transaksi.detail?.filter((d: any) => d.posisi === "KREDIT").reduce((sum: number, d: any) => sum + d.nilai, 0) || 0
+                    return (
+                      <tr className="bg-bg/50 border-t border-border">
+                        <td colSpan={2} className="p-3 font-bold text-text-muted text-right">Total</td>
+                        <td className="p-3 text-right font-bold text-text-main">Rp {totalDebit.toLocaleString('id-ID')}</td>
+                        <td className="p-3 text-right font-bold text-text-main">Rp {totalKredit.toLocaleString('id-ID')}</td>
+                      </tr>
+                    )
+                  })()}
                 </tbody>
               </table>
             </div>
