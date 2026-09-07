@@ -17,21 +17,25 @@ export default async function DashboardLayout({
   const userRole = tenant.role
   const userUnitId = tenant.unitId
 
-  // Fetch school units: Admin gets all, others get only their assigned unit
-  const schoolUnits = await prisma.unitSekolah.findMany({
-    where: { 
-      isActive: true,
-      ...(userRole !== "ADMIN" && userUnitId ? { id: userUnitId } : {})
-    },
-    orderBy: { name: 'asc' },
-    select: { id: true, name: true }
-  })
-
-  // For the header dropdown, we load ALL academic years so users can switch context.
-  const academicYears = await prisma.tahunAkademik.findMany({
-    select: { id: true, name: true, isActive: true },
-    orderBy: { name: "desc" }
-  })
+  // Load academic years, school units, dan logo pengaturan yayasan secara paralel
+  const [schoolUnits, academicYears, pengaturan] = await Promise.all([
+    prisma.unitSekolah.findMany({
+      where: { 
+        isActive: true,
+        ...(userRole !== "ADMIN" && userUnitId ? { id: userUnitId } : {})
+      },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true }
+    }),
+    prisma.tahunAkademik.findMany({
+      select: { id: true, name: true, isActive: true },
+      orderBy: { name: "desc" }
+    }),
+    prisma.pengaturan.findUnique({
+      where: { id: "GLOBAL" },
+      select: { logoUrl: true }
+    })
+  ])
 
   const cookieStore = await cookies()
   
@@ -43,12 +47,15 @@ export default async function DashboardLayout({
   return (
     <MobileMenuProvider>
       <div className="flex h-screen w-full bg-bg overflow-hidden relative">
-        <Sidebar user={{
-          name: tenant.user.name,
-          email: tenant.user.email,
-          role: tenant.role,
-          avatar: tenant.user.avatar
-        }} />
+        <Sidebar 
+          user={{
+            name: tenant.user.name,
+            email: tenant.user.email,
+            role: tenant.role,
+            avatar: tenant.user.avatar
+          }} 
+          logoUrl={pengaturan?.logoUrl || "/logo.png"}
+        />
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           <Header 
             user={{

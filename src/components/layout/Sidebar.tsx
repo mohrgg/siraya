@@ -64,7 +64,7 @@ const menuGroups = [
   }
 ] as { title: string, items: { href: string, label: string, icon: any, allowedRoles: string[], isGlobal?: boolean }[] }[]
 
-export default function Sidebar({ user }: { user: any }) {
+export default function Sidebar({ user, logoUrl }: { user: any; logoUrl?: string | null }) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
 
@@ -120,7 +120,7 @@ export default function Sidebar({ user }: { user: any }) {
 
         <div className="flex items-center p-5 gap-3 border-b border-white/10 shrink-0">
           <div className="w-10 h-10 shrink-0 bg-white rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
-            <img src="/logo.png" alt="Logo Al Basyariah" className="w-full h-full object-contain" onError={(e) => {
+            <img src={logoUrl || "/logo.png"} alt="Logo Al Basyariah" className="w-full h-full object-contain" onError={(e) => {
               e.currentTarget.style.display = 'none';
               e.currentTarget.nextElementSibling?.classList.remove('hidden');
             }} />

@@ -58,7 +58,7 @@ model UnitSekolah {
   nipKepalaTU       String?  @db.VarChar(50)
   namaBendaharaUnit String?  @db.VarChar(150)
   kotaPenandatangan String?  @db.VarChar(100)
-  logo              String?  @db.VarChar(255)
+  logo              String?  @db.Text
   isActive          Boolean  @default(true)
   tagihanColumnOrder String? @db.Text // JSON string of ordered column IDs
   createdAt         DateTime @default(now())
@@ -430,7 +430,7 @@ model Pengaturan {
   telepon     String? @db.VarChar(50)
   email       String? @db.VarChar(100)
   website     String? @db.VarChar(100)
-  logoUrl     String? @db.VarChar(255)
+  logoUrl     String? @db.Text
 
   // Penandatangan & Footer
   kotaPenandatangan      String? @default("Bandung") @db.VarChar(100)

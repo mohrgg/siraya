@@ -297,10 +297,10 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                   <div className="md:col-span-2">
                     <LogoUploader
                       label="Logo Utama Yayasan"
-                      description="Logo ditampilkan di sebelah kiri kop surat pada seluruh dokumen dan laporan."
+                      description="Disimpan langsung ke database (Base64). Ditampilkan di sebelah kiri kop surat seluruh dokumen dan laporan."
                       value={formData.logoUrl || ""}
                       onChange={(url) => setFormData((prev: any) => ({ ...prev, logoUrl: url }))}
-                      folder="logo"
+                      defaultLogo="/logo.png"
                     />
                   </div>
 
@@ -379,7 +379,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                           }
                         }))
                       }}
-                      folder="logo"
+                      defaultLogo=""
                     />
                   </div>
                   
