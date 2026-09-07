@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useState, useRef } from "react"
-import { UploadCloud, Image as ImageIcon, Trash2, RefreshCw, Loader2, Link2, RotateCcw } from "lucide-react"
+import React, { useState, useRef, useEffect } from "react"
+import { UploadCloud, Image as ImageIcon, Trash2, RefreshCw, Loader2, Link2, RotateCcw, Eye, X } from "lucide-react"
 import toast from "react-hot-toast"
 import { compressImageToBase64 } from "@/lib/image-utils"
 
@@ -27,7 +27,19 @@ export default function LogoUploader({
   const [isProcessing, setIsProcessing] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const [showManualInput, setShowManualInput] = useState(false)
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // ESC key listener untuk menutup modal preview
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isPreviewModalOpen) {
+        setIsPreviewModalOpen(false)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isPreviewModalOpen])
 
   const handleFile = async (file: File) => {
     if (disabled || isProcessing) return
@@ -137,8 +149,12 @@ export default function LogoUploader({
       {/* Uploader Card */}
       {hasLogo ? (
         <div className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-bg border border-border rounded-xl transition-all">
-          {/* Logo Thumbnail */}
-          <div className="w-20 h-20 bg-surface rounded-lg border border-border/80 flex items-center justify-center p-2 relative flex-shrink-0 shadow-sm overflow-hidden group">
+          {/* Logo Thumbnail - Clickable for Full Preview */}
+          <div 
+            onClick={() => setIsPreviewModalOpen(true)}
+            className="w-20 h-20 bg-surface rounded-lg border border-border/80 flex items-center justify-center p-2 relative flex-shrink-0 shadow-sm overflow-hidden group cursor-pointer hover:border-primary/60 transition-all"
+            title="Klik untuk melihat pratinjau penuh"
+          >
             {/* Checkerboard Pattern for transparent logos */}
             <div 
               className="absolute inset-0 opacity-25"
@@ -151,11 +167,15 @@ export default function LogoUploader({
             <img
               src={value || ""}
               alt="Logo"
-              className="w-full h-full object-contain relative z-10"
+              className="w-full h-full object-contain relative z-10 group-hover:scale-105 transition-transform"
               onError={(e) => {
                 (e.target as HTMLElement).style.display = 'none'
               }}
             />
+            {/* Hover overlay with Eye Icon */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex items-center justify-center text-white">
+              <Eye size={18} />
+            </div>
           </div>
 
           {/* Info & Action Buttons */}
@@ -183,6 +203,19 @@ export default function LogoUploader({
             </p>
 
             <div className="flex items-center gap-2 mt-3 justify-center sm:justify-start flex-wrap">
+              {/* Tombol Lihat Pratinjau */}
+              <button
+                type="button"
+                onClick={() => setIsPreviewModalOpen(true)}
+                disabled={disabled || isProcessing}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-text-main bg-surface hover:bg-gray-50 border border-border rounded-lg shadow-sm transition-all disabled:opacity-50"
+                title="Lihat ukuran penuh"
+              >
+                <Eye size={13} />
+                Lihat
+              </button>
+
+              {/* Tombol Ganti Logo */}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -202,6 +235,7 @@ export default function LogoUploader({
                 )}
               </button>
 
+              {/* Tombol Reset ke Default */}
               {!isDefault && defaultLogo && (
                 <button
                   type="button"
@@ -215,6 +249,7 @@ export default function LogoUploader({
                 </button>
               )}
 
+              {/* Tombol Hapus */}
               <button
                 type="button"
                 onClick={handleRemove}
@@ -291,6 +326,67 @@ export default function LogoUploader({
 
       {description && !hasLogo && (
         <p className="text-xs text-text-muted mt-1">{description}</p>
+      )}
+
+      {/* Modal / Lightbox Pratinjau Logo */}
+      {isPreviewModalOpen && value && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setIsPreviewModalOpen(false)}
+        >
+          <div 
+            className="bg-surface rounded-2xl border border-border shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-bg/50">
+              <div className="flex items-center gap-2">
+                <ImageIcon size={18} className="text-primary" />
+                <h3 className="font-bold text-sm text-text-main">Pratinjau Logo</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPreviewModalOpen(false)}
+                className="p-1.5 text-text-muted hover:text-text-main rounded-lg hover:bg-gray-100 transition-colors"
+                title="Tutup (ESC)"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body: Image Preview */}
+            <div className="p-8 flex items-center justify-center bg-bg relative min-h-[300px]">
+              {/* Checkerboard Pattern for transparent backgrounds */}
+              <div 
+                className="absolute inset-0 opacity-30"
+                style={{
+                  backgroundImage: "radial-gradient(#94a3b8 1px, transparent 1px)",
+                  backgroundSize: "12px 12px"
+                }}
+              />
+              <div className="relative z-10 max-h-[55vh] max-w-full flex items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={value}
+                  alt="Pratinjau Logo"
+                  className="max-h-[55vh] max-w-full object-contain rounded-lg drop-shadow-md"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-t border-border bg-surface text-xs text-text-muted">
+              <span>{isBase64 ? "Format: Tersimpan di Database (Base64)" : `Sumber: ${value}`}</span>
+              <button
+                type="button"
+                onClick={() => setIsPreviewModalOpen(false)}
+                className="px-4 py-1.5 font-semibold text-xs text-text-main bg-bg hover:bg-gray-100 border border-border rounded-lg transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
