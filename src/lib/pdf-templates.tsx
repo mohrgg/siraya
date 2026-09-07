@@ -86,25 +86,37 @@ export function PrintSignatureHtml({
     : String(tanggalCetak)
 
   const renderSigner = (signer?: { jabatan: string; nama: string }, showDate: boolean = false) => {
-    if (!signer) return <div className="w-48"></div> // Placeholder
+    if (!signer) return <div className="w-64"></div> // Placeholder
     return (
-      <div className="flex flex-col items-center text-[10px] w-64">
-        <p className="mb-0 h-3">{showDate ? `${kotaPenandatangan}, ${dateStr}` : ""}</p>
-        <p className="mb-10">{signer.jabatan}</p>
-        <p className="font-bold underline underline-offset-2">{signer.nama}</p>
+      <div className="flex flex-col items-center text-center w-64">
+        <p className="text-xs text-slate-700 min-h-[1.25rem] leading-relaxed mb-0.5">
+          {showDate ? `${kotaPenandatangan}, ${dateStr}` : "\u00A0"}
+        </p>
+        <p className="text-xs font-semibold text-slate-800 leading-tight mb-16">
+          {signer.jabatan}
+        </p>
+        <p className="text-sm font-bold underline underline-offset-4 text-slate-900 leading-tight">
+          {signer.nama || "____________________"}
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="mt-2 break-inside-avoid">
+    <div className="mt-8 break-inside-avoid">
       <div className="flex justify-between items-start w-full px-8">
         {renderSigner(penandatanganKiri, false)}
         {renderSigner(penandatanganKanan, true)}
       </div>
+
+      {catatanKwitansi && (
+        <div className="mt-4 px-8 text-center text-xs text-slate-600 italic">
+          <p>{catatanKwitansi}</p>
+        </div>
+      )}
       
       {/* Footer / Notes */}
-      <div className="mt-2 pt-1 border-t border-slate-300 text-center text-[9px] text-slate-500 italic">
+      <div className="mt-4 pt-2 border-t border-slate-300 text-center text-[10px] text-slate-500 italic">
         <p>Dicetak melalui Sistem Informasi Siraya pada {new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} WIB</p>
       </div>
     </div>

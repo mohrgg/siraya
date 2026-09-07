@@ -7,9 +7,29 @@ export async function POST(req: NextRequest) {
     const payload = await req.json();
     const { type, data } = payload;
 
-    // Pastikan URL logo absolut (beserta domain) agar Playwright bisa me-load gambarnya
-    if (data?.institutionInfo?.logoUrl?.startsWith('/')) {
-      data.institutionInfo.logoUrl = new URL(data.institutionInfo.logoUrl, req.url).toString();
+    // Handle logo for Playwright: Konversi file lokal di public/ ke Base64 Data URI agar tidak perlu roundtrip HTTP ke localhost
+    if (data?.institutionInfo?.logoUrl) {
+      const rawLogoUrl: string = data.institutionInfo.logoUrl;
+      if (rawLogoUrl.startsWith('/')) {
+        const fs = await import("fs");
+        const path = await import("path");
+        const cleanPath = rawLogoUrl.split('?')[0];
+        const localFilePath = path.join(process.cwd(), "public", cleanPath);
+        
+        if (fs.existsSync(localFilePath)) {
+          try {
+            const ext = path.extname(localFilePath).toLowerCase().replace('.', '');
+            const mimeType = ext === 'svg' ? 'image/svg+xml' : ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+            const fileBuffer = fs.readFileSync(localFilePath);
+            data.institutionInfo.logoUrl = `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
+          } catch (e) {
+            console.warn("Gagal konversi logo ke base64, fallback ke URL absolut:", e);
+            data.institutionInfo.logoUrl = new URL(rawLogoUrl, req.url).toString();
+          }
+        } else {
+          data.institutionInfo.logoUrl = new URL(rawLogoUrl, req.url).toString();
+        }
+      }
     }
 
     let htmlBody = "";

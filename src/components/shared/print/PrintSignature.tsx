@@ -35,12 +35,13 @@ export default function PrintSignature({
   const kota = unitInfo?.kotaPenandatangan || pengaturan?.kotaPenandatangan || "Bandung"
 
   return (
-    <div className={`${className} justify-between mt-12 mb-6 break-inside-avoid text-sm`}>
+    <div className={`${className} justify-between mt-8 mb-6 break-inside-avoid`}>
       {/* Tanda Tangan Kiri (Opsional) */}
       {tipe === "ganda" && kiri ? (
         <div className="text-center w-64">
-          <p className="mb-16">{kiri.jabatan},</p>
-          <p className="font-bold underline">{kiri.nama || "____________________"}</p>
+          <p className="text-xs text-slate-700 min-h-[1.25rem] leading-relaxed mb-0.5">&nbsp;</p>
+          <p className="text-xs font-semibold text-slate-800 leading-tight mb-16">{kiri.jabatan}</p>
+          <p className="text-sm font-bold underline underline-offset-4 text-slate-900">{kiri.nama || "____________________"}</p>
         </div>
       ) : (
         <div className="w-64"></div> /* Spacer jika hanya tunggal agar kanan tetap di kanan */
@@ -48,9 +49,9 @@ export default function PrintSignature({
 
       {/* Tanda Tangan Kanan (Wajib) */}
       <div className="text-center w-64">
-        <p className="mb-16">{kota}, {dateStr}</p>
-        <p className="font-bold underline">{kanan.nama || "____________________"}</p>
-        <p className="text-sm">{kanan.jabatan}</p>
+        <p className="text-xs text-slate-700 min-h-[1.25rem] leading-relaxed mb-0.5">{kota}, {dateStr}</p>
+        <p className="text-xs font-semibold text-slate-800 leading-tight mb-16">{kanan.jabatan}</p>
+        <p className="text-sm font-bold underline underline-offset-4 text-slate-900">{kanan.nama || "____________________"}</p>
       </div>
     </div>
   )

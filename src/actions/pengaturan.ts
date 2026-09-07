@@ -26,6 +26,9 @@ export async function getPengaturan() {
       logoUrl: "",
       kotaPenandatangan: "Bandung",
       catatanKwitansi: "",
+      namaPimpinanYayasan: "",
+      jabatanPimpinanYayasan: "Ketua Yayasan",
+      namaBendaharaYayasan: "",
       rekeningBank: "[]",
       prefixKasMasuk: "KM",
       prefixKasKeluar: "KK",
@@ -46,41 +49,45 @@ export async function upsertPengaturan(data: any) {
   }
 
   try {
+    const updatePayload: any = {
+      namaYayasan: data.namaYayasan,
+      alamat: data.alamat,
+      telepon: data.telepon,
+      email: data.email,
+      website: data.website,
+      logoUrl: data.logoUrl,
+      kotaPenandatangan: data.kotaPenandatangan,
+      catatanKwitansi: data.catatanKwitansi,
+      namaPimpinanYayasan: data.namaPimpinanYayasan,
+      jabatanPimpinanYayasan: data.jabatanPimpinanYayasan || "Ketua Yayasan",
+      namaBendaharaYayasan: data.namaBendaharaYayasan,
+      rekeningBank: data.rekeningBank, // JSON string
+      prefixKasMasuk: data.prefixKasMasuk || "KM",
+      prefixKasKeluar: data.prefixKasKeluar || "KK"
+    }
+
+    const createPayload: any = {
+      id: "GLOBAL",
+      namaYayasan: data.namaYayasan,
+      alamat: data.alamat,
+      telepon: data.telepon,
+      email: data.email,
+      website: data.website,
+      logoUrl: data.logoUrl,
+      kotaPenandatangan: data.kotaPenandatangan,
+      catatanKwitansi: data.catatanKwitansi,
+      namaPimpinanYayasan: data.namaPimpinanYayasan,
+      jabatanPimpinanYayasan: data.jabatanPimpinanYayasan || "Ketua Yayasan",
+      namaBendaharaYayasan: data.namaBendaharaYayasan,
+      rekeningBank: data.rekeningBank, // JSON string
+      prefixKasMasuk: data.prefixKasMasuk || "KM",
+      prefixKasKeluar: data.prefixKasKeluar || "KK"
+    }
+
     const settings = await prisma.pengaturan.upsert({
       where: { id: "GLOBAL" },
-      update: {
-        namaYayasan: data.namaYayasan,
-        alamat: data.alamat,
-        telepon: data.telepon,
-        email: data.email,
-        website: data.website,
-        logoUrl: data.logoUrl,
-        kotaPenandatangan: data.kotaPenandatangan,
-        catatanKwitansi: data.catatanKwitansi,
-        namaPimpinanYayasan: data.namaPimpinanYayasan,
-        jabatanPimpinanYayasan: data.jabatanPimpinanYayasan || "Ketua Yayasan",
-        namaBendaharaYayasan: data.namaBendaharaYayasan,
-        rekeningBank: data.rekeningBank, // JSON string
-        prefixKasMasuk: data.prefixKasMasuk || "KM",
-        prefixKasKeluar: data.prefixKasKeluar || "KK"
-      },
-      create: {
-        id: "GLOBAL",
-        namaYayasan: data.namaYayasan,
-        alamat: data.alamat,
-        telepon: data.telepon,
-        email: data.email,
-        website: data.website,
-        logoUrl: data.logoUrl,
-        kotaPenandatangan: data.kotaPenandatangan,
-        catatanKwitansi: data.catatanKwitansi,
-        namaPimpinanYayasan: data.namaPimpinanYayasan,
-        jabatanPimpinanYayasan: data.jabatanPimpinanYayasan || "Ketua Yayasan",
-        namaBendaharaYayasan: data.namaBendaharaYayasan,
-        rekeningBank: data.rekeningBank, // JSON string
-        prefixKasMasuk: data.prefixKasMasuk || "KM",
-        prefixKasKeluar: data.prefixKasKeluar || "KK"
-      }
+      update: updatePayload,
+      create: createPayload
     })
     
     // Log aktivitas
@@ -121,21 +128,23 @@ export async function updateUnitSekolahKop(id: string, data: any) {
   }
 
   try {
+    const unitUpdatePayload: any = {
+      address: data.address,
+      phone: data.phone,
+      email: data.email,
+      website: data.website,
+      namaKepalaSekolah: data.namaKepalaSekolah,
+      nipKepalaSekolah: data.nipKepalaSekolah,
+      namaKepalaTU: data.namaKepalaTU,
+      nipKepalaTU: data.nipKepalaTU,
+      namaBendaharaUnit: data.namaBendaharaUnit,
+      kotaPenandatangan: data.kotaPenandatangan,
+      logo: data.logo !== undefined ? data.logo : undefined
+    }
+
     const updated = await prisma.unitSekolah.update({
       where: { id },
-      data: {
-        address: data.address,
-        phone: data.phone,
-        email: data.email,
-        website: data.website,
-        namaKepalaSekolah: data.namaKepalaSekolah,
-        nipKepalaSekolah: data.nipKepalaSekolah,
-        namaKepalaTU: data.namaKepalaTU,
-        nipKepalaTU: data.nipKepalaTU,
-        namaBendaharaUnit: data.namaBendaharaUnit,
-        kotaPenandatangan: data.kotaPenandatangan,
-        // logo: data.logo // if handling image later
-      }
+      data: unitUpdatePayload
     })
     revalidatePath("/pengaturan")
     return { success: true, data: updated }

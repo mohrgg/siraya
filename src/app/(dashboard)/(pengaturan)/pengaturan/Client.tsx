@@ -8,6 +8,7 @@ import { upsertPengaturan } from "@/actions/pengaturan"
 import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
 import PrintFooter from "@/components/shared/print/PrintFooter"
+import LogoUploader from "@/components/shared/LogoUploader"
 
 export default function PengaturanClient({ initialSettings, units = [] }: { initialSettings: any, units?: any[] }) {
   const [activeTab, setActiveTab] = useState<"profil" | "rekening" | "backup">("profil")
@@ -288,15 +289,19 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                   <div className="md:col-span-2">
                     <h3 className="text-lg font-bold text-text-main border-b border-border pb-2 mb-4">1. Identitas Utama Yayasan</h3>
                   </div>
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-text-main mb-1.5">Nama Yayasan/Lembaga</label>
                     <input type="text" name="namaYayasan" value={formData.namaYayasan} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Contoh: Yayasan Pendidikan Al Basyariah" />
                     <p className="text-xs text-text-muted mt-1">Dicetak tebal pada baris pertama kop surat.</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-text-main mb-1.5">URL Logo Yayasan</label>
-                    <input type="text" name="logoUrl" value={formData.logoUrl || ""} onChange={handleChange} className="w-full bg-bg border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="/logo.png atau URL eksternal" />
-                    <p className="text-xs text-text-muted mt-1">Logo akan ditampilkan di sebelah kiri kop surat.</p>
+                  <div className="md:col-span-2">
+                    <LogoUploader
+                      label="Logo Utama Yayasan"
+                      description="Logo ditampilkan di sebelah kiri kop surat pada seluruh dokumen dan laporan."
+                      value={formData.logoUrl || ""}
+                      onChange={(url) => setFormData((prev: any) => ({ ...prev, logoUrl: url }))}
+                      folder="logo"
+                    />
                   </div>
 
                   <div className="md:col-span-2 mt-4">
@@ -358,6 +363,24 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                     <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-blue-800 text-sm">
                       <p>Data unit akan menimpa data Yayasan pada baris kedua kop surat (Sub-Header) serta kontak dan penandatangan jika dokumen dicetak spesifik untuk unit ini.</p>
                     </div>
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <LogoUploader
+                      label={`Logo Khusus Unit: ${unitData[activeUnitTab]?.name || ""}`}
+                      description="Opsional. Jika tidak diunggah, kop surat dokumen unit ini otomatis menggunakan Logo Yayasan."
+                      value={unitData[activeUnitTab]?.logo || ""}
+                      onChange={(url) => {
+                        setUnitData((prev: any) => ({
+                          ...prev,
+                          [activeUnitTab]: {
+                            ...prev[activeUnitTab],
+                            logo: url
+                          }
+                        }))
+                      }}
+                      folder="logo"
+                    />
                   </div>
                   
                   <div className="md:col-span-2">
