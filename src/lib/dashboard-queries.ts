@@ -164,15 +164,7 @@ export async function getYayasanDashboardData(yearId?: string) {
     }
   })
 
-  // 2. Komposisi Beasiswa
-  const scholarshipCount = await prisma.murid.count({ where: { isActive: true, isScholarship: true } })
-  const regularCount = totalSiswa - scholarshipCount
-  const scholarshipData = [
-    { name: 'Beasiswa', value: scholarshipCount, color: '#10b981' },
-    { name: 'Reguler', value: regularCount, color: '#3b82f6' }
-  ]
-
-  // 3. Demografi Gender Global
+  // 2. Demografi Gender Global
   const genderDistribution = await prisma.murid.groupBy({
     by: ['gender'],
     where: { 
@@ -197,19 +189,7 @@ export async function getYayasanDashboardData(yearId?: string) {
     { name: 'Tidak Diketahui', value: genderDataMap['Tidak Diketahui'], color: '#94a3b8' }
   ].filter(g => g.value > 0)
 
-  // 4. Indeks Kualitas & Anomali Data Yayasan
-  const completeDataCount = await prisma.murid.count({
-    where: {
-      isActive: true,
-      nik: { not: null, notIn: ['', '-', ' - '] },
-      nisn: { not: null, notIn: ['', '-', ' - '] },
-      nis: { not: null, notIn: ['', '-', ' - '] },
-      fatherName: { not: null, notIn: ['', '-', ' - '] },
-      motherName: { not: null, notIn: ['', '-', ' - '] }
-    }
-  })
-  const dataQualityIndex = totalSiswa > 0 ? Math.round((completeDataCount / totalSiswa) * 100) : 0
-
+  // 3. Anomali & Data Tidak Lengkap Yayasan
   const unitsWithIncompleteDataRaw = await prisma.unitSekolah.findMany({
     where: { isActive: true },
     select: {
@@ -235,7 +215,7 @@ export async function getYayasanDashboardData(yearId?: string) {
     .map(u => ({ unitName: u.name, incompleteCount: u._count.murid }))
     .sort((a, b) => b.incompleteCount - a.incompleteCount)
 
-  // 5. Tren Pertumbuhan Siswa (Mocked with createdAt for now)
+  // 4. Tren Pertumbuhan Siswa Riil (5 Tahun Terakhir)
   const currentYear = new Date().getFullYear()
   const trendData = []
   for (let i = 4; i >= 0; i--) {
@@ -248,38 +228,8 @@ export async function getYayasanDashboardData(yearId?: string) {
         }
       }
     })
-    trendData.push({ year: year.toString(), total: count > 0 ? count : (Math.floor(Math.random() * 100) + 50) })
+    trendData.push({ year: year.toString(), total: count })
   }
-
-  // 6. Peta Wilayah Asal (Kecamatan)
-  const districtDistribution = await prisma.murid.groupBy({
-    by: ['district'],
-    where: { isActive: true, district: { not: null, notIn: [''] } },
-    _count: { _all: true },
-    orderBy: { _count: { district: 'desc' } },
-    take: 5
-  })
-  const districtData = districtDistribution.map(d => ({
-    name: d.district || 'Lainnya',
-    value: d._count._all
-  }))
-
-  // 7. Rasio Efisiensi Kelas
-  const classEfficiency = unitsRaw.map(u => ({
-    name: u.name,
-    ratio: u._count.subKelas > 0 ? Math.round((u._count.murid / u._count.subKelas) * 10) / 10 : 0
-  })).filter(u => u.ratio > 0)
-
-  // 8. Status Siswa Global
-  const statusDistribution = await prisma.murid.groupBy({
-    by: ['status'],
-    where: { unitSekolahId: { not: '' } },
-    _count: { _all: true }
-  })
-  const statusDataGlobal = statusDistribution.map(p => ({
-    name: p.status,
-    value: p._count._all
-  }))
 
   const academicYear = yearId 
     ? await prisma.tahunAkademik.findUnique({ where: { id: yearId } })
@@ -382,9 +332,9 @@ export async function getYayasanDashboardData(yearId?: string) {
     muridCount: totalSiswa, totalSiswa,
     guruCount: totalGuru, totalGuru,
     units, unitDistribution, unitData: unitDistribution,
-    scholarshipData, genderData,
-    dataQualityIndex, incompleteData, trendData, trendSiswaDummy: trendData,
-    districtData, classEfficiency, statusDataGlobal, academicYear,
+    genderData,
+    incompleteData, trendData,
+    academicYear,
     // Keuangan Global
     totalKasGlobal, totalPiutangGlobal, kolektibilitas, arusKasTrend, topUnitTunggakan, 
     ...interactiveChartData
@@ -429,47 +379,7 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
     value: p._count._all
   }))
 
-  // Status Siswa
-  const statusDist = await prisma.murid.groupBy({
-    by: ['status'],
-    where: { unitSekolahId: unitId },
-    _count: { _all: true }
-  })
-  const statusData = statusDist.map(s => ({
-    name: s.status,
-    value: s._count._all
-  }))
-
-  // Kepadatan Siswa per Rombel (Data Tingkat & SubKelas)
-  const tingkatRaw = await prisma.tingkat.findMany({
-    where: { unitSekolahId: unitId },
-    select: {
-      name: true,
-      subKelas: {
-        where: { isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) },
-        select: {
-          name: true,
-          _count: { select: { riwayatKelas: { where: { isCurrent: true, murid: { isActive: true }, ...(yearId ? { tahunAkademikId: yearId } : {}) } } } }
-        }
-      }
-    }
-  })
-
-  // 1. Kepadatan per tingkat (average)
-  const paralelData = tingkatRaw.map(t => ({
-    tingkat: t.name,
-    average: t.subKelas.length > 0 
-      ? Math.round(t.subKelas.reduce((sum, sk) => sum + sk._count.riwayatKelas, 0) / t.subKelas.length) 
-      : 0
-  })).filter(p => p.average > 0).sort((a, b) => sortSchoolClasses(a.tingkat, b.tingkat))
-
-  // 2. Distribusi Siswa per Tingkat (Tingkat Kelas)
-  const tingkatDistribution = tingkatRaw.map(t => ({
-    name: t.name,
-    total: t.subKelas.reduce((sum, sk) => sum + sk._count.riwayatKelas, 0)
-  })).filter(t => t.total > 0).sort((a, b) => sortSchoolClasses(a.name, b.name))
-
-  // 3. Rombel Data & Capacity Warnings (>35)
+  // Kepadatan Siswa per Rombel (Data SubKelas & Kapasitas >35)
   const subKelasList = await prisma.subKelas.findMany({
     where: { isDeleted: false, unitSekolahId: unitId, ...(yearId ? { tahunAkademikId: yearId } : {}) },
     select: { 
@@ -535,67 +445,7 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
     { name: 'Tidak Diketahui', value: unitGenderMap['Tidak Diketahui'], color: '#94a3b8' }
   ].filter(g => g.value > 0)
 
-  // 5. Beasiswa vs Reguler
-  const scholarshipCount = await prisma.murid.count({ where: { isActive: true, unitSekolahId: unitId, isScholarship: true } })
-  const regularCount = totalMurid - scholarshipCount
-  const scholarshipData = [
-    { name: 'Beasiswa', value: scholarshipCount, color: '#f59e0b' },
-    { name: 'Reguler', value: regularCount, color: '#3b82f6' }
-  ]
-
-  // 6. Kelengkapan Orang Tua / Wali
-  const missingParent = await prisma.murid.count({
-    where: { unitSekolahId: unitId, isActive: true, OR: [{ fatherName: null }, { motherName: null }, { fatherName: '' }, { motherName: '' }] }
-  })
-  const completeParent = totalMurid - missingParent
-  const parentData = [
-    { name: 'Lengkap', value: completeParent, color: '#10b981' },
-    { name: 'Belum Lengkap', value: missingParent, color: '#f43f5e' }
-  ]
-
-  // 7. Pendapatan Orang Tua (Sample dari fatherIncome)
-  const incomeDist = await prisma.murid.groupBy({
-    by: ['fatherIncome'], where: { isActive: true, unitSekolahId: unitId, fatherIncome: { not: null, notIn: [''] } }, _count: { _all: true }
-  })
-  const incomeData = incomeDist.map((i, idx) => ({ 
-    name: i.fatherIncome || 'Tidak Diketahui', 
-    value: i._count._all,
-    color: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#64748b'][idx % 6]
-  }))
-
-  // 8. Rentang Usia
-  const studentsWithDOB = await prisma.murid.findMany({
-    where: { isActive: true, unitSekolahId: unitId, birthDate: { not: null } },
-    select: { birthDate: true }
-  })
-  const ageGroups: Record<string, number> = {}
-  const currentYear = new Date().getFullYear()
-  studentsWithDOB.forEach(s => {
-    if (s.birthDate) {
-      const age = currentYear - s.birthDate.getFullYear()
-      const key = `${age} thn`
-      ageGroups[key] = (ageGroups[key] || 0) + 1
-    }
-  })
-  const ageData = Object.entries(ageGroups).map(([ageGroup, total]) => ({ ageGroup, name: ageGroup, total })).sort((a, b) => parseInt(a.ageGroup) - parseInt(b.ageGroup))
-
-  // 9. Anomali & Mutasi
-  const anomalyList = await prisma.murid.findMany({
-    where: {
-      unitSekolahId: unitId, isActive: true,
-      OR: [ 
-        { nisn: null }, { nisn: '' }, { nisn: '-' }, { nisn: ' - ' },
-        { nik: null }, { nik: '' }, { nik: '-' }, { nik: ' - ' },
-        { nis: null }, { nis: '' }, { nis: '-' }, { nis: ' - ' },
-        { fatherName: null }, { fatherName: '' }, { fatherName: '-' }, { fatherName: ' - ' },
-        { motherName: null }, { motherName: '' }, { motherName: '-' }, { motherName: ' - ' }
-      ]
-    },
-    take: 10,
-    orderBy: { createdAt: 'desc' },
-    select: { id: true, name: true, nis: true, nisn: true, nik: true, fatherName: true, motherName: true }
-  })
-  
+  // 5. Anomali & Data Tidak Lengkap
   const incompleteDataCount = await prisma.murid.count({
     where: {
       unitSekolahId: unitId, isActive: true,
@@ -606,24 +456,6 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
       ]
     }
   })
-
-  const mutationLogs = await prisma.murid.findMany({
-    where: { unitSekolahId: unitId, status: { not: 'AKTIF' } },
-    take: 5,
-    orderBy: { updatedAt: 'desc' },
-    select: { id: true, name: true, status: true, updatedAt: true }
-  })
-
-  // 10. Log Aktivitas Khusus Unit
-  const unitLogsRaw = await prisma.logAktivitas.findMany({
-    where: { pengguna: { unitSekolahId: unitId } },
-    take: 5,
-    orderBy: { createdAt: 'desc' },
-    select: { id: true, aksi: true, modul: true, keterangan: true, createdAt: true, pengguna: { select: { name: true } } }
-  })
-  const unitLogs = unitLogsRaw.map(l => ({
-    id: l.id, aksi: l.aksi, modul: l.modul, keterangan: l.keterangan, createdAt: l.createdAt.toISOString(), penggunaName: l.pengguna?.name || 'Sistem'
-  }))
 
   // 11. KEUANGAN UNIT (Bulan Ini)
   const today = new Date()
@@ -684,16 +516,15 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
         }
       }
     })
-    // Dummy fallback if count is 0 just to show chart, but we will use real count
     trendData.push({ year: year.toString(), total: count })
   }
 
   return {
     totalMurid, totalRombel, totalSubKelas: totalRombel, totalJurusan, totalGuru,
-    rombelData, statusData, paralelData, tingkatDistribution, capacityWarnings,
-    genderData, parentData, scholarshipData, incomeData, ageData,
+    rombelData, capacityWarnings,
+    genderData,
     guruStatusData, guruPendidikanData,
-    anomalyList, missingParent, mutationLogs, unitLogs, trendData,
+    trendData,
     // Ekstra Keuangan Unit
     penerimaanBulanIni, pengeluaranBulanIni, totalTunggakanUnit, tunggakanKritisList, kolektibilitasUnit,
     incompleteDataCount,
@@ -838,17 +669,7 @@ export async function getKepsekData(unitId: string, yearId?: string) {
   const totalJurusan = await prisma.jurusan.count({ where: { isDeleted: false, unitSekolahId: unitId } })
   const totalGuru = await prisma.guru.count({ where: { unitSekolahId: unitId, isDeleted: false, isActive: true } })
 
-  // Status & Pendidikan Guru
-  const guruStatusDist = await prisma.guru.groupBy({
-    by: ['statusKepegawaian'],
-    where: { unitSekolahId: unitId, isDeleted: false, isActive: true },
-    _count: { _all: true }
-  })
-  const guruStatusData = guruStatusDist.map(s => ({
-    name: s.statusKepegawaian || 'Lainnya',
-    value: s._count._all
-  }))
-
+  // Pendidikan Guru
   const guruPendidikanDist = await prisma.guru.groupBy({
     by: ['pendidikan'],
     where: { unitSekolahId: unitId, isDeleted: false, isActive: true },
@@ -929,50 +750,6 @@ export async function getKepsekData(unitId: string, yearId?: string) {
     color: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#64748b'][idx % 6]
   }))
 
-  // Gender & Status
-  const genderDist = await prisma.murid.groupBy({
-    by: ['gender'],
-    where: { 
-      isActive: true, 
-      unitSekolahId: unitId,
-      ...(yearId ? { riwayatKelas: { some: { tahunAkademikId: yearId } } } : {})
-    },
-    _count: { _all: true }
-  })
-  const kepsekGenderMap = { 'Laki-laki': 0, 'Perempuan': 0, 'Tidak Diketahui': 0 }
-  genderDist.forEach(g => {
-    if (g.gender === 'Laki-laki' || g.gender === 'Perempuan') {
-      kepsekGenderMap[g.gender] += g._count._all
-    } else {
-      kepsekGenderMap['Tidak Diketahui'] += g._count._all
-    }
-  })
-  const genderData = [
-    { name: 'Laki-laki', value: kepsekGenderMap['Laki-laki'], color: '#3b82f6' },
-    { name: 'Perempuan', value: kepsekGenderMap['Perempuan'], color: '#ec4899' },
-    { name: 'Tidak Diketahui', value: kepsekGenderMap['Tidak Diketahui'], color: '#94a3b8' }
-  ].filter(g => g.value > 0)
-
-  const statusDist = await prisma.murid.groupBy({ by: ['status'], where: { unitSekolahId: unitId }, _count: { _all: true } })
-  const statusData = statusDist.map(s => ({ name: s.status, value: s._count._all }))
-
-  // Anomali Data untuk Monitoring
-  const anomalyList = await prisma.murid.findMany({
-    where: {
-      unitSekolahId: unitId, isActive: true,
-      OR: [ { nisn: null }, { nisn: '' }, { nik: null }, { nik: '' } ]
-    },
-    take: 5,
-    orderBy: { createdAt: 'desc' },
-    select: { id: true, name: true, nis: true, nisn: true, nik: true }
-  })
-
-  // Target vs Actual (Mock target: previous year max + 10%)
-  const capacityData = {
-    actual: totalMurid,
-    target: Math.floor(totalMurid * 1.1) || 100 // Example logic
-  }
-
   // ==================== KEUANGAN (FINANCIAL METRICS) ====================
   const today = new Date()
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
@@ -1035,9 +812,9 @@ export async function getKepsekData(unitId: string, yearId?: string) {
   const interactiveChartDataK = generateInteractiveChartData(rawMonthTransactionsK, todayStart, weekStart, monthStart)
 
   return { 
-    totalMurid, totalRombel, totalJurusan, totalGuru, guruStatusData, guruPendidikanData, 
+    totalMurid, totalRombel, totalJurusan, totalGuru, guruPendidikanData, 
     dataQualityScore, jobData, incomeData, topCrowded, topEmpty, retentionData, 
-    jenjangData, genderData, statusData, anomalyList, capacityData,
+    jenjangData,
     // Keuangan
     penerimaanBulanIni, pengeluaranBulanIni, saldoBulanIni, kolektibilitasData, alokasiPengeluaran, 
     ...interactiveChartDataK

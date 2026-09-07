@@ -2,9 +2,8 @@
 
 import React, { useState } from "react"
 import { 
-  Users, GraduationCap, LayoutDashboard, ShieldAlert, AlertTriangle, 
-  CheckCircle2, Clock, PlusCircle, BookOpen, ArrowRight, UserCheck, 
-  HeartHandshake, Sparkles, Activity, Wallet
+  Users, GraduationCap, LayoutDashboard, AlertTriangle, 
+  CheckCircle2, PlusCircle, ArrowRight, UserCheck, Activity 
 } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine, LineChart, Line } from 'recharts'
 import Link from 'next/link'
@@ -83,7 +82,6 @@ export default function UnitDashboard(props: UnitDashboardProps) {
     incompleteDataCount = 0
   } = props
 
-  const [activeTab, setActiveTab] = useState<'anomali' | 'mutasi' | 'tunggakan'>('anomali')
   const [selectedRombelDrilldown, setSelectedRombelDrilldown] = useState<any>(null)
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)

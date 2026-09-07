@@ -262,7 +262,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
               </div>
             </div>
             <div className="flex items-baseline gap-2 relative z-10">
-              <span className="text-3xl font-black">{formatNumber(totalMasterRecords > 0 ? totalMasterRecords : 18542)}</span>
+              <span className="text-3xl font-black">{formatNumber(totalMasterRecords || 0)}</span>
             </div>
             <p className="text-[11px] text-blue-200 mt-2 relative z-10">Estimasi total records di database (Murid, Rombel, Transaksi)</p>
           </div>
