@@ -34,20 +34,32 @@ export async function getMuridWithTagihanUnpaid(filters: {
   unitSekolahId: string, 
   tahunAkademikId: string, 
   kelasId?: string, 
-  subKelasId?: string 
+  subKelasId?: string,
+  searchName?: string
 }) {
   unstable_noStore()
   try {
+    const hasSearch = !!(filters.searchName && filters.searchName.trim() !== "")
+    const q = hasSearch ? filters.searchName!.trim() : ""
+
     const whereClause: any = {
       unitSekolahId: filters.unitSekolahId,
       status: "AKTIF",
       riwayatKelas: {
         some: {
           tahunAkademikId: filters.tahunAkademikId,
-          ...(filters.subKelasId ? { subKelasId: filters.subKelasId } : {}),
-          ...(filters.kelasId && !filters.subKelasId ? { subKelas: { kelasId: filters.kelasId } } : {})
+          ...(!hasSearch && filters.subKelasId ? { subKelasId: filters.subKelasId } : {}),
+          ...(!hasSearch && filters.kelasId && !filters.subKelasId ? { subKelas: { tingkatId: filters.kelasId } } : {})
         }
       }
+    }
+
+    if (hasSearch) {
+      whereClause.OR = [
+        { name: { contains: q, mode: "insensitive" } },
+        { nisn: { contains: q, mode: "insensitive" } },
+        { formNo: { contains: q, mode: "insensitive" } }
+      ]
     }
 
     const data = await prisma.murid.findMany({
@@ -57,6 +69,20 @@ export async function getMuridWithTagihanUnpaid(filters: {
         name: true,
         nisn: true,
         formNo: true,
+        riwayatKelas: {
+          where: {
+            tahunAkademikId: filters.tahunAkademikId
+          },
+          select: {
+            subKelas: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          },
+          take: 1
+        },
         tagihan: {
           where: {
             tahunAkademikId: filters.tahunAkademikId

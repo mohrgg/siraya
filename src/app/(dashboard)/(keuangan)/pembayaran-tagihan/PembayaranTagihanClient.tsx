@@ -39,6 +39,7 @@ type GridRow = {
   name: string
   nisn: string
   formNo: string
+  subKelasName?: string
   tagihanList: TagihanData[]
   // State for checkboxes: Map<tagihanId, boolean>
   selectedItems: Record<string, boolean>
@@ -163,13 +164,15 @@ export default function PembayaranTagihanClient({
     setAkunColumns(columns)
 
     const rows: GridRow[] = muridList.map(murid => {
-      const hasOldDebts = murid._count?.tagihan > 0
+      const hasOldDebts = (murid._count?.tagihan || 0) > 0
+      const subKelasName = murid.riwayatKelas?.[0]?.subKelas?.name || ""
       
       return {
         id: murid.id,
         name: murid.name,
         nisn: murid.nisn || "-",
         formNo: murid.formNo || "-",
+        subKelasName,
         tagihanList: murid.tagihan || [],
         selectedItems: {},
         hasOldDebts: hasOldDebts
@@ -180,9 +183,16 @@ export default function PembayaranTagihanClient({
     setCurrentPage(1)
   }
 
-  const handleTampilkan = async () => {
-    if (!subKelasId || !activeTahunAkademikId) {
-      toast.error("Pilih Subkelas dan Tahun Akademik terlebih dahulu")
+  const handleTampilkan = async (overrideSearch?: string) => {
+    const querySearch = typeof overrideSearch === "string" ? overrideSearch : searchTerm
+    const hasSearch = querySearch.trim().length > 0
+
+    if (!hasSearch && !subKelasId) {
+      toast.error("Pilih Subkelas atau ketik nama siswa untuk mencari")
+      return
+    }
+    if (!activeTahunAkademikId) {
+      toast.error("Tahun Akademik aktif tidak ditemukan")
       return
     }
     setIsLoading(true)
@@ -191,12 +201,16 @@ export default function PembayaranTagihanClient({
         getMuridWithTagihanUnpaid({
           unitSekolahId: activeUnitId,
           tahunAkademikId: activeTahunAkademikId,
-          kelasId: kelasId,
-          subKelasId: subKelasId
+          kelasId: kelasId || undefined,
+          subKelasId: subKelasId || undefined,
+          searchName: querySearch.trim() || undefined
         }),
         getColumnOrder(activeUnitId)
       ])
       processData(res, order)
+      if (res.length === 0) {
+        toast("Tidak ada data murid yang ditemukan", { icon: "ℹ️" })
+      }
     } catch (error: any) {
       toast.error(error.message || "Gagal mengambil data")
     } finally {
@@ -356,8 +370,14 @@ export default function PembayaranTagihanClient({
           <ToolbarSearch 
             value={searchTerm}
             onChange={(e: any) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                handleTampilkan(searchTerm)
+              }
+            }}
+            onClear={() => setSearchTerm("")}
             placeholder="Cari siswa atau NISN..." 
-            disabled={gridData.length === 0}
           />
 
           <ToolbarFilter
@@ -393,9 +413,9 @@ export default function PembayaranTagihanClient({
 
           <Button 
             size="sm"
-            onClick={handleTampilkan} 
-            disabled={!subKelasId || isLoading}
-            className="px-4 py-1.5 h-auto whitespace-nowrap bg-emerald-500 hover:bg-emerald-600 text-white"
+            onClick={() => handleTampilkan(searchTerm)} 
+            disabled={(!subKelasId && !searchTerm.trim()) || isLoading}
+            className="px-4 py-1.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90 text-white"
           >
             {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
           </Button>
@@ -459,7 +479,14 @@ export default function PembayaranTagihanClient({
                               </p>
                             )}
                           </div>
-                          <p className="text-xs text-text-muted mt-0.5">{row.nisn} • {row.formNo}</p>
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            {row.subKelasName && (
+                              <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-200">
+                                {row.subKelasName}
+                              </span>
+                            )}
+                            <p className="text-xs text-text-muted">{row.nisn} • {row.formNo}</p>
+                          </div>
                         </td>
                         
                         {akunColumns.map(col => {
@@ -640,9 +667,9 @@ export default function PembayaranTagihanClient({
           !isLoading && (
             <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted">
               <Filter className="mb-4 text-text-muted/50" size={48} strokeWidth={1} />
-              <h3 className="text-lg font-bold text-text-main mb-2">Pilih Filter Terlebih Dahulu</h3>
+              <h3 className="text-lg font-bold text-text-main mb-2">Pilih Filter atau Cari Siswa</h3>
               <p className="max-w-md">
-                Silakan pilih <strong>Kelas</strong> pada kolom filter di atas untuk melihat tagihan siswa.
+                Silakan pilih <strong>Kelas & Subkelas</strong> atau ketik <strong>Nama Siswa / NISN</strong> pada kolom pencarian lalu tekan <strong>Enter</strong> untuk melihat tagihan.
               </p>
             </div>
           )

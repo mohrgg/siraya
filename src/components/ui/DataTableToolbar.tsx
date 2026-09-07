@@ -1,5 +1,5 @@
 import React from "react"
-import { Search, Filter, FileSpreadsheet, FileText, UploadCloud, Plus } from "lucide-react"
+import { Search, Filter, FileSpreadsheet, FileText, UploadCloud, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 
 export function Toolbar({ children }: { children: React.ReactNode }) {
@@ -29,16 +29,30 @@ export function Toolbar({ children }: { children: React.ReactNode }) {
   )
 }
 
-interface ToolbarSearchProps extends React.InputHTMLAttributes<HTMLInputElement> {}
-export function ToolbarSearch({ className, ...props }: ToolbarSearchProps) {
+interface ToolbarSearchProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  onClear?: () => void
+  containerClassName?: string
+}
+export function ToolbarSearch({ className, containerClassName, onClear, value, ...props }: ToolbarSearchProps) {
   return (
-    <div className="relative w-full sm:w-44 flex-shrink-0">
+    <div className={`relative w-full sm:w-56 flex-shrink-0 ${containerClassName || ''}`}>
       <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
       <input
         type="text"
-        className={`w-full pl-10 pr-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 ${className || ''}`}
+        value={value}
+        className={`w-full pl-10 ${onClear && value ? 'pr-9' : 'pr-4'} py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 ${className || ''}`}
         {...props}
       />
+      {onClear && value ? (
+        <button
+          type="button"
+          onClick={onClear}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main p-0.5 rounded-full hover:bg-gray-100 transition-colors"
+          title="Hapus pencarian"
+        >
+          <X size={14} />
+        </button>
+      ) : null}
     </div>
   )
 }
