@@ -34,7 +34,7 @@ export async function getTenantContext(): Promise<TenantContext> {
   const userUnitId = (session.user as any).unitSekolahId
   
   if (role === "ADMIN" || role === "YAYASAN") {
-    // Admin dan Yayasan berhak membaca cookie activeUnitId
+    // Admin dan Yayasan berhak membaca cookie activeUnitId untuk audit unit tertentu atau semua unit
     const cookieStore = await cookies()
     const activeUnitId = cookieStore.get("activeUnitId")?.value || "all"
     

@@ -140,15 +140,17 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
   if (role === "YAYASAN") {
     const { schoolUnits, activeYearId, activeUnitId } = await getActiveContext()
 
-    if (activeTab === "unit" && activeUnitId && activeUnitId !== "all") {
-      const selectedUnit = schoolUnits.find(u => u.id === activeUnitId)
-      const data = await getUnitDashboardData(activeUnitId, activeYearId)
-      return (
-        <div className="max-w-[1600px] mx-auto w-full">
-          <DashboardNavTabs role="YAYASAN" units={schoolUnits} activeUnitId={activeUnitId} />
-          <UnitDashboard role="YAYASAN" unitName={selectedUnit?.name || 'Unit Sekolah'} {...data} />
-        </div>
-      )
+    if (activeUnitId && activeUnitId !== "all") {
+      if (activeTab === "unit" || !searchParams?.tab) {
+        const selectedUnit = schoolUnits.find(u => u.id === activeUnitId)
+        const data = await getUnitDashboardData(activeUnitId, activeYearId)
+        return (
+          <div className="max-w-[1600px] mx-auto w-full">
+            <DashboardNavTabs role="YAYASAN" units={schoolUnits} activeUnitId={activeUnitId} />
+            <UnitDashboard role="YAYASAN" unitName={selectedUnit?.name || 'Unit'} {...data} />
+          </div>
+        )
+      }
     }
 
     const data = await getYayasanDashboardData(activeYearId)

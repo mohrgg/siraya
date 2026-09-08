@@ -16,13 +16,14 @@ export default async function DashboardLayout({
   
   const userRole = tenant.role
   const userUnitId = tenant.unitId
+  const isGlobalRole = userRole === "ADMIN" || userRole === "YAYASAN"
 
   // Load academic years, school units, dan logo pengaturan yayasan secara paralel
   const [schoolUnits, academicYears, pengaturan] = await Promise.all([
     prisma.unitSekolah.findMany({
       where: { 
         isActive: true,
-        ...(userRole !== "ADMIN" && userUnitId ? { id: userUnitId } : {})
+        ...(!isGlobalRole && userUnitId ? { id: userUnitId } : {})
       },
       orderBy: { name: 'asc' },
       select: { id: true, name: true }
