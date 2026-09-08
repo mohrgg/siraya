@@ -81,6 +81,14 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
     })
   }
 
+  const handleDrilldownUnitDashboard = (unitId?: string) => {
+    if (!unitId) return
+    startSync(async () => {
+      await setGlobalContext(unitId, academicYear?.id || "")
+      window.location.href = `/?tab=unit&unitId=${unitId}`
+    })
+  }
+
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
   const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
 
@@ -97,7 +105,9 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
         }
         
         return {
+          id: u.id,
           unit: u.name,
+          unitName: u.name,
           siswa: u.total || 0,
           rombel: u.rombel || 0,
           guru: u.guru || 0,
@@ -391,18 +401,31 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedDrawerIndex(idx)
-                    setIsDrawerOpen(true)
-                  }}
-                  className="w-full mt-2 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#065f32]/10 hover:bg-[#065f32]/20 border border-[#065f32]/30 text-[#065f32] text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group"
-                >
-                  <Layers size={14} className="text-[#065f32] group-hover:scale-110 transition-transform" />
-                  Audit Sebaran Tingkat & Rombel
-                  <ChevronRight size={14} className="text-[#065f32] group-hover:translate-x-0.5 transition-transform" />
-                </button>
+                <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDrawerIndex(idx)
+                      setIsDrawerOpen(true)
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#065f32]/10 hover:bg-[#065f32]/20 border border-[#065f32]/30 text-[#065f32] text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group"
+                  >
+                    <Layers size={14} className="text-[#065f32] group-hover:scale-110 transition-transform" />
+                    Audit Sebaran Tingkat & Rombel
+                    <ChevronRight size={14} className="text-[#065f32] group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDrilldownUnitDashboard(item.id || item.raw?.id)}
+                    className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#065f32]/40 text-slate-700 hover:text-[#065f32] text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group shrink-0"
+                    title={`Buka Dashboard ${item.unit}`}
+                  >
+                    <LayoutDashboard size={14} className="text-slate-400 group-hover:text-[#065f32] transition-colors" />
+                    <span className="hidden sm:inline">Buka Dashboard Unit</span>
+                    <span className="sm:hidden">Dashboard Unit</span>
+                    <ChevronRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                </div>
               </div>
             )
           })}

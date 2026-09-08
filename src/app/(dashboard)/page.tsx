@@ -14,7 +14,6 @@ import KepsekDashboard from "@/components/dashboard/KepsekDashboard"
 
 export default async function DashboardPage(props: { searchParams: Promise<any> }) {
   const searchParams = await props.searchParams
-  const activeTab = searchParams?.tab || "yayasan"
 
   const session = await auth()
   const role = session?.user?.role || "TATA_USAHA"
@@ -29,8 +28,10 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
     const cookieStore = await cookies()
     
     let activeUnitId = cookieStore.get("activeUnitId")?.value
-    
-    if ((role === "ADMIN" || role === "YAYASAN") && !activeUnitId) {
+
+    if ((role === "ADMIN" || role === "YAYASAN") && searchParams?.unitId) {
+      activeUnitId = searchParams.unitId
+    } else if ((role === "ADMIN" || role === "YAYASAN") && !activeUnitId) {
       activeUnitId = "all"
     } else if (role !== "ADMIN" && role !== "YAYASAN" && userUnitId) {
       activeUnitId = userUnitId
@@ -51,6 +52,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
   // ==================== SUPERADMIN (ADMIN) ====================
   if (role === "ADMIN") {
     const { schoolUnits, activeYearId, activeUnitId } = await getActiveContext()
+    const activeTab = searchParams?.tab || (activeUnitId && activeUnitId !== "all" ? "unit" : "yayasan")
 
     if (activeTab === "yayasan") {
       const data = await getYayasanDashboardData(activeYearId)
@@ -74,9 +76,9 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
         )
       }
 
-      const selectedUnit = schoolUnits.find(u => u.id === activeUnitId)
+      const selectedUnit = schoolUnits.find(u => u.id === activeUnitId) || schoolUnits[0]
 
-      if (!activeUnitId) {
+      if (!selectedUnit) {
         return (
           <div className="max-w-[1600px] mx-auto w-full">
             <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
@@ -85,11 +87,11 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
         )
       }
 
-      const data = await getUnitDashboardData(activeUnitId, activeYearId)
+      const data = await getUnitDashboardData(selectedUnit.id, activeYearId)
       return (
         <div className="max-w-[1600px] mx-auto w-full">
-          <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
-          <UnitDashboard role="ADMIN" unitName={selectedUnit?.name || 'Unit'} {...data} />
+          <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={selectedUnit.id} />
+          <UnitDashboard role="ADMIN" unitName={selectedUnit.name || 'Unit'} {...data} />
         </div>
       )
     }
@@ -139,15 +141,16 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
   // ==================== PENGURUS YAYASAN ====================
   if (role === "YAYASAN") {
     const { schoolUnits, activeYearId, activeUnitId } = await getActiveContext()
+    const activeTab = searchParams?.tab || (activeUnitId && activeUnitId !== "all" ? "unit" : "yayasan")
 
-    if (activeUnitId && activeUnitId !== "all") {
-      if (activeTab === "unit" || !searchParams?.tab) {
-        const selectedUnit = schoolUnits.find(u => u.id === activeUnitId)
-        const data = await getUnitDashboardData(activeUnitId, activeYearId)
+    if (activeTab === "unit" && activeUnitId && activeUnitId !== "all") {
+      const selectedUnit = schoolUnits.find(u => u.id === activeUnitId) || schoolUnits[0]
+      if (selectedUnit) {
+        const data = await getUnitDashboardData(selectedUnit.id, activeYearId)
         return (
           <div className="max-w-[1600px] mx-auto w-full">
-            <DashboardNavTabs role="YAYASAN" units={schoolUnits} activeUnitId={activeUnitId} />
-            <UnitDashboard role="YAYASAN" unitName={selectedUnit?.name || 'Unit'} {...data} />
+            <DashboardNavTabs role="YAYASAN" units={schoolUnits} activeUnitId={selectedUnit.id} />
+            <UnitDashboard role="YAYASAN" unitName={selectedUnit.name || 'Unit'} {...data} />
           </div>
         )
       }

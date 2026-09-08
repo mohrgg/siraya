@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { setGlobalContext } from '@/actions/app-context'
 import { 
   X, ChevronLeft, ChevronRight, School, Users, 
-  Layers, GraduationCap, Wallet, ArrowRight, CheckCircle2, AlertTriangle 
+  Layers, GraduationCap, Wallet, ArrowRight, CheckCircle2, AlertTriangle, LayoutDashboard 
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -73,6 +73,14 @@ export default function UnitAuditSideDrawer({
     startSync(async () => {
       await setGlobalContext(unitId, "")
       window.location.href = `/rekapitulasi-tunggakan?unitId=${unitId}`
+    })
+  }
+
+  const handleOpenDashboardUnit = (unitId?: string) => {
+    if (!unitId) return
+    startSync(async () => {
+      await setGlobalContext(unitId, "")
+      window.location.href = `/?tab=unit&unitId=${unitId}`
     })
   }
 
@@ -312,7 +320,7 @@ export default function UnitAuditSideDrawer({
           </div>
 
           {/* Footer Action Hub */}
-          <div className="p-4 border-t border-slate-200/80 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-end gap-3">
+          <div className="p-4 border-t border-slate-200/80 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
@@ -320,6 +328,16 @@ export default function UnitAuditSideDrawer({
             >
               Tutup Panel
             </button>
+            {activeUnit?.id && (
+              <button
+                type="button"
+                onClick={() => handleOpenDashboardUnit(activeUnit.id)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-[#065f32]/30 text-[#065f32] text-xs font-bold transition-colors shadow-2xs min-h-[44px]"
+              >
+                <LayoutDashboard size={14} />
+                Buka Dashboard Unit
+              </button>
+            )}
             <Link
               href="/kelas"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#065f32] hover:bg-[#054d28] text-white text-xs font-bold transition-colors shadow-xs min-h-[44px]"
