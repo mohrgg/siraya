@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Building2, Layers, Activity, School, LayoutDashboard, ChevronDown } from 'lucide-react'
+import { Building2, Layers, Activity, School, LayoutDashboard } from 'lucide-react'
 
 interface DashboardNavTabsProps {
   role: string

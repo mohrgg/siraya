@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo } from "react"
 import { 
-  Activity, ShieldAlert, Zap, Server, Users, Database, FileText, 
-  Search, Filter, Download, CheckCircle2, AlertCircle, TrendingUp, RefreshCw,
-  Building, LayoutDashboard, Settings, X, ChevronLeft, ChevronRight, Copy, Calendar, Clock, User, Tag
+  Activity, ShieldAlert, Zap, Users, Database, FileText, 
+  Search, Filter, TrendingUp, RefreshCw,
+  LayoutDashboard, X, ChevronLeft, ChevronRight, Copy, Calendar, Clock, User, Tag
 } from "lucide-react"
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 

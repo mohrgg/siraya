@@ -22,8 +22,10 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
   // Helper untuk mengambil active unit dan year dari cookie
   const getActiveContext = async () => {
     const userUnitId = (session?.user as any)?.unitSekolahId
-    const schoolUnits = await prisma.unitSekolah.findMany({ orderBy: { name: 'asc' } })
-    const allAcademicYears = await prisma.tahunAkademik.findMany({ orderBy: { createdAt: 'desc' } })
+    const [schoolUnits, allAcademicYears] = await Promise.all([
+      prisma.unitSekolah.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } }),
+      prisma.tahunAkademik.findMany({ select: { id: true, name: true, isActive: true }, orderBy: { createdAt: 'desc' } })
+    ])
     const cookieStore = await cookies()
     
     let activeUnitId = cookieStore.get("activeUnitId")?.value

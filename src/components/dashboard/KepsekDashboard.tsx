@@ -1,6 +1,6 @@
 'use client'
 
-import { Building, Users, LayoutDashboard, Calendar, GraduationCap, CheckCircle2, TrendingUp, TrendingDown, BookOpen, Wallet, Award, Layers } from "lucide-react"
+import { Users, LayoutDashboard, GraduationCap, CheckCircle2, TrendingUp, TrendingDown, Wallet, Award } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, Treemap } from 'recharts'
 import Link from "next/link"
 import PendapatanInteractiveChart from './PendapatanInteractiveChart'
@@ -9,10 +9,9 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 export default function KepsekDashboard(props: any) {
   const { 
-    activeUnit, activeYear, totalMurid, totalRombel, totalJurusan, totalGuru,
+    activeUnit, activeYear, totalMurid, totalRombel, totalGuru,
     dataQualityScore, jobData, incomeData, topCrowded, topEmpty, retentionData, 
-    jenjangData, genderData, statusData, anomalyList, capacityData,
-    guruStatusData, guruPendidikanData,
+    jenjangData, guruPendidikanData,
     // Keuangan
     penerimaanBulanIni = 0, pengeluaranBulanIni = 0, saldoBulanIni = 0,
     kolektibilitasData = [], alokasiPengeluaran = [], 

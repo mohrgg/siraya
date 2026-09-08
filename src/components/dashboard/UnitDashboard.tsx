@@ -17,7 +17,6 @@ interface UnitDashboardProps {
   unitName?: string
   totalMurid?: number
   totalRombel?: number
-  totalJurusan?: number
   totalGuru?: number
   rombelData?: Array<{ 
     id?: string;
@@ -26,18 +25,8 @@ interface UnitDashboardProps {
     genderDist?: Array<{ name: string; value: number; color?: string }>;
     topStudents?: Array<any>;
   }>
-  capacityWarnings?: Array<{ name: string; total: number }>
   genderData?: Array<{ name: string; value: number; color?: string }>
-  statusData?: Array<{ name: string; value: number }>
-  anomalyList?: Array<any>
-  missingParent?: number
-  mutationLogs?: Array<any>
-  parentData?: Array<{ name: string; value: number; color?: string }>
-  scholarshipData?: Array<{ name: string; value: number; color?: string }>
-  incomeData?: Array<{ name: string; value: number; color?: string }>
   guruStatusData?: Array<{ name: string; value: number; color?: string }>
-  ageData?: Array<{ ageGroup: string; name?: string; total: number }>
-  unitLogs?: Array<any>
   // Keuangan Unit
   penerimaanBulanIni?: number
   pengeluaranBulanIni?: number
@@ -57,21 +46,10 @@ export default function UnitDashboard(props: UnitDashboardProps) {
     unitName = 'Unit Sekolah',
     totalMurid = 0,
     totalRombel = 0,
-    totalJurusan = 0,
-    rombelData = [],
-    capacityWarnings = [],
-    genderData = [],
-    statusData = [],
-    anomalyList = [],
-    missingParent = 0,
-    mutationLogs = [],
-    parentData = [],
-    scholarshipData = [],
-    incomeData = [],
-    guruStatusData = [],
-    ageData = [],
-    unitLogs = [],
     totalGuru = 0,
+    rombelData = [],
+    genderData = [],
+    guruStatusData = [],
     penerimaanBulanIni = 0,
     pengeluaranBulanIni = 0,
     totalTunggakanUnit = 0,

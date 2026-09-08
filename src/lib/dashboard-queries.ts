@@ -78,16 +78,18 @@ function generateInteractiveChartData(transactions: any[], todayStart: Date, wee
 
 // ==================== STANDAR YAYASAN (GLOBAL) ====================
 export async function getYayasanDashboardData(yearId?: string) {
-  const totalPegawai = await prisma.pengguna.count({ where: { isActive: true } })
-  const totalUnit = await prisma.unitSekolah.count({ where: { isActive: true } })
-  const totalRombel = await prisma.subKelas.count({ where: { isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) } })
-  const totalSiswa = await prisma.murid.count({ 
-    where: { 
-      isActive: true,
-      ...(yearId ? { riwayatKelas: { some: { isCurrent: true, tahunAkademikId: yearId } } } : {})
-    } 
-  })
-  const totalGuru = await prisma.guru.count({ where: { isDeleted: false, isActive: true } })
+  const [totalPegawai, totalUnit, totalRombel, totalSiswa, totalGuru] = await Promise.all([
+    prisma.pengguna.count({ where: { isActive: true } }),
+    prisma.unitSekolah.count({ where: { isActive: true } }),
+    prisma.subKelas.count({ where: { isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) } }),
+    prisma.murid.count({ 
+      where: { 
+        isActive: true,
+        ...(yearId ? { riwayatKelas: { some: { isCurrent: true, tahunAkademikId: yearId } } } : {})
+      } 
+    }),
+    prisma.guru.count({ where: { isDeleted: false, isActive: true } })
+  ])
 
   const unitsRaw = await prisma.unitSekolah.findMany({
     select: {
@@ -120,12 +122,6 @@ export async function getYayasanDashboardData(yearId?: string) {
     },
     orderBy: { name: 'asc' }
   })
-
-  const units = unitsRaw.map(u => ({
-    id: u.id,
-    name: u.name,
-    _count: u._count
-  }))
 
   // Hitung kolektibilitas per unit
   const tagihanUnitRaw = await prisma.tagihan.findMany({
@@ -215,44 +211,30 @@ export async function getYayasanDashboardData(yearId?: string) {
     .map(u => ({ unitName: u.name, incompleteCount: u._count.murid }))
     .sort((a, b) => b.incompleteCount - a.incompleteCount)
 
-  // 4. Tren Pertumbuhan Siswa Riil (5 Tahun Terakhir)
-  const currentYear = new Date().getFullYear()
-  const trendData = []
-  for (let i = 4; i >= 0; i--) {
-    const year = currentYear - i
-    const count = await prisma.murid.count({
-      where: {
-        createdAt: {
-          gte: new Date(`${year}-01-01`),
-          lt: new Date(`${year + 1}-01-01`)
-        }
-      }
-    })
-    trendData.push({ year: year.toString(), total: count })
-  }
-
   const academicYear = yearId 
     ? await prisma.tahunAkademik.findUnique({ where: { id: yearId } })
     : await prisma.tahunAkademik.findFirst({ where: { isActive: true } })
 
   // ==================== KEUANGAN (FINANCIAL METRICS) ====================
-  // 1. Total Kas Global (Pemasukan vs Pengeluaran)
-  const kasMasuk = await prisma.transaksi.aggregate({
-    where: { jenis: 'KAS_MASUK', status: 'POSTED' },
-    _sum: { totalNilai: true }
-  })
-  const kasKeluar = await prisma.transaksi.aggregate({
-    where: { jenis: 'KAS_KELUAR', status: 'POSTED' },
-    _sum: { totalNilai: true }
-  })
+  // 1. Total Kas Global & Piutang (Paralel)
+  const [kasMasuk, kasKeluar, tagihan] = await Promise.all([
+    prisma.transaksi.aggregate({
+      where: { jenis: 'KAS_MASUK', status: 'POSTED' },
+      _sum: { totalNilai: true }
+    }),
+    prisma.transaksi.aggregate({
+      where: { jenis: 'KAS_KELUAR', status: 'POSTED' },
+      _sum: { totalNilai: true }
+    }),
+    prisma.tagihan.aggregate({
+      _sum: { jumlah: true, sisaTagihan: true }
+    })
+  ])
+
   const totalPemasukan = kasMasuk._sum.totalNilai || 0
   const totalPengeluaran = kasKeluar._sum.totalNilai || 0
   const totalKasGlobal = totalPemasukan - totalPengeluaran
 
-  // 2. Piutang & Kolektibilitas
-  const tagihan = await prisma.tagihan.aggregate({
-    _sum: { jumlah: true, sisaTagihan: true }
-  })
   const totalPiutangGlobal = tagihan._sum.sisaTagihan || 0
   const totalTagihanGlobal = tagihan._sum.jumlah || 0
   const totalTerbayarGlobal = totalTagihanGlobal - totalPiutangGlobal
@@ -326,14 +308,14 @@ export async function getYayasanDashboardData(yearId?: string) {
   const interactiveChartData = generateInteractiveChartData(rawMonthTransactions, todayStart, weekStart, monthStart)
 
   return {
-    usersCount: totalPegawai, totalPegawai,
-    unitCount: totalUnit, totalUnit,
-    rombelCount: totalRombel, totalRombel,
-    muridCount: totalSiswa, totalSiswa,
-    guruCount: totalGuru, totalGuru,
-    units, unitDistribution, unitData: unitDistribution,
+    usersCount: totalPegawai,
+    unitCount: totalUnit,
+    rombelCount: totalRombel,
+    muridCount: totalSiswa,
+    guruCount: totalGuru,
+    unitData: unitDistribution,
     genderData,
-    incompleteData, trendData,
+    incompleteData,
     academicYear,
     // Keuangan Global
     totalKasGlobal, totalPiutangGlobal, kolektibilitas, arusKasTrend, topUnitTunggakan, 
@@ -345,18 +327,18 @@ export async function getYayasanDashboardData(yearId?: string) {
 export const getAdminYayasanData = getYayasanDashboardData;
 export const getTuYayasanData = getYayasanDashboardData;
 
-// ==================== STANDAR UNIT SEKOLAH ====================
 export async function getUnitDashboardData(unitId: string, yearId?: string) {
-  const totalMurid = await prisma.murid.count({ 
-    where: { 
-      isActive: true, 
-      unitSekolahId: unitId,
-      ...(yearId ? { riwayatKelas: { some: { isCurrent: true, tahunAkademikId: yearId } } } : {})
-    } 
-  })
-  const totalRombel = await prisma.subKelas.count({ where: { unitSekolahId: unitId, isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) } })
-  const totalJurusan = await prisma.jurusan.count({ where: { unitSekolahId: unitId, isDeleted: false } })
-  const totalGuru = await prisma.guru.count({ where: { unitSekolahId: unitId, isDeleted: false, isActive: true } })
+  const [totalMurid, totalRombel, totalGuru] = await Promise.all([
+    prisma.murid.count({ 
+      where: { 
+        isActive: true, 
+        unitSekolahId: unitId,
+        ...(yearId ? { riwayatKelas: { some: { isCurrent: true, tahunAkademikId: yearId } } } : {})
+      } 
+    }),
+    prisma.subKelas.count({ where: { unitSekolahId: unitId, isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) } }),
+    prisma.guru.count({ where: { unitSekolahId: unitId, isDeleted: false, isActive: true } })
+  ])
 
   // Status Guru
   const guruStatusDist = await prisma.guru.groupBy({
@@ -462,22 +444,23 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
   const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59)
 
-  const kasMasukUnit = await prisma.transaksi.aggregate({
-    where: { unitSekolahId: unitId, jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } },
-    _sum: { totalNilai: true }
-  })
+  const [kasMasukUnit, kasKeluarUnit, tagihanUnitLengkap] = await Promise.all([
+    prisma.transaksi.aggregate({
+      where: { unitSekolahId: unitId, jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } },
+      _sum: { totalNilai: true }
+    }),
+    prisma.transaksi.aggregate({
+      where: { unitSekolahId: unitId, jenis: 'KAS_KELUAR', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } },
+      _sum: { totalNilai: true }
+    }),
+    prisma.tagihan.aggregate({
+      where: { murid: { unitSekolahId: unitId } },
+      _sum: { jumlah: true, sisaTagihan: true }
+    })
+  ])
   const penerimaanBulanIni = kasMasukUnit._sum.totalNilai || 0
-
-  const kasKeluarUnit = await prisma.transaksi.aggregate({
-    where: { unitSekolahId: unitId, jenis: 'KAS_KELUAR', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } },
-    _sum: { totalNilai: true }
-  })
   const pengeluaranBulanIni = kasKeluarUnit._sum.totalNilai || 0
 
-  const tagihanUnitLengkap = await prisma.tagihan.aggregate({
-    where: { murid: { unitSekolahId: unitId } },
-    _sum: { jumlah: true, sisaTagihan: true }
-  })
   const totalTagihanUnit = tagihanUnitLengkap._sum.jumlah || 0
   const totalTunggakanUnit = tagihanUnitLengkap._sum.sisaTagihan || 0
   const terbayarUnit = totalTagihanUnit - totalTunggakanUnit
@@ -504,23 +487,27 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
   const interactiveChartDataU = generateInteractiveChartData(rawMonthTransactionsU, todayStart, weekStart, monthStart)
 
   const currentYearU = new Date().getFullYear()
-  const trendData = []
-  for (let i = 2; i >= 0; i--) {
-    const year = currentYearU - i
-    const count = await prisma.murid.count({
-      where: {
-        unitSekolahId: unitId,
-        createdAt: {
-          gte: new Date(`${year}-01-01`),
-          lt: new Date(`${year + 1}-01-01`)
+  const years = [currentYearU - 2, currentYearU - 1, currentYearU]
+  const trendCounts = await Promise.all(
+    years.map(year =>
+      prisma.murid.count({
+        where: {
+          unitSekolahId: unitId,
+          createdAt: {
+            gte: new Date(`${year}-01-01`),
+            lt: new Date(`${year + 1}-01-01`)
+          }
         }
-      }
-    })
-    trendData.push({ year: year.toString(), total: count })
-  }
+      })
+    )
+  )
+  const trendData = years.map((year, idx) => ({
+    year: year.toString(),
+    total: trendCounts[idx]
+  }))
 
   return {
-    totalMurid, totalRombel, totalSubKelas: totalRombel, totalJurusan, totalGuru,
+    totalMurid, totalRombel, totalSubKelas: totalRombel, totalGuru,
     rombelData, capacityWarnings,
     genderData,
     guruStatusData, guruPendidikanData,
@@ -664,10 +651,17 @@ export async function getAdminOperasionalData() {
 
 // ==================== KEPALA SEKOLAH ====================
 export async function getKepsekData(unitId: string, yearId?: string) {
-  const totalMurid = await prisma.murid.count({ where: { isActive: true, unitSekolahId: unitId } })
-  const totalRombel = await prisma.subKelas.count({ where: { isDeleted: false, unitSekolahId: unitId, ...(yearId ? { tahunAkademikId: yearId } : {}) } })
-  const totalJurusan = await prisma.jurusan.count({ where: { isDeleted: false, unitSekolahId: unitId } })
-  const totalGuru = await prisma.guru.count({ where: { unitSekolahId: unitId, isDeleted: false, isActive: true } })
+  const [totalMurid, totalRombel, totalGuru] = await Promise.all([
+    prisma.murid.count({ 
+      where: { 
+        isActive: true, 
+        unitSekolahId: unitId,
+        ...(yearId ? { riwayatKelas: { some: { isCurrent: true, tahunAkademikId: yearId } } } : {})
+      } 
+    }),
+    prisma.subKelas.count({ where: { isDeleted: false, unitSekolahId: unitId, ...(yearId ? { tahunAkademikId: yearId } : {}) } }),
+    prisma.guru.count({ where: { unitSekolahId: unitId, isDeleted: false, isActive: true } })
+  ])
 
   // Pendidikan Guru
   const guruPendidikanDist = await prisma.guru.groupBy({
@@ -755,24 +749,25 @@ export async function getKepsekData(unitId: string, yearId?: string) {
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
   const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59)
 
-  const kasMasukUnit = await prisma.transaksi.aggregate({
-    where: { unitSekolahId: unitId, jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } },
-    _sum: { totalNilai: true }
-  })
+  const [kasMasukUnit, kasKeluarUnit, tagihanUnitAgg] = await Promise.all([
+    prisma.transaksi.aggregate({
+      where: { unitSekolahId: unitId, jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } },
+      _sum: { totalNilai: true }
+    }),
+    prisma.transaksi.aggregate({
+      where: { unitSekolahId: unitId, jenis: 'KAS_KELUAR', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } },
+      _sum: { totalNilai: true }
+    }),
+    prisma.tagihan.aggregate({
+      where: { murid: { unitSekolahId: unitId } },
+      _sum: { jumlah: true, sisaTagihan: true }
+    })
+  ])
   const penerimaanBulanIni = kasMasukUnit._sum.totalNilai || 0
-
-  const kasKeluarUnit = await prisma.transaksi.aggregate({
-    where: { unitSekolahId: unitId, jenis: 'KAS_KELUAR', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } },
-    _sum: { totalNilai: true }
-  })
   const pengeluaranBulanIni = kasKeluarUnit._sum.totalNilai || 0
   const saldoBulanIni = penerimaanBulanIni - pengeluaranBulanIni
 
   // Kolektibilitas
-  const tagihanUnitAgg = await prisma.tagihan.aggregate({
-    where: { murid: { unitSekolahId: unitId } },
-    _sum: { jumlah: true, sisaTagihan: true }
-  })
   const totalTagihanUnit = tagihanUnitAgg._sum.jumlah || 0
   const totalSisaTagihanUnit = tagihanUnitAgg._sum.sisaTagihan || 0
   const totalLunasUnit = totalTagihanUnit - totalSisaTagihanUnit
@@ -812,7 +807,7 @@ export async function getKepsekData(unitId: string, yearId?: string) {
   const interactiveChartDataK = generateInteractiveChartData(rawMonthTransactionsK, todayStart, weekStart, monthStart)
 
   return { 
-    totalMurid, totalRombel, totalJurusan, totalGuru, guruPendidikanData, 
+    totalMurid, totalRombel, totalGuru, guruPendidikanData, 
     dataQualityScore, jobData, incomeData, topCrowded, topEmpty, retentionData, 
     jenjangData,
     // Keuangan

@@ -2,9 +2,9 @@
 
 import React, { useState } from "react"
 import { 
-  Building, Users, GraduationCap, LayoutDashboard, ShieldCheck, 
+  Building, Users, GraduationCap, LayoutDashboard, 
   AlertTriangle, TrendingUp, CheckCircle2, 
-  Settings, Award, Wallet, FileText, Info
+  Settings, Wallet, FileText
 } from "lucide-react"
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -24,13 +24,7 @@ interface YayasanDashboardProps {
   guruCount?: number
   unitData?: Array<any>
   genderData?: Array<{ name: string; value: number; color?: string }>
-  scholarshipData?: Array<{ name: string; value: number; color?: string }>
-  dataQualityIndex?: number
   incompleteData?: Array<{ unitName: string; incompleteCount: number }>
-  trendData?: Array<{ year: string; total: number }>
-  districtData?: Array<{ name: string; value: number }>
-  classEfficiency?: Array<{ name: string; ratio: number }>
-  statusDataGlobal?: Array<{ name: string; value: number }>
   academicYear?: any
   // Keuangan
   totalKasGlobal?: number
@@ -54,10 +48,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
     guruCount = 0,
     unitData = [],
     genderData = [],
-    scholarshipData = [],
-    dataQualityIndex = 0,
     incompleteData = [],
-    classEfficiency = [],
     academicYear,
     totalKasGlobal = 0,
     totalPiutangGlobal = 0,
