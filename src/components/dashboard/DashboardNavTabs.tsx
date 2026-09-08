@@ -26,9 +26,9 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
     switch (currentRole) {
       case 'ADMIN':
         return [
-          { id: 'yayasan', label: 'Yayasan', icon: Building2 },
-          ...(activeUnitId !== 'all' ? [{ id: 'unit', label: 'Unit Sekolah', icon: Layers }] : []),
-          { id: 'operasional', label: 'Operasional', icon: Activity },
+          { id: 'yayasan', label: 'Konsolidasi Yayasan', icon: Building2 },
+          ...(activeUnitId !== 'all' ? [{ id: 'unit', label: `Detail: ${units.find(u => u.id === activeUnitId)?.name || 'Unit Sekolah'}`, icon: Layers }] : []),
+          { id: 'operasional', label: 'Sistem & Operasional', icon: Activity },
         ]
       case 'TATA_USAHA':
         return [
@@ -54,7 +54,7 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
 
   return (
     <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      <div className="bg-white p-1.5 rounded-2xl border border-gray-200 shadow-sm inline-flex flex-wrap gap-1">
+      <div className="bg-surface p-1.5 rounded-2xl border border-border shadow-xs inline-flex flex-wrap gap-1.5 w-full sm:w-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon
           const isYayasanDefault = role === 'YAYASAN' && !searchParams.get('tab') && (activeUnitId && activeUnitId !== 'all' ? tab.id === 'unit' : tab.id === 'yayasan')
@@ -65,10 +65,10 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
             <Link
               key={tab.id}
               href={href}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all min-h-[44px] ${
                 isActive
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                  ? 'bg-primary text-white shadow-2xs'
+                  : 'text-text-muted hover:text-text-main hover:bg-slate-50'
               }`}
             >
               <Icon size={16} />
@@ -77,7 +77,6 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
           )
         })}
       </div>
-
     </div>
   )
 }
