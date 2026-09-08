@@ -2,25 +2,24 @@
 
 import { 
   Users, LayoutDashboard, GraduationCap, CheckCircle2, 
-  TrendingUp, TrendingDown, Wallet, Award, FileText, AlertCircle, PieChart as PieIcon
+  TrendingUp, TrendingDown, Wallet, Award, FileText, 
+  ArrowUpRight, BarChart3, AlertTriangle, ShieldCheck
 } from "lucide-react"
 import { 
-  PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Treemap 
+  ResponsiveContainer, Tooltip, 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts'
 import Link from "next/link"
 import PendapatanInteractiveChart from './PendapatanInteractiveChart'
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
-
 export default function KepsekDashboard(props: any) {
   const { 
     activeUnit, activeYear, totalMurid = 0, totalRombel = 0, totalGuru = 0,
-    dataQualityScore, jobData = [], incomeData = [], topCrowded = [], topEmpty = [], retentionData = [], 
-    jenjangData = [], guruPendidikanData = [],
+    incomeData = [], topCrowded = [], topEmpty = [],
+    jenjangData = [],
     // Keuangan
     penerimaanBulanIni = 0, pengeluaranBulanIni = 0, saldoBulanIni = 0,
-    kolektibilitasData = [], alokasiPengeluaran = [], 
+    alokasiPengeluaran = [], 
     totalTagihanUnit = 0, totalSisaTagihanUnit = 0, kolektibilitasPersen = null,
     pendapatanHariIniChart = [], pendapatanMingguIniChart = [], pendapatanBulanIniChart = []
   } = props
@@ -28,67 +27,60 @@ export default function KepsekDashboard(props: any) {
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
   const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
 
-  // Treemap custom renderer
-  const TreemapContent = (props: any) => {
-    const { depth, x, y, width, height, index, name, value } = props
-    if (depth !== 1) return null
-    return (
-      <g>
-        <rect x={x} y={y} width={width} height={height} fill={COLORS[index % COLORS.length]} stroke="#fff" strokeWidth={2} rx={4} />
-        {width > 50 && height > 28 && (
-          <text x={x + width / 2} y={y + height / 2} textAnchor="middle" fill="#fff" fontSize={11} fontWeight="bold" dy={4}>
-            {name} ({value})
-          </text>
-        )}
-      </g>
-    )
-  }
-
-  // Hitung persentase kolektibilitas jika ada
-  const displayKolektibilitas = kolektibilitasPersen !== null ? kolektibilitasPersen : (totalTagihanUnit > 0 ? Math.round(((totalTagihanUnit - totalSisaTagihanUnit) / totalTagihanUnit) * 100) : 100)
+  // Hitung metrik turunan eksekutif
+  const avgPerRombel = totalRombel > 0 ? Math.round(totalMurid / totalRombel) : 0
+  const ratioGuru = totalGuru > 0 ? Math.round(totalMurid / totalGuru) : 0
+  
+  const displayKolektibilitas = kolektibilitasPersen !== null 
+    ? kolektibilitasPersen 
+    : (totalTagihanUnit > 0 ? Math.round(((totalTagihanUnit - totalSisaTagihanUnit) / totalTagihanUnit) * 100) : 100)
   const isKolektibilitasSehat = displayKolektibilitas >= 80
 
+  const hasCrowded = topCrowded && topCrowded.length > 0 && topCrowded[0]?.total > 36
   const hasMajors = activeUnit?.level === 'SMK' || activeUnit?.level === 'SMA'
 
+  // Total Realisasi Tagihan Lunas
+  const totalLunas = totalTagihanUnit - totalSisaTagihanUnit
+
   return (
-    <div className="flex flex-col gap-8 pb-12 animate-in fade-in duration-300 w-full">
-      {/* SECTION 1: Header Banner Eksekutif */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+    <div className="flex flex-col gap-8 pb-12 animate-in fade-in duration-300 max-w-[1600px] mx-auto w-full">
+      {/* SECTION 1: Header Komando Eksekutif */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
         <div className="flex-1 min-w-0 pr-0 lg:pr-6">
-          <div className="flex flex-wrap items-center gap-2 mb-1.5">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wider uppercase bg-emerald-50 text-[#065f32] border border-emerald-200/80">
               Kepala Sekolah • Pimpinan Unit
             </span>
-            <span className="text-gray-300">•</span>
-            <span className="text-xs font-semibold text-gray-500">Tahun Akademik: {activeYear?.name || 'Aktif'}</span>
-            <span className="text-gray-300">•</span>
-            <span className="text-xs font-bold text-gray-800">{activeUnit?.name || '-'}</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-xs font-medium text-slate-500">Tahun Akademik: {activeYear?.name || 'Aktif'}</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-xs font-bold text-slate-800">{activeUnit?.name || 'Unit Sekolah'}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Dashboard Eksekutif Unit</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Pusat monitoring kesehatan operasional, evaluasi beban tenaga pendidik, dan audit finansial pada {activeUnit?.name || 'Unit Sekolah'}.
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Eksekutif Unit</h1>
+          <p className="text-sm text-slate-500 mt-1 max-w-3xl leading-relaxed">
+            Pusat kendali evaluasi mutu kesiswaan, kepatuhan daya tampung rombel, dan audit arus kas operasional pada {activeUnit?.name || 'Unit Sekolah'}.
           </p>
         </div>
 
-        {/* Action Buttons (Kontekstual & Relevan untuk Kepsek) */}
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start md:self-center">
+        {/* Action Buttons (Kontekstual & Relevan Eksekutif) */}
+        <div className="flex flex-wrap items-center gap-2 shrink-0 self-start md:self-center">
           <Link
             href="/kelas"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#065f32] hover:bg-[#054d28] text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm transition-all duration-200 whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-[#065f32] hover:bg-[#054d28] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
           >
             <LayoutDashboard size={16} />
             Kapasitas Rombel
           </Link>
           <Link
             href="/rekapitulasi-tunggakan"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm transition-all duration-200 whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
           >
             <Wallet size={16} />
             Monitoring SPP
           </Link>
           <Link
             href="/laporan"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-bold rounded-xl shadow-sm transition-all duration-200 whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
           >
             <FileText size={16} />
             Pusat Laporan
@@ -96,7 +88,7 @@ export default function KepsekDashboard(props: any) {
           {hasMajors && (
             <Link
               href="/jurusan"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm transition-all duration-200 whitespace-nowrap"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
             >
               <Award size={16} />
               Jurusan
@@ -105,137 +97,173 @@ export default function KepsekDashboard(props: any) {
         </div>
       </div>
 
-      {/* SECTION 2: Overview Indikator Kunci (4 Kolom) */}
-      <section className="flex flex-col gap-4">
-        <div className="flex items-center gap-2 px-1">
-          <div className="w-1.5 h-6 bg-emerald-600 rounded-full"></div>
-          <h2 className="text-xl font-bold text-gray-900 tracking-tight">Overview Eksekutif Unit</h2>
+      {/* SECTION 2: Executive Pulse (Hero Telemetry Strip) */}
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Overview Eksekutif Unit</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Indikator vital mutu kesiswaan, rasio pendidik, dan kolektibilitas unit sekolah.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          {/* Tile 1: Total Siswa Aktif */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Total Siswa Aktif</span>
-              <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-                <GraduationCap size={20} />
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Siswa Aktif</span>
+              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+                <GraduationCap size={16} />
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-gray-900">{formatNumber(totalMurid)}</span>
-              <span className="text-xs font-semibold text-blue-600">Peserta Didik</span>
-            </div>
-            <p className="text-[11px] text-gray-400 mt-2">Siswa terdaftar aktif pada tahun ajaran ini</p>
-          </div>
-          
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Rombongan Belajar</span>
-              <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
-                <LayoutDashboard size={20} />
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-slate-900">{formatNumber(totalMurid)}</span>
+                <span className="text-xs font-semibold text-slate-600">Peserta Didik</span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Aktif Terdaftar
+                </span>
+                <span className="text-[11px] text-slate-400">TA {activeYear?.name || '-'}</span>
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-gray-900">{formatNumber(totalRombel)}</span>
-              <span className="text-xs font-semibold text-purple-600">Rombel Aktif</span>
-            </div>
-            <p className="text-[11px] text-gray-400 mt-2">
-              Rata-rata {totalRombel > 0 ? Math.round(totalMurid / totalRombel) : 0} siswa per rombel
-            </p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          {/* Tile 2: Kapasitas Rombel */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Tenaga Pendidik</span>
-              <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
-                <Users size={20} />
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Rombongan Belajar</span>
+              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+                <LayoutDashboard size={16} />
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-gray-900">{formatNumber(totalGuru)}</span>
-              <span className="text-xs font-semibold text-amber-600">
-                Rasio 1 : {totalGuru > 0 ? Math.round(totalMurid / totalGuru) : 0}
-              </span>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-slate-900">{formatNumber(totalRombel)}</span>
+                <span className="text-xs font-semibold text-slate-600">Kelas</span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-2">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
+                  avgPerRombel >= 20 && avgPerRombel <= 36 
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                }`}>
+                  Rata-rata {avgPerRombel} Siswa
+                </span>
+                <span className="text-[11px] text-slate-400">Standar 20-36</span>
+              </div>
             </div>
-            <p className="text-[11px] text-gray-400 mt-2">Guru aktif bertugas di unit ini</p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          {/* Tile 3: Rasio Pendidik */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Kolektibilitas SPP</span>
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isKolektibilitasSehat ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                <CheckCircle2 size={20} />
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tenaga Pendidik</span>
+              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+                <Users size={16} />
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-gray-900">{displayKolektibilitas}%</span>
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isKolektibilitasSehat ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
-                {isKolektibilitasSehat ? 'Kolektibilitas Sehat' : 'Perlu Perhatian'}
-              </span>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-slate-900">1 : {ratioGuru}</span>
+                <span className="text-xs font-semibold text-slate-600">Rasio Murid</span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                  {formatNumber(totalGuru)} Guru Bertugas
+                </span>
+                <span className="text-[11px] text-slate-400">Linier</span>
+              </div>
             </div>
-            <p className="text-[11px] text-gray-500 mt-2">
-              Sisa Tunggakan: <strong className="text-gray-700">{formatCurrency(totalSisaTagihanUnit)}</strong>
-            </p>
+          </div>
+
+          {/* Tile 4: Kolektibilitas SPP */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Kolektibilitas SPP</span>
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                isKolektibilitasSehat ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+              }`}>
+                {isKolektibilitasSehat ? <ShieldCheck size={16} /> : <AlertTriangle size={16} />}
+              </div>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-slate-900">{displayKolektibilitas}%</span>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
+                  isKolektibilitasSehat ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
+                }`}>
+                  {isKolektibilitasSehat ? 'Likuiditas Sehat' : 'Perlu Atensi'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-2 truncate">
+                Sisa Piutang: <strong className="text-slate-700 font-semibold">{formatCurrency(totalSisaTagihanUnit)}</strong>
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* SECTION 3: Pengawasan Finansial & Arus Kas */}
+      {/* SECTION 3: Pengawasan Finansial & Likuiditas Kas (Asymmetric 12-Col Split) */}
       <section className="flex flex-col gap-4">
-        <div className="flex items-center gap-2 px-1">
-          <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-          <h2 className="text-xl font-bold text-gray-900 tracking-tight">Pengawasan Finansial & Arus Kas</h2>
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Pengawasan Finansial & Arus Kas</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Monitoring perputaran kas riil bulanan, efektivitas penerimaan tagihan, dan audit pengeluaran.</p>
         </div>
 
-        {/* 3 Metric Cards Keuangan */}
+        {/* 3 Key Financial Value Strip */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-gradient-to-br from-[#065f32] via-[#08733e] to-[#044e28] rounded-2xl border border-emerald-800/30 p-5 shadow-sm text-white hover:shadow-md transition-shadow relative overflow-hidden">
-            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-28 h-28 bg-white opacity-10 rounded-full blur-2xl pointer-events-none"></div>
-            <div className="flex items-center gap-3 mb-3 relative z-10">
-              <div className="w-10 h-10 bg-white/20 text-white rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <Wallet size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-emerald-100 text-xs uppercase tracking-wider">Saldo Kas Riil Unit</h3>
-                <p className="text-[10px] text-emerald-200">Bulan Berjalan</p>
+          {/* Card Saldo Kas Riil (Brand Forest Green Accent) */}
+          <div className="bg-[#065f32] text-white rounded-2xl p-5 shadow-xs flex flex-col justify-between border border-[#054d28]">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-emerald-200 uppercase tracking-wider">Saldo Kas Riil Unit</span>
+              <div className="w-8 h-8 rounded-lg bg-white/10 text-white flex items-center justify-center">
+                <Wallet size={16} />
               </div>
             </div>
-            <p className="text-3xl font-black relative z-10">{formatCurrency(saldoBulanIni)}</p>
-            <p className="text-[11px] text-emerald-100/80 mt-2 relative z-10">Selisih arus kas masuk & keluar</p>
-          </div>
-          
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-                <TrendingUp size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wider">Penerimaan Kas Masuk</h3>
-                <p className="text-[10px] text-gray-400">Bulan Berjalan</p>
-              </div>
+            <div>
+              <p className="text-3xl font-black text-white tracking-tight">{formatCurrency(saldoBulanIni)}</p>
+              <p className="text-[11px] text-emerald-100/70 mt-1.5">Net cashflow bulan berjalan</p>
             </div>
-            <p className="text-3xl font-black text-gray-900">{formatCurrency(penerimaanBulanIni)}</p>
-            <p className="text-[11px] text-gray-400 mt-2">Total kas & pembayaran SPP masuk</p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
-                <TrendingDown size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-700 text-xs uppercase tracking-wider">Realisasi Belanja Kas</h3>
-                <p className="text-[10px] text-gray-400">Bulan Berjalan</p>
+          {/* Card Penerimaan */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Penerimaan Kas Masuk</span>
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <TrendingUp size={16} />
               </div>
             </div>
-            <p className="text-3xl font-black text-gray-900">{formatCurrency(pengeluaranBulanIni)}</p>
-            <p className="text-[11px] text-gray-400 mt-2">Total pengeluaran operasional unit</p>
+            <div>
+              <p className="text-3xl font-black text-slate-900 tracking-tight">{formatCurrency(penerimaanBulanIni)}</p>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="text-xs font-bold text-emerald-700">+ Arus Kas Masuk</span>
+                <span className="text-[11px] text-slate-400">Pembayaran terverifikasi</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card Belanja Kas */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Realisasi Belanja Kas</span>
+              <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center">
+                <TrendingDown size={16} />
+              </div>
+            </div>
+            <div>
+              <p className="text-3xl font-black text-slate-900 tracking-tight">{formatCurrency(pengeluaranBulanIni)}</p>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="text-xs font-bold text-rose-700">- Realisasi Pengeluaran</span>
+                <span className="text-[11px] text-slate-400">Operasional berjalan</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* 3 Detail Financial Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mt-2">
-          {/* Chart 1: Interactive Cash Inflow */}
-          <div className="lg:col-span-2 xl:col-span-1 h-[380px]">
+        {/* Asymmetric Split: Chart Arus Kas (7 Cols) + Audit Likuiditas & Belanja (5 Cols) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-1">
+          {/* Kolom Kiri: Chart Arus Kas Masuk (7 Cols) */}
+          <div className="lg:col-span-7 h-[420px]">
             <PendapatanInteractiveChart 
               hariIniData={pendapatanHariIniChart}
               mingguIniData={pendapatanMingguIniChart}
@@ -243,302 +271,244 @@ export default function KepsekDashboard(props: any) {
             />
           </div>
 
-          {/* Chart 2: Kolektibilitas Tagihan */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between h-[380px]">
+          {/* Kolom Kanan: Audit Likuiditas & Belanja Operasional (5 Cols) */}
+          <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between h-[420px]">
             <div>
-              <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2">
-                <CheckCircle2 size={18} className="text-emerald-600" />
-                Rasio Kolektibilitas SPP
-              </h3>
-              <p className="text-xs text-gray-500 mb-2">Perbandingan kewajiban lunas vs tunggakan siswa unit.</p>
-            </div>
-            <div className="h-56">
-              {kolektibilitasData && kolektibilitasData.length > 0 && (kolektibilitasData[0]?.value > 0 || kolektibilitasData[1]?.value > 0) ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={kolektibilitasData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value">
-                      {kolektibilitasData.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)'}} 
-                      formatter={(value: any) => formatCurrency(Number(value))}
-                    />
-                    <Legend iconType="circle" wrapperStyle={{fontSize: '11px'}} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-xs">
-                  <CheckCircle2 size={32} className="text-gray-300 mb-2" />
-                  Belum ada catatan tagihan unit
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm sm:text-base">Audit Likuiditas & Belanja</h3>
+                  <p className="text-[11px] text-slate-400">Efektivitas penagihan dan pos pengeluaran terbesar</p>
                 </div>
-              )}
-            </div>
-            <div className="flex justify-between items-center text-xs text-gray-500 pt-3 border-t border-gray-50">
-              <span>Total Tagihan: <strong>{formatCurrency(totalTagihanUnit)}</strong></span>
-              <span className="text-emerald-600 font-bold">{displayKolektibilitas}% Terbayar</span>
-            </div>
-          </div>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
+                  isKolektibilitasSehat ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
+                }`}>
+                  {displayKolektibilitas}% Terbayar
+                </span>
+              </div>
 
-          {/* Chart 3: Alokasi Pengeluaran */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between h-[380px]">
-            <div>
-              <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2">
-                <TrendingDown size={18} className="text-rose-500" />
-                Alokasi Pengeluaran Unit
-              </h3>
-              <p className="text-xs text-gray-500 mb-2">Pos belanja operasional terbesar bulan ini.</p>
-            </div>
-            <div className="h-56">
-              {alokasiPengeluaran && alokasiPengeluaran.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={alokasiPengeluaran} layout="vertical" margin={{ left: 10, right: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
-                    <XAxis type="number" axisLine={false} tickLine={false} tick={{fontSize: 10}} tickFormatter={(val) => `Rp${val/1000}k`} />
-                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 10}} width={100} />
-                    <Tooltip 
-                      cursor={{fill: '#f8fafc'}} 
-                      contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)'}} 
-                      formatter={(value: any) => formatCurrency(Number(value))}
-                    />
-                    <Bar dataKey="value" name="Pengeluaran" radius={[0, 4, 4, 0]}>
-                      {alokasiPengeluaran.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-xs">
-                  <TrendingDown size={32} className="text-gray-300 mb-2" />
-                  Belum ada data belanja kas bulan ini
+              {/* Progress Kolektibilitas Tagihan */}
+              <div className="space-y-2 mb-5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500">Realisasi Penerimaan SPP</span>
+                  <span className="font-bold text-slate-900">{formatCurrency(totalLunas)} <span className="text-slate-400 font-normal">/ {formatCurrency(totalTagihanUnit)}</span></span>
                 </div>
-              )}
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-[#065f32] h-full rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, displayKolektibilitas)}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-[11px] text-slate-400 pt-0.5">
+                  <span>Target Tagihan Unit</span>
+                  <span>Sisa: <strong className="text-rose-600 font-semibold">{formatCurrency(totalSisaTagihanUnit)}</strong></span>
+                </div>
+              </div>
+
+              {/* Pos Belanja Operasional Terbesar */}
+              <div>
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+                  <span>Pos Belanja Terbesar Bulan Ini</span>
+                  <Link href="/kas-keluar" className="text-[11px] font-semibold text-[#065f32] hover:underline flex items-center gap-0.5">
+                    Audit Kas Keluar <ArrowUpRight size={12} />
+                  </Link>
+                </h4>
+
+                <div className="space-y-2 overflow-y-auto max-h-[165px] pr-1">
+                  {alokasiPengeluaran && alokasiPengeluaran.length > 0 ? (
+                    alokasiPengeluaran.slice(0, 4).map((item: any, idx: number) => {
+                      const pct = pengeluaranBulanIni > 0 ? Math.round((item.value / pengeluaranBulanIni) * 100) : 0
+                      return (
+                        <div key={`exp-${idx}`} className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                          <div className="min-w-0 pr-2">
+                            <p className="font-semibold text-slate-800 truncate">{item.name}</p>
+                            <p className="text-[10px] text-slate-400">{pct}% dari total belanja</p>
+                          </div>
+                          <span className="font-bold text-slate-900 shrink-0">{formatCurrency(item.value)}</span>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 text-slate-400 text-xs text-center">
+                      <p>Belum ada catatan belanja kas bulan ini</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="text-xs text-gray-400 pt-3 border-t border-gray-50 text-right">
-              Total Realisasi: <strong className="text-gray-700">{formatCurrency(pengeluaranBulanIni)}</strong>
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <span>Total Belanja Kas:</span>
+              <span className="font-bold text-slate-900">{formatCurrency(pengeluaranBulanIni)}</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SECTION 4: Mutu Akademik, Kapasitas & Demografi */}
+      {/* SECTION 4: Mutu Akademik, Kapasitas Rombel & Ketenagaan */}
       <section className="flex flex-col gap-4">
-        <div className="flex items-center gap-2 px-1">
-          <div className="w-1.5 h-6 bg-purple-600 rounded-full"></div>
-          <h2 className="text-xl font-bold text-gray-900 tracking-tight">Kapasitas Kelas & Demografi Kesiswaan</h2>
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Kapasitas Kelas & Demografi Kesiswaan</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Audit daya tampung ruang kelas, persebaran tingkatan, dan profil sosial-ekonomi keluarga murid.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Peringkat Kapasitas Kelas */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between">
+          {/* Card 1: Audit Kapasitas Rombel */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between">
             <div>
-              <h3 className="font-bold text-gray-900 text-base mb-1">Peringkat Kapasitas Kelas</h3>
-              <p className="text-xs text-gray-500 mb-4">Monitoring daya tampung rombel (Standar ideal: 20-36).</p>
-            </div>
-            <div className="flex-1 flex flex-col justify-around gap-4">
-              <div>
-                <p className="text-xs font-bold text-red-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <TrendingUp size={14} className="text-red-500" /> Rombel Terpadat (&gt;35 Siswa)
-                </p>
-                {topCrowded && topCrowded.length > 0 ? (
-                  topCrowded.map((c: any) => (
-                    <div key={`crowded-${c.name}`} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                      <span className="text-sm font-semibold text-gray-700">{c.name}</span>
-                      <span className={`text-xs px-2.5 py-0.5 rounded-md font-bold ${c.total > 36 ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-gray-100 text-gray-700'}`}>
-                        {c.total} siswa
-                      </span>
-                    </div>
-                  ))
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Audit Daya Tampung Rombel</h3>
+                  <p className="text-xs text-slate-400">Standar Permendikbud: 20 – 36 siswa</p>
+                </div>
+                {hasCrowded ? (
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                    Ada Kelas Padat
+                  </span>
                 ) : (
-                  <p className="text-xs text-gray-400 py-1">Semua kelas dalam batas kapasitas normal</p>
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Kapasitas Ideal
+                  </span>
                 )}
               </div>
 
-              <div>
-                <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <TrendingDown size={14} className="text-emerald-500" /> Rombel Terlonggar (&lt;20 Siswa)
-                </p>
-                {topEmpty && topEmpty.length > 0 ? (
-                  topEmpty.map((c: any) => (
-                    <div key={`empty-${c.name}`} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                      <span className="text-sm font-semibold text-gray-700">{c.name}</span>
-                      <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-md font-bold">
-                        {c.total} siswa
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-gray-400 py-1">Belum ada rombel terdaftar</p>
-                )}
+              <div className="space-y-4">
+                {/* Rombel Terpadat */}
+                <div>
+                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span>Rombel Terpadat (&gt;35 Siswa)</span>
+                    <span className="text-[10px] text-slate-400">Prioritas Split</span>
+                  </p>
+                  {topCrowded && topCrowded.length > 0 ? (
+                    topCrowded.map((c: any) => (
+                      <div key={`crowded-${c.name}`} className="flex justify-between items-center py-1.5 border-b border-slate-50 last:border-0 text-xs">
+                        <span className="font-medium text-slate-700">{c.name}</span>
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                          c.total > 36 
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200' 
+                            : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {c.total} Siswa
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-slate-400 py-1">Semua kelas dalam batas normal</p>
+                  )}
+                </div>
+
+                {/* Rombel Terlonggar */}
+                <div>
+                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span>Rombel Kuota Minim (&lt;20 Siswa)</span>
+                    <span className="text-[10px] text-slate-400">Optimalisasi</span>
+                  </p>
+                  {topEmpty && topEmpty.length > 0 ? (
+                    topEmpty.map((c: any) => (
+                      <div key={`empty-${c.name}`} className="flex justify-between items-center py-1.5 border-b border-slate-50 last:border-0 text-xs">
+                        <span className="font-medium text-slate-700">{c.name}</span>
+                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                          {c.total} Siswa
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-slate-400 py-1">Belum ada rombel terdaftar</p>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="pt-3 border-t border-gray-50 mt-4">
-              <Link href="/kelas" className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
-                Audit seluruh rombel di Kapasitas Rombel →
+
+            <div className="pt-3 border-t border-slate-100 mt-4">
+              <Link href="/kelas" className="text-xs font-semibold text-[#065f32] hover:underline flex items-center gap-1">
+                Audit rincian seluruh rombel di Kapasitas Rombel <ArrowUpRight size={13} />
               </Link>
             </div>
           </div>
 
-          {/* Distribusi Jenjang */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between">
+          {/* Card 2: Distribusi Siswa per Jenjang */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between">
             <div>
-              <h3 className="font-bold text-gray-900 text-base mb-1">Distribusi Siswa per Jenjang</h3>
-              <p className="text-xs text-gray-500 mb-4">Jumlah murid berdasarkan tingkatan kelas aktif.</p>
-            </div>
-            <div className="h-56">
-              {jenjangData && jenjangData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={jenjangData} layout="vertical" margin={{ left: 10, right: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
-                    <XAxis type="number" axisLine={false} tickLine={false} tick={{fontSize: 10}} />
-                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 10}} width={70} />
-                    <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)'}} />
-                    <Bar dataKey="value" name="Jumlah Siswa" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-xs">
-                  Belum ada data jenjang kelas
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Distribusi per Jenjang Tingkat</h3>
+                  <p className="text-xs text-slate-400">Sebaran populasi murid berdasarkan tingkatan</p>
                 </div>
-              )}
+                <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-md">
+                  {formatNumber(totalMurid)} Siswa
+                </span>
+              </div>
+
+              <div className="h-56">
+                {jenjangData && jenjangData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={jenjangData} layout="vertical" margin={{ left: 5, right: 20, top: 10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
+                      <XAxis type="number" axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#64748b'}} />
+                      <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#334155'}} width={80} />
+                      <Tooltip 
+                        cursor={{fill: '#f8fafc'}} 
+                        contentStyle={{borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '12px'}} 
+                        formatter={(val: any) => [`${val} Siswa`, 'Jumlah Murid']}
+                      />
+                      <Bar dataKey="value" name="Jumlah Siswa" fill="#065f32" radius={[0, 4, 4, 0]} barSize={20} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs">
+                    Belum ada data jenjang kelas
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="text-xs text-gray-400 pt-3 border-t border-gray-50">
-              Total: <strong className="text-gray-700">{formatNumber(totalMurid)} Siswa</strong>
+
+            <div className="pt-3 border-t border-slate-100 text-xs text-slate-400">
+              Total daya serap: <strong className="text-slate-800">{formatNumber(totalMurid)} Murid Aktif</strong>
             </div>
           </div>
 
-          {/* Retensi Siswa */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between">
+          {/* Card 3: Profil Penghasilan & Kemampuan Bayar */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between">
             <div>
-              <h3 className="font-bold text-gray-900 text-base mb-1">Retensi Siswa (Tahun Ini)</h3>
-              <p className="text-xs text-gray-500 mb-4">Perbandingan siswa aktif bertahan vs mutasi/keluar.</p>
-            </div>
-            <div className="h-56">
-              {retentionData && retentionData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={retentionData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={4} dataKey="value">
-                      {retentionData.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)'}} />
-                    <Legend iconType="circle" wrapperStyle={{fontSize: '11px'}} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-xs">
-                  Belum ada data retensi
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Profil Finansial Orang Tua</h3>
+                  <p className="text-xs text-slate-400">Kemampuan daya dukung pembiayaan siswa</p>
                 </div>
-              )}
-            </div>
-            <div className="text-xs text-gray-400 pt-3 border-t border-gray-50 text-center">
-              Indikator kepuasan & keberlanjutan siswa
-            </div>
-          </div>
-        </div>
+                <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                  <BarChart3 size={14} />
+                </div>
+              </div>
 
-        {/* Row 2: Profil Ortu & Pendidikan Guru */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Treemap Pekerjaan Orang Tua */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between">
-            <div>
-              <h3 className="font-bold text-gray-900 text-base mb-1">Profil Pekerjaan Orang Tua</h3>
-              <p className="text-xs text-gray-500 mb-4">Demografi profesi kepala keluarga siswa.</p>
+              <div className="space-y-2.5 overflow-y-auto max-h-[220px] pr-1">
+                {incomeData && incomeData.length > 0 ? (
+                  incomeData.map((item: any, idx: number) => {
+                    const pct = totalMurid > 0 ? Math.round((item.value / totalMurid) * 100) : 0
+                    return (
+                      <div key={`inc-${idx}`} className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="font-medium text-slate-700 truncate max-w-[180px]">{item.name}</span>
+                          <span className="font-bold text-slate-900">{item.value} <span className="text-slate-400 font-normal">({pct}%)</span></span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                          <div 
+                            className="bg-slate-700 h-full rounded-full"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-10 text-slate-400 text-xs text-center">
+                    <p>Data penghasilan orang tua belum lengkap</p>
+                    <span className="text-[11px] text-slate-400 mt-1">Dapat dilengkapi oleh Tata Usaha</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="h-56">
-              {jobData && jobData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <Treemap
-                    data={jobData}
-                    dataKey="value"
-                    stroke="#fff"
-                    fill="#8884d8"
-                    content={<TreemapContent />}
-                  >
-                    <Tooltip />
-                  </Treemap>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-xs bg-gray-50/50 rounded-xl p-4 border border-dashed border-gray-200">
-                  <Users size={28} className="text-gray-300 mb-2" />
-                  <span>Data pekerjaan ayah belum diisi lengkap</span>
-                  <span className="text-[11px] text-gray-400 mt-1">Dapat diupdate melalui data siswa oleh TU</span>
-                </div>
-              )}
-            </div>
-            <div className="text-xs text-gray-400 pt-3 border-t border-gray-50">
-              Analisis latar belakang sosial-ekonomi
-            </div>
-          </div>
 
-          {/* Demografi Penghasilan Orang Tua */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between">
-            <div>
-              <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2">
-                <Wallet size={18} className="text-emerald-600" />
-                Rentang Gaji Orang Tua
-              </h3>
-              <p className="text-xs text-gray-500 mb-4">Demografi penghasilan bulanan keluarga siswa.</p>
-            </div>
-            <div className="h-56">
-              {incomeData && incomeData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={incomeData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={4} dataKey="value">
-                      {incomeData.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
-                    <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-xs bg-gray-50/50 rounded-xl p-4 border border-dashed border-gray-200">
-                  <Wallet size={28} className="text-gray-300 mb-2" />
-                  Belum ada data penghasilan orang tua
-                </div>
-              )}
-            </div>
-            <div className="text-xs text-gray-400 pt-3 border-t border-gray-50">
-              Data kemampuan pembiayaan pendidikan
-            </div>
-          </div>
-
-          {/* Pendidikan Terakhir Guru */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between">
-            <div>
-              <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2">
-                <Award size={18} className="text-pink-600" />
-                Kualifikasi Pendidik
-              </h3>
-              <p className="text-xs text-gray-500 mb-4">Linieritas & jenjang pendidikan guru aktif.</p>
-            </div>
-            <div className="h-56">
-              {guruPendidikanData && guruPendidikanData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={guruPendidikanData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={4} dataKey="value">
-                      {guruPendidikanData.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color || COLORS[(index + 3) % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
-                    <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-xs bg-gray-50/50 rounded-xl p-4 border border-dashed border-gray-200">
-                  <Award size={28} className="text-gray-300 mb-2" />
-                  Belum ada data pendidikan guru
-                </div>
-              )}
-            </div>
-            <div className="text-xs text-gray-400 pt-3 border-t border-gray-50">
-              Kesiapan standar akreditasi unit
+            <div className="pt-3 border-t border-slate-100 text-xs text-slate-400">
+              Indikator acuan kebijakan dispensasi SPP
             </div>
           </div>
         </div>
@@ -546,4 +516,5 @@ export default function KepsekDashboard(props: any) {
     </div>
   )
 }
+
 

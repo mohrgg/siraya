@@ -411,59 +411,59 @@ export default function KelasClient({
 
       {/* Executive Capacity Banner for KEPALA_SEKOLAH */}
       {isReadOnly && (
-        <div className="mb-6 p-5 bg-gradient-to-r from-[#065f32] via-[#08733e] to-[#044e28] rounded-2xl text-white shadow-sm border border-emerald-600/40">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
+        <div className="mb-6 p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/20 text-white border border-white/20">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-[#065f32] border border-emerald-200/80">
                   Ringkasan Eksekutif Mutu Rombel
                 </span>
-                <span className="text-xs text-white/60">•</span>
-                <span className="text-xs text-emerald-100 font-medium">Monitoring Kapasitas & Distribusi</span>
+                <span className="text-slate-300">•</span>
+                <span className="text-xs text-slate-500 font-medium">Monitoring Kapasitas & Distribusi</span>
               </div>
-              <h2 className="text-xl font-bold tracking-tight text-white">Monitoring Daya Tampung & Keterisian Rombel</h2>
+              <h2 className="text-xl font-bold tracking-tight text-slate-900">Monitoring Daya Tampung & Keterisian Rombel</h2>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-xl text-emerald-100 font-medium border border-white/10">
+              <span className="text-xs bg-slate-50 px-3 py-1.5 rounded-xl text-slate-600 font-medium border border-slate-200">
                 Standar Permendikbud: 20 - 36 Siswa / Rombel
               </span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
-              <p className="text-xs font-semibold text-emerald-200">Total Siswa Terdaftar</p>
-              <p className="text-2xl font-black mt-1 text-white">{executiveMetrics.totalMuridInRombel} <span className="text-xs font-normal text-white/70">Siswa</span></p>
-              <p className="text-[11px] text-white/70 mt-0.5">Rata-rata {executiveMetrics.avgPerRombel} siswa/rombel</p>
+            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Siswa Terdaftar</p>
+              <p className="text-2xl font-black mt-1 text-slate-900">{executiveMetrics.totalMuridInRombel} <span className="text-xs font-semibold text-slate-500">Siswa</span></p>
+              <p className="text-[11px] text-slate-500 mt-1">Rata-rata {executiveMetrics.avgPerRombel} siswa/rombel</p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
-              <p className="text-xs font-semibold text-emerald-200">Total Rombel Berjalan</p>
-              <p className="text-2xl font-black mt-1 text-white">{executiveMetrics.totalRombel} <span className="text-xs font-normal text-white/70">Kelas</span></p>
-              <p className="text-[11px] text-emerald-200 mt-0.5">{executiveMetrics.rombelIdeal} rombel kapasitas ideal</p>
+            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Rombel Berjalan</p>
+              <p className="text-2xl font-black mt-1 text-slate-900">{executiveMetrics.totalRombel} <span className="text-xs font-semibold text-slate-500">Kelas</span></p>
+              <p className="text-[11px] text-[#065f32] font-semibold mt-1">{executiveMetrics.rombelIdeal} rombel kapasitas ideal</p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
-              <p className="text-xs font-semibold text-emerald-200">Anomali Kapasitas</p>
+            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Anomali Kapasitas</p>
               <div className="flex items-baseline gap-2 mt-1">
-                <span className={`text-2xl font-black ${executiveMetrics.rombelOvercapacity > 0 ? 'text-rose-300' : 'text-white'}`}>
+                <span className={`text-2xl font-black ${executiveMetrics.rombelOvercapacity > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
                   {executiveMetrics.rombelOvercapacity}
                 </span>
-                <span className="text-xs text-rose-200">Padat (&gt;36)</span>
-                <span className="text-white/40">/</span>
-                <span className="text-xs text-amber-200">{executiveMetrics.rombelMinim} Minim (&lt;20)</span>
+                <span className="text-xs font-semibold text-rose-700">Padat (&gt;36)</span>
+                <span className="text-slate-300">/</span>
+                <span className="text-xs font-semibold text-amber-700">{executiveMetrics.rombelMinim} Minim (&lt;20)</span>
               </div>
-              <p className="text-[11px] text-white/70 mt-0.5">
+              <p className="text-[11px] text-slate-500 mt-1">
                 {executiveMetrics.rombelOvercapacity === 0 ? "Kapasitas terkendali" : "Perlu evaluasi rombel padat"}
               </p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
-              <p className="text-xs font-semibold text-emerald-200">Kesiapan Wali Kelas</p>
-              <p className="text-2xl font-black mt-1 text-white">
-                {executiveMetrics.rombelWithWali} <span className="text-xs font-normal text-white/70">/ {executiveMetrics.totalRombel}</span>
+            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Kesiapan Wali Kelas</p>
+              <p className="text-2xl font-black mt-1 text-slate-900">
+                {executiveMetrics.rombelWithWali} <span className="text-xs font-semibold text-slate-500">/ {executiveMetrics.totalRombel}</span>
               </p>
-              <p className="text-[11px] mt-0.5 font-medium text-emerald-200">
+              <p className="text-[11px] mt-1 font-semibold text-[#065f32]">
                 {executiveMetrics.rombelNoWali > 0 ? `${executiveMetrics.rombelNoWali} rombel belum ada wali` : "100% Rombel Terisi Wali"}
               </p>
             </div>

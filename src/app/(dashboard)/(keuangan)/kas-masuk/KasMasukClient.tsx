@@ -203,48 +203,48 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
 
       {/* Executive Cashflow Watch for KEPALA_SEKOLAH */}
       {isReadOnly && (
-        <div className="mb-6 p-5 bg-gradient-to-r from-[#065f32] via-[#08733e] to-[#044e28] rounded-2xl text-white shadow-sm border border-emerald-600/40">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
+        <div className="mb-6 p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/20 text-white border border-white/20">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-[#065f32] border border-emerald-200/80">
                   Audit Arus Kas Masuk
                 </span>
-                <span className="text-xs text-white/60">•</span>
-                <span className="text-xs text-emerald-100 font-medium">Periode Filter: {timeRange.toUpperCase()}</span>
+                <span className="text-slate-300">•</span>
+                <span className="text-xs text-slate-500 font-medium">Periode Filter: {timeRange.toUpperCase()}</span>
               </div>
-              <h2 className="text-xl font-bold tracking-tight text-white">Ringkasan Penerimaan Kas & Bank Unit</h2>
+              <h2 className="text-xl font-bold tracking-tight text-slate-900">Ringkasan Penerimaan Kas & Bank Unit</h2>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-xl text-emerald-100 font-medium border border-white/10">
+              <span className="text-xs bg-slate-50 px-3 py-1.5 rounded-xl text-slate-600 font-medium border border-slate-200">
                 Pimpinan Unit • Mode Pengawasan
               </span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
-              <p className="text-xs font-semibold text-emerald-200">Total Kas Masuk</p>
-              <p className="text-2xl font-black mt-1 text-white">Rp {executiveMetrics.totalMasuk.toLocaleString('id-ID')}</p>
-              <p className="text-[11px] text-white/70 mt-0.5">Akumulasi transaksi aktif</p>
+            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Kas Masuk</p>
+              <p className="text-2xl font-black mt-1 text-[#065f32]">Rp {executiveMetrics.totalMasuk.toLocaleString('id-ID')}</p>
+              <p className="text-[11px] text-slate-500 mt-1">Akumulasi transaksi aktif</p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
-              <p className="text-xs font-semibold text-emerald-200">Frekuensi Transaksi</p>
-              <p className="text-2xl font-black mt-1 text-white">{executiveMetrics.countTrans} <span className="text-xs font-normal text-white/70">Transaksi</span></p>
-              <p className="text-[11px] text-emerald-200 mt-0.5">Tercatat di pembukuan</p>
+            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Frekuensi Transaksi</p>
+              <p className="text-2xl font-black mt-1 text-slate-900">{executiveMetrics.countTrans} <span className="text-xs font-semibold text-slate-500">Transaksi</span></p>
+              <p className="text-[11px] text-slate-500 mt-1">Tercatat di pembukuan</p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
-              <p className="text-xs font-semibold text-emerald-200">Transaksi Signifikan</p>
-              <p className="text-2xl font-black mt-1 text-emerald-200">{executiveMetrics.largeTrans} <span className="text-xs font-normal text-white/70">Nota</span></p>
-              <p className="text-[11px] text-white/70 mt-0.5">Nilai &ge; Rp 1.000.000</p>
+            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Transaksi Signifikan</p>
+              <p className="text-2xl font-black mt-1 text-slate-900">{executiveMetrics.largeTrans} <span className="text-xs font-semibold text-slate-500">Nota</span></p>
+              <p className="text-[11px] text-slate-500 mt-1">Nilai &ge; Rp 1.000.000</p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
-              <p className="text-xs font-semibold text-emerald-200">Rata-rata Nilai Masuk</p>
-              <p className="text-2xl font-black mt-1 text-white">Rp {executiveMetrics.avgTrans.toLocaleString('id-ID')}</p>
-              <p className="text-[11px] text-white/70 mt-0.5">Rata-rata per bukti setor</p>
+            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Rata-rata Nilai Masuk</p>
+              <p className="text-2xl font-black mt-1 text-slate-900">Rp {executiveMetrics.avgTrans.toLocaleString('id-ID')}</p>
+              <p className="text-[11px] text-slate-500 mt-1">Rata-rata per bukti setor</p>
             </div>
           </div>
         </div>
