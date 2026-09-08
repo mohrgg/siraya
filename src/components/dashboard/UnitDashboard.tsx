@@ -14,6 +14,7 @@ import {
 import Link from 'next/link'
 import PendapatanInteractiveChart from './PendapatanInteractiveChart'
 import toast from "react-hot-toast"
+import { AdaptiveValue } from "@/components/ui/AdaptiveValue"
 
 // Brand disciplined palette: Al-Basyariah Forest Green (#065f32), Emerald, Slate, Amber
 const BRAND_COLORS = ['#065f32', '#10b981', '#475569', '#d97706', '#0284c7', '#64748b']
@@ -104,8 +105,8 @@ export default function UnitDashboard(props: UnitDashboardProps) {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight">
             Dashboard Operasional Unit
           </h1>
-          <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
-            Pantau kapasitas kelas, demografi murid, serta kelengkapan data administratif pada {unitName}.
+          <p className="text-xs sm:text-sm text-text-muted mt-0.5">
+            Monitoring kapasitas kelas, demografi murid, dan rekapitulasi data administratif {unitName}.
           </p>
         </div>
 
@@ -136,7 +137,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
           <p className="text-xs text-text-muted">Kapasitas utama siswa, rombel, tenaga pendidik, dan ringkasan piutang {unitName}.</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {/* Card 1: Siswa Aktif */}
           <div className="bg-surface rounded-2xl border border-border p-5 shadow-2xs hover:border-border-hover transition-colors">
             <div className="flex items-center justify-between mb-3">
@@ -145,11 +146,10 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                 <GraduationCap size={20} />
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-text-main">{formatNumber(totalMurid)}</span>
-              <span className="text-xs font-bold text-[#065f32]">Peserta Didik</span>
+            <div className="flex items-baseline gap-2 overflow-hidden">
+              <span className="text-2xl sm:text-3xl font-black text-text-main tracking-tight truncate max-w-full" title={formatNumber(totalMurid)}>{formatNumber(totalMurid)}</span>
+              <span className="text-xs font-bold text-[#065f32] shrink-0">Peserta Didik</span>
             </div>
-            <p className="text-[11px] text-text-muted mt-2">Siswa berstatus aktif di unit ini</p>
           </div>
 
           {/* Card 2: Rombel */}
@@ -160,11 +160,10 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                 <LayoutDashboard size={20} />
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-text-main">{formatNumber(totalRombel)}</span>
-              <span className="text-xs font-bold text-slate-700">Rombel Aktif</span>
+            <div className="flex items-baseline gap-2 overflow-hidden">
+              <span className="text-2xl sm:text-3xl font-black text-text-main tracking-tight truncate max-w-full" title={formatNumber(totalRombel)}>{formatNumber(totalRombel)}</span>
+              <span className="text-xs font-bold text-slate-700 shrink-0">Rombel Aktif</span>
             </div>
-            <p className="text-[11px] text-text-muted mt-2">Kelas yang sedang berjalan</p>
           </div>
 
           {/* Card 3: Tenaga Pendidik */}
@@ -175,14 +174,13 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                 <Users size={20} />
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-text-main">{formatNumber(totalGuru)}</span>
-              <span className="text-xs font-bold text-amber-700">Guru Aktif</span>
+            <div className="flex items-baseline gap-2 overflow-hidden">
+              <span className="text-2xl sm:text-3xl font-black text-text-main tracking-tight truncate max-w-full" title={formatNumber(totalGuru)}>{formatNumber(totalGuru)}</span>
+              <span className="text-xs font-bold text-amber-700 shrink-0">Guru Aktif</span>
             </div>
-            <p className="text-[11px] text-text-muted mt-2">Berbasis di unit ini</p>
           </div>
 
-          {/* Card 4: Total Piutang Unit (Refined Solid Matte Card, No Slop Gradient) */}
+          {/* Card 4: Total Piutang Unit (Refined Solid Matte Card, No Overflow, Full Nominal) */}
           <div className="bg-surface rounded-2xl border border-rose-200/90 p-5 shadow-2xs hover:border-rose-300 transition-colors">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-rose-700">Total Piutang Unit</span>
@@ -190,10 +188,14 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                 <AlertTriangle size={20} />
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl sm:text-3xl font-black text-rose-700">{formatCurrency(totalTunggakanUnit)}</span>
+            <div className="flex items-baseline my-1">
+              <AdaptiveValue 
+                value={formatCurrency(totalTunggakanUnit)}
+                className="text-rose-700"
+                maxFontSize={30}
+                minFontSize={15}
+              />
             </div>
-            <p className="text-[11px] text-rose-600/90 mt-2 font-medium">Total tagihan siswa yang belum dibayar</p>
           </div>
         </div>
       </section>
@@ -556,13 +558,27 @@ export default function UnitDashboard(props: UnitDashboardProps) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-surface rounded-2xl border border-emerald-200/80 p-5 shadow-2xs">
             <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 mb-2">Pendapatan Bulan Ini</div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-800">{formatCurrency(penerimaanBulanIni)}</div>
+            <div className="my-1">
+              <AdaptiveValue 
+                value={formatCurrency(penerimaanBulanIni)}
+                className="text-emerald-800"
+                maxFontSize={30}
+                minFontSize={16}
+              />
+            </div>
             <p className="text-xs text-emerald-700/80 mt-1 font-medium">Realisasi transaksi penerimaan kas</p>
           </div>
           
           <div className="bg-surface rounded-2xl border border-rose-200/80 p-5 shadow-2xs">
             <div className="text-xs font-bold uppercase tracking-wider text-rose-700 mb-2">Total Piutang (Tunggakan)</div>
-            <div className="text-2xl sm:text-3xl font-black text-rose-700">{formatCurrency(totalTunggakanUnit)}</div>
+            <div className="my-1">
+              <AdaptiveValue 
+                value={formatCurrency(totalTunggakanUnit)}
+                className="text-rose-700"
+                maxFontSize={30}
+                minFontSize={16}
+              />
+            </div>
             <p className="text-xs text-rose-600/80 mt-1 font-medium">Akumulasi tagihan siswa belum lunas</p>
           </div>
 

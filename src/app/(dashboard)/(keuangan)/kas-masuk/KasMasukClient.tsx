@@ -206,20 +206,20 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
         <div className="mb-6 p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
-              <div className="flex items-center gap-2 mb-1.5">
+              <div className="flex items-center gap-2 mb-1">
                 <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-[#065f32] border border-emerald-200/80">
                   Audit Arus Kas Masuk
                 </span>
                 <span className="text-slate-300">•</span>
-                <span className="text-xs text-slate-500 font-medium">Periode Filter: {timeRange.toUpperCase()}</span>
+                <span className="text-xs text-slate-500 font-medium">Periode: {timeRange.toUpperCase()}</span>
               </div>
               <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                {userRole === "YAYASAN" ? "Ringkasan Penerimaan Kas & Bank Konsolidasi" : "Ringkasan Penerimaan Kas & Bank Unit"}
+                {userRole === "YAYASAN" ? "Penerimaan Kas Konsolidasi" : "Ringkasan Penerimaan Kas & Bank Unit"}
               </h2>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs bg-slate-50 px-3 py-1.5 rounded-xl text-slate-600 font-medium border border-slate-200">
-                {userRole === "YAYASAN" ? "Pengurus Yayasan • Mode Pengawasan 360°" : "Pimpinan Unit • Mode Pengawasan"}
+                {userRole === "YAYASAN" ? "Pengurus Yayasan • Mode Pengawasan 360°" : "Mode Pengawasan"}
               </span>
             </div>
           </div>
@@ -228,25 +228,24 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Kas Masuk</p>
               <p className="text-2xl font-black mt-1 text-[#065f32]">Rp {executiveMetrics.totalMasuk.toLocaleString('id-ID')}</p>
-              <p className="text-[11px] text-slate-500 mt-1">Akumulasi transaksi aktif</p>
             </div>
 
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Frekuensi Transaksi</p>
               <p className="text-2xl font-black mt-1 text-slate-900">{executiveMetrics.countTrans} <span className="text-xs font-semibold text-slate-500">Transaksi</span></p>
-              <p className="text-[11px] text-slate-500 mt-1">Tercatat di pembukuan</p>
             </div>
 
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Transaksi Signifikan</p>
-              <p className="text-2xl font-black mt-1 text-slate-900">{executiveMetrics.largeTrans} <span className="text-xs font-semibold text-slate-500">Nota</span></p>
-              <p className="text-[11px] text-slate-500 mt-1">Nilai &ge; Rp 1.000.000</p>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-2xl font-black text-slate-900">{executiveMetrics.largeTrans}</span>
+                <span className="text-xs font-semibold text-slate-500">Nota (≥Rp 1 Juta)</span>
+              </div>
             </div>
 
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Rata-rata Nilai Masuk</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Rata-rata Masuk</p>
               <p className="text-2xl font-black mt-1 text-slate-900">Rp {executiveMetrics.avgTrans.toLocaleString('id-ID')}</p>
-              <p className="text-[11px] text-slate-500 mt-1">Rata-rata per bukti setor</p>
             </div>
           </div>
         </div>

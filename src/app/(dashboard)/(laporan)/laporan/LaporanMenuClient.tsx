@@ -39,7 +39,7 @@ export default function LaporanMenuClient({ userRole }: { userRole?: string }) {
         <div className="mb-8 p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-1.5">
+              <div className="flex items-center gap-2 mb-1">
                 <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-[#065f32] border border-emerald-200/80">
                   {isYayasan ? "Pusat Dokumen Konsolidasi Yayasan" : "Pusat Dokumen Resmi Unit"}
                 </span>
@@ -51,8 +51,8 @@ export default function LaporanMenuClient({ userRole }: { userRole?: string }) {
               </h2>
               <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
                 {isYayasan
-                  ? "Seluruh format dokumen dan ekspor PDF pada modul di bawah ini menyajikan data konsolidasi serta pertanggungjawaban resmi seluruh unit sekolah binaan."
-                  : <>Seluruh format ekspor PDF pada modul di bawah ini telah secara otomatis memuat blok pengesahan resmi: <strong className="text-slate-800">&quot;Mengetahui, Kepala Sekolah&quot;</strong> dan <strong className="text-slate-800">&quot;Dibuat oleh, Tata Usaha&quot;</strong> sesuai profil unit sekolah Anda.</>}
+                  ? "Seluruh format dokumen menyajikan data konsolidasi dan pertanggungjawaban resmi seluruh unit sekolah binaan."
+                  : "Seluruh format ekspor PDF otomatis memuat blok pengesahan resmi Mengetahui Kepala Sekolah dan Tata Usaha."}
               </p>
             </div>
             <span className="text-xs bg-slate-50 px-3 py-1.5 rounded-xl text-slate-700 font-semibold border border-slate-200 shrink-0">

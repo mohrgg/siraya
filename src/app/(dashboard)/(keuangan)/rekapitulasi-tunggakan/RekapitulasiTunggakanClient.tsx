@@ -16,6 +16,7 @@ import {
   ToolbarExportExcel,
   ToolbarExportPDF
 } from "@/components/ui/DataTableToolbar"
+import { AdaptiveValue } from "@/components/ui/AdaptiveValue"
 
 interface Akun {
   id: string
@@ -345,26 +346,36 @@ export default function RekapitulasiTunggakanClient({
               <h2 className="text-xl font-bold tracking-tight text-slate-900">Monitoring Penerimaan Tagihan & Efektivitas Kas</h2>
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                size="sm" 
+              <ToolbarExportPDF 
                 onClick={handleExportPdfRingkasan}
-                className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 font-semibold text-xs border shadow-xs"
-              >
-                <FilePdf size={14} className="mr-1.5" /> Cetak Lembar Eksekutif (PDF)
-              </Button>
+                label="Cetak Lembar Eksekutif (PDF)"
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{isGlobal ? "Total Tagihan Yayasan" : "Total Tagihan Unit"}</p>
-              <p className="text-2xl font-black mt-1 text-slate-900">Rp {formatRupiah(executiveMetrics.totalTagihan)}</p>
-              <p className="text-[11px] text-slate-500 mt-1">{isGlobal ? "Kewajiban seluruh siswa se-yayasan" : "Kewajiban seluruh siswa aktif"}</p>
+              <div className="my-1">
+                <AdaptiveValue 
+                  value={`Rp ${formatRupiah(executiveMetrics.totalTagihan)}`}
+                  className="text-slate-900"
+                  maxFontSize={28}
+                  minFontSize={15}
+                />
+              </div>
             </div>
 
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Realisasi Penerimaan</p>
-              <p className="text-2xl font-black mt-1 text-[#065f32]">Rp {formatRupiah(executiveMetrics.totalDibayar)}</p>
+              <div className="my-1">
+                <AdaptiveValue 
+                  value={`Rp ${formatRupiah(executiveMetrics.totalDibayar)}`}
+                  className="text-[#065f32]"
+                  maxFontSize={28}
+                  minFontSize={15}
+                />
+              </div>
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
                   <div 
@@ -378,10 +389,14 @@ export default function RekapitulasiTunggakanClient({
 
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
               <p className="text-xs font-bold text-rose-700 uppercase tracking-wider">Sisa Piutang / Tunggakan</p>
-              <p className="text-2xl font-black mt-1 text-rose-600">Rp {formatRupiah(executiveMetrics.totalTunggakan)}</p>
-              <p className="text-[11px] text-slate-500 mt-1">
-                {100 - executiveMetrics.pctKolektibilitas}% tagihan belum tertagih
-              </p>
+              <div className="my-1">
+                <AdaptiveValue 
+                  value={`Rp ${formatRupiah(executiveMetrics.totalTunggakan)}`}
+                  className="text-rose-600"
+                  maxFontSize={28}
+                  minFontSize={15}
+                />
+              </div>
             </div>
 
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">

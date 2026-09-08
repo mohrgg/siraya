@@ -405,20 +405,20 @@ export default function GuruClient({
         <div className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
-              <div className="flex items-center gap-2 mb-1.5">
+              <div className="flex items-center gap-2 mb-1">
                 <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-[#065f32] border border-emerald-200/80">
                   Ringkasan Eksekutif Tenaga Pendidik
                 </span>
                 <span className="text-slate-300">•</span>
-                <span className="text-xs text-slate-500 font-medium">Monitoring Beban & Kualifikasi Guru</span>
+                <span className="text-xs text-slate-500 font-medium">Beban & Kualifikasi Guru</span>
               </div>
               <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                {userRole === "YAYASAN" ? "Komposisi & Kesiapan Guru Konsolidasi" : "Komposisi & Kesiapan Guru Unit"}
+                {userRole === "YAYASAN" ? "Komposisi Guru Konsolidasi" : "Komposisi & Kesiapan Guru Unit"}
               </h2>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs bg-slate-50 px-3 py-1.5 rounded-xl text-slate-600 font-medium border border-slate-200">
-                {userRole === "YAYASAN" ? "Pengurus Yayasan • Mode Pengawasan 360°" : "Pimpinan Unit • Mode Pengawasan"}
+                {userRole === "YAYASAN" ? "Mode Pengawasan 360°" : "Mode Pengawasan"}
               </span>
             </div>
           </div>
@@ -427,30 +427,29 @@ export default function GuruClient({
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Tenaga Pendidik</p>
               <p className="text-2xl font-black mt-1 text-slate-900">{executiveMetrics.totalGuru} <span className="text-xs font-semibold text-slate-500">Guru</span></p>
-              <p className="text-[11px] text-slate-500 mt-1">Seluruh jenjang aktif</p>
             </div>
 
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status Kepegawaian</p>
               <div className="flex items-baseline gap-2 mt-1">
                 <span className="text-2xl font-black text-slate-900">{executiveMetrics.totalTetap}</span>
-                <span className="text-xs font-semibold text-[#065f32]">Tetap (GTY)</span>
+                <span className="text-xs font-semibold text-[#065f32]">GTY</span>
                 <span className="text-slate-300">/</span>
                 <span className="text-xs font-semibold text-amber-700">{executiveMetrics.totalHonorer} Honorer</span>
               </div>
-              <p className="text-[11px] text-[#065f32] font-semibold mt-1">{executiveMetrics.pctTetap}% Guru Tetap Yayasan</p>
             </div>
 
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Penugasan Wali Kelas</p>
-              <p className="text-2xl font-black mt-1 text-slate-900">{executiveMetrics.totalWali} <span className="text-xs font-semibold text-slate-500">Guru</span></p>
-              <p className="text-[11px] text-slate-500 mt-1">Memegang amanah wali rombel</p>
+              <p className="text-2xl font-black mt-1 text-slate-900">{executiveMetrics.totalWali} <span className="text-xs font-semibold text-slate-500">Wali Kelas</span></p>
             </div>
 
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Kualifikasi Akademik</p>
-              <p className="text-2xl font-black mt-1 text-slate-900">{executiveMetrics.pctS1Plus}% <span className="text-xs font-semibold text-slate-500">S1/S2</span></p>
-              <p className="text-[11px] text-[#065f32] font-semibold mt-1">{executiveMetrics.totalS1Plus} guru berpendidikan tinggi</p>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-2xl font-black text-slate-900">{executiveMetrics.pctS1Plus}%</span>
+                <span className="text-xs font-semibold text-[#065f32]">S1/S2 ({executiveMetrics.totalS1Plus})</span>
+              </div>
             </div>
           </div>
         </div>

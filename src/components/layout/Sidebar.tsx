@@ -80,11 +80,6 @@ export default function Sidebar({ user, logoUrl }: { user: any; logoUrl?: string
       if (group.title === "DATA AKADEMIK") title = "AKADEMIK & MUTU"
       if (group.title === "KEUANGAN") title = "AUDIT KEUANGAN UNIT"
       if (group.title === "LAPORAN") title = "PENGESAHAN & LAPORAN"
-    } else if (isYayasan) {
-      if (group.title === "DATA YAYASAN") title = "KELEMBAGAAN YAYASAN"
-      if (group.title === "DATA AKADEMIK") title = "SDM & KESISWAAN GLOBAL"
-      if (group.title === "KEUANGAN") title = "KONSOLIDASI KEUANGAN"
-      if (group.title === "LAPORAN") title = "LAPORAN KONSOLIDASI"
     }
 
     const items = group.items
@@ -97,17 +92,6 @@ export default function Sidebar({ user, logoUrl }: { user: any; logoUrl?: string
           if (item.href === "/kas-masuk") return { ...item, label: "Audit Kas Masuk" }
           if (item.href === "/kas-keluar") return { ...item, label: "Audit Kas Keluar" }
           if (item.href === "/laporan") return { ...item, label: "Laporan & Pengesahan" }
-        } else if (isYayasan) {
-          if (item.href === "/") return { ...item, label: "360° Cockpit Yayasan" }
-          if (item.href === "/unit-sekolah") return { ...item, label: "Direktori Unit Sekolah" }
-          if (item.href === "/jurusan") return { ...item, label: "Kompetensi Keahlian" }
-          if (item.href === "/kelas") return { ...item, label: "Rombel Seluruh Unit" }
-          if (item.href === "/guru") return { ...item, label: "Direktori Pendidik & Staf" }
-          if (item.href === "/akun-keuangan") return { ...item, label: "Bagan Akun Yayasan" }
-          if (item.href === "/kas-masuk") return { ...item, label: "Arus Kas Masuk Global" }
-          if (item.href === "/kas-keluar") return { ...item, label: "Audit Belanja Yayasan" }
-          if (item.href === "/rekapitulasi-tunggakan") return { ...item, label: "Piutang SPP Konsolidasi" }
-          if (item.href === "/laporan") return { ...item, label: "Laporan Eksekutif" }
         }
         return item
       })

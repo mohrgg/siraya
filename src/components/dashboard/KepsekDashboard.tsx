@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 import Link from "next/link"
 import PendapatanInteractiveChart from './PendapatanInteractiveChart'
+import { AdaptiveValue } from "@/components/ui/AdaptiveValue"
 
 export default function KepsekDashboard(props: any) {
   const { 
@@ -57,8 +58,8 @@ export default function KepsekDashboard(props: any) {
             <span className="text-xs font-bold text-slate-800">{activeUnit?.name || 'Unit Sekolah'}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Eksekutif Unit</h1>
-          <p className="text-sm text-slate-500 mt-1 max-w-3xl leading-relaxed">
-            Pusat kendali evaluasi mutu kesiswaan, kepatuhan daya tampung rombel, dan audit arus kas operasional pada {activeUnit?.name || 'Unit Sekolah'}.
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Evaluasi mutu kesiswaan, kepatuhan daya tampung rombel, dan stabilitas operasional {activeUnit?.name || 'Unit Sekolah'}.
           </p>
         </div>
 
@@ -104,7 +105,7 @@ export default function KepsekDashboard(props: any) {
           <p className="text-xs text-slate-500 mt-0.5">Indikator vital mutu kesiswaan, rasio pendidik, dan kolektibilitas unit sekolah.</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {/* Tile 1: Total Siswa Aktif */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors">
             <div className="flex items-center justify-between mb-3">
@@ -122,7 +123,6 @@ export default function KepsekDashboard(props: any) {
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   Aktif Terdaftar
                 </span>
-                <span className="text-[11px] text-slate-400">TA {activeYear?.name || '-'}</span>
               </div>
             </div>
           </div>
@@ -146,9 +146,8 @@ export default function KepsekDashboard(props: any) {
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
                     : 'bg-amber-50 text-amber-700 border border-amber-200'
                 }`}>
-                  Rata-rata {avgPerRombel} Siswa
+                  Rata-rata {avgPerRombel} Siswa/Kelas
                 </span>
-                <span className="text-[11px] text-slate-400">Standar 20-36</span>
               </div>
             </div>
           </div>
@@ -170,7 +169,6 @@ export default function KepsekDashboard(props: any) {
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                   {formatNumber(totalGuru)} Guru Bertugas
                 </span>
-                <span className="text-[11px] text-slate-400">Linier</span>
               </div>
             </div>
           </div>
@@ -194,9 +192,11 @@ export default function KepsekDashboard(props: any) {
                   {isKolektibilitasSehat ? 'Likuiditas Sehat' : 'Perlu Atensi'}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 mt-2 truncate">
-                Sisa Piutang: <strong className="text-slate-700 font-semibold">{formatCurrency(totalSisaTagihanUnit)}</strong>
-              </p>
+              <div className="flex items-center gap-1.5 mt-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 truncate">
+                  Sisa Piutang {formatCurrency(totalSisaTagihanUnit)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -220,7 +220,14 @@ export default function KepsekDashboard(props: any) {
               </div>
             </div>
             <div>
-              <p className="text-3xl font-black text-white tracking-tight">{formatCurrency(saldoBulanIni)}</p>
+              <div className="my-0.5">
+                <AdaptiveValue 
+                  value={formatCurrency(saldoBulanIni)}
+                  className="text-white"
+                  maxFontSize={30}
+                  minFontSize={16}
+                />
+              </div>
               <p className="text-[11px] text-emerald-100/70 mt-1.5">Net cashflow bulan berjalan</p>
             </div>
           </div>
@@ -234,7 +241,14 @@ export default function KepsekDashboard(props: any) {
               </div>
             </div>
             <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight">{formatCurrency(penerimaanBulanIni)}</p>
+              <div className="my-0.5">
+                <AdaptiveValue 
+                  value={formatCurrency(penerimaanBulanIni)}
+                  className="text-slate-900"
+                  maxFontSize={30}
+                  minFontSize={16}
+                />
+              </div>
               <div className="flex items-center gap-1.5 mt-1.5">
                 <span className="text-xs font-bold text-emerald-700">+ Arus Kas Masuk</span>
                 <span className="text-[11px] text-slate-400">Pembayaran terverifikasi</span>
@@ -251,7 +265,14 @@ export default function KepsekDashboard(props: any) {
               </div>
             </div>
             <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight">{formatCurrency(pengeluaranBulanIni)}</p>
+              <div className="my-0.5">
+                <AdaptiveValue 
+                  value={formatCurrency(pengeluaranBulanIni)}
+                  className="text-slate-900"
+                  maxFontSize={30}
+                  minFontSize={16}
+                />
+              </div>
               <div className="flex items-center gap-1.5 mt-1.5">
                 <span className="text-xs font-bold text-rose-700">- Realisasi Pengeluaran</span>
                 <span className="text-[11px] text-slate-400">Operasional berjalan</span>

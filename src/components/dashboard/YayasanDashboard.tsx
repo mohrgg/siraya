@@ -16,6 +16,7 @@ import {
 import PendapatanInteractiveChart from './PendapatanInteractiveChart'
 import Link from "next/link"
 import UnitAuditSideDrawer from './UnitAuditSideDrawer'
+import { AdaptiveValue } from "@/components/ui/AdaptiveValue"
 
 interface YayasanDashboardProps {
   role?: string
@@ -133,8 +134,8 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
     <div className="flex flex-col gap-8 pb-20 md:pb-12 animate-in fade-in duration-300 max-w-[1600px] mx-auto w-full">
       
       {/* SECTION 1: Header Komando Eksekutif Yayasan */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-5 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
-        <div className="flex-1 min-w-[300px]">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 bg-white p-5 lg:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="flex-1 min-w-0 pr-0 lg:pr-4">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wider uppercase bg-emerald-50 text-[#065f32] border border-emerald-200/80">
               {role === 'ADMIN' ? 'Superadmin • Badan Penyelenggara Al-Basyariah' : 'Pengurus Yayasan • Badan Penyelenggara Al-Basyariah'}
@@ -142,59 +143,64 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
             <span className="text-slate-300">•</span>
             <span className="text-xs font-medium text-slate-500">Tahun Akademik: {academicYear?.name || 'Aktif'}</span>
             <span className="text-slate-300">•</span>
-            <span className="text-xs font-bold text-slate-800">Cakupan: Seluruh Unit (SD, SMP, SMK)</span>
+            <span className="text-xs font-bold text-slate-800">Cakupan: Seluruh Unit</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard 360° Cockpit Eksekutif Yayasan</h1>
-          <p className="text-sm text-slate-500 mt-1 max-w-3xl leading-relaxed">
-            Konsolidasi pengawasan kelembagaan terpadu: pantau kesehatan mutu akademik, stabilitas arus kas riil, kepatuhan kapasitas rombel, dan efektivitas SPP di bawah naungan Yayasan Al-Basyariah.
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard 360° Cockpit Eksekutif Yayasan</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+            Konsolidasi pengawasan kelembagaan, stabilitas arus kas riil, kapasitas rombel, dan efektivitas SPP lintas unit.
           </p>
+
+          {/* Quick Access Pills (Ramping & Proporsional di Laptop) */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-2.5 border-t border-slate-100">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1">Akses Cepat:</span>
+            <Link
+              href="/unit-sekolah"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium rounded-lg border border-slate-200/60 transition-colors"
+            >
+              <School size={13} className="text-slate-500" />
+              <span>Direktori Unit</span>
+            </Link>
+            <Link
+              href="/guru"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium rounded-lg border border-slate-200/60 transition-colors"
+            >
+              <GraduationCap size={13} className="text-slate-500" />
+              <span>SDM Pendidik</span>
+            </Link>
+            <Link
+              href="/kelas"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium rounded-lg border border-slate-200/60 transition-colors"
+            >
+              <LayoutDashboard size={13} className="text-slate-500" />
+              <span>Rombel Global</span>
+            </Link>
+            {role === 'ADMIN' && (
+              <Link
+                href="/manajemen-user"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium rounded-lg border border-slate-200/60 transition-colors"
+              >
+                <Users size={13} className="text-slate-500" />
+                <span>Kelola User</span>
+              </Link>
+            )}
+          </div>
         </div>
 
-        {/* Action Buttons (Kontekstual Audit Eksekutif) */}
-        <div className="flex flex-wrap items-center gap-2">
-          {role === 'ADMIN' && (
-            <Link
-              href="/manajemen-user"
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
-            >
-              <Users size={16} />
-              Kelola Pengguna
-            </Link>
-          )}
+        {/* Action Buttons: Tombol Aksi Eksekutif Utama */}
+        <div className="flex flex-row flex-wrap sm:flex-nowrap lg:flex-col xl:flex-row items-stretch sm:items-center gap-2.5 shrink-0 self-start lg:self-center">
           <Link
-            href="/unit-sekolah"
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-[#065f32] hover:bg-[#054d28] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
+            href="/laporan"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#065f32] hover:bg-[#054d28] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-colors whitespace-nowrap min-h-[42px]"
           >
-            <School size={16} />
-            Direktori Unit
-          </Link>
-          <Link
-            href="/guru"
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
-          >
-            <GraduationCap size={16} />
-            SDM Pendidik
-          </Link>
-          <Link
-            href="/kelas"
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
-          >
-            <LayoutDashboard size={16} />
-            Rombel Global
+            <FileText size={16} />
+            <span>Laporan Konsolidasi</span>
           </Link>
           <Link
             href="/rekapitulasi-tunggakan"
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-colors whitespace-nowrap min-h-[42px]"
           >
-            <Wallet size={16} />
-            Piutang SPP
-          </Link>
-          <Link
-            href="/laporan"
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
-          >
-            <FileText size={16} />
-            Laporan Konsolidasi
+            <Wallet size={16} className="text-slate-500" />
+            <span>Piutang SPP</span>
           </Link>
         </div>
       </div>
@@ -206,7 +212,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
           <p className="text-xs text-slate-500 mt-0.5">Indikator utama kekuatan finansial, kesiswaan, kapasitas ketenagaan, dan efektivitas SPP lintas unit.</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {/* Tile 1: Total Kas Riil Yayasan */}
           <Link 
             href="/kas-masuk"
@@ -219,14 +225,18 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl sm:text-3xl font-black text-[#065f32] tracking-tight">{formatCurrency(totalKasGlobal)}</span>
+              <div className="flex items-baseline my-0.5">
+                <AdaptiveValue 
+                  value={formatCurrency(totalKasGlobal)}
+                  className="text-[#065f32]"
+                  maxFontSize={30}
+                  minFontSize={16}
+                />
               </div>
               <div className="flex items-center gap-1.5 mt-2">
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   Likuiditas Bersih
                 </span>
-                <span className="text-[11px] text-slate-400">Seluruh unit & rekening</span>
               </div>
             </div>
           </Link>
@@ -249,9 +259,8 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
               </div>
               <div className="flex items-center gap-1.5 mt-2">
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                  {unitCount} Unit Binaan
+                  {formatNumber(rombelCount)} Rombel • {unitCount} Unit
                 </span>
-                <span className="text-[11px] text-slate-400">{formatNumber(rombelCount)} Rombongan Belajar</span>
               </div>
             </div>
           </Link>
@@ -274,9 +283,8 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
               </div>
               <div className="flex items-center gap-1.5 mt-2">
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                  Rasio 1 : {guruCount > 0 ? Math.round(muridCount / guruCount) : 0} Siswa
+                  Rasio 1 : {guruCount > 0 ? Math.round(muridCount / guruCount) : 0} Murid
                 </span>
-                <span className="text-[11px] text-slate-400">{usersCount} Akun Sistem</span>
               </div>
             </div>
           </Link>
@@ -298,12 +306,12 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                   {kolektibilitas}%
                 </span>
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isKolektibilitasSehat ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                  {isKolektibilitasSehat ? 'Kolektibilitas Prima' : 'Perhatian Khusus'}
+                  {isKolektibilitasSehat ? 'Prima' : 'Perhatian'}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 mt-2">
-                <span className="text-[11px] text-slate-500">
-                  Piutang Berjalan: <strong className="text-rose-600 font-bold">{formatCurrency(totalPiutangGlobal)}</strong>
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                  Sisa Piutang {formatCurrency(totalPiutangGlobal)}
                 </span>
               </div>
             </div>
@@ -401,29 +409,30 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => {
                       setSelectedDrawerIndex(idx)
                       setIsDrawerOpen(true)
                     }}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#065f32]/10 hover:bg-[#065f32]/20 border border-[#065f32]/30 text-[#065f32] text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group"
+                    className="inline-flex items-center justify-center gap-1.5 py-2 px-2.5 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200 text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all h-10 shadow-2xs group whitespace-nowrap min-w-0"
+                    title={`Audit sebaran rombel & siswa ${item.unit}`}
                   >
-                    <Layers size={14} className="text-[#065f32] group-hover:scale-110 transition-transform" />
-                    Audit Sebaran Tingkat & Rombel
-                    <ChevronRight size={14} className="text-[#065f32] group-hover:translate-x-0.5 transition-transform" />
+                    <Layers size={14} className="text-[#065f32] shrink-0 group-hover:scale-110 transition-transform" />
+                    <span className="truncate">Audit Rombel</span>
+                    <ChevronRight size={13} className="text-[#065f32]/70 shrink-0 group-hover:translate-x-0.5 transition-transform" />
                   </button>
+
                   <button
                     type="button"
                     onClick={() => handleDrilldownUnitDashboard(item.id || item.raw?.id)}
-                    className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#065f32]/40 text-slate-700 hover:text-[#065f32] text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group shrink-0"
-                    title={`Buka Dashboard ${item.unit}`}
+                    className="inline-flex items-center justify-center gap-1.5 py-2 px-2.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-emerald-300 text-slate-700 hover:text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all h-10 shadow-2xs group whitespace-nowrap min-w-0"
+                    title={`Buka dashboard ${item.unit}`}
                   >
-                    <LayoutDashboard size={14} className="text-slate-400 group-hover:text-[#065f32] transition-colors" />
-                    <span className="hidden sm:inline">Buka Dashboard Unit</span>
-                    <span className="sm:hidden">Dashboard Unit</span>
-                    <ChevronRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                    <LayoutDashboard size={14} className="text-slate-400 group-hover:text-[#065f32] shrink-0 transition-colors" />
+                    <span className="truncate">Dashboard Unit</span>
+                    <ChevronRight size={13} className="text-slate-400 group-hover:text-[#065f32] shrink-0 group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 </div>
               </div>
