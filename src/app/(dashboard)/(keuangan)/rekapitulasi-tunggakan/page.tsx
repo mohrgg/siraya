@@ -12,14 +12,22 @@ export const metadata = {
   title: "Rekapitulasi Tagihan & Tunggakan | Sistem Informasi Sekolah",
 }
 
-export default async function RekapitulasiTunggakanPage() {
+export default async function RekapitulasiTunggakanPage(props: { searchParams: Promise<any> }) {
+  const searchParams = await props.searchParams
   const tenant = await getTenantContext()
   const user = tenant.user
-  const activeUnitId = tenant.unitId || "all"
+  const units = await getUnitSekolah()
+
+  let activeUnitId = tenant.unitId || "all"
+  if ((tenant.role === "ADMIN" || tenant.role === "YAYASAN") && searchParams?.unitId) {
+    const matched = units.find(u => u.id === searchParams.unitId)
+    if (matched) {
+      activeUnitId = matched.id
+    }
+  }
   
   const tahunAkademikAktif = await getTahunAkademikAktif()
   const pengaturan = await getPengaturan()
-  const units = await getUnitSekolah()
   
   let activeTahunAkademikId = tahunAkademikAktif ? tahunAkademikAktif.id : ""
   let activeTahunAkademikName = "Tidak Ada Tahun Aktif"
@@ -29,7 +37,7 @@ export default async function RekapitulasiTunggakanPage() {
   }
 
   const activeUnit = units.find(u => u.id === activeUnitId)
-  const activeUnitName = activeUnit ? activeUnit.name : "SEMUA UNIT"
+  const activeUnitName = activeUnit ? activeUnit.name : "SEMUA UNIT (KONSOLIDASI)"
 
   return (
     <RekapitulasiTunggakanClient 

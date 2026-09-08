@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { RefreshCw, Menu } from "lucide-react"
 import { setGlobalContext } from "@/actions/app-context"
@@ -24,6 +24,18 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
   const isHoldingRole = user?.role === "ADMIN" || user?.role === "YAYASAN";
   const [unit, setUnit] = useState(activeUnitId || (isHoldingRole ? "all" : schoolUnits[0]?.id) || "")
   const [year, setYear] = useState(activeYearId || academicYears[0]?.id || "")
+
+  useEffect(() => {
+    if (activeUnitId) {
+      setUnit(activeUnitId)
+    }
+  }, [activeUnitId])
+
+  useEffect(() => {
+    if (activeYearId) {
+      setYear(activeYearId)
+    }
+  }, [activeYearId])
   
   const { toggleMobileMenu } = useMobileMenu()
 

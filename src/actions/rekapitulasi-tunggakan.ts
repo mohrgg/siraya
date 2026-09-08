@@ -6,12 +6,19 @@ import { unstable_noStore } from "next/cache"
 export async function getRekapitulasiTunggakan(unitSekolahId: string, tahunAkademikId: string) {
   unstable_noStore();
   try {
-    // 1. Get all SubKelas in the given unit
+    const isGlobal = !unitSekolahId || unitSekolahId === "all";
+
+    // 1. Get all SubKelas in the given unit (or all units if isGlobal)
     const subKelasList = await prisma.subKelas.findMany({
-      where: { unitSekolahId },
+      where: isGlobal
+        ? { isDeleted: false }
+        : { unitSekolahId, isDeleted: false },
       select: {
         id: true,
         name: true,
+        unitSekolah: {
+          select: { id: true, name: true }
+        },
         riwayatKelas: {
           where: { tahunAkademikId, isCurrent: true },
           select: {
@@ -26,9 +33,7 @@ export async function getRekapitulasiTunggakan(unitSekolahId: string, tahunAkade
     const tagihanList = await prisma.tagihan.findMany({
       where: {
         tahunAkademikId,
-        murid: {
-          unitSekolahId
-        }
+        ...(isGlobal ? {} : { murid: { unitSekolahId } })
       },
       select: {
         muridId: true,
@@ -65,7 +70,8 @@ export async function getRekapitulasiTunggakan(unitSekolahId: string, tahunAkade
     // Grouping
     const rekap = subKelasList.map(sk => ({
       subKelasId: sk.id,
-      subKelasName: sk.name,
+      subKelasName: isGlobal && sk.unitSekolah?.name ? `[${sk.unitSekolah.name}] ${sk.name}` : sk.name,
+      unitName: sk.unitSekolah?.name || "",
       totalTagihan: 0,
       totalDibayar: 0,
       totalTunggakan: 0,

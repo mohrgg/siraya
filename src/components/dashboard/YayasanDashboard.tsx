@@ -1,6 +1,8 @@
 'use client'
 
-import React, { useState } from "react"
+import React, { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { setGlobalContext } from "@/actions/app-context"
 import { 
   Building, Users, GraduationCap, LayoutDashboard, 
   AlertTriangle, TrendingUp, CheckCircle2, 
@@ -31,7 +33,7 @@ interface YayasanDashboardProps {
   totalPiutangGlobal?: number
   kolektibilitas?: number
   arusKasTrend?: Array<{ month: string, pemasukan: number, pengeluaran: number }>
-  topUnitTunggakan?: Array<{ name: string, total: number }>
+  topUnitTunggakan?: Array<{ id?: string, name: string, total: number }>
   pendapatanHariIniChart?: any[]
   pendapatanMingguIniChart?: any[]
   pendapatanBulanIniChart?: any[]
@@ -61,9 +63,23 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
     pendapatanPerUnitChart = []
   } = props
 
-  const [selectedUnitDrillDown, setSelectedUnitDrillDown] = useState<any>(null)
+  const [selectedUnitDrillDown, setSelectedUnitDrillDown] = useState<any | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [selectedDrawerIndex, setSelectedDrawerIndex] = useState(0)
+
+  const router = useRouter()
+  const [isSyncing, startSync] = useTransition()
+
+  const handleDrilldownUnitTunggakan = (unitId?: string) => {
+    if (!unitId) {
+      window.location.href = "/rekapitulasi-tunggakan"
+      return
+    }
+    startSync(async () => {
+      await setGlobalContext(unitId, academicYear?.id || "")
+      window.location.href = `/rekapitulasi-tunggakan?unitId=${unitId}`
+    })
+  }
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
   const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
@@ -507,10 +523,12 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
               <div className="space-y-2.5 mt-2">
                 {topUnitTunggakan && topUnitTunggakan.length > 0 ? (
                   topUnitTunggakan.map((unit, idx) => (
-                    <Link 
+                    <button 
                       key={idx}
-                      href="/rekapitulasi-tunggakan" 
-                      className="flex justify-between items-center p-3 rounded-xl bg-slate-50/80 border border-slate-100 hover:border-[#065f32] hover:bg-slate-50 transition-colors group cursor-pointer"
+                      type="button"
+                      disabled={isSyncing}
+                      onClick={() => handleDrilldownUnitTunggakan(unit.id)}
+                      className="w-full flex justify-between items-center p-3 rounded-xl bg-slate-50/80 border border-slate-100 hover:border-[#065f32] hover:bg-slate-50 transition-colors group cursor-pointer text-left"
                     >
                       <span className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2 group-hover:text-[#065f32]">
                         <span className="w-5 h-5 rounded-full bg-rose-50 text-rose-700 font-black flex items-center justify-center text-[10px] border border-rose-200">
@@ -522,7 +540,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                         {formatCurrency(unit.total)}
                         <ChevronRight size={12} className="text-rose-400 group-hover:translate-x-0.5 transition-transform" />
                       </span>
-                    </Link>
+                    </button>
                   ))
                 ) : (
                   <div className="flex items-center justify-center py-6 text-xs text-slate-400 text-center">

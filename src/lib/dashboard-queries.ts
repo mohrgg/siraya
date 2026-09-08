@@ -283,17 +283,20 @@ export async function getYayasanDashboardData(yearId?: string) {
   // 4. Top Unit Tunggakan
   const tunggakanRaw = await prisma.tagihan.findMany({
     where: { sisaTagihan: { gt: 0 } },
-    select: { sisaTagihan: true, murid: { select: { unitSekolah: { select: { name: true } } } } }
+    select: { sisaTagihan: true, murid: { select: { unitSekolah: { select: { id: true, name: true } } } } }
   })
   
-  const unitTunggakanMap = new Map<string, number>()
+  const unitTunggakanMap = new Map<string, { id: string, name: string, total: number }>()
   tunggakanRaw.forEach(t => {
-    const unitName = t.murid.unitSekolah?.name || 'Lainnya'
-    unitTunggakanMap.set(unitName, (unitTunggakanMap.get(unitName) || 0) + t.sisaTagihan)
+    const u = t.murid.unitSekolah
+    if (u) {
+      const existing = unitTunggakanMap.get(u.id) || { id: u.id, name: u.name, total: 0 }
+      existing.total += t.sisaTagihan
+      unitTunggakanMap.set(u.id, existing)
+    }
   })
   
-  const topUnitTunggakan = Array.from(unitTunggakanMap.entries())
-    .map(([name, total]) => ({ name, total }))
+  const topUnitTunggakan = Array.from(unitTunggakanMap.values())
     .sort((a, b) => b.total - a.total)
     .slice(0, 5)
 

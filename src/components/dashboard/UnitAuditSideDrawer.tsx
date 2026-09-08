@@ -1,6 +1,8 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { setGlobalContext } from '@/actions/app-context'
 import { 
   X, ChevronLeft, ChevronRight, School, Users, 
   Layers, GraduationCap, Wallet, ArrowRight, CheckCircle2, AlertTriangle 
@@ -43,6 +45,9 @@ export default function UnitAuditSideDrawer({
   currentUnitIndex,
   onSelectUnitIndex
 }: UnitAuditSideDrawerProps) {
+  const router = useRouter()
+  const [isSyncing, startSync] = useTransition()
+
   // ESC key listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -59,6 +64,17 @@ export default function UnitAuditSideDrawer({
   const activeUnit = unitDataList[currentUnitIndex] || unitDataList[0]
   const hasPrev = currentUnitIndex > 0
   const hasNext = currentUnitIndex < unitDataList.length - 1
+
+  const handleOpenBukuPiutang = (unitId?: string) => {
+    if (!unitId) {
+      window.location.href = '/rekapitulasi-tunggakan'
+      return
+    }
+    startSync(async () => {
+      await setGlobalContext(unitId, "")
+      window.location.href = `/rekapitulasi-tunggakan?unitId=${unitId}`
+    })
+  }
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
   const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
@@ -249,12 +265,14 @@ export default function UnitAuditSideDrawer({
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">Realisasi pelunasan tagihan kesiswaan pada unit ini.</p>
                 </div>
-                <Link
-                  href="/rekapitulasi-tunggakan"
-                  className="text-xs font-semibold text-[#065f32] hover:underline inline-flex items-center gap-1"
+                <button
+                  type="button"
+                  disabled={isSyncing}
+                  onClick={() => handleOpenBukuPiutang(activeUnit?.id)}
+                  className="text-xs font-semibold text-[#065f32] hover:underline inline-flex items-center gap-1 cursor-pointer"
                 >
                   Buku Piutang <ArrowRight size={12} />
-                </Link>
+                </button>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs space-y-3">

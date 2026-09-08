@@ -64,7 +64,8 @@ export default function RekapitulasiTunggakanClient({
   userName,
   userRole
 }: Props) {
-  const isKepsek = userRole === "KEPALA_SEKOLAH" || userRole === "YAYASAN"
+  const isExecutive = userRole === "KEPALA_SEKOLAH" || userRole === "YAYASAN" || userRole === "ADMIN"
+  const isGlobal = activeUnitId === "all" || !activeUnitId
 
   const [isLoading, setIsLoading] = useState(false)
   const [rekapData, setRekapData] = useState<RekapItem[]>([])
@@ -318,23 +319,25 @@ export default function RekapitulasiTunggakanClient({
     <div className="max-w-[1600px] mx-auto w-full">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
-          {isKepsek ? "Monitoring SPP & Tagihan Siswa" : "Rekapitulasi Tagihan & Tunggakan"}
+          {isExecutive ? (isGlobal ? "Monitoring SPP Konsolidasi Yayasan" : "Monitoring SPP & Tagihan Siswa") : "Rekapitulasi Tagihan & Tunggakan"}
         </h1>
         <p className="text-text-muted">
-          {isKepsek
-            ? `Audit efektivitas penerimaan pembayaran, rasio kolektibilitas SPP, dan daftar rombel prioritas (${activeTahunAkademikName})`
+          {isExecutive
+            ? (isGlobal 
+                ? `Audit efektivitas penerimaan pembayaran, rasio kolektibilitas SPP, dan daftar rombel lintas unit yayasan (${activeTahunAkademikName})`
+                : `Audit efektivitas penerimaan pembayaran, rasio kolektibilitas SPP, dan daftar rombel prioritas (${activeTahunAkademikName})`)
             : `Berisi ringkasan tagihan serta tunggakan siswa per kelas (${activeTahunAkademikName})`}
         </p>
       </div>
 
-      {/* Executive SPP Health Center for KEPALA_SEKOLAH */}
-      {isKepsek && (
+      {/* Executive SPP Health Center */}
+      {isExecutive && (
         <div className="mb-6 p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-[#065f32] border border-emerald-200/80">
-                  Audit Likuiditas & Kolektibilitas SPP
+                  {isGlobal ? "Konsolidasi Yayasan • Likuiditas SPP" : "Audit Likuiditas & Kolektibilitas SPP"}
                 </span>
                 <span className="text-slate-300">•</span>
                 <span className="text-xs text-slate-500 font-medium">{activeUnitName} • TA {activeTahunAkademikName}</span>
@@ -354,9 +357,9 @@ export default function RekapitulasiTunggakanClient({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Tagihan Unit</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{isGlobal ? "Total Tagihan Yayasan" : "Total Tagihan Unit"}</p>
               <p className="text-2xl font-black mt-1 text-slate-900">Rp {formatRupiah(executiveMetrics.totalTagihan)}</p>
-              <p className="text-[11px] text-slate-500 mt-1">Kewajiban seluruh siswa aktif</p>
+              <p className="text-[11px] text-slate-500 mt-1">{isGlobal ? "Kewajiban seluruh siswa se-yayasan" : "Kewajiban seluruh siswa aktif"}</p>
             </div>
 
             <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
