@@ -147,7 +147,7 @@ export default function KelasToolbar({
             
             {activeTab === "kelas" && (
               <ToolbarAddButton onClick={() => {
-                setFormKelas({ id: "", name: "", order: 1, unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
+                setFormKelas({ id: "", name: "", order: 1, unitSekolahId: (activeUnitId && activeUnitId !== "all") ? activeUnitId : (schoolUnits[0]?.id || "") })
                 setShowModalKelas(true)
               }}>
                 Tambah Tingkat
@@ -155,7 +155,7 @@ export default function KelasToolbar({
             )}
             {activeTab === "sub-kelas" && (
               <ToolbarAddButton onClick={() => {
-                setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
+                setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: (activeUnitId && activeUnitId !== "all") ? activeUnitId : (schoolUnits[0]?.id || "") })
                 setShowModalSubKelas(true)
               }}>
                 Tambah Sub Kelas
@@ -164,7 +164,7 @@ export default function KelasToolbar({
             {activeTab === "murid" && (
               <ToolbarAddButton onClick={() => {
                 setFormMurid({
-                  id: "", nisn: "", name: "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "", subKelasId: "",
+                  id: "", nisn: "", name: "", unitSekolahId: (activeUnitId && activeUnitId !== "all") ? activeUnitId : (schoolUnits[0]?.id || ""), subKelasId: "",
                   previousSchool: "", phone: "", birthDate: "", email: "", studentStatus: "AKTIF",
                   parentName: "", parentPhone: "", religion: "Islam", gender: "Laki-laki",
                   address: "", formNo: "", username: ""

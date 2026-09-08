@@ -72,6 +72,10 @@ export default function TingkatFormModal({
   // Reset or detect custom mode when modal opens or unit changes
   useEffect(() => {
     if (isOpen) {
+      const validUnit = (formData.unitSekolahId && formData.unitSekolahId !== "all")
+        ? formData.unitSekolahId
+        : ((activeUnitId && activeUnitId !== "all") ? activeUnitId : (schoolUnits?.[0]?.id || ""))
+
       if (formData.id && formData.name) {
         const match = presets.some(p => p.name === formData.name)
         setIsCustom(!match)
@@ -81,14 +85,16 @@ export default function TingkatFormModal({
         if (!formData.name && presets[0]) {
           setFormData({
             ...formData,
-            unitSekolahId: formData.unitSekolahId || selectedUnit?.id || "",
+            unitSekolahId: validUnit,
             name: presets[0].name,
             order: presets[0].order
           })
+        } else if (!formData.unitSekolahId || formData.unitSekolahId === "all") {
+          setFormData((prev: any) => ({ ...prev, unitSekolahId: validUnit }))
         }
       }
     }
-  }, [isOpen, formData.id, formData.unitSekolahId])
+  }, [isOpen, formData.id, formData.unitSekolahId, activeUnitId, schoolUnits])
 
   const handlePresetChange = (val: string) => {
     if (val === "__CUSTOM__") {

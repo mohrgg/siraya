@@ -318,7 +318,7 @@ export default function KelasClient({
         toast.success("Tingkat berhasil ditambahkan")
       }
       setShowModalKelas(false)
-      setFormKelas({ id: "", name: "", order: formKelas.order + 1, unitSekolahId: activeUnitId || schoolUnits[0]?.id || "" })
+      setFormKelas({ id: "", name: "", order: formKelas.order + 1, unitSekolahId: (activeUnitId && activeUnitId !== "all") ? activeUnitId : (schoolUnits[0]?.id || "") })
     } catch (err: any) { toast.error(err.message) }
     setIsSubmitting(false)
   }
@@ -340,7 +340,7 @@ export default function KelasClient({
       }
       toast.success("Sub kelas berhasil disimpan")
       setShowModalSubKelas(false)
-      setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: activeUnitId || schoolUnits[0]?.id || "", waliKelasGuruId: "", waliKelas: "", waliKelasPhone: "" })
+      setFormSubKelas({ id: "", name: "", tingkatId: "", jurusanId: "", tahunAkademikId: activeYearId || academicYears[0]?.id || "", unitSekolahId: (activeUnitId && activeUnitId !== "all") ? activeUnitId : (schoolUnits[0]?.id || ""), waliKelasGuruId: "", waliKelas: "", waliKelasPhone: "" })
     } catch (err: any) { toast.error(err.message) }
     setIsSubmitting(false)
   }

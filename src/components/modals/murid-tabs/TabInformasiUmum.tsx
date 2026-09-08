@@ -12,12 +12,11 @@ export default function TabInformasiUmum({ formData, handleChange, schoolUnits, 
           <label className="text-sm font-semibold text-text-main">Unit Sekolah <span className="text-red-500">*</span></label>
           <select 
             className="w-full px-4 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium disabled:bg-gray-100 disabled:cursor-not-allowed" 
-            value={formData.unitSekolahId || ""} 
+            value={(formData.unitSekolahId && formData.unitSekolahId !== "all") ? formData.unitSekolahId : (schoolUnits[0]?.id || "")} 
             onChange={e => handleChange("unitSekolahId", e.target.value)} 
             required
             disabled={!!activeUnitId && activeUnitId !== "all"}
           >
-            <option value="" disabled>-- Pilih Unit --</option>
             {schoolUnits.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
         </div>

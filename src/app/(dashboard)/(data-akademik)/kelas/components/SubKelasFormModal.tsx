@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { Modal } from "@/components/ui/Modal"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
@@ -10,13 +11,36 @@ export default function SubKelasFormModal({
   setFormData,
   onSave,
   isSubmitting,
-  schoolUnits,
-  grades,
-  academicYears,
-  initialMajors,
+  schoolUnits = [],
+  grades = [],
+  academicYears = [],
+  initialMajors = [],
   initialTeachers = [],
   activeUnitId
 }: any) {
+  useEffect(() => {
+    if (isOpen) {
+      const validUnit = (formData.unitSekolahId && formData.unitSekolahId !== "all")
+        ? formData.unitSekolahId
+        : ((activeUnitId && activeUnitId !== "all") ? activeUnitId : (schoolUnits[0]?.id || ""))
+      
+      const availableGrades = grades.filter((g: any) => g.unitSekolahId === validUnit)
+      const validTingkat = formData.tingkatId || (availableGrades[0]?.id || "")
+
+      const availableMajors = initialMajors.filter((m: any) => m.unitSekolahId === validUnit)
+      const validJurusan = formData.jurusanId || (availableMajors[0]?.id || "")
+
+      if (formData.unitSekolahId !== validUnit || formData.tingkatId !== validTingkat || (availableMajors.length > 0 && !formData.jurusanId)) {
+        setFormData((prev: any) => ({
+          ...prev,
+          unitSekolahId: validUnit,
+          tingkatId: prev.tingkatId || validTingkat,
+          jurusanId: prev.jurusanId || validJurusan
+        }))
+      }
+    }
+  }, [isOpen, formData.unitSekolahId, activeUnitId, grades, schoolUnits, initialMajors])
+
   const isSelectedGuruInList = initialTeachers.some((t: any) => t.id === formData.waliKelasGuruId)
   const teachersForUnit = [
     ...(formData.waliKelasGuruId && !isSelectedGuruInList ? [{
