@@ -25,6 +25,7 @@ export default async function JurusanPage() {
         initialData={data} 
         userRole={session?.user?.role} 
         activeUnitId={activeUnitId} 
+        units={units}
       />
     </div>
   )

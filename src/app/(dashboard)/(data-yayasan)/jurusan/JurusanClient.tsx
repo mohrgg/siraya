@@ -13,7 +13,7 @@ import toast from "react-hot-toast"
 
 type Major = any
 
-export default function JurusanClient({ initialData, userRole, activeUnitId }: { initialData: Major[], userRole?: string, activeUnitId?: string }) {
+export default function JurusanClient({ initialData, userRole, activeUnitId, units = [] }: { initialData: Major[], userRole?: string, activeUnitId?: string, units?: any[] }) {
   const isReadOnly = false
   const [data, setData] = useState<Major[]>(initialData)
   const [searchTerm, setSearchTerm] = useState("")
@@ -44,13 +44,14 @@ export default function JurusanClient({ initialData, userRole, activeUnitId }: {
   const [selectedPreset, setSelectedPreset] = useState("UMUM")
   const [isCustom, setIsCustom] = useState(false)
 
-  const [formData, setFormData] = useState({ id: "", name: "", code: "", unitSekolahId: activeUnitId })
+  const defaultUnit = activeUnitId || (units.length > 0 ? units[0].id : "")
+  const [formData, setFormData] = useState({ id: "", name: "", code: "", unitSekolahId: defaultUnit })
 
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleAddClick = () => {
-    setFormData({ id: "", name: PRESETS[0].name, code: PRESETS[0].code, unitSekolahId: activeUnitId || "" })
+    setFormData({ id: "", name: PRESETS[0].name, code: PRESETS[0].code, unitSekolahId: defaultUnit })
     setSelectedPreset(PRESETS[0].code)
     setIsCustom(false)
     setIsAdding(true)
@@ -148,7 +149,21 @@ export default function JurusanClient({ initialData, userRole, activeUnitId }: {
           <div>Jurusan ini hanya akan muncul sebagai pilihan saat Anda membuat kelas pada <b>Unit Sekolah</b> yang bersangkutan.</div>
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Removed hidden unitSekolahId select, managed automatically */}
+          {!activeUnitId && units.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-main">Pilih Unit Sekolah</label>
+              <select 
+                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text-main font-medium"
+                value={formData.unitSekolahId || defaultUnit}
+                onChange={e => setFormData({ ...formData, unitSekolahId: e.target.value })}
+                required
+              >
+                {units.map((u: any) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text-main">Pilih Preset Jurusan / Program</label>
