@@ -68,7 +68,7 @@ export async function getSubKlasifikasiAkun(unitId?: string) {
 
 export async function tambahSubKlasifikasi(data: { kode: string, nama: string, klasifikasiAkunId: string, unitSekolahId?: string }) {
   const tenant = await getTenantContext()
-  if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
+  if (tenant.role === "KEPALA_SEKOLAH" || tenant.role === "YAYASAN") throw new Error("Akses ditolak (Read-Only).")
 
   const targetUnitId = data.unitSekolahId || tenant.unitId
   if (!targetUnitId) throw new Error("Unit sekolah harus dipilih.")
@@ -107,7 +107,7 @@ export async function tambahSubKlasifikasi(data: { kode: string, nama: string, k
 
 export async function editSubKlasifikasi(id: string, data: { kode?: string, nama?: string, klasifikasiAkunId?: string }) {
   const tenant = await getTenantContext()
-  if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
+  if (tenant.role === "KEPALA_SEKOLAH" || tenant.role === "YAYASAN") throw new Error("Akses ditolak (Read-Only).")
 
   const current = await prisma.subKlasifikasiAkun.findUnique({ where: { id } })
   if (!current) throw new Error("Subklasifikasi tidak ditemukan.")
@@ -143,7 +143,7 @@ export async function editSubKlasifikasi(id: string, data: { kode?: string, nama
 
 export async function hapusSubKlasifikasi(id: string) {
   const tenant = await getTenantContext()
-  if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
+  if (tenant.role === "KEPALA_SEKOLAH" || tenant.role === "YAYASAN") throw new Error("Akses ditolak (Read-Only).")
 
   const current = await prisma.subKlasifikasiAkun.findUnique({ where: { id } })
   if (!current) throw new Error("Subklasifikasi tidak ditemukan.")
@@ -199,7 +199,7 @@ export async function getAkunDetail(unitId?: string) {
 
 export async function tambahAkunDetail(data: { kode: string, nama: string, subKlasifikasiAkunId: string, unitSekolahId?: string, isKasBank: boolean, isSPP?: boolean, isActive: boolean }) {
   const tenant = await getTenantContext()
-  if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
+  if (tenant.role === "KEPALA_SEKOLAH" || tenant.role === "YAYASAN") throw new Error("Akses ditolak (Read-Only).")
 
   const targetUnitId = data.unitSekolahId || tenant.unitId
   if (!targetUnitId) throw new Error("Unit sekolah harus dipilih.")
@@ -241,7 +241,7 @@ export async function tambahAkunDetail(data: { kode: string, nama: string, subKl
 
 export async function editAkunDetail(id: string, data: { kode?: string, nama?: string, subKlasifikasiAkunId?: string, unitSekolahId?: string, isKasBank?: boolean, isSPP?: boolean, isActive?: boolean }) {
   const tenant = await getTenantContext()
-  if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
+  if (tenant.role === "KEPALA_SEKOLAH" || tenant.role === "YAYASAN") throw new Error("Akses ditolak (Read-Only).")
 
   const current = await prisma.akunDetail.findUnique({ where: { id } })
   if (!current) throw new Error("Akun tidak ditemukan")
@@ -286,7 +286,7 @@ export async function editAkunDetail(id: string, data: { kode?: string, nama?: s
 
 export async function hapusAkunDetail(id: string) {
   const tenant = await getTenantContext()
-  if (tenant.role === "KEPALA_SEKOLAH") throw new Error("Akses ditolak (Read-Only).")
+  if (tenant.role === "KEPALA_SEKOLAH" || tenant.role === "YAYASAN") throw new Error("Akses ditolak (Read-Only).")
 
   const current = await prisma.akunDetail.findUnique({ where: { id } })
   if (!current) throw new Error("Akun tidak ditemukan")

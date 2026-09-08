@@ -114,6 +114,8 @@ export async function getYayasanDashboardData(yearId?: string) {
           subKelas: {
             where: { isDeleted: false, ...(yearId ? { tahunAkademikId: yearId } : {}) },
             select: {
+              id: true,
+              name: true,
               _count: { select: { riwayatKelas: { where: { isCurrent: true, murid: { isActive: true }, ...(yearId ? { tahunAkademikId: yearId } : {}) } } } }
             }
           }
@@ -148,14 +150,23 @@ export async function getYayasanDashboardData(yearId?: string) {
     const kolektibilitas = kData.jumlah > 0 ? Math.round((kData.terbayar / kData.jumlah) * 100) : null
     
     return {
+      id: u.id,
       name: u.name,
       total: u._count.murid,
       rombel: u._count.subKelas,
       guru: u._count.guru,
       kolektibilitas,
+      tagihanTotal: kData.jumlah,
+      tagihanTerbayar: kData.terbayar,
+      tagihanSisa: kData.jumlah - kData.terbayar,
       classes: u.tingkat.map(t => ({
         name: t.name,
-        total: t.subKelas.reduce((sum, sk) => sum + sk._count.riwayatKelas, 0)
+        total: t.subKelas.reduce((sum, sk) => sum + sk._count.riwayatKelas, 0),
+        rombelList: t.subKelas.map(sk => ({
+          id: sk.id,
+          name: sk.name,
+          total: sk._count.riwayatKelas
+        }))
       })).filter(t => t.total > 0).sort((a, b) => sortSchoolClasses(a.name, b.name))
     }
   })

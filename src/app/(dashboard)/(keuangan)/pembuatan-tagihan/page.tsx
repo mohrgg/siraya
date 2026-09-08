@@ -18,7 +18,7 @@ export default async function PembuatanTagihanPage() {
   const tenant = await getTenantContext()
   const user = tenant.user
 
-  if (user?.role === "KEPALA_SEKOLAH") {
+  if (user?.role === "KEPALA_SEKOLAH" || user?.role === "YAYASAN") {
     redirect("/rekapitulasi-tunggakan")
   }
 

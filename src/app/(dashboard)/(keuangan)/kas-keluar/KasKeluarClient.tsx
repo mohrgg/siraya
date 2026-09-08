@@ -32,7 +32,7 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
   const [isDeleting, setIsDeleting] = useState(false)
   const [isExportingExcel, setIsExportingExcel] = useState(false)
   const [isExportingPDF, setIsExportingPDF] = useState(false)
-  const isReadOnly = userRole === "KEPALA_SEKOLAH"
+  const isReadOnly = userRole === "KEPALA_SEKOLAH" || userRole === "YAYASAN"
   
   const [filterBy, setFilterBy] = useState<'tanggal_transaksi' | 'tanggal_pembuatan'>('tanggal_transaksi')
   const [timeRange, setTimeRange] = useState<'hari' | 'minggu' | 'bulan' | 'custom'>('bulan')
@@ -194,11 +194,13 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
                 <span className="text-slate-300">•</span>
                 <span className="text-xs text-slate-500 font-medium">Periode Filter: {timeRange.toUpperCase()}</span>
               </div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900">Ringkasan Belanja & Pengeluaran Unit</h2>
+              <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                {userRole === "YAYASAN" ? "Ringkasan Belanja & Pengeluaran Konsolidasi" : "Ringkasan Belanja & Pengeluaran Unit"}
+              </h2>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs bg-slate-50 px-3 py-1.5 rounded-xl text-slate-600 font-medium border border-slate-200">
-                Pimpinan Unit • Mode Pengawasan
+                {userRole === "YAYASAN" ? "Pengurus Yayasan • Mode Pengawasan 360°" : "Pimpinan Unit • Mode Pengawasan"}
               </span>
             </div>
           </div>

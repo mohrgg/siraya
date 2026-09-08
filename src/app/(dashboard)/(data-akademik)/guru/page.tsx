@@ -19,15 +19,22 @@ export default async function GuruPage() {
   const activeUnitId = tenant.unitId || "all"
 
   const isKepsek = tenant.role === "KEPALA_SEKOLAH"
+  const isYayasan = tenant.role === "YAYASAN"
 
   return (
     <div className="max-w-[1600px] mx-auto w-full">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
-          {isKepsek ? "Beban & Direktori Tenaga Pendidik" : "Guru & Staf"}
+          {isYayasan
+            ? "Direktori Tenaga Pendidik Seluruh Unit"
+            : isKepsek
+            ? "Beban & Direktori Tenaga Pendidik"
+            : "Guru & Staf"}
         </h1>
         <p className="text-text-muted">
-          {isKepsek
+          {isYayasan
+            ? "Pengawasan kualifikasi, status kepegawaian (GTY vs Honorer), dan penugasan wali kelas lintas unit yayasan."
+            : isKepsek
             ? "Monitoring kualifikasi, status kepegawaian, dan penugasan wali kelas unit"
             : "Kelola data kepegawaian, pengampu mata pelajaran, dan wali kelas"}
         </p>

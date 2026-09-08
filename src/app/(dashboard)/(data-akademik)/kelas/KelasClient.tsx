@@ -25,7 +25,7 @@ export default function KelasClient({
 }: {
   activeUnitId?: string, activeYearId?: string, initialGrades: any[], initialMajors: any[], initialClassrooms: any[], initialStudents: any[], academicYears: any[], schoolUnits: any[], initialTeachers?: any[], userRole?: string, userName?: string, pengaturan?: any
 }) {
-  const isReadOnly = userRole === "KEPALA_SEKOLAH"
+  const isReadOnly = userRole === "KEPALA_SEKOLAH" || userRole === "YAYASAN"
   const router = useRouter()
   const data = useKelasData({ activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits, userRole })
 

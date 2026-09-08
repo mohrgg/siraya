@@ -21,7 +21,8 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   
-  const [unit, setUnit] = useState(activeUnitId || schoolUnits[0]?.id || "")
+  const isHoldingRole = user?.role === "ADMIN" || user?.role === "YAYASAN";
+  const [unit, setUnit] = useState(activeUnitId || (isHoldingRole ? "all" : schoolUnits[0]?.id) || "")
   const [year, setYear] = useState(activeYearId || academicYears[0]?.id || "")
   
   const { toggleMobileMenu } = useMobileMenu()
@@ -50,7 +51,7 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
     })
   }
   
-  const isUnitLocked = schoolUnits.length <= 1;
+  const isUnitLocked = !isHoldingRole && schoolUnits.length <= 1;
 
   return (
     <header className="h-auto min-h-[80px] py-4 px-4 md:px-6 bg-surface border-b border-border flex flex-col md:flex-row md:items-center justify-between shadow-sm shrink-0 gap-4 md:gap-0">
@@ -78,6 +79,9 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
               onChange={(e) => handleChange("unit", e.target.value)}
               disabled={isPending || isUnitLocked}
             >
+              {isHoldingRole && (
+                <option value="all">🏢 Semua Unit (Konsolidasi)</option>
+              )}
               {[...schoolUnits]
                 .sort((a, b) => {
                   const getLvl = (n: string) => {

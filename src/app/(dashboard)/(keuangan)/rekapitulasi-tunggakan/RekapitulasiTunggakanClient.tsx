@@ -64,7 +64,7 @@ export default function RekapitulasiTunggakanClient({
   userName,
   userRole
 }: Props) {
-  const isKepsek = userRole === "KEPALA_SEKOLAH"
+  const isKepsek = userRole === "KEPALA_SEKOLAH" || userRole === "YAYASAN"
 
   const [isLoading, setIsLoading] = useState(false)
   const [rekapData, setRekapData] = useState<RekapItem[]>([])

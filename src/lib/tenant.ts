@@ -33,8 +33,8 @@ export async function getTenantContext(): Promise<TenantContext> {
   const role = session.user.role || "TATA_USAHA"
   const userUnitId = (session.user as any).unitSekolahId
   
-  if (role === "ADMIN") {
-    // Admin berhak membaca cookie activeUnitId
+  if (role === "ADMIN" || role === "YAYASAN") {
+    // Admin dan Yayasan berhak membaca cookie activeUnitId
     const cookieStore = await cookies()
     const activeUnitId = cookieStore.get("activeUnitId")?.value || "all"
     
@@ -45,7 +45,7 @@ export async function getTenantContext(): Promise<TenantContext> {
     return { role, unitId: activeUnitId, isGlobal: false, user: session.user }
   }
   
-  // Non-Admin: Wajib menggunakan unitId dari session, cookie diabaikan!
+  // Non-Admin / Non-Yayasan: Wajib menggunakan unitId dari session, cookie diabaikan!
   if (!userUnitId) {
     throw new Error("Unauthorized: User tidak memiliki akses ke unit manapun.")
   }

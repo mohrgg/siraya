@@ -92,7 +92,7 @@ export default function GuruClient({
   userName?: string
 }) {
   const router = useRouter()
-  const isReadOnly = userRole === "KEPALA_SEKOLAH"
+  const isReadOnly = userRole === "KEPALA_SEKOLAH" || userRole === "YAYASAN"
 
   const [data, setData] = useState<Guru[]>(initialData)
   
@@ -412,11 +412,13 @@ export default function GuruClient({
                 <span className="text-slate-300">•</span>
                 <span className="text-xs text-slate-500 font-medium">Monitoring Beban & Kualifikasi Guru</span>
               </div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900">Komposisi & Kesiapan Guru Unit</h2>
+              <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                {userRole === "YAYASAN" ? "Komposisi & Kesiapan Guru Konsolidasi" : "Komposisi & Kesiapan Guru Unit"}
+              </h2>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs bg-slate-50 px-3 py-1.5 rounded-xl text-slate-600 font-medium border border-slate-200">
-                Pimpinan Unit • Mode Pengawasan
+                {userRole === "YAYASAN" ? "Pengurus Yayasan • Mode Pengawasan 360°" : "Pimpinan Unit • Mode Pengawasan"}
               </span>
             </div>
           </div>

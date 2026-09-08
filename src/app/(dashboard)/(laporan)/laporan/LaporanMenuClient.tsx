@@ -13,38 +13,50 @@ import {
 
 export default function LaporanMenuClient({ userRole }: { userRole?: string }) {
   const isKepsek = userRole === "KEPALA_SEKOLAH"
+  const isYayasan = userRole === "YAYASAN"
+  const isSupervisory = isKepsek || isYayasan
 
   return (
     <div className="max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
-          {isKepsek ? "Pusat Pengesahan & Laporan Resmi Unit" : "Pusat Laporan"}
+          {isYayasan
+            ? "Pusat Laporan Eksekutif Yayasan"
+            : isKepsek
+            ? "Pusat Pengesahan & Laporan Resmi Unit"
+            : "Pusat Laporan"}
         </h1>
         <p className="text-text-muted text-base max-w-2xl">
-          {isKepsek
+          {isYayasan
+            ? "Akses komprehensif ke dokumen pertanggungjawaban keuangan konsolidasi dan rekapitulasi audit seluruh unit sekolah Al-Basyariah."
+            : isKepsek
             ? "Verifikasi, audit, dan cetak dokumen pertanggungjawaban keuangan resmi yang telah dilengkapi format tanda tangan Mengetahui Kepala Sekolah."
             : "Pantau dan analisis kesehatan finansial serta kepatuhan administrasi sekolah melalui berbagai modul laporan terpadu."}
         </p>
       </div>
 
-      {isKepsek && (
+      {isSupervisory && (
         <div className="mb-8 p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-[#065f32] border border-emerald-200/80">
-                  Pusat Dokumen Resmi Unit
+                  {isYayasan ? "Pusat Dokumen Konsolidasi Yayasan" : "Pusat Dokumen Resmi Unit"}
                 </span>
                 <span className="text-slate-300">•</span>
                 <span className="text-xs text-slate-500 font-medium">Standar Yayasan Al-Basyariah</span>
               </div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900 mt-0.5">Standarisasi Pengesahan Berkas Yayasan</h2>
+              <h2 className="text-xl font-bold tracking-tight text-slate-900 mt-0.5">
+                {isYayasan ? "Standarisasi Laporan Konsolidasi Yayasan" : "Standarisasi Pengesahan Berkas Yayasan"}
+              </h2>
               <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
-                Seluruh format ekspor PDF pada modul di bawah ini telah secara otomatis memuat blok pengesahan resmi: <strong className="text-slate-800">&quot;Mengetahui, Kepala Sekolah&quot;</strong> dan <strong className="text-slate-800">&quot;Dibuat oleh, Tata Usaha&quot;</strong> sesuai profil unit sekolah Anda.
+                {isYayasan
+                  ? "Seluruh format dokumen dan ekspor PDF pada modul di bawah ini menyajikan data konsolidasi serta pertanggungjawaban resmi seluruh unit sekolah binaan."
+                  : <>Seluruh format ekspor PDF pada modul di bawah ini telah secara otomatis memuat blok pengesahan resmi: <strong className="text-slate-800">&quot;Mengetahui, Kepala Sekolah&quot;</strong> dan <strong className="text-slate-800">&quot;Dibuat oleh, Tata Usaha&quot;</strong> sesuai profil unit sekolah Anda.</>}
               </p>
             </div>
             <span className="text-xs bg-slate-50 px-3 py-1.5 rounded-xl text-slate-700 font-semibold border border-slate-200 shrink-0">
-              Format Siap Tanda Tangan
+              {isYayasan ? "Mode Audit Yayasan" : "Format Siap Tanda Tangan"}
             </span>
           </div>
         </div>

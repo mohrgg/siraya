@@ -30,9 +30,9 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
     
     let activeUnitId = cookieStore.get("activeUnitId")?.value
     
-    if (role === "ADMIN" && !activeUnitId) {
+    if ((role === "ADMIN" || role === "YAYASAN") && !activeUnitId) {
       activeUnitId = "all"
-    } else if (role !== "ADMIN" && userUnitId) {
+    } else if (role !== "ADMIN" && role !== "YAYASAN" && userUnitId) {
       activeUnitId = userUnitId
     } else if (!activeUnitId) {
       activeUnitId = schoolUnits[0]?.id
@@ -132,6 +132,30 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
       <div className="max-w-[1600px] mx-auto w-full">
         <DashboardNavTabs role="TATA_USAHA" />
         <UnitDashboard role="TATA_USAHA" unitName={activeUnit?.name || 'Unit Sekolah'} {...data} />
+      </div>
+    )
+  }
+
+  // ==================== PENGURUS YAYASAN ====================
+  if (role === "YAYASAN") {
+    const { schoolUnits, activeYearId, activeUnitId } = await getActiveContext()
+
+    if (activeTab === "unit" && activeUnitId && activeUnitId !== "all") {
+      const selectedUnit = schoolUnits.find(u => u.id === activeUnitId)
+      const data = await getUnitDashboardData(activeUnitId, activeYearId)
+      return (
+        <div className="max-w-[1600px] mx-auto w-full">
+          <DashboardNavTabs role="YAYASAN" units={schoolUnits} activeUnitId={activeUnitId} />
+          <UnitDashboard role="YAYASAN" unitName={selectedUnit?.name || 'Unit Sekolah'} {...data} />
+        </div>
+      )
+    }
+
+    const data = await getYayasanDashboardData(activeYearId)
+    return (
+      <div className="max-w-[1600px] mx-auto w-full">
+        <DashboardNavTabs role="YAYASAN" units={schoolUnits} activeUnitId={activeUnitId} />
+        <YayasanDashboard role="YAYASAN" {...data} />
       </div>
     )
   }

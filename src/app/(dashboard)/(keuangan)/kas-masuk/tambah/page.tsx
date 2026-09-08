@@ -10,7 +10,7 @@ export default async function TambahKasMasukPage() {
   if (!session || !session.user) redirect("/login")
   const tenant = await getTenantContext()
   
-  if (tenant.user?.role === "KEPALA_SEKOLAH") {
+  if (tenant.user?.role === "KEPALA_SEKOLAH" || tenant.user?.role === "YAYASAN") {
     redirect("/kas-masuk")
   }
 

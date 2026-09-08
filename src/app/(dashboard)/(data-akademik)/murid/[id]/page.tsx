@@ -12,7 +12,7 @@ export default async function MuridDetailPage({ params }: PageProps) {
   const { id } = await params
   const session = await auth()
   const role = session?.user?.role || "TATA_USAHA"
-  const isReadOnly = role === "KEPALA_SEKOLAH"
+  const isReadOnly = role === "KEPALA_SEKOLAH" || role === "YAYASAN"
 
   const res = await getMuridDetail360(id)
   if (!res.success || !res.data) {

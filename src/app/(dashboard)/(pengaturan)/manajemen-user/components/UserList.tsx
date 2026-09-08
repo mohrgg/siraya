@@ -19,6 +19,7 @@ export default function UserList({
       case "ADMIN": return <span className="text-rose-600 text-xs font-bold flex items-center gap-1 w-max"><ShieldCheck size={12} /> SUPER ADMIN</span>
       case "TATA_USAHA": return <span className="text-blue-600 text-xs font-bold w-max">TATA USAHA</span>
       case "KEPALA_SEKOLAH": return <span className="text-purple-600 text-xs font-bold w-max">KEPALA SEKOLAH</span>
+      case "YAYASAN": return <span className="text-[#065f32] text-xs font-bold w-max">PENGURUS YAYASAN</span>
       default: return <span className="text-text-main text-xs font-bold w-max">{role}</span>
     }
   }
@@ -40,7 +41,8 @@ export default function UserList({
               { label: "Semua Role", value: "" },
               { label: "ADMIN", value: "ADMIN" },
               { label: "TATA_USAHA", value: "TATA_USAHA" },
-              { label: "KEPALA_SEKOLAH", value: "KEPALA_SEKOLAH" }
+              { label: "KEPALA_SEKOLAH", value: "KEPALA_SEKOLAH" },
+              { label: "YAYASAN", value: "YAYASAN" }
             ]}
           />
           <ToolbarFilter
@@ -82,6 +84,7 @@ export default function UserList({
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border shadow-sm shrink-0 ${
                         u.role === "ADMIN" ? "bg-rose-50 text-rose-600 border-rose-200" :
                         u.role === "KEPALA_SEKOLAH" ? "bg-purple-50 text-purple-600 border-purple-200" :
+                        u.role === "YAYASAN" ? "bg-emerald-50 text-[#065f32] border-emerald-200" :
                         "bg-blue-50 text-blue-600 border-blue-200"
                       }`}>
                         {u.name.substring(0,2).toUpperCase()}

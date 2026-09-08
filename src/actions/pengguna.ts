@@ -37,8 +37,8 @@ export async function tambahPengguna(data: {
   const existingEmail = await prisma.pengguna.findUnique({ where: { email: data.email } })
   if (existingEmail) throw new Error("Email sudah terdaftar.")
 
-  if (data.role !== "ADMIN" && !data.unitSekolahId) {
-    throw new Error("Unit Sekolah wajib diisi untuk role selain ADMIN.")
+  if (data.role !== "ADMIN" && data.role !== "YAYASAN" && !data.unitSekolahId) {
+    throw new Error("Unit Sekolah wajib diisi untuk role selain ADMIN dan YAYASAN.")
   }
 
   // Default password is 'albas123' if not provided
@@ -72,8 +72,8 @@ export async function editPengguna(id: string, data: {
   })
   if (existingEmail) throw new Error("Email sudah digunakan pengguna lain.")
 
-  if (data.role !== "ADMIN" && !data.unitSekolahId) {
-    throw new Error("Unit Sekolah wajib diisi untuk role selain ADMIN.")
+  if (data.role !== "ADMIN" && data.role !== "YAYASAN" && !data.unitSekolahId) {
+    throw new Error("Unit Sekolah wajib diisi untuk role selain ADMIN dan YAYASAN.")
   }
 
   const updateData: any = {

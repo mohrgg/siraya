@@ -38,6 +38,13 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
         return [
           { id: 'kepsek', label: 'Ringkasan Eksekutif', icon: LayoutDashboard },
         ]
+      case 'YAYASAN': {
+        const activeUnitName = units.find(u => u.id === activeUnitId)?.name || 'Unit'
+        return [
+          { id: 'yayasan', label: 'Konsolidasi 360° Yayasan', icon: Building2 },
+          ...(activeUnitId && activeUnitId !== 'all' ? [{ id: 'unit', label: `Detail: ${activeUnitName}`, icon: Layers }] : []),
+        ]
+      }
       default:
         return [
           { id: 'yayasan', label: 'Yayasan', icon: Building2 },
@@ -52,8 +59,8 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
       <div className="bg-white p-1.5 rounded-2xl border border-gray-200 shadow-sm inline-flex flex-wrap gap-1">
         {tabs.map((tab) => {
           const Icon = tab.icon
-          const isActive = activeTab === tab.id || (role === 'KEPALA_SEKOLAH' && !searchParams.get('tab') && tab.id === 'kepsek')
-          const href = tab.id === 'unit' && role === 'ADMIN' ? `/?tab=${tab.id}&unitId=${activeUnitId}` : `/?tab=${tab.id}`
+          const isActive = activeTab === tab.id || (role === 'KEPALA_SEKOLAH' && !searchParams.get('tab') && tab.id === 'kepsek') || (role === 'YAYASAN' && !searchParams.get('tab') && tab.id === 'yayasan')
+          const href = tab.id === 'unit' && (role === 'ADMIN' || role === 'YAYASAN') ? `/?tab=${tab.id}&unitId=${activeUnitId}` : `/?tab=${tab.id}`
 
           return (
             <Link

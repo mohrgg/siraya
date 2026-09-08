@@ -20,39 +20,39 @@ const menuGroups = [
   {
     title: "UTAMA",
     items: [
-      { href: "/", label: "Dashboard", icon: LayoutDashboard, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/", label: "Dashboard", icon: LayoutDashboard, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
     ]
   },
   {
     title: "DATA YAYASAN",
     items: [
-      { href: "/unit-sekolah", label: "Unit Sekolah", icon: Building, allowedRoles: ["ADMIN"], isGlobal: true },
-      { href: "/jurusan", label: "Program & Jurusan", icon: BookOpen, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/unit-sekolah", label: "Unit Sekolah", icon: Building, allowedRoles: ["ADMIN", "YAYASAN"], isGlobal: true },
+      { href: "/jurusan", label: "Program & Jurusan", icon: BookOpen, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
     ]
   },
   {
     title: "DATA AKADEMIK",
     items: [
-      { href: "/tahun-akademik", label: "Tahun Akademik", icon: Calendar, allowedRoles: ["ADMIN"], isGlobal: true },
-      { href: "/guru", label: "Guru & Staf", icon: GraduationCap, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
-      { href: "/kelas", label: "Kelas & Murid", icon: Users2, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/tahun-akademik", label: "Tahun Akademik", icon: Calendar, allowedRoles: ["ADMIN", "YAYASAN"], isGlobal: true },
+      { href: "/guru", label: "Guru & Staf", icon: GraduationCap, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
+      { href: "/kelas", label: "Kelas & Murid", icon: Users2, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
     ]
   },
   {
     title: "KEUANGAN",
     items: [
-      { href: "/akun-keuangan", label: "Akun Keuangan", icon: Landmark, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"], isGlobal: true },
-      { href: "/kas-masuk", label: "Kas Masuk", icon: ArrowDownToLine, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
-      { href: "/kas-keluar", label: "Kas Keluar", icon: ArrowUpFromLine, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/akun-keuangan", label: "Akun Keuangan", icon: Landmark, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"], isGlobal: true },
+      { href: "/kas-masuk", label: "Kas Masuk", icon: ArrowDownToLine, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
+      { href: "/kas-keluar", label: "Kas Keluar", icon: ArrowUpFromLine, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
       { href: "/pembuatan-tagihan", label: "Pembuatan Tagihan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA"] },
       { href: "/pembayaran-tagihan", label: "Pembayaran Tagihan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA"] },
-      { href: "/rekapitulasi-tunggakan", label: "Rekap. Tagihan & Tunggakan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/rekapitulasi-tunggakan", label: "Rekap. Tagihan & Tunggakan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
     ]
   },
   {
     title: "LAPORAN",
     items: [
-      { href: "/laporan", label: "Laporan Keuangan", icon: PieChart, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"], isGlobal: true },
+      { href: "/laporan", label: "Laporan Keuangan", icon: PieChart, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"], isGlobal: true },
     ]
   },
   {
@@ -72,6 +72,7 @@ export default function Sidebar({ user, logoUrl }: { user: any; logoUrl?: string
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
 
   const isKepsek = user?.role === "KEPALA_SEKOLAH"
+  const isYayasan = user?.role === "YAYASAN"
 
   const filteredGroups = menuGroups.map(group => {
     let title = group.title
@@ -79,6 +80,11 @@ export default function Sidebar({ user, logoUrl }: { user: any; logoUrl?: string
       if (group.title === "DATA AKADEMIK") title = "AKADEMIK & MUTU"
       if (group.title === "KEUANGAN") title = "AUDIT KEUANGAN UNIT"
       if (group.title === "LAPORAN") title = "PENGESAHAN & LAPORAN"
+    } else if (isYayasan) {
+      if (group.title === "DATA YAYASAN") title = "KELEMBAGAAN YAYASAN"
+      if (group.title === "DATA AKADEMIK") title = "SDM & KESISWAAN GLOBAL"
+      if (group.title === "KEUANGAN") title = "KONSOLIDASI KEUANGAN"
+      if (group.title === "LAPORAN") title = "LAPORAN KONSOLIDASI"
     }
 
     const items = group.items
@@ -91,6 +97,17 @@ export default function Sidebar({ user, logoUrl }: { user: any; logoUrl?: string
           if (item.href === "/kas-masuk") return { ...item, label: "Audit Kas Masuk" }
           if (item.href === "/kas-keluar") return { ...item, label: "Audit Kas Keluar" }
           if (item.href === "/laporan") return { ...item, label: "Laporan & Pengesahan" }
+        } else if (isYayasan) {
+          if (item.href === "/") return { ...item, label: "360° Cockpit Yayasan" }
+          if (item.href === "/unit-sekolah") return { ...item, label: "Direktori Unit Sekolah" }
+          if (item.href === "/jurusan") return { ...item, label: "Kompetensi Keahlian" }
+          if (item.href === "/kelas") return { ...item, label: "Rombel Seluruh Unit" }
+          if (item.href === "/guru") return { ...item, label: "Direktori Pendidik & Staf" }
+          if (item.href === "/akun-keuangan") return { ...item, label: "Bagan Akun Yayasan" }
+          if (item.href === "/kas-masuk") return { ...item, label: "Arus Kas Masuk Global" }
+          if (item.href === "/kas-keluar") return { ...item, label: "Audit Belanja Yayasan" }
+          if (item.href === "/rekapitulasi-tunggakan") return { ...item, label: "Piutang SPP Konsolidasi" }
+          if (item.href === "/laporan") return { ...item, label: "Laporan Eksekutif" }
         }
         return item
       })
@@ -212,7 +229,9 @@ export default function Sidebar({ user, logoUrl }: { user: any; logoUrl?: string
             {!isCollapsed && (
               <div className="flex flex-col flex-1 overflow-hidden">
                 <span className="text-sm font-semibold text-white truncate">{user?.name || "User"}</span>
-                <span className="text-xs text-white/60 truncate">{user?.role}</span>
+                <span className="text-xs text-white/60 truncate">
+                  {user?.role === "YAYASAN" ? "PENGURUS YAYASAN" : user?.role}
+                </span>
               </div>
             )}
             {!isCollapsed && (

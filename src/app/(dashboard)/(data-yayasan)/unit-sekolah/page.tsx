@@ -8,7 +8,7 @@ export default async function UnitSekolahPage() {
   const session = await auth()
   const tenant = await getTenantContext()
   
-  if (tenant.role !== "ADMIN") {
+  if (tenant.role !== "ADMIN" && tenant.role !== "YAYASAN") {
     redirect("/")
   }
 

@@ -42,6 +42,24 @@ async function main() {
     },
   })
 
+  // Seed Pengurus Yayasan
+  await prisma.pengguna.upsert({
+    where: { email: 'yayasan@albasyariah.com' },
+    update: {
+      role: 'YAYASAN',
+      unitSekolahId: null,
+      isActive: true,
+    },
+    create: {
+      email: 'yayasan@albasyariah.com',
+      name: 'Pengurus Yayasan',
+      password: hashedPassword,
+      role: 'YAYASAN',
+      unitSekolahId: null,
+      isActive: true,
+    },
+  })
+
   // Seed default School Unit
   const school = await prisma.unitSekolah.create({
     data: {

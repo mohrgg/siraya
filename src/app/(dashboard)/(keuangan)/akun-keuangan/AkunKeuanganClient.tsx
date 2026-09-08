@@ -39,7 +39,7 @@ export default function AkunKeuanganClient({
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const isReadOnly = userRole === "KEPALA_SEKOLAH"
+  const isReadOnly = userRole === "KEPALA_SEKOLAH" || userRole === "YAYASAN"
   const canEditKategori = !isReadOnly // TU and Admin can edit Kategori
 
   const [activeTab, setActiveTab] = useState<"AKUN" | "SUBKLASIFIKASI">("SUBKLASIFIKASI")
