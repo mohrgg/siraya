@@ -16,6 +16,11 @@ export const metadata = {
 export default async function PembayaranTagihanPage() {
   const tenant = await getTenantContext()
   const user = tenant.user
+
+  if (user?.role === "KEPALA_SEKOLAH") {
+    redirect("/rekapitulasi-tunggakan")
+  }
+
   const activeUnitId = tenant.unitId || "all"
   
   const tahunAkademikAktif = await getTahunAkademikAktif()

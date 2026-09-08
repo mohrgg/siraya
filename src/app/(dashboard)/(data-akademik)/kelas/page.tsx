@@ -28,11 +28,19 @@ export default async function KelasPage() {
   const pengaturan = await prisma.pengaturan.findUnique({ where: { id: "GLOBAL" } })
   const students: any[] = [] // Now fetched asynchronously in KelasClient via pagination
 
+  const isKepsek = tenant.role === "KEPALA_SEKOLAH"
+
   return (
     <div className="max-w-[1600px] mx-auto w-full">
       <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Kelas & Murid</h1>
-        <p className="text-text-muted">Kelola data rombongan belajar dan data siswa</p>
+        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
+          {isKepsek ? "Kapasitas & Distribusi Rombel" : "Kelas & Murid"}
+        </h1>
+        <p className="text-text-muted">
+          {isKepsek
+            ? "Monitoring daya tampung rombongan belajar, rasio murid, dan penugasan wali kelas"
+            : "Kelola data rombongan belajar dan data siswa"}
+        </p>
       </div>
 
       <KelasClient 

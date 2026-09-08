@@ -9,59 +9,96 @@ interface PendapatanInteractiveChartProps {
   mingguIniData: any[]
   bulanIniData: any[]
   perUnitData?: any[]
+  title?: string
+  hideContainerCard?: boolean
 }
 
 const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
 
-export default function PendapatanInteractiveChart({ hariIniData, mingguIniData, bulanIniData, perUnitData = [] }: PendapatanInteractiveChartProps) {
+export default function PendapatanInteractiveChart({ 
+  hariIniData, mingguIniData, bulanIniData, perUnitData = [],
+  title, hideContainerCard = false
+}: PendapatanInteractiveChartProps) {
   const [activeTab, setActiveTab] = useState<'hari' | 'minggu' | 'bulan' | 'unit'>('hari')
 
   const data = activeTab === 'hari' ? hariIniData : activeTab === 'minggu' ? mingguIniData : activeTab === 'bulan' ? bulanIniData : perUnitData
   const maxBarSize = activeTab === 'unit' ? 40 : activeTab === 'bulan' ? 15 : activeTab === 'minggu' ? 40 : 30
   const color = activeTab === 'hari' ? '#3b82f6' : activeTab === 'minggu' ? '#f59e0b' : activeTab === 'bulan' ? '#10b981' : '#8b5cf6'
 
-  const totalValue = data.reduce((acc, curr) => acc + curr.value, 0)
+  const totalValue = data.reduce((acc, curr) => acc + (curr.value || 0), 0)
+
+  const containerClasses = hideContainerCard 
+    ? "flex flex-col w-full h-full" 
+    : "bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col w-full h-full"
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col w-full h-full">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-        <div>
-          <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-            <Wallet size={18} className={activeTab === 'hari' ? "text-blue-500" : activeTab === 'minggu' ? "text-amber-500" : activeTab === 'bulan' ? "text-emerald-500" : "text-purple-500"} />
-            Pendapatan {activeTab === 'hari' ? 'Hari Ini' : activeTab === 'minggu' ? 'Minggu Ini' : activeTab === 'bulan' ? 'Bulan Ini' : 'Per Unit (Bulan Ini)'}
-          </h3>
-          <p className="text-xs text-gray-500 mt-1">Total: <span className="font-bold text-gray-700">{formatCurrency(totalValue)}</span></p>
+    <div className={containerClasses}>
+      {/* Two-Tier Header: Anti-Overflow & Responsive */}
+      <div className="flex flex-col gap-3 mb-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+              activeTab === 'hari' ? "bg-blue-50 text-blue-600" : activeTab === 'minggu' ? "bg-amber-50 text-amber-600" : activeTab === 'bulan' ? "bg-emerald-50 text-emerald-600" : "bg-purple-50 text-purple-600"
+            }`}>
+              <Wallet size={16} />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">
+                {title || (activeTab === 'hari' ? 'Arus Kas Hari Ini' : activeTab === 'minggu' ? 'Arus Kas Minggu Ini' : activeTab === 'bulan' ? 'Arus Kas Bulan Ini' : 'Arus Kas per Unit')}
+              </h3>
+              <p className="text-[11px] text-gray-400 truncate">Penerimaan & pembayaran terverifikasi</p>
+            </div>
+          </div>
+
+          <div className="shrink-0 text-right">
+            <span className="text-xs sm:text-sm font-black text-gray-900 bg-gray-50 border border-gray-200/80 px-2.5 py-1 rounded-lg inline-block whitespace-nowrap shadow-xs">
+              {formatCurrency(totalValue)}
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-200">
+        {/* Full-width Responsive Segmented Control (Zero Overflow Guarantee) */}
+        <div className={`grid ${perUnitData && perUnitData.length > 0 ? 'grid-cols-4' : 'grid-cols-3'} gap-1 bg-gray-100/90 p-1 rounded-xl w-full select-none`}>
           <button 
+            type="button"
             onClick={() => setActiveTab('hari')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'hari' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex items-center justify-center py-1.5 px-2 rounded-lg text-xs font-bold transition-all truncate ${
+              activeTab === 'hari' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'
+            }`}
+            title="Hari Ini"
           >
-            <Clock size={14} />
-            Hari Ini
+            <span className="truncate">Hari Ini</span>
           </button>
           <button 
+            type="button"
             onClick={() => setActiveTab('minggu')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'minggu' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex items-center justify-center py-1.5 px-2 rounded-lg text-xs font-bold transition-all truncate ${
+              activeTab === 'minggu' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'
+            }`}
+            title="Minggu Ini"
           >
-            <Calendar size={14} />
-            Minggu Ini
+            <span className="truncate">Minggu</span>
           </button>
           <button 
+            type="button"
             onClick={() => setActiveTab('bulan')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'bulan' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex items-center justify-center py-1.5 px-2 rounded-lg text-xs font-bold transition-all truncate ${
+              activeTab === 'bulan' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'
+            }`}
+            title="Bulan Ini"
           >
-            <CalendarDays size={14} />
-            Bulan Ini
+            <span className="truncate">Bulan</span>
           </button>
           {perUnitData && perUnitData.length > 0 && (
             <button 
+              type="button"
               onClick={() => setActiveTab('unit')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'unit' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex items-center justify-center py-1.5 px-2 rounded-lg text-xs font-bold transition-all truncate ${
+                activeTab === 'unit' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'
+              }`}
+              title="Per Unit Sekolah"
             >
-              <Wallet size={14} />
-              Per Unit
+              <span className="truncate">Per Unit</span>
             </button>
           )}
         </div>

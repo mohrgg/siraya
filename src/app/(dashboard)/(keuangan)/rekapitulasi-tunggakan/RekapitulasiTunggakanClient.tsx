@@ -51,6 +51,7 @@ interface Props {
   pengaturan?: any
   unitInfo?: any
   userName?: string
+  userRole?: string
 }
 
 export default function RekapitulasiTunggakanClient({
@@ -60,8 +61,11 @@ export default function RekapitulasiTunggakanClient({
   activeTahunAkademikName,
   pengaturan,
   unitInfo,
-  userName
+  userName,
+  userRole
 }: Props) {
+  const isKepsek = userRole === "KEPALA_SEKOLAH"
+
   const [isLoading, setIsLoading] = useState(false)
   const [rekapData, setRekapData] = useState<RekapItem[]>([])
   const [akunList, setAkunList] = useState<Akun[]>([])
@@ -69,6 +73,26 @@ export default function RekapitulasiTunggakanClient({
   const [searchTerm2, setSearchTerm2] = useState("")
   const [activeTab, setActiveTab] = useState<'ringkasan' | 'detail'>('ringkasan')
   const [selectedSubKelasId, setSelectedSubKelasId] = useState("")
+
+  const executiveMetrics = useMemo(() => {
+    const totalTagihan = rekapData.reduce((sum, r) => sum + (r.totalTagihan || 0), 0)
+    const totalDibayar = rekapData.reduce((sum, r) => sum + (r.totalDibayar || 0), 0)
+    const totalTunggakan = rekapData.reduce((sum, r) => sum + (r.totalTunggakan || 0), 0)
+    const pctKolektibilitas = totalTagihan > 0 ? Math.round((totalDibayar / totalTagihan) * 100) : 0
+    
+    const topTunggakanRombel = [...rekapData]
+      .filter(r => r.totalTunggakan > 0)
+      .sort((a, b) => b.totalTunggakan - a.totalTunggakan)
+      .slice(0, 3)
+
+    return {
+      totalTagihan,
+      totalDibayar,
+      totalTunggakan,
+      pctKolektibilitas,
+      topTunggakanRombel
+    }
+  }, [rekapData])
 
   useEffect(() => {
     if (activeUnitId && activeTahunAkademikId) {
@@ -293,9 +317,88 @@ export default function RekapitulasiTunggakanClient({
   return (
     <div className="max-w-[1600px] mx-auto w-full">
       <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Rekapitulasi Tagihan & Tunggakan</h1>
-        <p className="text-text-muted">Berisi ringkasan tagihan serta tunggakan siswa per kelas ({activeTahunAkademikName})</p>
+        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
+          {isKepsek ? "Monitoring SPP & Tagihan Siswa" : "Rekapitulasi Tagihan & Tunggakan"}
+        </h1>
+        <p className="text-text-muted">
+          {isKepsek
+            ? `Audit efektivitas penerimaan pembayaran, rasio kolektibilitas SPP, dan daftar rombel prioritas (${activeTahunAkademikName})`
+            : `Berisi ringkasan tagihan serta tunggakan siswa per kelas (${activeTahunAkademikName})`}
+        </p>
       </div>
+
+      {/* Executive SPP Health Center for KEPALA_SEKOLAH */}
+      {isKepsek && (
+        <div className="mb-6 p-5 bg-gradient-to-r from-[#065f32] via-[#08733e] to-[#044e28] rounded-2xl text-white shadow-sm border border-emerald-600/40">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/20 text-white border border-white/20">
+                  Audit Likuiditas & Kolektibilitas SPP
+                </span>
+                <span className="text-xs text-white/60">•</span>
+                <span className="text-xs text-emerald-100 font-medium">{activeUnitName} • TA {activeTahunAkademikName}</span>
+              </div>
+              <h2 className="text-xl font-bold tracking-tight text-white">Monitoring Penerimaan Tagihan & Efektivitas Kas</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button 
+                size="sm" 
+                onClick={handleExportPdfRingkasan}
+                className="bg-white/15 hover:bg-white/25 text-white border border-white/20 font-bold text-xs"
+              >
+                <FilePdf size={14} className="mr-1.5" /> Cetak Lembar Eksekutif (PDF)
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Total Tagihan Unit</p>
+              <p className="text-2xl font-black mt-1 text-white">Rp {formatRupiah(executiveMetrics.totalTagihan)}</p>
+              <p className="text-[11px] text-white/70 mt-0.5">Kewajiban seluruh siswa aktif</p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Realisasi Penerimaan</p>
+              <p className="text-2xl font-black mt-1 text-emerald-200">Rp {formatRupiah(executiveMetrics.totalDibayar)}</p>
+              <div className="flex items-center gap-2 mt-1.5">
+                <div className="flex-1 bg-white/20 rounded-full h-1.5 overflow-hidden">
+                  <div 
+                    className="bg-emerald-300 h-full rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, executiveMetrics.pctKolektibilitas)}%` }}
+                  />
+                </div>
+                <span className="text-xs font-bold text-emerald-200">{executiveMetrics.pctKolektibilitas}%</span>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-rose-200">Sisa Piutang / Tunggakan</p>
+              <p className="text-2xl font-black mt-1 text-rose-200">Rp {formatRupiah(executiveMetrics.totalTunggakan)}</p>
+              <p className="text-[11px] text-rose-100/80 mt-0.5">
+                {100 - executiveMetrics.pctKolektibilitas}% tagihan belum tertagih
+              </p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-amber-200">Rombel Prioritas Penagihan</p>
+              {executiveMetrics.topTunggakanRombel.length > 0 ? (
+                <div className="mt-1 space-y-1">
+                  {executiveMetrics.topTunggakanRombel.slice(0, 2).map((r, i) => (
+                    <div key={r.subKelasId} className="flex justify-between items-center text-xs">
+                      <span className="font-semibold text-white truncate max-w-[110px]">{i + 1}. {r.subKelasName}</span>
+                      <span className="text-amber-200 font-mono text-[11px]">Rp {formatRupiah(r.totalTunggakan)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-white/80 mt-2">Semua tagihan lunas</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16 bg-surface rounded-2xl shadow-sm border border-border">

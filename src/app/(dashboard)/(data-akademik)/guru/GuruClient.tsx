@@ -143,6 +143,26 @@ export default function GuruClient({
 
   const [formData, setFormData] = useState(defaultForm)
 
+  const executiveMetrics = useMemo(() => {
+    const totalGuru = data.length
+    const totalTetap = data.filter(g => g.statusKepegawaian === "GTY" || g.statusKepegawaian === "TETAP" || g.statusKepegawaian === "PNS").length
+    const totalHonorer = totalGuru - totalTetap
+    const pctTetap = totalGuru > 0 ? Math.round((totalTetap / totalGuru) * 100) : 0
+    const totalWali = data.filter(g => g.rombelWali && g.rombelWali.length > 0).length
+    const totalS1Plus = data.filter(g => g.pendidikan && (g.pendidikan.includes("S1") || g.pendidikan.includes("S2") || g.pendidikan.includes("S3"))).length
+    const pctS1Plus = totalGuru > 0 ? Math.round((totalS1Plus / totalGuru) * 100) : 0
+
+    return {
+      totalGuru,
+      totalTetap,
+      totalHonorer,
+      pctTetap,
+      totalWali,
+      totalS1Plus,
+      pctS1Plus
+    }
+  }, [data])
+
   const handleOpenAdd = () => {
     setFormData({
       ...defaultForm,
@@ -380,11 +400,65 @@ export default function GuruClient({
 
   return (
     <div className="space-y-6">
+      {/* Executive Teacher KPI Banner for KEPALA_SEKOLAH */}
+      {isReadOnly && (
+        <div className="p-5 bg-gradient-to-r from-[#065f32] via-[#08733e] to-[#044e28] rounded-2xl text-white shadow-sm border border-emerald-600/40">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/20 text-white border border-white/20">
+                  Ringkasan Eksekutif Tenaga Pendidik
+                </span>
+                <span className="text-xs text-white/60">•</span>
+                <span className="text-xs text-emerald-100 font-medium">Monitoring Beban & Kualifikasi Guru</span>
+              </div>
+              <h2 className="text-xl font-bold tracking-tight text-white">Komposisi & Kesiapan Guru Unit</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-xl text-emerald-100 font-medium border border-white/10">
+                Pimpinan Unit • Mode Pengawasan
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Total Tenaga Pendidik</p>
+              <p className="text-2xl font-black mt-1 text-white">{executiveMetrics.totalGuru} <span className="text-xs font-normal text-white/70">Guru</span></p>
+              <p className="text-[11px] text-white/70 mt-0.5">Seluruh jenjang aktif</p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Status Kepegawaian</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-2xl font-black text-white">{executiveMetrics.totalTetap}</span>
+                <span className="text-xs text-emerald-200">Tetap (GTY)</span>
+                <span className="text-white/40">/</span>
+                <span className="text-xs text-amber-200">{executiveMetrics.totalHonorer} Honorer</span>
+              </div>
+              <p className="text-[11px] text-emerald-200 mt-0.5">{executiveMetrics.pctTetap}% Guru Tetap Yayasan</p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Penugasan Wali Kelas</p>
+              <p className="text-2xl font-black mt-1 text-white">{executiveMetrics.totalWali} <span className="text-xs font-normal text-white/70">Guru</span></p>
+              <p className="text-[11px] text-white/70 mt-0.5">Memegang amanah wali rombel</p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Kualifikasi Akademik</p>
+              <p className="text-2xl font-black mt-1 text-white">{executiveMetrics.pctS1Plus}% <span className="text-xs font-normal text-white/70">S1/S2</span></p>
+              <p className="text-[11px] text-emerald-200 mt-0.5">{executiveMetrics.totalS1Plus} guru berpendidikan tinggi</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
         {/* Dummy Tab Navigation for UI Consistency */}
         <div className="flex gap-2 mb-6 border-b border-border">
           <button className="px-6 py-3 font-semibold text-sm border-b-2 border-primary text-primary transition-colors">
-            Daftar Guru & Staf Aktif
+            {isReadOnly ? "Direktori & Beban Tenaga Pendidik" : "Daftar Guru & Staf Aktif"}
           </button>
         </div>
 
@@ -468,7 +542,7 @@ export default function GuruClient({
                 <SortableHeader label="STATUS PEGAWAI" sortKey="statusKepegawaian" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-center hidden lg:table-cell" />
                 <SortableHeader label="NO. WHATSAPP" sortKey="phone" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left hidden xl:table-cell" />
                 <SortableHeader label="STATUS" sortKey="isActive" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-center hidden xl:table-cell w-28" />
-                {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
+                <th className="p-4 font-semibold text-right">{isReadOnly ? "PROFIL" : "AKSI"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-sm">
@@ -562,7 +636,16 @@ export default function GuruClient({
                           </span>
                         )}
                       </td>
-                      {!isReadOnly && (
+                      {isReadOnly ? (
+                        <td className="p-4 text-right">
+                          <Link
+                            href={`/guru/${item.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors font-bold text-xs"
+                          >
+                            <Eye size={14} /> Profil 360°
+                          </Link>
+                        </td>
+                      ) : (
                         <td className="p-4">
                           <div className="flex items-center justify-end gap-2">
                             <Link

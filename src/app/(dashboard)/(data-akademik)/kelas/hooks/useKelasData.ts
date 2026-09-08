@@ -4,8 +4,8 @@ import { useSortableData } from "@/hooks/useSortableData"
 import { getSiswaPaginated, promoteSiswaBatch } from "@/actions/siswa"
 import { getKelas } from "@/actions/kelas"
 
-export function useKelasData({ activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits }: any) {
-  const [activeTab, setActiveTab] = useState<"kelas" | "sub-kelas" | "murid" | "alumni">("kelas")
+export function useKelasData({ activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits, userRole }: any) {
+  const [activeTab, setActiveTab] = useState<"kelas" | "sub-kelas" | "murid" | "alumni">(userRole === "KEPALA_SEKOLAH" ? "sub-kelas" : "kelas")
 
   // Core Data States
   const [grades, setGrades] = useState(initialGrades)

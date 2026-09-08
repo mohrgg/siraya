@@ -54,12 +54,34 @@ export default function TabSubKelas({
                 <span className="text-xs text-text-muted/60 italic">Belum dipilih</span>
               )}
             </td>
-            <td className="p-4 text-text-muted">{c._count?.riwayatKelas || c._count?.murid || 0}</td>
+            <td className="p-4">
+              {(() => {
+                const count = c._count?.riwayatKelas || c._count?.murid || 0
+                if (!isReadOnly) return <span className="text-text-muted font-medium">{count}</span>
+                let badge = "bg-emerald-50 text-emerald-700 border-emerald-200"
+                let label = "Ideal"
+                if (count > 36) {
+                  badge = "bg-rose-50 text-rose-700 border-rose-200"
+                  label = "Padat (>36)"
+                } else if (count < 20) {
+                  badge = "bg-amber-50 text-amber-700 border-amber-200"
+                  label = "Minim (<20)"
+                }
+                return (
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-text-main">{count} Siswa</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded border font-semibold ${badge}`}>
+                      {label}
+                    </span>
+                  </div>
+                )
+              })()}
+            </td>
             {isReadOnly ? (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
                   <button onClick={() => setViewDetailSubKelas(c)} className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors font-bold text-xs">
-                    <Info size={16} /> Lihat Detail
+                    <Info size={16} /> Audit Siswa
                   </button>
                 </div>
               </td>

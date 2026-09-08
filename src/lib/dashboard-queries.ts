@@ -806,12 +806,15 @@ export async function getKepsekData(unitId: string, yearId?: string) {
   })
   const interactiveChartDataK = generateInteractiveChartData(rawMonthTransactionsK, todayStart, weekStart, monthStart)
 
+  const kolektibilitasPersen = totalTagihanUnit > 0 ? Math.round((totalLunasUnit / totalTagihanUnit) * 100) : null
+
   return { 
     totalMurid, totalRombel, totalGuru, guruPendidikanData, 
     dataQualityScore, jobData, incomeData, topCrowded, topEmpty, retentionData, 
     jenjangData,
     // Keuangan
-    penerimaanBulanIni, pengeluaranBulanIni, saldoBulanIni, kolektibilitasData, alokasiPengeluaran, 
+    penerimaanBulanIni, pengeluaranBulanIni, saldoBulanIni, kolektibilitasData, alokasiPengeluaran,
+    totalTagihanUnit, totalSisaTagihanUnit, kolektibilitasPersen,
     ...interactiveChartDataK
   }
 }

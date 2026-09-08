@@ -40,6 +40,7 @@ export default async function RekapitulasiTunggakanPage() {
       pengaturan={pengaturan}
       unitInfo={activeUnit}
       userName={user.name || undefined}
+      userRole={tenant.role}
     />
   )
 }

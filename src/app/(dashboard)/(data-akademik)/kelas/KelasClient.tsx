@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import toast from "react-hot-toast"
 import { useKelasData } from "./hooks/useKelasData"
@@ -27,7 +27,30 @@ export default function KelasClient({
 }) {
   const isReadOnly = userRole === "KEPALA_SEKOLAH"
   const router = useRouter()
-  const data = useKelasData({ activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits })
+  const data = useKelasData({ activeUnitId, activeYearId, initialGrades, initialMajors, initialClassrooms, initialStudents, academicYears, schoolUnits, userRole })
+
+  // Executive Metrics for Kepala Sekolah
+  const executiveMetrics = useMemo(() => {
+    const totalRombel = data.classrooms.length
+    const totalMuridInRombel = data.classrooms.reduce((acc: number, c: any) => acc + (c._count?.riwayatKelas || 0), 0)
+    const avgPerRombel = totalRombel > 0 ? Math.round(totalMuridInRombel / totalRombel) : 0
+    const rombelOvercapacity = data.classrooms.filter((c: any) => (c._count?.riwayatKelas || 0) > 36).length
+    const rombelIdeal = data.classrooms.filter((c: any) => (c._count?.riwayatKelas || 0) >= 20 && (c._count?.riwayatKelas || 0) <= 36).length
+    const rombelMinim = data.classrooms.filter((c: any) => (c._count?.riwayatKelas || 0) < 20).length
+    const rombelWithWali = data.classrooms.filter((c: any) => c.waliKelasGuruId || c.waliKelas).length
+    const rombelNoWali = totalRombel - rombelWithWali
+
+    return {
+      totalRombel,
+      totalMuridInRombel,
+      avgPerRombel,
+      rombelOvercapacity,
+      rombelIdeal,
+      rombelMinim,
+      rombelWithWali,
+      rombelNoWali
+    }
+  }, [data.classrooms])
 
   // Modals Local State (Keep here since they trigger API mutations that might affect data)
   const [showModalMurid, setShowModalMurid] = useState(false)
@@ -386,13 +409,86 @@ export default function KelasClient({
         isLoading={data.isPromoting}
       />
 
+      {/* Executive Capacity Banner for KEPALA_SEKOLAH */}
+      {isReadOnly && (
+        <div className="mb-6 p-5 bg-gradient-to-r from-[#065f32] via-[#08733e] to-[#044e28] rounded-2xl text-white shadow-sm border border-emerald-600/40">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/20 text-white border border-white/20">
+                  Ringkasan Eksekutif Mutu Rombel
+                </span>
+                <span className="text-xs text-white/60">•</span>
+                <span className="text-xs text-emerald-100 font-medium">Monitoring Kapasitas & Distribusi</span>
+              </div>
+              <h2 className="text-xl font-bold tracking-tight text-white">Monitoring Daya Tampung & Keterisian Rombel</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-xl text-emerald-100 font-medium border border-white/10">
+                Standar Permendikbud: 20 - 36 Siswa / Rombel
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Total Siswa Terdaftar</p>
+              <p className="text-2xl font-black mt-1 text-white">{executiveMetrics.totalMuridInRombel} <span className="text-xs font-normal text-white/70">Siswa</span></p>
+              <p className="text-[11px] text-white/70 mt-0.5">Rata-rata {executiveMetrics.avgPerRombel} siswa/rombel</p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Total Rombel Berjalan</p>
+              <p className="text-2xl font-black mt-1 text-white">{executiveMetrics.totalRombel} <span className="text-xs font-normal text-white/70">Kelas</span></p>
+              <p className="text-[11px] text-emerald-200 mt-0.5">{executiveMetrics.rombelIdeal} rombel kapasitas ideal</p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Anomali Kapasitas</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className={`text-2xl font-black ${executiveMetrics.rombelOvercapacity > 0 ? 'text-rose-300' : 'text-white'}`}>
+                  {executiveMetrics.rombelOvercapacity}
+                </span>
+                <span className="text-xs text-rose-200">Padat (&gt;36)</span>
+                <span className="text-white/40">/</span>
+                <span className="text-xs text-amber-200">{executiveMetrics.rombelMinim} Minim (&lt;20)</span>
+              </div>
+              <p className="text-[11px] text-white/70 mt-0.5">
+                {executiveMetrics.rombelOvercapacity === 0 ? "Kapasitas terkendali" : "Perlu evaluasi rombel padat"}
+              </p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Kesiapan Wali Kelas</p>
+              <p className="text-2xl font-black mt-1 text-white">
+                {executiveMetrics.rombelWithWali} <span className="text-xs font-normal text-white/70">/ {executiveMetrics.totalRombel}</span>
+              </p>
+              <p className="text-[11px] mt-0.5 font-medium text-emerald-200">
+                {executiveMetrics.rombelNoWali > 0 ? `${executiveMetrics.rombelNoWali} rombel belum ada wali` : "100% Rombel Terisi Wali"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-6 border-b border-border">
-          <TabButton id="kelas" label="Daftar Kelas (Tingkat)" />
-          <TabButton id="sub-kelas" label="Daftar Sub Kelas (Rombel)" />
-          <TabButton id="murid" label="Murid Aktif" />
-          <TabButton id="alumni" label="Riwayat & Alumni" />
+          {isReadOnly ? (
+            <>
+              <TabButton id="sub-kelas" label="Kapasitas & Distribusi Rombel" />
+              <TabButton id="murid" label="Direktori Siswa Aktif" />
+              <TabButton id="alumni" label="Riwayat & Alumni" />
+              <TabButton id="kelas" label="Tingkat Pendidikan" />
+            </>
+          ) : (
+            <>
+              <TabButton id="kelas" label="Daftar Kelas (Tingkat)" />
+              <TabButton id="sub-kelas" label="Daftar Sub Kelas (Rombel)" />
+              <TabButton id="murid" label="Murid Aktif" />
+              <TabButton id="alumni" label="Riwayat & Alumni" />
+            </>
+          )}
         </div>
 
         {/* Toolbar */}

@@ -30,6 +30,18 @@ async function main() {
     },
   })
 
+  // Seed Kepala Sekolah
+  await prisma.pengguna.upsert({
+    where: { email: 'kepsek@albasyariah.com' },
+    update: {},
+    create: {
+      email: 'kepsek@albasyariah.com',
+      name: 'Kepala Sekolah',
+      password: hashedPassword,
+      role: 'KEPALA_SEKOLAH',
+    },
+  })
+
   // Seed default School Unit
   const school = await prisma.unitSekolah.create({
     data: {

@@ -10,6 +10,10 @@ export default async function TambahKasKeluarPage() {
   if (!session || !session.user) redirect("/login")
   const tenant = await getTenantContext()
   
+  if (tenant.user?.role === "KEPALA_SEKOLAH") {
+    redirect("/kas-keluar")
+  }
+
   const kasBankAccounts = await getKasBankAccounts()
   const pengeluaranAccounts = await getPengeluaranAccounts()
   const divisiList = await getDivisiList()

@@ -17,6 +17,11 @@ import { getTenantContext } from "@/lib/tenant"
 export default async function PembuatanTagihanPage() {
   const tenant = await getTenantContext()
   const user = tenant.user
+
+  if (user?.role === "KEPALA_SEKOLAH") {
+    redirect("/rekapitulasi-tunggakan")
+  }
+
   const cookieStore = await cookies()
   const activeYearIdCookie = cookieStore.get("activeYearId")?.value
   

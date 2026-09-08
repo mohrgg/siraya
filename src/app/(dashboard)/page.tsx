@@ -150,7 +150,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
 
   const data = await getKepsekData(activeUnitId, activeYearId)
   return (
-    <div className="max-w-7xl mx-auto w-full">
+    <div className="max-w-[1600px] mx-auto w-full">
       <DashboardNavTabs role="KEPALA_SEKOLAH" />
       <KepsekDashboard activeUnit={activeUnit} activeYear={activeYear} {...data} />
     </div>

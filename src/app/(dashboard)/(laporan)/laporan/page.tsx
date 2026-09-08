@@ -8,5 +8,5 @@ export default async function LaporanMenuPage() {
   const session = await auth()
   if (!session?.user) redirect("/login")
   
-  return <LaporanMenuClient />
+  return <LaporanMenuClient userRole={(session.user as any).role} />
 }

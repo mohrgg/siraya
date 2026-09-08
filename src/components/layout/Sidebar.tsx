@@ -44,8 +44,8 @@ const menuGroups = [
       { href: "/akun-keuangan", label: "Akun Keuangan", icon: Landmark, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"], isGlobal: true },
       { href: "/kas-masuk", label: "Kas Masuk", icon: ArrowDownToLine, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
       { href: "/kas-keluar", label: "Kas Keluar", icon: ArrowUpFromLine, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
-      { href: "/pembuatan-tagihan", label: "Pembuatan Tagihan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
-      { href: "/pembayaran-tagihan", label: "Pembayaran Tagihan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/pembuatan-tagihan", label: "Pembuatan Tagihan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA"] },
+      { href: "/pembayaran-tagihan", label: "Pembayaran Tagihan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA"] },
       { href: "/rekapitulasi-tunggakan", label: "Rekap. Tagihan & Tunggakan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
     ]
   },
@@ -71,10 +71,36 @@ export default function Sidebar({ user, logoUrl }: { user: any; logoUrl?: string
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
 
-  const filteredGroups = menuGroups.map(group => ({
-    ...group,
-    items: group.items.filter(item => item.allowedRoles.includes(user?.role || "TATA_USAHA"))
-  })).filter(group => group.items.length > 0)
+  const isKepsek = user?.role === "KEPALA_SEKOLAH"
+
+  const filteredGroups = menuGroups.map(group => {
+    let title = group.title
+    if (isKepsek) {
+      if (group.title === "DATA AKADEMIK") title = "AKADEMIK & MUTU"
+      if (group.title === "KEUANGAN") title = "AUDIT KEUANGAN UNIT"
+      if (group.title === "LAPORAN") title = "PENGESAHAN & LAPORAN"
+    }
+
+    const items = group.items
+      .filter(item => item.allowedRoles.includes(user?.role || "TATA_USAHA"))
+      .map(item => {
+        if (isKepsek) {
+          if (item.href === "/kelas") return { ...item, label: "Kapasitas & Rombel" }
+          if (item.href === "/guru") return { ...item, label: "Beban & Data Guru" }
+          if (item.href === "/rekapitulasi-tunggakan") return { ...item, label: "Monitoring SPP & Tagihan" }
+          if (item.href === "/kas-masuk") return { ...item, label: "Audit Kas Masuk" }
+          if (item.href === "/kas-keluar") return { ...item, label: "Audit Kas Keluar" }
+          if (item.href === "/laporan") return { ...item, label: "Laporan & Pengesahan" }
+        }
+        return item
+      })
+
+    return {
+      ...group,
+      title,
+      items
+    }
+  }).filter(group => group.items.length > 0)
 
   const getInitials = (name: string) => {
     if (!name) return "U"

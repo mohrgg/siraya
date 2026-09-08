@@ -533,18 +533,12 @@ export default function UnitDashboard(props: UnitDashboardProps) {
 
         {/* Trend Pendapatan & Tunggakan Kritis */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col lg:col-span-2 h-[420px]">
-            <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2 mb-4">
-              <Activity size={18} className="text-emerald-500" />
-              Trend Pendapatan Unit
-            </h3>
-            <div className="flex-1 w-full min-h-0">
-              <PendapatanInteractiveChart 
-                hariIniData={pendapatanHariIniChart}
-                mingguIniData={pendapatanMingguIniChart}
-                bulanIniData={pendapatanBulanIniChart}
-              />
-            </div>
+          <div className="lg:col-span-2 h-[420px]">
+            <PendapatanInteractiveChart 
+              hariIniData={pendapatanHariIniChart}
+              mingguIniData={pendapatanMingguIniChart}
+              bulanIniData={pendapatanBulanIniChart}
+            />
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col justify-between h-[420px]">

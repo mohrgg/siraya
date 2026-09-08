@@ -101,6 +101,19 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
 
   const computedTotalPages = Math.ceil(filteredData.length / pageSize)
 
+  const executiveMetrics = useMemo(() => {
+    const totalMasuk = filteredData.reduce((sum: number, item: any) => sum + (item.totalNilai || 0), 0)
+    const countTrans = filteredData.length
+    const largeTrans = filteredData.filter((item: any) => (item.totalNilai || 0) >= 1000000).length
+    const avgTrans = countTrans > 0 ? Math.round(totalMasuk / countTrans) : 0
+    return {
+      totalMasuk,
+      countTrans,
+      largeTrans,
+      avgTrans
+    }
+  }, [filteredData])
+
   const handleExportExcel = async () => {
     setIsExportingExcel(true)
     try {
@@ -178,9 +191,64 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
   return (
     <div className="max-w-[1600px] mx-auto w-full">
       <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Kas Masuk (Penerimaan)</h1>
-        <p className="text-text-muted">Kelola data penerimaan kas dan pendapatan Yayasan</p>
+        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
+          {isReadOnly ? "Audit Penerimaan Kas Masuk" : "Kas Masuk (Penerimaan)"}
+        </h1>
+        <p className="text-text-muted">
+          {isReadOnly
+            ? "Pengawasan dan audit aliran kas masuk, bukti setoran, dan verifikasi penerimaan kas unit"
+            : "Kelola data penerimaan kas dan pendapatan Yayasan"}
+        </p>
       </div>
+
+      {/* Executive Cashflow Watch for KEPALA_SEKOLAH */}
+      {isReadOnly && (
+        <div className="mb-6 p-5 bg-gradient-to-r from-[#065f32] via-[#08733e] to-[#044e28] rounded-2xl text-white shadow-sm border border-emerald-600/40">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/20 text-white border border-white/20">
+                  Audit Arus Kas Masuk
+                </span>
+                <span className="text-xs text-white/60">•</span>
+                <span className="text-xs text-emerald-100 font-medium">Periode Filter: {timeRange.toUpperCase()}</span>
+              </div>
+              <h2 className="text-xl font-bold tracking-tight text-white">Ringkasan Penerimaan Kas & Bank Unit</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-xl text-emerald-100 font-medium border border-white/10">
+                Pimpinan Unit • Mode Pengawasan
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Total Kas Masuk</p>
+              <p className="text-2xl font-black mt-1 text-white">Rp {executiveMetrics.totalMasuk.toLocaleString('id-ID')}</p>
+              <p className="text-[11px] text-white/70 mt-0.5">Akumulasi transaksi aktif</p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Frekuensi Transaksi</p>
+              <p className="text-2xl font-black mt-1 text-white">{executiveMetrics.countTrans} <span className="text-xs font-normal text-white/70">Transaksi</span></p>
+              <p className="text-[11px] text-emerald-200 mt-0.5">Tercatat di pembukuan</p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Transaksi Signifikan</p>
+              <p className="text-2xl font-black mt-1 text-emerald-200">{executiveMetrics.largeTrans} <span className="text-xs font-normal text-white/70">Nota</span></p>
+              <p className="text-[11px] text-white/70 mt-0.5">Nilai &ge; Rp 1.000.000</p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+              <p className="text-xs font-semibold text-emerald-200">Rata-rata Nilai Masuk</p>
+              <p className="text-2xl font-black mt-1 text-white">Rp {executiveMetrics.avgTrans.toLocaleString('id-ID')}</p>
+              <p className="text-[11px] text-white/70 mt-0.5">Rata-rata per bukti setor</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
         
@@ -189,7 +257,7 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
           <button 
             className="px-6 py-3 font-semibold text-sm transition-colors border-b-2 border-primary text-primary"
           >
-            Daftar Kas Masuk
+            {isReadOnly ? "Daftar Audit Kas Masuk" : "Daftar Kas Masuk"}
           </button>
         </div>
 
@@ -275,7 +343,7 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
                 <th className="p-4 font-semibold">PEMBUAT</th>
                 <th className="p-4 font-semibold text-center">STATUS</th>
                 <th className="p-4 font-semibold text-center">REVISI</th>
-                <th className="p-4 font-semibold text-right">AKSI</th>
+                <th className="p-4 font-semibold text-right">{isReadOnly ? "AUDIT NOTA" : "AKSI"}</th>
               </tr>
             </thead>
             <tbody>
@@ -292,6 +360,11 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
                   </td>
                   <td className="p-4 text-right font-bold text-albas-green">
                     Rp {item.totalNilai.toLocaleString('id-ID')}
+                    {isReadOnly && item.totalNilai >= 1000000 && (
+                      <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
+                        &ge; 1 Jt
+                      </span>
+                    )}
                   </td>
                   <td className="p-4 text-text-muted">{item.pembuat?.name}</td>
                   <td className="p-4 text-center">
@@ -307,13 +380,21 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
                     )}
                   </td>
                   <td className="p-4 text-right">
-                    <DropdownMenu.Root>
-                      <DropdownMenu.Trigger asChild>
-                        <Button variant="outline" className="h-9 px-3 flex items-center gap-2 bg-white hover:bg-bg/50 shadow-sm">
-                          <span className="text-xs font-semibold text-text-main">Aksi</span>
-                          <ChevronDown size={16} className="text-text-muted" />
-                        </Button>
-                      </DropdownMenu.Trigger>
+                    {isReadOnly ? (
+                      <Link
+                        href={`/kas-masuk/${item.id}?tab=resi`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors font-bold text-xs"
+                      >
+                        <Receipt size={14} /> Audit Nota
+                      </Link>
+                    ) : (
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Trigger asChild>
+                          <Button variant="outline" className="h-9 px-3 flex items-center gap-2 bg-white hover:bg-bg/50 shadow-sm">
+                            <span className="text-xs font-semibold text-text-main">Aksi</span>
+                            <ChevronDown size={16} className="text-text-muted" />
+                          </Button>
+                        </DropdownMenu.Trigger>
                       <DropdownMenu.Portal>
                         <DropdownMenu.Content 
                           align="end"
@@ -331,27 +412,24 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
                           >
                             <Eye size={14} className="mr-2 text-text-muted" /> Jurnal
                           </DropdownMenu.Item>
-                          {isReadOnly ? null : (
-                            <>
-                              <DropdownMenu.Item 
-                                className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-bg/50 transition-colors flex items-center cursor-pointer outline-none"
-                                onClick={() => router.push(`/kas-masuk/${item.id}/edit`)}
-                              >
-                                <Edit size={14} className="mr-2 text-blue-500" /> Ubah
-                              </DropdownMenu.Item>
-                              <DropdownMenu.Separator className="h-px bg-border my-1" />
-                              <DropdownMenu.Item 
-                                className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors flex items-center cursor-pointer outline-none"
-                                onClick={() => setDeleteId(item.id)}
-                              >
-                                <Trash2 size={14} className="mr-2" /> Hapus
-                              </DropdownMenu.Item>
-                            </>
-                          )}
+                          <DropdownMenu.Item 
+                            className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-bg/50 transition-colors flex items-center cursor-pointer outline-none"
+                            onClick={() => router.push(`/kas-masuk/${item.id}/edit`)}
+                          >
+                            <Edit size={14} className="mr-2 text-blue-500" /> Ubah
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Separator className="h-px bg-border my-1" />
+                          <DropdownMenu.Item 
+                            className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors flex items-center cursor-pointer outline-none"
+                            onClick={() => setDeleteId(item.id)}
+                          >
+                            <Trash2 size={14} className="mr-2" /> Hapus
+                          </DropdownMenu.Item>
                         </DropdownMenu.Content>
                       </DropdownMenu.Portal>
                     </DropdownMenu.Root>
-                  </td>
+                  )}
+                </td>
                 </tr>
               ))}
               {filteredData.length === 0 && (

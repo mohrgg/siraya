@@ -543,19 +543,14 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
         </div>
 
         {/* Row 3: Grafik Pendapatan Interaktif */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-          <h3 className="font-bold text-gray-900 text-lg mb-4 flex items-center gap-2">
-            <Wallet size={18} className="text-blue-500" />
-            Pendapatan & Transaksi Detail
-          </h3>
-          <div className="w-full h-[360px]">
-            <PendapatanInteractiveChart 
-              hariIniData={pendapatanHariIniChart}
-              mingguIniData={pendapatanMingguIniChart}
-              bulanIniData={pendapatanBulanIniChart}
-              perUnitData={pendapatanPerUnitChart}
-            />
-          </div>
+        <div className="w-full h-[420px]">
+          <PendapatanInteractiveChart 
+            title="Pendapatan & Transaksi Detail"
+            hariIniData={pendapatanHariIniChart}
+            mingguIniData={pendapatanMingguIniChart}
+            bulanIniData={pendapatanBulanIniChart}
+            perUnitData={pendapatanPerUnitChart}
+          />
         </div>
       </section>
 

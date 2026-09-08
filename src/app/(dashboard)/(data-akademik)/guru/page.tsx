@@ -18,11 +18,19 @@ export default async function GuruPage() {
   // activeUnitId is null when in Global mode
   const activeUnitId = tenant.unitId || "all"
 
+  const isKepsek = tenant.role === "KEPALA_SEKOLAH"
+
   return (
     <div className="max-w-[1600px] mx-auto w-full">
       <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Guru & Staf</h1>
-        <p className="text-text-muted">Kelola data kepegawaian, pengampu mata pelajaran, dan wali kelas</p>
+        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
+          {isKepsek ? "Beban & Direktori Tenaga Pendidik" : "Guru & Staf"}
+        </h1>
+        <p className="text-text-muted">
+          {isKepsek
+            ? "Monitoring kualifikasi, status kepegawaian, dan penugasan wali kelas unit"
+            : "Kelola data kepegawaian, pengampu mata pelajaran, dan wali kelas"}
+        </p>
       </div>
       <GuruClient 
         initialData={data} 
