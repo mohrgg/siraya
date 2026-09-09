@@ -226,53 +226,50 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
       </div>
 
       {/* Minimalist Profile Header */}
-      <div className="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 relative overflow-hidden">
-        {/* Subtle decorative background */}
-        <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none"></div>
-        
-        <div className="flex items-center gap-5 relative z-10">
+      <div className="bg-surface border border-border rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5 mb-6">
+        <div className="flex items-center gap-4 sm:gap-5">
           {/* Initial Avatar */}
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-50 text-emerald-700 border border-emerald-200/50 flex items-center justify-center text-3xl font-black shadow-sm shrink-0">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-emerald-50 text-[#065f32] border border-emerald-200 flex items-center justify-center text-2xl sm:text-3xl font-black shadow-xs shrink-0">
             {initialData.name.charAt(0).toUpperCase()}
           </div>
 
           {/* Identity Details */}
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
                 initialData.statusKepegawaian === "GTY" ? "bg-emerald-100 text-emerald-700" :
                 initialData.statusKepegawaian === "PNS" ? "bg-purple-100 text-purple-700" :
                 "bg-blue-100 text-blue-700"
               } border border-black/5`}>
                 {initialData.statusKepegawaian}
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 text-gray-700 border border-border">
+              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 text-gray-700 border border-border">
                 {initialData.unitSekolah.name}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight mb-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text-main tracking-tight mb-1">
               {initialData.name}
             </h1>
-            <div className="flex items-center gap-1.5 text-sm text-text-muted font-medium">
-              <Briefcase size={16} />
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm text-text-muted font-medium">
+              <Briefcase size={14} />
               <span>NIP/NIK: <span className="font-mono text-text-main font-semibold ml-1">{initialData.nip || "-"}</span></span>
             </div>
           </div>
         </div>
 
         {/* Metric KPI Cards */}
-        <div className="flex gap-4 relative z-10">
-          <div className="bg-gray-50 border border-border rounded-xl p-4 shadow-sm min-w-[130px]">
-            <div className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Status</div>
-            <div className="text-lg font-black text-emerald-600 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+        <div className="grid grid-cols-2 sm:flex gap-3">
+          <div className="bg-bg border border-border rounded-xl p-3 sm:p-4 shadow-2xs min-w-[120px]">
+            <div className="text-[10px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Status</div>
+            <div className="text-base sm:text-lg font-black text-emerald-600 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
               Aktif
             </div>
           </div>
-          <div className="bg-gray-50 border border-border rounded-xl p-4 shadow-sm min-w-[130px]">
-            <div className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Tugas Wali</div>
-            <div className="text-lg font-black text-text-main flex items-center gap-2">
-              <Building2 size={18} className="text-primary" />
+          <div className="bg-bg border border-border rounded-xl p-3 sm:p-4 shadow-2xs min-w-[120px]">
+            <div className="text-[10px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Tugas Wali</div>
+            <div className="text-base sm:text-lg font-black text-text-main flex items-center gap-1.5">
+              <Building2 size={16} className="text-primary" />
               {initialData.rombelWali.length} <span className="text-xs font-medium text-text-muted">Kelas</span>
             </div>
           </div>

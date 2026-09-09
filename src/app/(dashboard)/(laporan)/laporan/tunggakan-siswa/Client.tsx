@@ -262,39 +262,38 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
       </div>
 
       {/* KPI Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 print:hidden">
-        <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
-            <FileText size={24} />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 print:hidden">
+        <div className="bg-surface rounded-2xl shadow-2xs border border-border p-3.5 sm:p-5 flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 border border-blue-200/60 flex items-center justify-center shrink-0">
+            <FileText size={20} />
           </div>
           <div>
-            <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Tagihan</div>
-            <div className="text-xl font-bold text-gray-800">
+            <div className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider mb-0.5">Total Tagihan</div>
+            <div className="text-lg sm:text-xl font-bold text-text-main">
               Rp {new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.nominal, 0))}
             </div>
           </div>
         </div>
 
-        <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
-            <FileSpreadsheet size={24} />
+        <div className="bg-surface rounded-2xl shadow-2xs border border-border p-3.5 sm:p-5 flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#065f32] border border-emerald-200/60 flex items-center justify-center shrink-0">
+            <FileSpreadsheet size={20} />
           </div>
           <div>
-            <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Dibayar</div>
-            <div className="text-xl font-bold text-gray-800">
+            <div className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider mb-0.5">Total Dibayar</div>
+            <div className="text-lg sm:text-xl font-bold text-text-main">
               Rp {new Intl.NumberFormat("id-ID").format(filteredData.reduce((acc, curr) => acc + curr.dibayar, 0))}
             </div>
           </div>
         </div>
 
-        <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex items-center gap-4 relative overflow-hidden">
-          <div className="absolute right-0 top-0 w-24 h-24 bg-rose-50 rounded-full blur-2xl -mr-10 -mt-10 opacity-60"></div>
-          <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center relative z-10">
-            <BarChart3 size={24} />
+        <div className="bg-surface rounded-2xl shadow-2xs border border-border p-3.5 sm:p-5 flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-700 border border-rose-200/60 flex items-center justify-center shrink-0">
+            <BarChart3 size={20} />
           </div>
-          <div className="relative z-10">
-            <div className="text-sm font-semibold text-rose-500 uppercase tracking-wider mb-1">Sisa Tunggakan</div>
-            <div className="text-2xl font-black text-rose-700">
+          <div>
+            <div className="text-[11px] sm:text-xs font-semibold text-rose-700 uppercase tracking-wider mb-0.5">Sisa Tunggakan</div>
+            <div className="text-lg sm:text-xl font-black text-rose-800">
               Rp {new Intl.NumberFormat("id-ID").format(matrixRows.reduce((acc, curr) => acc + curr.totalTunggakan, 0))}
             </div>
           </div>

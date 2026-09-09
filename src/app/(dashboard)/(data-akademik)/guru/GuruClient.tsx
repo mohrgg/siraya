@@ -400,55 +400,50 @@ export default function GuruClient({
 
   return (
     <div className="space-y-6">
-      {/* Executive Teacher KPI Banner for KEPALA_SEKOLAH */}
+      {/* Executive Teacher KPI Banner for KEPALA_SEKOLAH / YAYASAN */}
       {isReadOnly && (
-        <div className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-[#065f32] border border-emerald-200/80">
-                  Ringkasan Eksekutif Tenaga Pendidik
-                </span>
-                <span className="text-slate-300">•</span>
-                <span className="text-xs text-slate-500 font-medium">Beban & Kualifikasi Guru</span>
-              </div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                {userRole === "YAYASAN" ? "Komposisi Guru Konsolidasi" : "Komposisi & Kesiapan Guru Unit"}
-              </h2>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs bg-slate-50 px-3 py-1.5 rounded-xl text-slate-600 font-medium border border-slate-200">
-                {userRole === "YAYASAN" ? "Mode Pengawasan 360°" : "Mode Pengawasan"}
-              </span>
-            </div>
+        <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900">
+              Ringkasan Tenaga Pendidik
+            </h2>
+            <span className="text-xs bg-slate-50 px-2.5 py-1 rounded-lg text-slate-600 font-medium border border-slate-200">
+              {userRole === "YAYASAN" ? "Konsolidasi" : "Unit Sekolah"}
+            </span>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Tenaga Pendidik</p>
-              <p className="text-2xl font-black mt-1 text-slate-900">{executiveMetrics.totalGuru} <span className="text-xs font-semibold text-slate-500">Guru</span></p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-3 sm:mt-4">
+            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
+              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Total Guru</p>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-xl sm:text-2xl font-black text-slate-900">{executiveMetrics.totalGuru}</span>
+                <span className="text-xs font-medium text-slate-500">Guru</span>
+              </div>
             </div>
 
-            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status Kepegawaian</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-2xl font-black text-slate-900">{executiveMetrics.totalTetap}</span>
+            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
+              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Status Kepegawaian</p>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-xl sm:text-2xl font-black text-slate-900">{executiveMetrics.totalTetap}</span>
                 <span className="text-xs font-semibold text-[#065f32]">GTY</span>
                 <span className="text-slate-300">/</span>
                 <span className="text-xs font-semibold text-amber-700">{executiveMetrics.totalHonorer} Honorer</span>
               </div>
             </div>
 
-            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Penugasan Wali Kelas</p>
-              <p className="text-2xl font-black mt-1 text-slate-900">{executiveMetrics.totalWali} <span className="text-xs font-semibold text-slate-500">Wali Kelas</span></p>
+            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
+              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Wali Kelas</p>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-xl sm:text-2xl font-black text-slate-900">{executiveMetrics.totalWali}</span>
+                <span className="text-xs font-medium text-slate-500">Kelas</span>
+              </div>
             </div>
 
-            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Kualifikasi Akademik</p>
-              <div className="flex items-baseline gap-1.5 mt-1">
-                <span className="text-2xl font-black text-slate-900">{executiveMetrics.pctS1Plus}%</span>
-                <span className="text-xs font-semibold text-[#065f32]">S1/S2 ({executiveMetrics.totalS1Plus})</span>
+            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
+              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Kualifikasi S1/S2</p>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span className="text-xl sm:text-2xl font-black text-slate-900">{executiveMetrics.pctS1Plus}%</span>
+                <span className="text-xs font-semibold text-[#065f32]">({executiveMetrics.totalS1Plus} Orang)</span>
               </div>
             </div>
           </div>

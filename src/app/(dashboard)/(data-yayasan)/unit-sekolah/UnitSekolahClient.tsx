@@ -336,62 +336,62 @@ export default function UnitSekolahClient({
               Batal
             </Button>
             <Button type="submit" isLoading={isSubmitting}>
-              {formData.id ? "Simpan Perubahan" : "Simpan Unit Sekolah"}
+              {formData.id ? "Simpan Perubahan" : "Simpan / Buat Unit Sekolah"}
             </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Hero KPI Summary Yayasan */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-surface rounded-2xl p-5 border border-border shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <Building2 size={24} />
+      {/* KPI Summary Yayasan */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Building2 size={20} />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Total Unit</p>
-            <div className="flex items-baseline gap-1.5 mt-0.5">
-              <span className="text-2xl font-black text-text-main">{totalUnits}</span>
-              <span className="text-xs font-medium text-emerald-600">({totalActiveUnits} Aktif)</span>
+          <div className="min-w-0">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Total Unit</p>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="text-xl sm:text-2xl font-black text-text-main">{totalUnits}</span>
+              <span className="text-[11px] font-medium text-emerald-600">({totalActiveUnits} Aktif)</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-surface rounded-2xl p-5 border border-border shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-            <Users size={24} />
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <Users size={20} />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Murid Konsolidasi</p>
-            <div className="flex items-baseline gap-1.5 mt-0.5">
-              <span className="text-2xl font-black text-text-main">{new Intl.NumberFormat('id-ID').format(totalSiswa)}</span>
-              <span className="text-xs font-medium text-text-muted">Siswa</span>
+          <div className="min-w-0">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Murid Konsolidasi</p>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="text-xl sm:text-2xl font-black text-text-main">{new Intl.NumberFormat('id-ID').format(totalSiswa)}</span>
+              <span className="text-[11px] font-medium text-text-muted">Siswa</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-surface rounded-2xl p-5 border border-border shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
-            <Layers size={24} />
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
+            <Layers size={20} />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Rombel / Kelas</p>
-            <div className="flex items-baseline gap-1.5 mt-0.5">
-              <span className="text-2xl font-black text-text-main">{new Intl.NumberFormat('id-ID').format(totalRombel)}</span>
-              <span className="text-xs font-medium text-text-muted">Kelas</span>
+          <div className="min-w-0">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Rombel / Kelas</p>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="text-xl sm:text-2xl font-black text-text-main">{new Intl.NumberFormat('id-ID').format(totalRombel)}</span>
+              <span className="text-[11px] font-medium text-text-muted">Kelas</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-surface rounded-2xl p-5 border border-border shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-            <GraduationCap size={24} />
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <GraduationCap size={20} />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Pendidik & Tendik</p>
-            <div className="flex items-baseline gap-1.5 mt-0.5">
-              <span className="text-2xl font-black text-text-main">{new Intl.NumberFormat('id-ID').format(totalGuru)}</span>
-              <span className="text-xs font-medium text-text-muted">Guru</span>
+          <div className="min-w-0">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Pendidik & Tendik</p>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="text-xl sm:text-2xl font-black text-text-main">{new Intl.NumberFormat('id-ID').format(totalGuru)}</span>
+              <span className="text-[11px] font-medium text-text-muted">Guru</span>
             </div>
           </div>
         </div>

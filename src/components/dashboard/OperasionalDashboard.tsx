@@ -219,29 +219,26 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
 
   return (
     <div className="flex flex-col gap-8 pb-16 min-w-0 w-full animate-in fade-in duration-200">
-      {/* SECTION 1: Executive System Telemetry Banner */}
-      <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+      {/* SECTION 1: System Telemetry Banner */}
+      <div className="bg-surface rounded-2xl border border-border p-4 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-[#065f32] border border-emerald-200">
-              <ShieldCheck size={14} className="text-[#065f32]" />
-              Pusat Kendali Sistem & Audit
+          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-bold bg-emerald-50 text-[#065f32] border border-emerald-200">
+              <ShieldCheck size={13} className="text-[#065f32]" />
+              Kendali Sistem & Audit
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
               <Server size={13} className="text-slate-500" />
               PostgreSQL Active
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
               <Clock size={13} className="text-slate-500" />
               Zona: WIB (UTC+7)
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight">
-            Audit Operasional & Integritas Sistem
+            Audit Operasional Sistem
           </h1>
-          <p className="text-sm text-text-muted mt-1.5 max-w-3xl leading-relaxed">
-            Pengawasan telemetri performa basis data, analisis frekuensi mutasi modul, dan catatan jejak audit riil lintas seluruh tenant sekolah Yayasan Al-Basyariah.
-          </p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0 self-start md:self-center">
@@ -257,97 +254,86 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
         </div>
       </div>
 
-      {/* SECTION 2: Metrik Utama Sistem (4 Solid Matte Cards) */}
+      {/* SECTION 2: Metrik Utama Sistem */}
       <section className="flex flex-col gap-3">
-        <div className="px-1">
-          <h2 className="text-lg sm:text-xl font-extrabold text-text-main tracking-tight">
-            Indikator Kapasitas & Aktivitas Sistem
-          </h2>
-          <p className="text-xs text-text-muted mt-0.5">Ringkasan volume data inti dan ritme penggunaan aplikasi terkini.</p>
-        </div>
+        <h2 className="text-lg sm:text-xl font-extrabold text-text-main tracking-tight px-0.5">
+          Indikator Sistem
+        </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Total Data Induk (Executive Dark Slate Matte) */}
-          <div className="bg-[#0f172a] text-white rounded-2xl border border-slate-800 p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* Card 1: Total Data Induk */}
+          <div className="bg-[#0f172a] text-white rounded-2xl border border-slate-800 p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-300">
                 Volume Data Induk
               </span>
-              <div className="w-10 h-10 bg-slate-800 text-emerald-400 rounded-xl flex items-center justify-center">
-                <Database size={18} />
+              <div className="w-8 h-8 bg-slate-800 text-emerald-400 rounded-lg flex items-center justify-center shrink-0">
+                <Database size={16} />
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-white tracking-tight">{formatNumber(totalMasterRecords)}</span>
-                <span className="text-xs font-semibold text-slate-400">Entri Terkelola</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">{formatNumber(totalMasterRecords)}</span>
+                <span className="text-xs font-medium text-slate-400">Entri</span>
               </div>
-              <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
-                Akumulasi murid, rombel, pendidik, dan akun pengguna di database.
-              </p>
+              <p className="text-[11px] text-slate-400 mt-1">Total database master</p>
             </div>
           </div>
 
           {/* Card 2: Pengguna Aktif Harian (DAU) */}
-          <div className="bg-surface rounded-2xl border border-border p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
-                Pengguna Aktif Hari Ini
+          <div className="bg-surface rounded-2xl border border-border p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-text-muted">
+                Pengguna Hari Ini
               </span>
-              <div className="w-10 h-10 bg-emerald-50 text-[#065f32] rounded-xl flex items-center justify-center">
-                <Users size={18} />
+              <div className="w-8 h-8 bg-emerald-50 text-[#065f32] rounded-lg flex items-center justify-center shrink-0">
+                <Users size={16} />
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-text-main tracking-tight">{formatNumber(dauCount)}</span>
-                <span className="text-xs font-semibold text-[#065f32]">Akun (DAU)</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight">{formatNumber(dauCount)}</span>
+                <span className="text-xs font-medium text-text-muted">Akun</span>
               </div>
-              <p className="text-[11px] text-text-muted mt-2 leading-relaxed">
-                Pengguna unik yang login dan melakukan aktivitas sistem hari ini.
-              </p>
+              <p className="text-[11px] text-[#065f32] font-medium mt-1">Aktif Hari Ini (DAU)</p>
             </div>
           </div>
 
           {/* Card 3: Laju Mutasi Harian */}
-          <div className="bg-surface rounded-2xl border border-border p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
-                Laju Mutasi Harian
+          <div className="bg-surface rounded-2xl border border-border p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-text-muted">
+                Laju Mutasi
               </span>
-              <div className="w-10 h-10 bg-slate-100 text-slate-700 rounded-xl flex items-center justify-center">
-                <Activity size={18} />
+              <div className="w-8 h-8 bg-slate-100 text-slate-700 rounded-lg flex items-center justify-center shrink-0">
+                <Activity size={16} />
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-text-main tracking-tight">{formatNumber(avgDailyLogs)}</span>
-                <span className="text-xs font-semibold text-slate-600">Aksi / Hari</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight">{formatNumber(avgDailyLogs)}</span>
+                <span className="text-xs font-medium text-slate-500">Aksi/Hari</span>
               </div>
-              <p className="text-[11px] text-text-muted mt-2 leading-relaxed">
-                Rata-rata frekuensi transaksi dan pengubahan data dalam 30 hari.
-              </p>
+              <p className="text-[11px] text-slate-500 mt-1">Rata-rata 30 hari</p>
             </div>
           </div>
 
           {/* Card 4: Total Log Bulan Berjalan */}
-          <div className="bg-surface rounded-2xl border border-border p-5 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
-                Log Bulan Berjalan
+          <div className="bg-surface rounded-2xl border border-border p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-text-muted">
+                Log Bulan Ini
               </span>
-              <div className="w-10 h-10 bg-amber-50 text-amber-700 rounded-xl flex items-center justify-center">
-                <FileText size={18} />
+              <div className="w-8 h-8 bg-amber-50 text-amber-700 rounded-lg flex items-center justify-center shrink-0">
+                <FileText size={16} />
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-text-main tracking-tight">{formatNumber(monthlyLogsCount)}</span>
-                <span className="text-xs font-semibold text-amber-700">Catatan Audit</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight">{formatNumber(monthlyLogsCount)}</span>
+                <span className="text-xs font-medium text-amber-700">Audit</span>
               </div>
-              <p className="text-[11px] text-text-muted mt-2 leading-relaxed">
-                Total jejak rekam audit yang disimpan aman di sistem bulan ini.
-              </p>
+              <p className="text-[11px] text-slate-500 mt-1">Catatan tersimpan</p>
             </div>
           </div>
         </div>

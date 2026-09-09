@@ -133,71 +133,33 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
   return (
     <div className="flex flex-col gap-8 pb-20 md:pb-12 animate-in fade-in duration-300 max-w-[1600px] mx-auto w-full">
       
-      {/* SECTION 1: Header Komando Eksekutif Yayasan */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 bg-white p-5 lg:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+      {/* SECTION 1: Header Yayasan */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
         <div className="flex-1 min-w-0 pr-0 lg:pr-4">
-          <div className="flex flex-wrap items-center gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
             <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wider uppercase bg-emerald-50 text-[#065f32] border border-emerald-200/80">
-              {role === 'ADMIN' ? 'Superadmin • Badan Penyelenggara Al-Basyariah' : 'Pengurus Yayasan • Badan Penyelenggara Al-Basyariah'}
+              {role === 'ADMIN' ? 'Superadmin • Yayasan Al-Basyariah' : 'Yayasan Al-Basyariah'}
             </span>
             <span className="text-slate-300">•</span>
-            <span className="text-xs font-medium text-slate-500">Tahun Akademik: {academicYear?.name || 'Aktif'}</span>
+            <span className="text-xs font-medium text-slate-500">TA {academicYear?.name || 'Aktif'}</span>
             <span className="text-slate-300">•</span>
-            <span className="text-xs font-bold text-slate-800">Cakupan: Seluruh Unit</span>
+            <span className="text-xs font-bold text-slate-800">Semua Unit</span>
           </div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard 360° Cockpit Eksekutif Yayasan</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-            Konsolidasi pengawasan kelembagaan, stabilitas arus kas riil, kapasitas rombel, dan efektivitas SPP lintas unit.
-          </p>
-
-          {/* Quick Access Pills (Ramping & Proporsional di Laptop) */}
-          <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-2.5 border-t border-slate-100">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1">Akses Cepat:</span>
-            <Link
-              href="/unit-sekolah"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium rounded-lg border border-slate-200/60 transition-colors"
-            >
-              <School size={13} className="text-slate-500" />
-              <span>Direktori Unit</span>
-            </Link>
-            <Link
-              href="/guru"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium rounded-lg border border-slate-200/60 transition-colors"
-            >
-              <GraduationCap size={13} className="text-slate-500" />
-              <span>SDM Pendidik</span>
-            </Link>
-            <Link
-              href="/kelas"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium rounded-lg border border-slate-200/60 transition-colors"
-            >
-              <LayoutDashboard size={13} className="text-slate-500" />
-              <span>Rombel Global</span>
-            </Link>
-            {role === 'ADMIN' && (
-              <Link
-                href="/manajemen-user"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium rounded-lg border border-slate-200/60 transition-colors"
-              >
-                <Users size={13} className="text-slate-500" />
-                <span>Kelola User</span>
-              </Link>
-            )}
-          </div>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Yayasan</h1>
         </div>
 
-        {/* Action Buttons: Tombol Aksi Eksekutif Utama */}
-        <div className="flex flex-row flex-wrap sm:flex-nowrap lg:flex-col xl:flex-row items-stretch sm:items-center gap-2.5 shrink-0 self-start lg:self-center">
+        {/* Action Buttons */}
+        <div className="flex flex-row flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0 self-start lg:self-center">
           <Link
             href="/laporan"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#065f32] hover:bg-[#054d28] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-colors whitespace-nowrap min-h-[42px]"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#065f32] hover:bg-[#054d28] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-colors whitespace-nowrap min-h-[44px]"
           >
             <FileText size={16} />
             <span>Laporan Konsolidasi</span>
           </Link>
           <Link
             href="/rekapitulasi-tunggakan"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-colors whitespace-nowrap min-h-[42px]"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-colors whitespace-nowrap min-h-[44px]"
           >
             <Wallet size={16} className="text-slate-500" />
             <span>Piutang SPP</span>
@@ -205,22 +167,19 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
         </div>
       </div>
 
-      {/* SECTION 2: Hero Telemetry Strip (4 Vital Signs Konsolidasi Yayasan) */}
+      {/* SECTION 2: Ringkasan Eksekutif */}
       <section className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Vital Signs Konsolidasi Yayasan</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Indikator utama kekuatan finansial, kesiswaan, kapasitas ketenagaan, dan efektivitas SPP lintas unit.</p>
-        </div>
+        <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight px-0.5">Ringkasan Eksekutif</h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {/* Tile 1: Total Kas Riil Yayasan */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* Tile 1: Kas Riil */}
           <Link 
             href="/kas-masuk"
-            className="group bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-[#065f32] hover:shadow-md transition-all cursor-pointer"
+            className="group bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-[#065f32] hover:shadow-md transition-all cursor-pointer"
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-[#065f32] transition-colors">Total Kas Riil YTD</span>
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#065f32] flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-[#065f32] transition-colors">Total Kas Riil</span>
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#065f32] flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <Wallet size={16} />
               </div>
             </div>
@@ -229,91 +188,72 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                 <AdaptiveValue 
                   value={formatCurrency(totalKasGlobal)}
                   className="text-[#065f32]"
-                  maxFontSize={30}
-                  minFontSize={16}
+                  maxFontSize={28}
+                  minFontSize={15}
                 />
               </div>
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Likuiditas Bersih
-                </span>
-              </div>
+              <p className="text-[11px] text-slate-500 mt-1">Akumulasi seluruh unit</p>
             </div>
           </Link>
 
-          {/* Tile 2: Total Siswa Seluruh Unit */}
+          {/* Tile 2: Total Siswa */}
           <Link 
             href="/kelas"
-            className="group bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-400 hover:shadow-md transition-all cursor-pointer"
+            className="group bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-slate-400 hover:shadow-md transition-all cursor-pointer"
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition-colors">Total Siswa Terdaftar</span>
-              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition-colors">Total Siswa</span>
+              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <GraduationCap size={16} />
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{formatNumber(muridCount)}</span>
-                <span className="text-xs font-semibold text-slate-600">Peserta Didik</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">{formatNumber(muridCount)}</span>
+                <span className="text-xs font-medium text-slate-500">Siswa</span>
               </div>
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                  {formatNumber(rombelCount)} Rombel • {unitCount} Unit
-                </span>
-              </div>
+              <p className="text-[11px] text-slate-500 mt-1">{formatNumber(rombelCount)} Rombel • {unitCount} Unit</p>
             </div>
           </Link>
 
-          {/* Tile 3: Tenaga Pendidik & Staf */}
+          {/* Tile 3: Tenaga Pendidik */}
           <Link 
             href="/guru"
-            className="group bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-400 hover:shadow-md transition-all cursor-pointer"
+            className="group bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-slate-400 hover:shadow-md transition-all cursor-pointer"
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition-colors">Kapasitas Tenaga Pendidik</span>
-              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition-colors">Tenaga Pendidik</span>
+              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <Users size={16} />
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{formatNumber(guruCount)}</span>
-                <span className="text-xs font-semibold text-slate-600">Guru & Staf</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">{formatNumber(guruCount)}</span>
+                <span className="text-xs font-medium text-slate-500">Guru</span>
               </div>
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                  Rasio 1 : {guruCount > 0 ? Math.round(muridCount / guruCount) : 0} Murid
-                </span>
-              </div>
+              <p className="text-[11px] text-slate-500 mt-1">Rasio 1 : {guruCount > 0 ? Math.round(muridCount / guruCount) : 0} Murid</p>
             </div>
           </Link>
 
-          {/* Tile 4: Kolektibilitas Tagihan Yayasan */}
+          {/* Tile 4: Kolektibilitas */}
           <Link 
             href="/rekapitulasi-tunggakan"
-            className="group bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-amber-400 hover:shadow-md transition-all cursor-pointer"
+            className="group bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-slate-400 hover:shadow-md transition-all cursor-pointer"
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition-colors">Kolektibilitas SPP Yayasan</span>
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform ${isKolektibilitasSehat ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition-colors">Kolektibilitas SPP</span>
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 ${isKolektibilitasSehat ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
                 <CheckCircle2 size={16} />
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-2">
-                <span className={`text-2xl sm:text-3xl font-black tracking-tight ${isKolektibilitasSehat ? 'text-slate-900' : 'text-amber-700'}`}>
+              <div className="flex items-baseline gap-1.5">
+                <span className={`text-xl sm:text-2xl lg:text-3xl font-black tracking-tight ${isKolektibilitasSehat ? 'text-slate-900' : 'text-amber-700'}`}>
                   {kolektibilitas}%
                 </span>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isKolektibilitasSehat ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                  {isKolektibilitasSehat ? 'Prima' : 'Perhatian'}
-                </span>
               </div>
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                  Sisa Piutang {formatCurrency(totalPiutangGlobal)}
-                </span>
-              </div>
+              <p className="text-[11px] text-rose-600 font-medium mt-1 truncate">Sisa {formatCurrency(totalPiutangGlobal)}</p>
             </div>
           </Link>
         </div>

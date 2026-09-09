@@ -310,43 +310,40 @@ export default function MuridDetailClient({
 
       <div className="space-y-6 print:hidden">
         {/* Minimalist Profile Header */}
-        <div className="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 relative overflow-hidden">
-          {/* Subtle decorative background */}
-          <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none"></div>
-          
-          <div className="flex items-center gap-5 relative z-10">
+        <div className="bg-surface border border-border rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5 mb-6">
+          <div className="flex items-center gap-4 sm:gap-5">
             {/* Initial Avatar */}
-            <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl font-black shadow-sm shrink-0 border ${
+            <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl font-black shadow-xs shrink-0 border ${
               murid.gender === 'Perempuan' 
-                ? 'bg-gradient-to-br from-rose-100 to-pink-50 text-rose-600 border-rose-200/50' 
-                : 'bg-gradient-to-br from-blue-100 to-indigo-50 text-blue-600 border-blue-200/50'
+                ? 'bg-rose-50 text-rose-700 border-rose-200' 
+                : 'bg-blue-50 text-blue-700 border-blue-200'
             }`}>
               {murid.name.charAt(0).toUpperCase()}
             </div>
 
             {/* Identity Details */}
             <div>
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 text-gray-700 border border-border">
+              <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 text-gray-700 border border-border">
                   {unitName}
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                   Rombel: {currentRombel}
                 </span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getStatusBadge(murid.status)}`}>
+                <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${getStatusBadge(murid.status)}`}>
                   {murid.status || "AKTIF"}
                 </span>
                 {murid.isScholarship && (
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
-                    <Award size={12} /> Penerima Beasiswa
+                  <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
+                    <Award size={12} /> Beasiswa
                   </span>
                 )}
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight mb-1">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text-main tracking-tight mb-1">
                 {murid.name}
               </h1>
-              <div className="flex items-center gap-1.5 text-sm text-text-muted font-medium flex-wrap mt-1">
-                <User size={16} />
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm text-text-muted font-medium flex-wrap">
+                <User size={14} />
                 <span>NIS: <span className="font-mono text-text-main font-semibold ml-1">{murid.nis || "-"}</span></span>
                 {murid.nisn && (
                   <>
@@ -355,25 +352,25 @@ export default function MuridDetailClient({
                   </>
                 )}
                 <span className="mx-1 text-border">•</span>
-                <span className="flex items-center gap-1.5 bg-primary/10 text-primary px-2 py-0.5 rounded-md">
-                  ID Sistem: <span className="font-mono font-bold tracking-tight">{murid.id}</span>
+                <span className="flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 rounded-md text-xs">
+                  ID: <span className="font-mono font-bold tracking-tight">{murid.id}</span>
                 </span>
               </div>
             </div>
           </div>
 
           {/* Metric KPI Cards */}
-          <div className="flex gap-4 relative z-10 self-stretch md:self-auto min-w-[200px]">
-            <div className="bg-gray-50 border border-border rounded-xl p-4 shadow-sm w-full flex flex-col justify-center">
-              <div className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Status Tunggakan SPP</div>
-              <div className="text-lg font-black mt-0.5">
+          <div className="flex gap-3 self-stretch md:self-auto min-w-[180px]">
+            <div className="bg-bg border border-border rounded-xl p-3 sm:p-4 shadow-2xs w-full flex flex-col justify-center">
+              <div className="text-[10px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Status Tunggakan SPP</div>
+              <div className="text-base sm:text-lg font-black">
                 {summaryKeuangan.sisaTunggakan === 0 ? (
-                  <span className="text-emerald-600 flex items-center gap-2">
-                    <CheckCircle2 size={20} /> Bebas Tunggakan
+                  <span className="text-emerald-600 flex items-center gap-1.5">
+                    <CheckCircle2 size={18} /> Bebas Tunggakan
                   </span>
                 ) : (
-                  <span className="text-amber-600 flex items-center gap-2">
-                    <AlertCircle size={20} /> {formatRupiah(summaryKeuangan.sisaTunggakan)}
+                  <span className="text-amber-700 flex items-center gap-1.5">
+                    <AlertCircle size={18} /> {formatRupiah(summaryKeuangan.sisaTunggakan)}
                   </span>
                 )}
               </div>

@@ -90,7 +90,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
   return (
     <div className="flex flex-col gap-6 pb-12 animate-in fade-in duration-300">
       {/* SECTION 1: Header Hero & Context Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface p-5 sm:p-6 rounded-2xl border border-border shadow-2xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface p-4 sm:p-6 rounded-2xl border border-border shadow-2xs">
         <div className="flex-1 min-w-0 pr-0 lg:pr-6">
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
             <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-bold tracking-wide uppercase bg-slate-100 text-slate-700 border border-slate-200">
@@ -103,14 +103,11 @@ export default function UnitDashboard(props: UnitDashboardProps) {
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight">
-            Dashboard Operasional Unit
+            Dashboard Unit
           </h1>
-          <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-            Monitoring kapasitas kelas, demografi murid, dan rekapitulasi data administratif {unitName}.
-          </p>
         </div>
 
-        {/* Role Injection: TU mendapatkan tombol Quick Actions, Admin mendapatkan mode Supervisi */}
+        {/* Role Quick Action Button */}
         {role === 'TATA_USAHA' ? (
           <div className="flex items-center gap-2.5 shrink-0 self-start md:self-center">
             <Link
@@ -130,71 +127,80 @@ export default function UnitDashboard(props: UnitDashboardProps) {
         )}
       </div>
 
-      {/* SECTION 2: Overview KPI Cards (Solid Matte, Zero AI Slop) */}
-      <section className="flex flex-col gap-3.5">
-        <div className="flex flex-col gap-0.5 px-1">
-          <h2 className="text-lg sm:text-xl font-extrabold text-text-main tracking-tight">Overview Unit</h2>
-          <p className="text-xs text-text-muted">Kapasitas utama siswa, rombel, tenaga pendidik, dan ringkasan piutang {unitName}.</p>
-        </div>
+      {/* SECTION 2: Overview KPI Cards */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg sm:text-xl font-extrabold text-text-main tracking-tight px-0.5">Overview Unit</h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Card 1: Siswa Aktif */}
-          <div className="bg-surface rounded-2xl border border-border p-5 shadow-2xs hover:border-border-hover transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-text-muted">Total Siswa Aktif</span>
-              <div className="w-10 h-10 bg-emerald-50 text-[#065f32] border border-emerald-100/80 rounded-xl flex items-center justify-center">
-                <GraduationCap size={20} />
+          <div className="bg-surface rounded-2xl border border-border p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-border-hover transition-colors">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-text-muted">Total Siswa</span>
+              <div className="w-8 h-8 bg-emerald-50 text-[#065f32] border border-emerald-100/80 rounded-lg flex items-center justify-center shrink-0">
+                <GraduationCap size={16} />
               </div>
             </div>
-            <div className="flex items-baseline gap-2 overflow-hidden">
-              <span className="text-2xl sm:text-3xl font-black text-text-main tracking-tight truncate max-w-full" title={formatNumber(totalMurid)}>{formatNumber(totalMurid)}</span>
-              <span className="text-xs font-bold text-[#065f32] shrink-0">Peserta Didik</span>
+            <div>
+              <div className="flex items-baseline gap-1.5 overflow-hidden">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight truncate max-w-full" title={formatNumber(totalMurid)}>{formatNumber(totalMurid)}</span>
+                <span className="text-xs font-medium text-text-muted shrink-0">Siswa</span>
+              </div>
+              <p className="text-[11px] text-emerald-700 font-medium mt-1">Status Aktif</p>
             </div>
           </div>
 
           {/* Card 2: Rombel */}
-          <div className="bg-surface rounded-2xl border border-border p-5 shadow-2xs hover:border-border-hover transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-text-muted">Rombongan Belajar</span>
-              <div className="w-10 h-10 bg-slate-100 text-slate-700 border border-slate-200/80 rounded-xl flex items-center justify-center">
-                <LayoutDashboard size={20} />
+          <div className="bg-surface rounded-2xl border border-border p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-border-hover transition-colors">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-text-muted">Rombel</span>
+              <div className="w-8 h-8 bg-slate-100 text-slate-700 border border-slate-200/80 rounded-lg flex items-center justify-center shrink-0">
+                <LayoutDashboard size={16} />
               </div>
             </div>
-            <div className="flex items-baseline gap-2 overflow-hidden">
-              <span className="text-2xl sm:text-3xl font-black text-text-main tracking-tight truncate max-w-full" title={formatNumber(totalRombel)}>{formatNumber(totalRombel)}</span>
-              <span className="text-xs font-bold text-slate-700 shrink-0">Rombel Aktif</span>
+            <div>
+              <div className="flex items-baseline gap-1.5 overflow-hidden">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight truncate max-w-full" title={formatNumber(totalRombel)}>{formatNumber(totalRombel)}</span>
+                <span className="text-xs font-medium text-text-muted shrink-0">Kelas</span>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">Rombel Aktif</p>
             </div>
           </div>
 
           {/* Card 3: Tenaga Pendidik */}
-          <div className="bg-surface rounded-2xl border border-border p-5 shadow-2xs hover:border-border-hover transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-text-muted">Tenaga Pendidik</span>
-              <div className="w-10 h-10 bg-amber-50 text-amber-700 border border-amber-200/80 rounded-xl flex items-center justify-center">
-                <Users size={20} />
+          <div className="bg-surface rounded-2xl border border-border p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-border-hover transition-colors">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-text-muted">Tenaga Pendidik</span>
+              <div className="w-8 h-8 bg-amber-50 text-amber-700 border border-amber-200/80 rounded-lg flex items-center justify-center shrink-0">
+                <Users size={16} />
               </div>
             </div>
-            <div className="flex items-baseline gap-2 overflow-hidden">
-              <span className="text-2xl sm:text-3xl font-black text-text-main tracking-tight truncate max-w-full" title={formatNumber(totalGuru)}>{formatNumber(totalGuru)}</span>
-              <span className="text-xs font-bold text-amber-700 shrink-0">Guru Aktif</span>
+            <div>
+              <div className="flex items-baseline gap-1.5 overflow-hidden">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight truncate max-w-full" title={formatNumber(totalGuru)}>{formatNumber(totalGuru)}</span>
+                <span className="text-xs font-medium text-text-muted shrink-0">Guru</span>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">Guru Bertugas</p>
             </div>
           </div>
 
-          {/* Card 4: Total Piutang Unit (Refined Solid Matte Card, No Overflow, Full Nominal) */}
-          <div className="bg-surface rounded-2xl border border-rose-200/90 p-5 shadow-2xs hover:border-rose-300 transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-rose-700">Total Piutang Unit</span>
-              <div className="w-10 h-10 bg-rose-50 text-rose-700 border border-rose-200/70 rounded-xl flex items-center justify-center">
-                <AlertTriangle size={20} />
+          {/* Card 4: Total Piutang Unit */}
+          <div className="bg-surface rounded-2xl border border-rose-200/90 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-rose-300 transition-colors">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-rose-700">Total Piutang Unit</span>
+              <div className="w-8 h-8 bg-rose-50 text-rose-700 border border-rose-200/70 rounded-lg flex items-center justify-center shrink-0">
+                <AlertTriangle size={16} />
               </div>
             </div>
-            <div className="flex items-baseline my-1">
-              <AdaptiveValue 
-                value={formatCurrency(totalTunggakanUnit)}
-                className="text-rose-700"
-                maxFontSize={30}
-                minFontSize={15}
-              />
+            <div>
+              <div className="flex items-baseline my-0.5">
+                <AdaptiveValue 
+                  value={formatCurrency(totalTunggakanUnit)}
+                  className="text-rose-700"
+                  maxFontSize={28}
+                  minFontSize={15}
+                />
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">Tagihan Belum Lunas</p>
             </div>
           </div>
         </div>

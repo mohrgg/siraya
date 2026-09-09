@@ -280,45 +280,39 @@ export default function TahunAkademikClient({
         </form>
       </Modal>
 
-      {/* HERO BANNER: ACTIVE PERIOD COCKPIT */}
+      {/* BANNER TAHUN AJARAN AKTIF */}
       {activeYear ? (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-surface border border-emerald-500/30 p-6 shadow-sm">
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
-                </span>
-                <span>TAHUN AJARAN OPERASIONAL AKTIF</span>
+        <div className="rounded-2xl bg-surface border border-emerald-500/30 p-4 sm:p-5 shadow-xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                <span>Tahun Ajaran Operasional Aktif</span>
               </div>
-              <h2 className="text-3xl font-black text-text-main tracking-tight flex items-center gap-3">
-                <Calendar className="text-emerald-600" size={32} />
+              <h2 className="text-2xl sm:text-3xl font-black text-text-main tracking-tight flex items-center gap-2.5 mt-1">
+                <Calendar className="text-emerald-600 shrink-0" size={26} />
                 <span>{activeYear.name}</span>
               </h2>
-              <p className="text-xs text-text-muted max-w-xl">
-                Periode ini merupakan rujukan utama yayasan. Seluruh pencatatan pembayaran tagihan, pembagian kelas/rombel, dan penarikan laporan operasional aktif merujuk pada tahun akademik ini.
-              </p>
             </div>
 
             {/* Live KPI mini-counters for active year */}
-            <div className="flex items-center gap-4">
-              <div className="px-5 py-3.5 bg-surface/90 backdrop-blur-xs rounded-xl border border-emerald-200/60 shadow-xs flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-                  <Layers size={20} />
+            <div className="grid grid-cols-2 sm:flex items-center gap-3">
+              <div className="px-4 py-2.5 bg-bg rounded-xl border border-border flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                  <Layers size={18} />
                 </div>
                 <div>
-                  <p className="text-lg font-black text-text-main">{activeYear._count?.subKelas || 0}</p>
+                  <p className="text-base sm:text-lg font-black text-text-main">{activeYear._count?.subKelas || 0}</p>
                   <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Rombel Aktif</p>
                 </div>
               </div>
 
-              <div className="px-5 py-3.5 bg-surface/90 backdrop-blur-xs rounded-xl border border-emerald-200/60 shadow-xs flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
-                  <Receipt size={20} />
+              <div className="px-4 py-2.5 bg-bg rounded-xl border border-border flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+                  <Receipt size={18} />
                 </div>
                 <div>
-                  <p className="text-lg font-black text-text-main">{activeYear._count?.tagihan || 0}</p>
+                  <p className="text-base sm:text-lg font-black text-text-main">{activeYear._count?.tagihan || 0}</p>
                   <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Tagihan Tercatat</p>
                 </div>
               </div>

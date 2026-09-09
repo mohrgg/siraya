@@ -331,19 +331,15 @@ export default function RekapitulasiTunggakanClient({
         </p>
       </div>
 
-      {/* Executive SPP Health Center */}
+      {/* Executive SPP Summary for KEPALA_SEKOLAH / YAYASAN */}
       {isExecutive && (
-        <div className="mb-6 p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div className="mb-6 p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
             <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-[#065f32] border border-emerald-200/80">
-                  {isGlobal ? "Konsolidasi Yayasan • Likuiditas SPP" : "Audit Likuiditas & Kolektibilitas SPP"}
-                </span>
-                <span className="text-slate-300">•</span>
-                <span className="text-xs text-slate-500 font-medium">{activeUnitName} • TA {activeTahunAkademikName}</span>
-              </div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900">Monitoring Penerimaan Tagihan & Efektivitas Kas</h2>
+              <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900">
+                Ringkasan Tagihan & Tunggakan
+              </h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5"><span>{activeUnitName}</span> • TA {activeTahunAkademikName}</p>
             </div>
             <div className="flex items-center gap-2">
               <ToolbarExportPDF 
@@ -353,30 +349,30 @@ export default function RekapitulasiTunggakanClient({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
-            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{isGlobal ? "Total Tagihan Yayasan" : "Total Tagihan Unit"}</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-3 sm:mt-4">
+            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
+              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">{isGlobal ? "Total Tagihan Yayasan" : "Total Tagihan Unit"}</p>
               <div className="my-1">
                 <AdaptiveValue 
                   value={`Rp ${formatRupiah(executiveMetrics.totalTagihan)}`}
                   className="text-slate-900"
-                  maxFontSize={28}
-                  minFontSize={15}
+                  maxFontSize={24}
+                  minFontSize={14}
                 />
               </div>
             </div>
 
-            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Realisasi Penerimaan</p>
+            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
+              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Realisasi Penerimaan</p>
               <div className="my-1">
                 <AdaptiveValue 
                   value={`Rp ${formatRupiah(executiveMetrics.totalDibayar)}`}
                   className="text-[#065f32]"
-                  maxFontSize={28}
-                  minFontSize={15}
+                  maxFontSize={24}
+                  minFontSize={14}
                 />
               </div>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-1.5">
                 <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
                   <div 
                     className="bg-[#065f32] h-full rounded-full transition-all duration-500"
@@ -387,26 +383,26 @@ export default function RekapitulasiTunggakanClient({
               </div>
             </div>
 
-            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
-              <p className="text-xs font-bold text-rose-700 uppercase tracking-wider">Sisa Piutang / Tunggakan</p>
+            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
+              <p className="text-[11px] sm:text-xs font-bold text-rose-700 uppercase tracking-wider">Sisa Piutang</p>
               <div className="my-1">
                 <AdaptiveValue 
                   value={`Rp ${formatRupiah(executiveMetrics.totalTunggakan)}`}
                   className="text-rose-600"
-                  maxFontSize={28}
-                  minFontSize={15}
+                  maxFontSize={24}
+                  minFontSize={14}
                 />
               </div>
             </div>
 
-            <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
-              <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">Rombel Prioritas Penagihan</p>
+            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
+              <p className="text-[11px] sm:text-xs font-bold text-amber-700 uppercase tracking-wider">Prioritas Penagihan</p>
               {executiveMetrics.topTunggakanRombel.length > 0 ? (
-                <div className="mt-1 space-y-1.5">
+                <div className="mt-1 space-y-1">
                   {executiveMetrics.topTunggakanRombel.slice(0, 2).map((r, i) => (
-                    <div key={r.subKelasId} className="flex justify-between items-center text-xs">
-                      <span className="font-semibold text-slate-800 truncate max-w-[110px]">{i + 1}. {r.subKelasName}</span>
-                      <span className="text-amber-800 font-mono text-[11px] font-semibold">Rp {formatRupiah(r.totalTunggakan)}</span>
+                    <div key={r.subKelasId} className="flex justify-between items-center text-[11px]">
+                      <span className="font-semibold text-slate-800 truncate max-w-[90px]">{i + 1}. {r.subKelasName}</span>
+                      <span className="text-amber-800 font-mono font-semibold">Rp {formatRupiah(r.totalTunggakan)}</span>
                     </div>
                   ))}
                 </div>

@@ -256,40 +256,38 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
       </div>
 
       {/* KPI Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 print:hidden">
-        <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gray-50 text-gray-500 flex items-center justify-center">
-            <Wallet size={24} />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 print:hidden">
+        <div className="bg-surface rounded-2xl shadow-2xs border border-border p-3.5 sm:p-5 flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-gray-50 text-gray-500 border border-gray-200/60 flex items-center justify-center shrink-0">
+            <Wallet size={20} />
           </div>
           <div>
-            <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Saldo Awal</div>
-            <div className="text-xl font-bold text-gray-800">
+            <div className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider mb-0.5">Saldo Awal</div>
+            <div className="text-lg sm:text-xl font-black text-text-main">
               {isLoading ? "..." : `Rp ${(data?.saldoAwal || 0).toLocaleString('id-ID')}`}
             </div>
           </div>
         </div>
 
-        <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex items-center gap-4 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-full -mr-4 -mt-4 opacity-50 transition-transform group-hover:scale-110"></div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center relative z-10">
-            <ArrowDownRight size={24} />
+        <div className="bg-surface rounded-2xl shadow-2xs border border-border p-3.5 sm:p-5 flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#065f32] border border-emerald-200/60 flex items-center justify-center shrink-0">
+            <ArrowDownRight size={20} />
           </div>
-          <div className="relative z-10">
-            <div className="text-sm font-semibold text-emerald-600/80 uppercase tracking-wider mb-1">Pemasukan Periode Ini</div>
-            <div className="text-xl font-bold text-emerald-700">
+          <div>
+            <div className="text-[11px] sm:text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-0.5">Pemasukan Periode</div>
+            <div className="text-lg sm:text-xl font-black text-[#065f32]">
               {isLoading ? "..." : `Rp ${totalDebit.toLocaleString('id-ID')}`}
             </div>
           </div>
         </div>
 
-        <div className="bg-surface rounded-2xl shadow-sm border border-border p-5 flex items-center gap-4 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-rose-50 rounded-bl-full -mr-4 -mt-4 opacity-50 transition-transform group-hover:scale-110"></div>
-          <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center relative z-10">
-            <ArrowUpRight size={24} />
+        <div className="bg-surface rounded-2xl shadow-2xs border border-border p-3.5 sm:p-5 flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-700 border border-rose-200/60 flex items-center justify-center shrink-0">
+            <ArrowUpRight size={20} />
           </div>
-          <div className="relative z-10">
-            <div className="text-sm font-semibold text-rose-600/80 uppercase tracking-wider mb-1">Pengeluaran Periode Ini</div>
-            <div className="text-xl font-bold text-rose-700">
+          <div>
+            <div className="text-[11px] sm:text-xs font-semibold text-rose-700 uppercase tracking-wider mb-0.5">Pengeluaran Periode</div>
+            <div className="text-lg sm:text-xl font-black text-rose-700">
               {isLoading ? "..." : `Rp ${totalKredit.toLocaleString('id-ID')}`}
             </div>
           </div>

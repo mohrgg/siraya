@@ -48,40 +48,37 @@ export default function KepsekDashboard(props: any) {
       {/* SECTION 1: Header Komando Eksekutif */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
         <div className="flex-1 min-w-0 pr-0 lg:pr-6">
-          <div className="flex flex-wrap items-center gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
             <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wider uppercase bg-emerald-50 text-[#065f32] border border-emerald-200/80">
-              Kepala Sekolah • Pimpinan Unit
+              Kepala Sekolah
             </span>
             <span className="text-slate-300">•</span>
-            <span className="text-xs font-medium text-slate-500">Tahun Akademik: {activeYear?.name || 'Aktif'}</span>
+            <span className="text-xs font-medium text-slate-500">TA {activeYear?.name || 'Aktif'}</span>
             <span className="text-slate-300">•</span>
             <span className="text-xs font-bold text-slate-800">{activeUnit?.name || 'Unit Sekolah'}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Eksekutif Unit</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Evaluasi mutu kesiswaan, kepatuhan daya tampung rombel, dan stabilitas operasional {activeUnit?.name || 'Unit Sekolah'}.
-          </p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Kepala Sekolah</h1>
         </div>
 
-        {/* Action Buttons (Kontekstual & Relevan Eksekutif) */}
+        {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2 shrink-0 self-start md:self-center">
           <Link
             href="/kelas"
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-[#065f32] hover:bg-[#054d28] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-[#065f32] hover:bg-[#054d28] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap min-h-[44px]"
           >
             <LayoutDashboard size={16} />
             Kapasitas Rombel
           </Link>
           <Link
             href="/rekapitulasi-tunggakan"
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap min-h-[44px]"
           >
             <Wallet size={16} />
             Monitoring SPP
           </Link>
           <Link
             href="/laporan"
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap min-h-[44px]"
           >
             <FileText size={16} />
             Pusat Laporan
@@ -89,7 +86,7 @@ export default function KepsekDashboard(props: any) {
           {hasMajors && (
             <Link
               href="/jurusan"
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap min-h-[44px]"
             >
               <Award size={16} />
               Jurusan
@@ -98,105 +95,77 @@ export default function KepsekDashboard(props: any) {
         </div>
       </div>
 
-      {/* SECTION 2: Executive Pulse (Hero Telemetry Strip) */}
+      {/* SECTION 2: Ringkasan Unit */}
       <section className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Overview Eksekutif Unit</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Indikator vital mutu kesiswaan, rasio pendidik, dan kolektibilitas unit sekolah.</p>
-        </div>
+        <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight px-0.5">Ringkasan Unit</h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Tile 1: Total Siswa Aktif */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Siswa Aktif</span>
-              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Total Siswa</span>
+              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
                 <GraduationCap size={16} />
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-slate-900">{formatNumber(totalMurid)}</span>
-                <span className="text-xs font-semibold text-slate-600">Peserta Didik</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">{formatNumber(totalMurid)}</span>
+                <span className="text-xs font-medium text-slate-500">Siswa</span>
               </div>
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Aktif Terdaftar
-                </span>
-              </div>
+              <p className="text-[11px] text-emerald-700 font-medium mt-1">Status Aktif</p>
             </div>
           </div>
 
           {/* Tile 2: Kapasitas Rombel */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Rombongan Belajar</span>
-              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Rombongan Belajar</span>
+              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
                 <LayoutDashboard size={16} />
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-slate-900">{formatNumber(totalRombel)}</span>
-                <span className="text-xs font-semibold text-slate-600">Kelas</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">{formatNumber(totalRombel)}</span>
+                <span className="text-xs font-medium text-slate-500">Kelas</span>
               </div>
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
-                  avgPerRombel >= 20 && avgPerRombel <= 36 
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                    : 'bg-amber-50 text-amber-700 border border-amber-200'
-                }`}>
-                  Rata-rata {avgPerRombel} Siswa/Kelas
-                </span>
-              </div>
+              <p className="text-[11px] text-slate-500 mt-1">Rata-rata {avgPerRombel} Siswa/Kelas</p>
             </div>
           </div>
 
           {/* Tile 3: Rasio Pendidik */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tenaga Pendidik</span>
-              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Tenaga Pendidik</span>
+              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
                 <Users size={16} />
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-slate-900">1 : {ratioGuru}</span>
-                <span className="text-xs font-semibold text-slate-600">Rasio Murid</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">{formatNumber(totalGuru)}</span>
+                <span className="text-xs font-medium text-slate-500">Guru</span>
               </div>
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                  {formatNumber(totalGuru)} Guru Bertugas
-                </span>
-              </div>
+              <p className="text-[11px] text-slate-500 mt-1">Rasio 1 : {ratioGuru} Murid</p>
             </div>
           </div>
 
           {/* Tile 4: Kolektibilitas SPP */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Kolektibilitas SPP</span>
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Kolektibilitas SPP</span>
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                 isKolektibilitasSehat ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
               }`}>
                 {isKolektibilitasSehat ? <ShieldCheck size={16} /> : <AlertTriangle size={16} />}
               </div>
             </div>
             <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-slate-900">{displayKolektibilitas}%</span>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
-                  isKolektibilitasSehat ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
-                }`}>
-                  {isKolektibilitasSehat ? 'Likuiditas Sehat' : 'Perlu Atensi'}
-                </span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">{displayKolektibilitas}%</span>
               </div>
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 truncate">
-                  Sisa Piutang {formatCurrency(totalSisaTagihanUnit)}
-                </span>
-              </div>
+              <p className="text-[11px] text-rose-600 font-medium mt-1 truncate">Sisa {formatCurrency(totalSisaTagihanUnit)}</p>
             </div>
           </div>
         </div>
