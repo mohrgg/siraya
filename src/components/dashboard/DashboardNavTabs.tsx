@@ -30,7 +30,7 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
             id: `unit-${u.id}`,
             tabType: 'unit',
             unitId: u.id,
-            label: `Detail: ${u.name}`,
+            label: u.name,
             icon: Layers,
             href: `/?tab=unit&unitId=${u.id}`
           })),
@@ -51,7 +51,7 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
             id: `unit-${u.id}`,
             tabType: 'unit',
             unitId: u.id,
-            label: `Detail: ${u.name}`,
+            label: u.name,
             icon: Layers,
             href: `/?tab=unit&unitId=${u.id}`
           })),
