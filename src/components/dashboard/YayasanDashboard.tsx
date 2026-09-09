@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useTransition } from "react"
+import React, { useState, useTransition, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { setGlobalContext } from "@/actions/app-context"
 import { 
@@ -93,9 +93,24 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
   const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
 
+  // Urutan hierarki jenjang sekolah dari paling kecil ke paling besar (TK -> SD -> SMP -> SMA -> SMK)
+  const getUnitLevel = (name: string) => {
+    const str = (name || '').toUpperCase()
+    if (str.includes('TK') || str.includes('PAUD')) return 0
+    if (str.includes('SD') || str.includes('MI')) return 1
+    if (str.includes('SMP') || str.includes('MTS')) return 2
+    if (str.includes('SMA') || str.includes('MA')) return 3
+    if (str.includes('SMK')) return 4
+    return 5
+  }
+
+  const sortedUnitData = useMemo(() => {
+    return [...unitData].sort((a, b) => getUnitLevel(a.name) - getUnitLevel(b.name))
+  }, [unitData])
+
   // Status evaluasi kesehatan kolektibilitas unit
-  const performaUnitData = unitData && unitData.length > 0 
-    ? unitData.map(u => {
+  const performaUnitData = sortedUnitData && sortedUnitData.length > 0 
+    ? sortedUnitData.map(u => {
         let status: 'sehat' | 'perhatian' | 'kritis' | 'N/A' = 'sehat'
         if (u.kolektibilitas === null || u.kolektibilitas === undefined || isNaN(u.kolektibilitas)) {
           status = 'N/A'
@@ -129,6 +144,16 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
   const femalePercent = totalGender > 0 ? (100 - malePercent) : 50
 
   const isKolektibilitasSehat = kolektibilitas >= 80
+
+  // Grid adaptif cerdas berbasis jumlah unit agar simetris & hemat ruang vertikal
+  const getScorecardGridClass = (count: number) => {
+    if (count <= 1) return "grid grid-cols-1 max-w-2xl mx-auto gap-4 sm:gap-5"
+    if (count === 2) return "grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5"
+    if (count === 3) return "grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5"
+    if (count === 4) return "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 sm:gap-5"
+    if (count <= 6) return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
+    return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5"
+  }
 
   return (
     <div className="flex flex-col gap-8 pb-20 md:pb-12 animate-in fade-in duration-300 max-w-[1600px] mx-auto w-full">
@@ -274,7 +299,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className={getScorecardGridClass(performaUnitData.length)}>
           {performaUnitData.map((item, idx) => {
             const kolektibilitasVal = typeof item.kolektibilitas === 'number' ? item.kolektibilitas : 0
             const isUnitSehat = item.status === 'sehat'
@@ -284,13 +309,14 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
             return (
               <div 
                 key={idx} 
-                className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all"
+                className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all"
               >
                 <div>
-                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 mb-4">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Unit Sekolah #{idx + 1}</span>
-                      <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">{item.unit}</h3>
+                  <div className="flex items-center justify-between gap-2.5 pb-3 border-b border-slate-100 mb-3.5">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
+                        {item.unit}
+                      </h3>
                     </div>
                     <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border shrink-0 ${
                       isUnitSehat 
@@ -304,31 +330,31 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                   </div>
 
                   {/* 4 KPI Grid Per Unit */}
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4">
+                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Siswa</span>
-                      <span className="text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.siswa)}</span>
-                      <span className="text-[10px] text-slate-500 font-medium">{avgPerRombel} siswa/rombel</span>
+                      <span className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.siswa)}</span>
+                      <span className="text-[10px] text-slate-500 font-medium block">{avgPerRombel} siswa/rombel</span>
                     </div>
 
-                    <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Rombel Aktif</span>
-                      <span className="text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.rombel)}</span>
-                      <span className="text-[10px] text-slate-500 font-medium">Kelas Belajar</span>
+                      <span className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.rombel)}</span>
+                      <span className="text-[10px] text-slate-500 font-medium block">Kelas Belajar</span>
                     </div>
 
-                    <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tenaga Guru</span>
-                      <span className="text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.guru)}</span>
-                      <span className="text-[10px] text-slate-500 font-medium">Pengajar Unit</span>
+                      <span className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.guru)}</span>
+                      <span className="text-[10px] text-slate-500 font-medium block">Pengajar Unit</span>
                     </div>
 
-                    <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kolektibilitas</span>
-                      <span className={`text-xl font-black mt-0.5 block ${isUnitSehat ? 'text-[#065f32]' : isUnitKritis ? 'text-rose-600' : 'text-amber-600'}`}>
+                      <span className={`text-lg sm:text-xl font-black mt-0.5 block ${isUnitSehat ? 'text-[#065f32]' : isUnitKritis ? 'text-rose-600' : 'text-amber-600'}`}>
                         {item.kolektibilitas === 'N/A' ? '-' : `${item.kolektibilitas}%`}
                       </span>
-                      <span className="text-[10px] text-slate-500 font-medium">Realisasi SPP</span>
+                      <span className="text-[10px] text-slate-500 font-medium block">Realisasi SPP</span>
                     </div>
                   </div>
 
@@ -356,23 +382,23 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                       setSelectedDrawerIndex(idx)
                       setIsDrawerOpen(true)
                     }}
-                    className="inline-flex items-center justify-center gap-1.5 py-2 px-2.5 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200 text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all h-10 shadow-2xs group whitespace-nowrap min-w-0"
+                    className="inline-flex items-center justify-center gap-1.5 py-2 px-2.5 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200 text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all h-9 sm:h-10 shadow-2xs group whitespace-nowrap min-w-0"
                     title={`Audit sebaran rombel & siswa ${item.unit}`}
                   >
                     <Layers size={14} className="text-[#065f32] shrink-0 group-hover:scale-110 transition-transform" />
                     <span className="truncate">Audit Rombel</span>
-                    <ChevronRight size={13} className="text-[#065f32]/70 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                    <ChevronRight size={13} className="text-[#065f32]/70 shrink-0 group-hover:translate-x-0.5 transition-transform ml-auto" />
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleDrilldownUnitDashboard(item.id || item.raw?.id)}
-                    className="inline-flex items-center justify-center gap-1.5 py-2 px-2.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-emerald-300 text-slate-700 hover:text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all h-10 shadow-2xs group whitespace-nowrap min-w-0"
+                    className="inline-flex items-center justify-center gap-1.5 py-2 px-2.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-emerald-300 text-slate-700 hover:text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all h-9 sm:h-10 shadow-2xs group whitespace-nowrap min-w-0"
                     title={`Buka dashboard ${item.unit}`}
                   >
                     <LayoutDashboard size={14} className="text-slate-400 group-hover:text-[#065f32] shrink-0 transition-colors" />
                     <span className="truncate">Dashboard Unit</span>
-                    <ChevronRight size={13} className="text-slate-400 group-hover:text-[#065f32] shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                    <ChevronRight size={13} className="text-slate-400 group-hover:text-[#065f32] shrink-0 group-hover:translate-x-0.5 transition-transform ml-auto" />
                   </button>
                 </div>
               </div>
@@ -554,7 +580,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                   <button
                     type="button"
                     onClick={() => {
-                      const foundIdx = unitData.findIndex(u => u.name === selectedUnitDrillDown.name)
+                      const foundIdx = sortedUnitData.findIndex(u => u.name === selectedUnitDrillDown.name)
                       if (foundIdx !== -1) setSelectedDrawerIndex(foundIdx)
                       setIsDrawerOpen(true)
                     }}
@@ -586,7 +612,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
               >
                 Semua Unit (Konsolidasi)
               </button>
-              {unitData.map((u, uIdx) => (
+              {sortedUnitData.map((u, uIdx) => (
                 <button
                   key={uIdx}
                   type="button"
@@ -624,9 +650,9 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                     <p className="text-xs text-slate-400 mt-0.5">Tidak ditemukan sebaran kelas aktif pada unit ini.</p>
                   </div>
                 )
-              ) : unitData && unitData.length > 0 ? (
+              ) : sortedUnitData && sortedUnitData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={unitData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart data={sortedUnitData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
@@ -726,7 +752,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
       <UnitAuditSideDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
-        unitDataList={unitData}
+        unitDataList={sortedUnitData}
         currentUnitIndex={selectedDrawerIndex}
         onSelectUnitIndex={setSelectedDrawerIndex}
       />
