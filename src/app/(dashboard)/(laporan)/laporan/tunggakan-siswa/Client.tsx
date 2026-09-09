@@ -300,7 +300,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
         </div>
       </div>
 
-      <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 print:shadow-none print:border-none print:p-0">
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6 print:shadow-none print:border-none print:p-0">
         
         {/* KOP SURAT (Hanya Print) */}
         <PrintHeader 
@@ -334,7 +334,69 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* VIEW A: MOBILE ADAPTIVE CARDS (<md) */}
+            <div className="md:hidden divide-y divide-border border border-border rounded-2xl overflow-hidden mb-5">
+              {paginatedData.length === 0 ? (
+                <div className="p-8 text-center text-text-muted text-sm italic">
+                  Tidak ada data tunggakan.
+                </div>
+              ) : (
+                paginatedData.map((item) => (
+                  <div key={item.muridId} className="p-4 bg-surface flex flex-col gap-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-bold text-sm text-text-main truncate">{item.namaSiswa}</div>
+                        <div className="flex items-center gap-1.5 text-xs text-text-muted mt-0.5">
+                          <span className="font-mono">{item.nis}</span>
+                          <span>•</span>
+                          <span className="font-medium text-slate-700">{item.rombel}</span>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-[10px] text-rose-600 uppercase font-bold block">Tunggakan</span>
+                        <span className="font-mono font-black text-rose-600 text-sm">
+                          Rp {new Intl.NumberFormat("id-ID").format(item.totalTunggakan)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* SPP Breakdown */}
+                    <div className="bg-bg p-2.5 rounded-xl border border-border flex items-center justify-between text-xs">
+                      <div>
+                        <span className="font-bold text-primary block">SPP ({item.sppCount || 0} Bln)</span>
+                        <span className="text-[11px] text-text-muted">{item.sppMonthString}</span>
+                      </div>
+                      <span className="font-mono font-bold text-primary">
+                        {item.sppAmount > 0 
+                          ? `Rp ${new Intl.NumberFormat("id-ID").format(item.sppAmount)}` 
+                          : <span className="text-emerald-600 font-bold">LUNAS</span>}
+                      </span>
+                    </div>
+
+                    {/* Tagihan Lainnya jika ada */}
+                    {dynamicCategories.length > 0 && (
+                      <div className="space-y-1 pt-1 border-t border-border/50">
+                        {dynamicCategories.map(cat => {
+                          const detail = item.categories[cat] || { sisa: 0, dibayar: 0 }
+                          if (detail.sisa <= 0 && detail.dibayar <= 0) return null
+                          return (
+                            <div key={cat} className="flex justify-between text-xs">
+                              <span className="text-text-muted truncate mr-2">{cat}:</span>
+                              <span className="font-mono font-medium shrink-0">
+                                {detail.sisa > 0 ? `Rp ${new Intl.NumberFormat("id-ID").format(detail.sisa)}` : <span className="text-emerald-600 font-bold">LUNAS</span>}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* VIEW B: DESKTOP & PRINT MATRIX TABLE (>=md) */}
+            <div className="hidden md:block print:block overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse whitespace-nowrap">
                 <thead>
                   <tr className="border-b-2 border-gray-200 text-gray-500 text-xs uppercase tracking-wider bg-bg/50">

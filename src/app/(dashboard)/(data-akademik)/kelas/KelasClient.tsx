@@ -466,9 +466,108 @@ export default function KelasClient({
         </div>
       </div>
 
-      <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6 border-b border-border">
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6">
+        {/* Mobile 2x2 Segmented Touch Grid (<md) - 0% Overflow & Zero Swipe Fatigue */}
+        <div className="md:hidden grid grid-cols-2 gap-1.5 p-1 bg-bg border border-border rounded-2xl mb-5">
+          {isReadOnly ? (
+            <>
+              <button
+                type="button"
+                onClick={() => data.setActiveTab("sub-kelas")}
+                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
+                  data.activeTab === "sub-kelas"
+                    ? "bg-surface text-primary shadow-xs border border-border font-black"
+                    : "text-text-muted hover:text-text-main"
+                }`}
+              >
+                <span className="truncate">Kapasitas Rombel</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => data.setActiveTab("murid")}
+                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
+                  data.activeTab === "murid"
+                    ? "bg-surface text-primary shadow-xs border border-border font-black"
+                    : "text-text-muted hover:text-text-main"
+                }`}
+              >
+                <span className="truncate">Direktori Siswa</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => data.setActiveTab("alumni")}
+                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
+                  data.activeTab === "alumni"
+                    ? "bg-surface text-primary shadow-xs border border-border font-black"
+                    : "text-text-muted hover:text-text-main"
+                }`}
+              >
+                <span className="truncate">Riwayat & Alumni</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => data.setActiveTab("kelas")}
+                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
+                  data.activeTab === "kelas"
+                    ? "bg-surface text-primary shadow-xs border border-border font-black"
+                    : "text-text-muted hover:text-text-main"
+                }`}
+              >
+                <span className="truncate">Tingkat Pendidikan</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => data.setActiveTab("kelas")}
+                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
+                  data.activeTab === "kelas"
+                    ? "bg-surface text-primary shadow-xs border border-border font-black"
+                    : "text-text-muted hover:text-text-main"
+                }`}
+              >
+                <span className="truncate">Tingkat (Kelas)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => data.setActiveTab("sub-kelas")}
+                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
+                  data.activeTab === "sub-kelas"
+                    ? "bg-surface text-primary shadow-xs border border-border font-black"
+                    : "text-text-muted hover:text-text-main"
+                }`}
+              >
+                <span className="truncate">Rombel (Sub Kelas)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => data.setActiveTab("murid")}
+                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
+                  data.activeTab === "murid"
+                    ? "bg-surface text-primary shadow-xs border border-border font-black"
+                    : "text-text-muted hover:text-text-main"
+                }`}
+              >
+                <span className="truncate">Murid Aktif</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => data.setActiveTab("alumni")}
+                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
+                  data.activeTab === "alumni"
+                    ? "bg-surface text-primary shadow-xs border border-border font-black"
+                    : "text-text-muted hover:text-text-main"
+                }`}
+              >
+                <span className="truncate">Riwayat & Alumni</span>
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Desktop Tab Navigation (>=md) - Kept Clean & Intact */}
+        <div className="hidden md:flex gap-2 mb-6 border-b border-border">
           {isReadOnly ? (
             <>
               <TabButton id="sub-kelas" label="Kapasitas & Distribusi Rombel" />

@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth"
 import { getTenantContext } from "@/lib/tenant"
 import { redirect } from "next/navigation"
 
+import { PageHeader } from "@/components/ui/PageHeader"
+
 export default async function UnitSekolahPage() {
   const session = await auth()
   const tenant = await getTenantContext()
@@ -16,10 +18,10 @@ export default async function UnitSekolahPage() {
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Unit Sekolah</h1>
-        <p className="text-text-muted">Kelola unit sekolah di bawah naungan Yayasan Al Basyariah</p>
-      </div>
+      <PageHeader 
+        title="Unit Sekolah"
+        subtitle="Kelola konfigurasi institusi dan data operasional unit pendidikan di bawah Yayasan Al Basyariah"
+      />
       <UnitSekolahClient initialData={data} userRole={session?.user?.role} />
     </div>
   )

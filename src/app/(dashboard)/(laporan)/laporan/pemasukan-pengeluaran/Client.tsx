@@ -12,6 +12,7 @@ import toast from "react-hot-toast"
 import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
 import PrintFooter from "@/components/shared/print/PrintFooter"
+import { PageHeader } from "@/components/ui/PageHeader"
 
 export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], userRole, userUnitId, userName }: { pengaturan?: any, schoolUnits?: any[], userRole?: string, userUnitId?: string, userName?: string }) {
   const router = useRouter()
@@ -159,45 +160,46 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
   return (
     <div className="w-full animate-in fade-in duration-500">
       
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
-        <div>
-          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Pemasukan & Pengeluaran</h1>
-          <p className="text-text-muted">Laporan Laba/Rugi sekolah dalam rentang waktu tertentu</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => router.push("/laporan")}
-            className="gap-2 font-bold bg-surface text-text-main hover:bg-surface-hover shadow-sm"
-          >
-            <ArrowLeft size={16} /> Kembali
-          </Button>
-          <Button 
-            variant="outline"
-            size="sm" 
-            onClick={handleExportExcel}
-            className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm"
-          >
-            <FileSpreadsheet size={16} className="mr-1.5" /> Excel
-          </Button>
-          <Button 
-            variant="outline"
-            size="sm" 
-            onClick={handleExportPdf}
-            className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm"
-          >
-            <FileText size={16} className="mr-1.5" /> PDF
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handlePrint} 
-            className="font-semibold bg-surface shadow-sm border-gray-200 text-gray-700 hover:bg-gray-50"
-          >
-            <Printer size={16} className="mr-1.5" /> Cetak
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        className="print:hidden"
+        title="Pemasukan & Pengeluaran"
+        subtitle="Laporan Laba/Rugi sekolah dalam rentang waktu tertentu"
+        action={
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button 
+              variant="outline" 
+              onClick={() => router.push("/laporan")}
+              className="gap-2 font-bold bg-surface text-text-main hover:bg-surface-hover shadow-sm cursor-pointer"
+            >
+              <ArrowLeft size={16} /> Kembali
+            </Button>
+            <Button 
+              variant="outline"
+              size="sm" 
+              onClick={handleExportExcel}
+              className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm cursor-pointer"
+            >
+              <FileSpreadsheet size={16} className="mr-1.5" /> Excel
+            </Button>
+            <Button 
+              variant="outline"
+              size="sm" 
+              onClick={handleExportPdf}
+              className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm cursor-pointer"
+            >
+              <FileText size={16} className="mr-1.5" /> PDF
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handlePrint} 
+              className="font-semibold bg-surface shadow-sm border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer"
+            >
+              <Printer size={16} className="mr-1.5" /> Cetak
+            </Button>
+          </div>
+        }
+      />
 
       {/* Filter Card */}
       <div className="bg-surface p-5 rounded-2xl shadow-sm border border-border mb-6">
@@ -287,7 +289,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
       </div>
 
       {/* Report Document */}
-      <div className="bg-surface rounded-2xl shadow-sm border border-border p-8 print:shadow-none print:border-none print:p-0">
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6 md:p-8 print:shadow-none print:border-none print:p-0">
         
         {/* KOP SURAT (Hanya Print) */}
         <PrintHeader 
@@ -296,16 +298,16 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
         />
 
         {/* Document Header */}
-        <div className="text-center mb-10">
-          <div className="text-sm font-semibold text-gray-600 uppercase tracking-widest mb-1">Data {unitName}</div>
-          <h2 className="text-xl font-bold text-blue-600 print:text-black uppercase mb-1">LAPORAN PEMASUKAN DAN PENGELUARAN</h2>
-          <div className="text-sm font-medium text-rose-500 print:text-gray-800">per {startDate} - {endDate}</div>
+        <div className="text-center mb-6 sm:mb-10">
+          <div className="text-xs sm:text-sm font-semibold text-text-muted uppercase tracking-widest mb-1">Data {unitName}</div>
+          <h2 className="text-lg sm:text-xl font-bold text-blue-600 print:text-black uppercase mb-1">LAPORAN PEMASUKAN DAN PENGELUARAN</h2>
+          <div className="text-xs sm:text-sm font-medium text-rose-500 print:text-gray-800">per {startDate} - {endDate}</div>
         </div>
 
         {/* Column Header */}
-        <div className="flex justify-between items-center pb-2 border-b-2 border-rose-500/20 mb-6 px-4">
-          <div className="text-sm font-semibold text-gray-500">Semua Departemen</div>
-          <div className="text-sm font-bold text-rose-500 uppercase">Saldo</div>
+        <div className="flex justify-between items-center pb-2 border-b-2 border-rose-500/20 mb-6 px-2 sm:px-4">
+          <div className="text-xs sm:text-sm font-semibold text-text-muted">Semua Departemen</div>
+          <div className="text-xs sm:text-sm font-bold text-rose-500 uppercase">Saldo</div>
         </div>
 
         {/* Content */}
@@ -318,27 +320,27 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
             
             {/* PENDAPATAN SECTION */}
             <div>
-              <div className="flex justify-between font-bold text-blue-600 mb-3 px-4">
-                <span className="uppercase tracking-wider">PENDAPATAN</span>
-                <span>Rp. <span className="inline-block w-32 text-right">{new Intl.NumberFormat("id-ID").format(data.totalPendapatan)}</span></span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 font-bold text-blue-600 mb-3 px-3 sm:px-4 py-1.5 bg-blue-50/60 rounded-xl">
+                <span className="uppercase tracking-wider text-xs sm:text-sm">PENDAPATAN</span>
+                <span className="text-sm sm:text-base font-mono">Rp {new Intl.NumberFormat("id-ID").format(data.totalPendapatan)}</span>
               </div>
               
-              <div className="pl-6 mb-2">
-                <div className="font-semibold text-teal-500 text-sm mb-3">PENDAPATAN</div>
+              <div className="pl-1 sm:pl-6 mb-2">
+                <div className="font-semibold text-teal-600 text-xs sm:text-sm mb-3 px-2 sm:px-0">RINCIAN PENDAPATAN</div>
                 
                 {data.pendapatan.length === 0 ? (
-                  <div className="text-sm text-gray-400 italic py-2">Tidak ada data pendapatan pada rentang ini.</div>
+                  <div className="text-sm text-text-muted italic py-2 px-2">Tidak ada data pendapatan pada rentang ini.</div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {data.pendapatan.map((item, i) => (
-                      <div key={i} className="flex justify-between text-sm text-gray-600 hover:bg-blue-50/50 py-1.5 px-4 rounded transition-colors">
-                        <div className="flex gap-12 w-full max-w-lg">
-                          <span className="text-blue-500 font-mono font-medium">{item.kode}</span>
-                          <span className="uppercase">{item.nama}</span>
+                      <div key={i} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 text-xs sm:text-sm text-text-main hover:bg-blue-50/50 py-2 sm:py-1.5 px-3 sm:px-4 rounded-xl transition-colors border-b border-border/40 sm:border-none">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-blue-600 bg-blue-50 border border-blue-200/60 px-1.5 py-0.5 rounded font-mono text-xs font-bold shrink-0">{item.kode}</span>
+                          <span className="uppercase font-medium truncate">{item.nama}</span>
                         </div>
-                        <div className="flex items-center gap-4 whitespace-nowrap">
-                          <span>Rp.</span>
-                          <span className="inline-block w-32 text-right font-mono">{new Intl.NumberFormat("id-ID").format(item.total)}</span>
+                        <div className="flex items-center justify-between sm:justify-end gap-2 whitespace-nowrap pl-8 sm:pl-0 font-mono font-bold text-text-main">
+                          <span className="text-text-muted text-[10px] font-sans sm:hidden">Total:</span>
+                          <span>Rp {new Intl.NumberFormat("id-ID").format(item.total)}</span>
                         </div>
                       </div>
                     ))}
@@ -346,39 +348,35 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
                 )}
               </div>
 
-              <div className="flex justify-between font-bold text-emerald-500 mt-4 px-4 pt-4 border-t border-gray-100">
-                <span>Total PENDAPATAN</span>
-                <span>Rp. <span className="inline-block w-32 text-right">{new Intl.NumberFormat("id-ID").format(data.totalPendapatan)}</span></span>
-              </div>
-              <div className="flex justify-between font-bold text-blue-600 mt-2 px-4">
-                <span>Total PENDAPATAN</span>
-                <span>Rp. <span className="inline-block w-32 text-right">{new Intl.NumberFormat("id-ID").format(data.totalPendapatan)}</span></span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 font-bold text-emerald-600 mt-4 px-3 sm:px-4 pt-4 border-t border-border">
+                <span className="text-xs sm:text-sm">Total PENDAPATAN</span>
+                <span className="text-sm sm:text-base font-mono">Rp {new Intl.NumberFormat("id-ID").format(data.totalPendapatan)}</span>
               </div>
             </div>
 
             {/* PENGELUARAN SECTION */}
             <div>
-              <div className="flex justify-between font-bold text-blue-600 mb-3 px-4">
-                <span className="uppercase tracking-wider">BIAYA BEBAN</span>
-                <span>Rp. <span className="inline-block w-32 text-right">{new Intl.NumberFormat("id-ID").format(data.totalPengeluaran)}</span></span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 font-bold text-blue-600 mb-3 px-3 sm:px-4 py-1.5 bg-blue-50/60 rounded-xl">
+                <span className="uppercase tracking-wider text-xs sm:text-sm">BIAYA BEBAN</span>
+                <span className="text-sm sm:text-base font-mono">Rp {new Intl.NumberFormat("id-ID").format(data.totalPengeluaran)}</span>
               </div>
               
-              <div className="pl-6 mb-2">
-                <div className="font-semibold text-teal-500 text-sm mb-3">PENGELUARAN</div>
+              <div className="pl-1 sm:pl-6 mb-2">
+                <div className="font-semibold text-teal-600 text-xs sm:text-sm mb-3 px-2 sm:px-0">RINCIAN PENGELUARAN</div>
                 
                 {data.pengeluaran.length === 0 ? (
-                  <div className="text-sm text-gray-400 italic py-2">Tidak ada data pengeluaran pada rentang ini.</div>
+                  <div className="text-sm text-text-muted italic py-2 px-2">Tidak ada data pengeluaran pada rentang ini.</div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {data.pengeluaran.map((item, i) => (
-                      <div key={i} className="flex justify-between text-sm text-gray-600 hover:bg-blue-50/50 py-1.5 px-4 rounded transition-colors">
-                        <div className="flex gap-12 w-full max-w-lg">
-                          <span className="text-blue-500 font-mono font-medium">{item.kode}</span>
-                          <span className="uppercase">{item.nama}</span>
+                      <div key={i} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 text-xs sm:text-sm text-text-main hover:bg-blue-50/50 py-2 sm:py-1.5 px-3 sm:px-4 rounded-xl transition-colors border-b border-border/40 sm:border-none">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-blue-600 bg-blue-50 border border-blue-200/60 px-1.5 py-0.5 rounded font-mono text-xs font-bold shrink-0">{item.kode}</span>
+                          <span className="uppercase font-medium truncate">{item.nama}</span>
                         </div>
-                        <div className="flex items-center gap-4 whitespace-nowrap">
-                          <span>Rp.</span>
-                          <span className="inline-block w-32 text-right font-mono">{new Intl.NumberFormat("id-ID").format(item.total)}</span>
+                        <div className="flex items-center justify-between sm:justify-end gap-2 whitespace-nowrap pl-8 sm:pl-0 font-mono font-bold text-text-main">
+                          <span className="text-text-muted text-[10px] font-sans sm:hidden">Total:</span>
+                          <span>Rp {new Intl.NumberFormat("id-ID").format(item.total)}</span>
                         </div>
                       </div>
                     ))}
@@ -386,41 +384,27 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
                 )}
               </div>
 
-              <div className="flex justify-between font-bold text-emerald-500 mt-4 px-4 pt-4 border-t border-gray-100">
-                <span>Total PENGELUARAN</span>
-                <span>Rp. <span className="inline-block w-32 text-right">{new Intl.NumberFormat("id-ID").format(data.totalPengeluaran)}</span></span>
-              </div>
-              <div className="flex justify-between font-bold text-blue-600 mt-2 px-4">
-                <span>Total BIAYA BEBAN</span>
-                <span>Rp. <span className="inline-block w-32 text-right">{new Intl.NumberFormat("id-ID").format(data.totalPengeluaran)}</span></span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 font-bold text-rose-600 mt-4 px-3 sm:px-4 pt-4 border-t border-border">
+                <span className="text-xs sm:text-sm">Total BIAYA BEBAN</span>
+                <span className="text-sm sm:text-base font-mono">Rp {new Intl.NumberFormat("id-ID").format(data.totalPengeluaran)}</span>
               </div>
             </div>
 
             {/* SUMMARY SECTION */}
-            <div className="pt-6 border-t-2 border-gray-200 space-y-3">
-              <div className="flex justify-between text-sm font-semibold text-blue-700 px-4">
-                <span>PENGELUARAN OPERASIONAL</span>
-                <span>Rp. <span className="inline-block w-32 text-right">0</span></span>
-              </div>
-              <div className="flex justify-between text-sm font-semibold text-blue-700 px-4">
-                <span>Total PENGELUARAN OPERASIONAL</span>
-                <span>Rp. <span className="inline-block w-32 text-right">0</span></span>
+            <div className="pt-6 border-t-2 border-border space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-base sm:text-lg font-bold text-blue-700 px-3 sm:px-4 py-2 bg-blue-50/60 rounded-xl">
+                <span>LABA / (RUGI) BERSIH</span>
+                <span className="font-mono text-lg sm:text-xl font-black">
+                  Rp {new Intl.NumberFormat("id-ID").format(data.totalPendapatan - data.totalPengeluaran)}
+                </span>
               </div>
               
-              <div className="flex justify-between text-base font-bold text-blue-600 px-4 pt-4 border-t border-gray-100">
-                <span>Selisih Pemasukan dan Pengeluaran</span>
-                <span>Rp. <span className="inline-block w-32 text-right">{new Intl.NumberFormat("id-ID").format(data.totalPendapatan - data.totalPengeluaran)}</span></span>
-              </div>
-              
-              <div className="flex justify-between text-sm font-bold text-gray-700 px-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs sm:text-sm font-bold text-text-muted px-3 sm:px-4 pt-2">
                 <span>Persentase Dana Terpakai</span>
-                <span className="flex items-center gap-4">
-                  <span>(%)</span>
-                  <span className="inline-block w-32 text-right">
-                    {data.totalPendapatan > 0 
-                      ? ((data.totalPengeluaran / data.totalPendapatan) * 100).toFixed(2) 
-                      : "0.00"}
-                  </span>
+                <span className="font-mono font-bold text-text-main">
+                  {data.totalPendapatan > 0 
+                    ? `${((data.totalPengeluaran / data.totalPendapatan) * 100).toFixed(2)}%`
+                    : "0.00%"}
                 </span>
               </div>
             </div>

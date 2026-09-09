@@ -1405,35 +1405,40 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                   <div
                     key={log.id}
                     onClick={() => setSelectedLogIndex(index)}
-                    className="p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer flex flex-col gap-2.5 min-h-[44px]"
+                    className="p-4 hover:bg-slate-50/80 active:bg-slate-100 transition-colors cursor-pointer flex flex-col gap-2.5 min-h-[44px]"
                   >
+                    {/* Baris 1: Waktu & Tanggal (Utuh satu baris tanpa terpotong) + Status Badge */}
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-mono font-bold text-text-muted">
-                        {format(dateObj, "dd/MM/yyyy • HH:mm")} WIB
+                      <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-text-muted">
+                        <Clock size={12} className="text-text-muted/70 shrink-0" />
+                        <span className="whitespace-nowrap">{format(dateObj, "dd/MM/yyyy • HH:mm")} WIB</span>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${getActionBadge(log.aksi)}`}>
+                        {log.aksi}
                       </span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                          {log.modul}
-                        </span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${getActionBadge(log.aksi)}`}>
-                          {log.aksi}
-                        </span>
-                      </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold flex items-center justify-center shrink-0">
-                        {log.penggunaName.charAt(0).toUpperCase()}
+                    {/* Baris 2: Modul & Aktor Pengguna */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold flex items-center justify-center shrink-0">
+                          {log.penggunaName.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-xs font-bold text-text-main truncate">{log.penggunaName}</span>
+                        <span className="text-[10px] text-text-muted uppercase font-semibold shrink-0">({log.penggunaRole || 'USER'})</span>
                       </div>
-                      <span className="text-xs font-bold text-text-main truncate">{log.penggunaName}</span>
-                      <span className="text-[10px] text-text-muted uppercase font-semibold">({log.penggunaRole || 'USER'})</span>
+                      <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 shrink-0">
+                        {log.modul}
+                      </span>
                     </div>
 
+                    {/* Baris 3: Keterangan Log Box */}
                     <p className="text-xs text-text-main bg-bg p-2.5 rounded-xl border border-border leading-relaxed line-clamp-3">
                       {log.keterangan}
                     </p>
 
-                    <div className="flex items-center justify-end text-xs font-bold text-primary gap-1 pt-1">
+                    {/* Baris 4: Footer Tindakan */}
+                    <div className="flex items-center justify-end text-xs font-bold text-primary gap-1 pt-0.5">
                       <span>Lihat Rincian</span>
                       <ArrowRight size={13} />
                     </div>

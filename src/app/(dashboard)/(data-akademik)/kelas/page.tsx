@@ -9,6 +9,8 @@ import { cookies } from "next/headers"
 import { auth } from "@/lib/auth"
 import { getTenantContext } from "@/lib/tenant"
 
+import { PageHeader } from "@/components/ui/PageHeader"
+
 export default async function KelasPage() {
   const tenant = await getTenantContext()
   const userName = tenant.user?.name || undefined
@@ -31,24 +33,24 @@ export default async function KelasPage() {
   const isKepsek = tenant.role === "KEPALA_SEKOLAH"
   const isYayasan = tenant.role === "YAYASAN"
 
+  const pageTitle = isYayasan
+    ? "Direktori Kelas & Rombel"
+    : isKepsek
+    ? "Kapasitas & Distribusi Rombel"
+    : "Kelas & Murid"
+
+  const pageSubtitle = isYayasan
+    ? "Pengawasan kapasitas rombongan belajar, rasio siswa, dan penugasan wali kelas lintas unit"
+    : isKepsek
+    ? "Monitoring daya tampung rombongan belajar, rasio murid, dan penugasan wali kelas"
+    : "Kelola data rombongan belajar dan data siswa"
+
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
-          {isYayasan
-            ? "Direktori Kelas & Rombel"
-            : isKepsek
-            ? "Kapasitas & Distribusi Rombel"
-            : "Kelas & Murid"}
-        </h1>
-        <p className="text-text-muted">
-          {isYayasan
-            ? "Pengawasan kapasitas rombongan belajar, rasio siswa, dan penugasan wali kelas lintas unit"
-            : isKepsek
-            ? "Monitoring daya tampung rombongan belajar, rasio murid, dan penugasan wali kelas"
-            : "Kelola data rombongan belajar dan data siswa"}
-        </p>
-      </div>
+      <PageHeader 
+        title={pageTitle}
+        subtitle={pageSubtitle}
+      />
 
       <KelasClient 
         activeUnitId={activeUnitId}

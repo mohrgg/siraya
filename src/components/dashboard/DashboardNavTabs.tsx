@@ -5,10 +5,11 @@ import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Building2, Layers, Activity, School, LayoutDashboard, ChevronDown, Check, X, ShieldCheck } from 'lucide-react'
 import { setGlobalContext } from '@/actions/app-context'
+import { sortUnitsByLevel } from '@/lib/constants/units'
 
 interface DashboardNavTabsProps {
   role: string
-  units?: { id: string; name: string }[]
+  units?: { id: string; name: string; level?: string }[]
   activeUnitId?: string
 }
 
@@ -21,13 +22,16 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
   const currentTab = searchParams.get('tab')
   const currentUnitId = searchParams.get('unitId')
 
+  // Canonical sorting: SD -> SMP -> SMA -> SMK
+  const sortedUnits = sortUnitsByLevel(units)
+
   // Pemetaan daftar tab sesuai role sistem
   const getTabsForRole = (currentRole: string) => {
     switch (currentRole) {
       case 'ADMIN':
         return [
           { id: 'yayasan', tabType: 'yayasan', label: 'Konsolidasi Yayasan', icon: Building2, href: '/?tab=yayasan' },
-          ...units.map(u => ({
+          ...sortedUnits.map(u => ({
             id: `unit-${u.id}`,
             tabType: 'unit',
             unitId: u.id,
@@ -48,7 +52,7 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
       case 'YAYASAN':
         return [
           { id: 'yayasan', tabType: 'yayasan', label: 'Konsolidasi 360° Yayasan', icon: Building2, href: '/?tab=yayasan' },
-          ...units.map(u => ({
+          ...sortedUnits.map(u => ({
             id: `unit-${u.id}`,
             tabType: 'unit',
             unitId: u.id,
@@ -181,11 +185,19 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
                 className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
                 onClick={() => setShowUnitPicker(false)}
               />
-              <div className="relative w-full max-w-lg bg-surface rounded-t-3xl border-t border-border p-5 z-10 shadow-2xl flex flex-col gap-3 max-h-[75vh] animate-in slide-in-from-bottom duration-200">
+              <div className="relative w-full max-w-lg bg-surface rounded-t-3xl border-t border-border p-5 pb-safe z-10 shadow-2xl flex flex-col gap-3 max-h-[85dvh] animate-in slide-in-from-bottom duration-200">
+                {/* Drag Handle Indicator */}
+                <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto -mt-1 mb-1 shrink-0" />
+
                 <div className="flex items-center justify-between pb-2 border-b border-border">
                   <div className="flex items-center gap-2">
-                    <School size={18} className="text-primary" />
-                    <h3 className="font-extrabold text-sm text-text-main">Pilih Unit Sekolah</h3>
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <School size={17} />
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-sm text-text-main">Pilih Unit Sekolah</h3>
+                      <p className="text-[11px] text-text-muted">Urutan jenjang SD, SMP, SMA, SMK</p>
+                    </div>
                   </div>
                   <button
                     onClick={() => setShowUnitPicker(false)}
@@ -195,28 +207,32 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-1.5 overflow-y-auto py-1">
-                  {units.map((u) => {
+                <div className="flex flex-col gap-2 overflow-y-auto py-1 pb-28">
+                  {sortedUnits.map((u) => {
                     const isSelected = effectiveUnitId === u.id && isUnitActive
+                    const levelBadge = u.name.match(/\b(SD|SMP|SMA|SMK|MI|MTS|MA)\b/i)?.[0]?.toUpperCase() || 'UNIT'
                     return (
                       <button
                         key={u.id}
                         onClick={() => handleMobileUnitSelect(u.id)}
-                        className={`flex items-center justify-between p-3.5 rounded-xl border text-xs font-bold transition-all min-h-[48px] text-left cursor-pointer ${
+                        className={`flex items-center justify-between p-3.5 rounded-2xl border text-xs font-bold transition-all min-h-[52px] text-left cursor-pointer ${
                           isSelected
-                            ? 'bg-primary/10 border-primary text-primary font-extrabold shadow-2xs'
+                            ? 'bg-primary/10 border-primary text-primary font-extrabold shadow-2xs ring-1 ring-primary/30'
                             : 'bg-surface border-border text-text-main hover:bg-slate-50'
                         }`}
                       >
-                        <div className="flex items-center gap-2.5">
-                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
                             isSelected ? 'bg-primary text-white' : 'bg-slate-100 text-slate-700'
                           }`}>
-                            {u.name.charAt(0)}
+                            {levelBadge}
                           </div>
-                          <span>{u.name}</span>
+                          <div>
+                            <span className="block text-xs font-bold">{u.name}</span>
+                            <span className="text-[10px] text-text-muted font-normal">Jenjang Institusi {levelBadge}</span>
+                          </div>
                         </div>
-                        {isSelected && <Check size={16} className="text-primary shrink-0" />}
+                        {isSelected && <Check size={18} className="text-primary shrink-0" />}
                       </button>
                     )
                   })}

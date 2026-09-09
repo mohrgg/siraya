@@ -8,6 +8,8 @@ import MobileBottomNav from "@/components/layout/MobileBottomNav"
 import { MobileMenuProvider } from "@/components/layout/MobileMenuContext"
 import { UserActivityTracker } from "@/components/UserActivityTracker"
 
+import { sortUnitsByLevel } from "@/lib/constants/units"
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -20,14 +22,14 @@ export default async function DashboardLayout({
   const isGlobalRole = userRole === "ADMIN" || userRole === "YAYASAN"
 
   // Load academic years, school units, dan logo pengaturan yayasan secara paralel
-  const [schoolUnits, academicYears, pengaturan] = await Promise.all([
+  const [rawSchoolUnits, academicYears, pengaturan] = await Promise.all([
     prisma.unitSekolah.findMany({
       where: { 
         isActive: true,
         ...(!isGlobalRole && userUnitId ? { id: userUnitId } : {})
       },
       orderBy: { name: 'asc' },
-      select: { id: true, name: true }
+      select: { id: true, name: true, level: true }
     }),
     prisma.tahunAkademik.findMany({
       select: { id: true, name: true, isActive: true },
@@ -38,6 +40,9 @@ export default async function DashboardLayout({
       select: { logoUrl: true }
     })
   ])
+
+  // Urutkan secara kanonikal: SD -> SMP -> SMA -> SMK
+  const schoolUnits = sortUnitsByLevel(rawSchoolUnits)
 
   const cookieStore = await cookies()
   

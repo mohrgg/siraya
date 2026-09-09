@@ -10,10 +10,18 @@ import PrintSignature from "@/components/shared/print/PrintSignature"
 import PrintFooter from "@/components/shared/print/PrintFooter"
 import LogoUploader from "@/components/shared/LogoUploader"
 
+import { PageHeader } from "@/components/ui/PageHeader"
+import { sortUnitsByLevel } from "@/lib/constants/units"
+
 export default function PengaturanClient({ initialSettings, units = [] }: { initialSettings: any, units?: any[] }) {
   const [activeTab, setActiveTab] = useState<"profil" | "rekening" | "backup">("profil")
   const [activeUnitTab, setActiveUnitTab] = useState<string>("GLOBAL")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showMobilePreview, setShowMobilePreview] = useState(false)
+
+  // Canonical unit sorting: SD -> SMP -> SMA -> SMK
+  const sortedUnits = sortUnitsByLevel(units)
+
   const [formData, setFormData] = useState({
     ...initialSettings,
     rekeningBank: initialSettings.rekeningBank ? JSON.parse(initialSettings.rekeningBank) : []
@@ -22,7 +30,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
   // State per unit
   const [unitData, setUnitData] = useState<Record<string, any>>(() => {
     const initialState: Record<string, any> = {}
-    units.forEach(u => {
+    sortedUnits.forEach(u => {
       initialState[u.id] = { ...u }
     })
     return initialState
@@ -118,43 +126,40 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
       const { generateBackupData } = await import("@/actions/backup")
       const result = await generateBackupData(selectedModules, backupUnitId)
 
-      if (!result.success || !result.data) {
-        throw new Error(result.error)
-      }
-
-      const dateStr = new Date().toISOString().replace(/[:.]/g, '-').split('T').join('_').substring(0, 15)
-      const unitStr = backupUnitId === "GLOBAL" ? "YAYASAN" : units.find(u => u.id === backupUnitId)?.name?.replace(/\s+/g, '_') || "UNIT"
-
-      if (backupFormat === "excel") {
-        toast.loading("Membuat file Excel & mengatur lebar kolom...", { id: toastId })
-        const { exportMultiSheetExcel } = await import("@/lib/excel")
-        exportMultiSheetExcel(result.data, `Backup_Siraya_${unitStr}_${dateStr}`)
-        toast.success("File Excel berhasil diunduh!", { id: toastId })
+      if (result.success && result.data) {
+        toast.success("Data berhasil diekstrak! Mengunduh...", { id: toastId })
+        
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+        const unitSuffix = backupUnitId === "GLOBAL" ? "YAYASAN" : (sortedUnits.find(u => u.id === backupUnitId)?.name.replace(/\s+/g, "_") || "UNIT")
+        
+        if (backupFormat === "json") {
+          const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(result.data, null, 2))}`
+          const downloadAnchor = document.createElement("a")
+          downloadAnchor.setAttribute("href", jsonString)
+          downloadAnchor.setAttribute("download", `SIRAYA_BACKUP_${unitSuffix}_${timestamp}.json`)
+          document.body.appendChild(downloadAnchor)
+          downloadAnchor.click()
+          downloadAnchor.remove()
+        } else {
+          const { exportMultiSheetExcel } = await import("@/lib/excel")
+          exportMultiSheetExcel(result.data, `SIRAYA_BACKUP_${unitSuffix}_${timestamp}`)
+        }
       } else {
-        toast.loading("Menyiapkan snapshot JSON mentah...", { id: toastId })
-        const jsonString = JSON.stringify(result.rawData, null, 2)
-        const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" })
-        const downloadUrl = URL.createObjectURL(blob)
-        const link = document.createElement("a")
-        link.href = downloadUrl
-        link.download = `Backup_Siraya_Snapshot_${unitStr}_${dateStr}.json`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(downloadUrl)
-        toast.success("File JSON Snapshot berhasil diunduh!", { id: toastId })
+        throw new Error(result.error || "Gagal memproses data cadangan")
       }
-    } catch (error: any) {
-      toast.error(error.message || "Gagal melakukan pencadangan data.", { id: toastId })
+    } catch (err: any) {
+      toast.error(err.message || "Terjadi kesalahan saat memproses backup", { id: toastId })
     } finally {
       setIsBackingUp(false)
     }
   }
 
-  const toggleModule = (mod: string) => {
-    setSelectedModules(prev => 
-      prev.includes(mod) ? prev.filter(m => m !== mod) : [...prev, mod]
-    )
+  const toggleModule = (id: string) => {
+    if (selectedModules.includes(id)) {
+      setSelectedModules(selectedModules.filter(m => m !== id))
+    } else {
+      setSelectedModules([...selectedModules, id])
+    }
   }
 
   const toggleAllModules = () => {
@@ -167,26 +172,65 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
 
   return (
     <div className="w-full">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Pengaturan Sistem</h1>
-          <p className="text-text-muted">Kelola identitas yayasan, format penomoran, rekening, dan pencadangan data.</p>
-        </div>
-        
-        {activeTab !== "backup" && (
-          <Button onClick={handleSave} disabled={isSubmitting}>
-            <Save size={16} className="mr-2" />
-            {isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title="Pengaturan Sistem"
+        subtitle="Kelola identitas yayasan, format penomoran, rekening, dan pencadangan data."
+        action={
+          activeTab !== "backup" ? (
+            <Button onClick={handleSave} disabled={isSubmitting} className="w-full sm:w-auto">
+              <Save size={16} className="mr-2" />
+              {isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
+            </Button>
+          ) : undefined
+        }
+      />
 
-      <div className="bg-surface rounded-2xl border border-border shadow-sm p-6 sm:p-8">
-        {/* TABS HEADER */}
-        <div className="flex gap-2 mb-6 border-b border-border overflow-x-auto">
+      <div className="bg-surface rounded-2xl border border-border shadow-sm p-4 sm:p-8">
+        {/* MOBILE 3-SEGMENTED TABS (<md) - 0% HORIZONTAL SCROLL */}
+        <div className="md:hidden grid grid-cols-3 gap-1 p-1 bg-bg border border-border rounded-2xl mb-6">
+          <button 
+            type="button"
+            onClick={() => setActiveTab("profil")} 
+            className={`py-2 px-1 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 min-h-[46px] cursor-pointer ${
+              activeTab === "profil" 
+                ? "bg-surface text-primary shadow-xs border border-border font-black" 
+                : "text-text-muted hover:text-text-main"
+            }`}
+          >
+            <Building2 size={15} />
+            <span className="truncate">Identitas</span>
+          </button>
+          <button 
+            type="button"
+            onClick={() => setActiveTab("rekening")} 
+            className={`py-2 px-1 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 min-h-[46px] cursor-pointer ${
+              activeTab === "rekening" 
+                ? "bg-surface text-primary shadow-xs border border-border font-black" 
+                : "text-text-muted hover:text-text-main"
+            }`}
+          >
+            <Landmark size={15} />
+            <span className="truncate">Rekening</span>
+          </button>
+          <button 
+            type="button"
+            onClick={() => setActiveTab("backup")} 
+            className={`py-2 px-1 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 min-h-[46px] cursor-pointer ${
+              activeTab === "backup" 
+                ? "bg-surface text-primary shadow-xs border border-border font-black" 
+                : "text-text-muted hover:text-text-main"
+            }`}
+          >
+            <Database size={15} />
+            <span className="truncate">Backup</span>
+          </button>
+        </div>
+
+        {/* DESKTOP TABS HEADER (>=md) */}
+        <div className="hidden md:flex gap-2 mb-6 border-b border-border overflow-x-auto">
           <button 
             onClick={() => setActiveTab("profil")} 
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 ${
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 cursor-pointer ${
               activeTab === "profil" 
                 ? "border-primary text-primary" 
                 : "border-transparent text-text-muted hover:text-text-main"
@@ -196,7 +240,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
           </button>
           <button 
             onClick={() => setActiveTab("rekening")} 
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 ${
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 cursor-pointer ${
               activeTab === "rekening" 
                 ? "border-primary text-primary" 
                 : "border-transparent text-text-muted hover:text-text-main"
@@ -206,7 +250,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
           </button>
           <button 
             onClick={() => setActiveTab("backup")} 
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 ${
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 cursor-pointer ${
               activeTab === "backup" 
                 ? "border-primary text-primary" 
                 : "border-transparent text-text-muted hover:text-text-main"
@@ -220,12 +264,22 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
         {activeTab === "profil" && (
           <div className="space-y-6">
             
-            {/* Live Preview Dokumen Lengkap */}
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 relative overflow-hidden">
-              <div className="absolute top-0 left-0 bg-slate-200 text-slate-500 text-[10px] font-bold px-3 py-1 rounded-br-lg uppercase tracking-wider">
-                Live Preview Dokumen
+            {/* Live Preview Dokumen Lengkap (Adaptif & Collapsible di Mobile) */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-6 relative overflow-hidden">
+              <div className="flex items-center justify-between mb-2">
+                <div className="bg-slate-200 text-slate-600 text-[10px] font-bold px-3 py-1 rounded-lg uppercase tracking-wider">
+                  Live Preview Dokumen
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowMobilePreview(!showMobilePreview)}
+                  className="sm:hidden text-xs font-bold text-primary hover:underline cursor-pointer"
+                >
+                  {showMobilePreview ? "Sembunyikan Preview" : "Tampilkan Preview"}
+                </button>
               </div>
-              <div className="mt-4 bg-white p-8 shadow-sm border border-slate-100 min-h-[420px] flex flex-col">
+
+              <div className={`${showMobilePreview ? "block" : "hidden sm:block"} mt-2 bg-white p-3 sm:p-8 shadow-sm border border-slate-100 rounded-xl overflow-x-auto min-h-[360px] flex flex-col`}>
                 {/* === KOP SURAT === */}
                 <PrintHeader 
                   pengaturan={formData} 
@@ -276,15 +330,29 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                   className="block"
                 />
               </div>
-              <p className="text-xs text-slate-500 mt-4 text-center">Simulasi tampilan dokumen lengkap yang akan muncul pada ekspor PDF dan Cetak. Ubah data pada form di bawah untuk melihat perubahan secara real-time.</p>
+              <p className="text-xs text-slate-500 mt-3 text-center hidden sm:block">Simulasi tampilan dokumen lengkap yang akan muncul pada ekspor PDF dan Cetak. Ubah data pada form di bawah untuk melihat perubahan secara real-time.</p>
             </div>
 
-            {/* Pilihan Mode Edit */}
-            <div className="bg-surface border border-border rounded-xl p-2 flex gap-2 flex-wrap items-center">
+            {/* Pilihan Mode Edit - Mobile Selector vs Desktop Badges */}
+            <div className="sm:hidden w-full bg-surface border border-border rounded-xl p-3 flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-text-muted">Sedang Mengedit Konfigurasi:</label>
+              <select
+                value={activeUnitTab}
+                onChange={(e) => setActiveUnitTab(e.target.value)}
+                className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-xs font-bold text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="GLOBAL">Informasi Yayasan (Utama)</option>
+                {sortedUnits.map((u: any) => (
+                  <option key={u.id} value={u.id}>Unit: {u.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="hidden sm:flex bg-surface border border-border rounded-xl p-2 gap-2 flex-wrap items-center">
               <span className="text-sm font-semibold text-text-muted ml-2 mr-2">Sedang Mengedit:</span>
               <button
                 onClick={() => setActiveUnitTab("GLOBAL")}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer ${
                   activeUnitTab === "GLOBAL" 
                   ? "bg-primary text-white shadow-sm" 
                   : "bg-transparent text-text-muted hover:bg-gray-50"
@@ -292,12 +360,12 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
               >
                 Informasi Yayasan (Utama)
               </button>
-              <div className="h-6 w-px bg-border mx-1 hidden sm:block"></div>
-              {units.map((unit: any) => (
+              <div className="h-6 w-px bg-border mx-1"></div>
+              {sortedUnits.map((unit: any) => (
                 <button
                   key={unit.id}
                   onClick={() => setActiveUnitTab(unit.id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer ${
                     activeUnitTab === unit.id 
                     ? "bg-blue-600 text-white shadow-sm" 
                     : "bg-transparent text-text-muted hover:bg-gray-50"
@@ -550,7 +618,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                     className="w-full bg-white border border-blue-200 text-blue-900 rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="GLOBAL">Seluruh Yayasan (Semua Unit)</option>
-                    {units.map((u: any) => (
+                    {sortedUnits.map((u: any) => (
                       <option key={u.id} value={u.id}>Unit: {u.name}</option>
                     ))}
                   </select>
