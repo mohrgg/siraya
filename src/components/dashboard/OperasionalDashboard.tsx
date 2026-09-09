@@ -81,6 +81,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
   const [startDate, setStartDate] = useState<string>("")
   const [endDate, setEndDate] = useState<string>("")
   const [searchTerm, setSearchTerm] = useState<string>("")
+  const [showMobileFilterSheet, setShowMobileFilterSheet] = useState<boolean>(false)
   
   // Server-side Pagination & Stream
   const [currentPage, setCurrentPage] = useState(1)
@@ -352,7 +353,8 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
       {/* ======================================================== */}
       {/* 1. HEADER COCKPIT & SYSTEM STATUS BANNER */}
       {/* ======================================================== */}
-      <div className="bg-surface rounded-2xl border border-border p-4 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* 1A. DESKTOP HEADER (>=md) */}
+      <div className="hidden md:flex bg-surface rounded-2xl border border-border p-5 lg:p-6 shadow-xs flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
@@ -410,6 +412,50 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
         </div>
       </div>
 
+      {/* 1B. MOBILE COMPACT HEADER (<md) */}
+      <div className="md:hidden bg-surface rounded-2xl border border-border p-4 shadow-xs flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+            <ShieldCheck size={12} className="text-emerald-700" />
+            Live Audit Trail
+          </span>
+          
+          {/* Compact Inline Live Clock */}
+          <div className="flex items-center gap-1.5 font-mono text-xs font-bold bg-slate-900 text-emerald-400 px-2.5 py-1 rounded-lg border border-slate-800">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>{formattedLiveTime} WIB</span>
+          </div>
+        </div>
+
+        <div>
+          <h1 className="text-xl font-extrabold text-text-main tracking-tight leading-tight">
+            Pemantauan Jejak Audit
+          </h1>
+          <p className="text-xs text-text-muted mt-1 leading-relaxed">
+            Pengawasan telemetri operasional, mutasi data, dan kepatuhan sistem.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
+          <span className="text-[11px] text-text-muted font-medium flex items-center gap-1">
+            <Server size={12} className="text-slate-400" />
+            PostgreSQL Log
+          </span>
+
+          <button 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-bg hover:bg-slate-100 text-text-main border border-border text-xs font-bold transition-all min-h-[38px] cursor-pointer"
+          >
+            <RefreshCw size={13} className={isRefreshing ? "animate-spin text-primary" : "text-text-muted"} />
+            <span>Segarkan Data</span>
+          </button>
+        </div>
+      </div>
+
       {/* ======================================================== */}
       {/* 2. TOP SECURITY & MUTATION KPI STRIP */}
       {/* ======================================================== */}
@@ -420,11 +466,12 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
             Ringkasan Keamanan & Mutasi Data
           </h2>
           <span className="text-xs text-text-muted font-medium">
-            Total Riwayat: {formatNumber(kpi.totalAll)} entri log
+            Total: {formatNumber(kpi.totalAll)} entri
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        {/* 2A. DESKTOP KPI 5 STRIP (>=md) */}
+        <div className="hidden md:grid grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           {/* KPI 1: Mutasi Data Operasional (Non-Login) */}
           <div className="bg-[#0f172a] text-white rounded-2xl border border-slate-800 p-3.5 sm:p-4 shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
@@ -538,10 +585,87 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
             </div>
           </div>
         </div>
+
+        {/* 2B. MOBILE COMPACT KPI SNAPSHOT (<md) - 60% LESS VERTICAL SPACE */}
+        <div className="md:hidden flex flex-col gap-2">
+          {/* Hero Mutasi Card */}
+          <div className="bg-[#0f172a] text-white rounded-2xl border border-slate-800 p-4 shadow-xs flex items-center justify-between gap-3">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300 block">
+                Mutasi Riil Data
+              </span>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span className="text-2xl font-black text-white tracking-tight">
+                  {formatNumber(kpi.totalMutasi)}
+                </span>
+                <span className="text-xs text-slate-400">Aksi Operasional</span>
+              </div>
+              <p className="text-[10px] text-slate-400 mt-0.5">Di luar log sesi login</p>
+            </div>
+            {kpi.totalDelete > 0 && (
+              <div className="flex flex-col items-end shrink-0">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-bold">
+                  <Trash2 size={13} className="text-rose-400" />
+                  {kpi.totalDelete} Hapus
+                </span>
+                <span className="text-[10px] text-rose-300/80 mt-1 font-medium">Aksi Kritis</span>
+              </div>
+            )}
+          </div>
+
+          {/* 2x2 Micro Metrics Grid */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-surface rounded-xl border border-border p-3 flex items-center justify-between gap-2 shadow-2xs">
+              <div>
+                <span className="text-[10px] font-bold text-text-muted uppercase block">Penambahan</span>
+                <span className="text-base font-extrabold text-emerald-700 block mt-0.5">+{formatNumber(kpi.totalCreate)}</span>
+              </div>
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                <PlusCircle size={15} />
+              </div>
+            </div>
+
+            <div className="bg-surface rounded-xl border border-border p-3 flex items-center justify-between gap-2 shadow-2xs">
+              <div>
+                <span className="text-[10px] font-bold text-text-muted uppercase block">Perubahan</span>
+                <span className="text-base font-extrabold text-blue-700 block mt-0.5">{formatNumber(kpi.totalUpdate)}</span>
+              </div>
+              <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+                <Edit3 size={15} />
+              </div>
+            </div>
+
+            <div className={`rounded-xl border p-3 flex items-center justify-between gap-2 shadow-2xs ${
+              kpi.totalDelete > 0 ? 'bg-rose-50/70 border-rose-200' : 'bg-surface border-border'
+            }`}>
+              <div>
+                <span className={`text-[10px] font-bold uppercase block ${kpi.totalDelete > 0 ? 'text-rose-900' : 'text-text-muted'}`}>Aksi Hapus</span>
+                <span className={`text-base font-extrabold block mt-0.5 ${kpi.totalDelete > 0 ? 'text-rose-700' : 'text-text-main'}`}>
+                  {formatNumber(kpi.totalDelete)}
+                </span>
+              </div>
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                kpi.totalDelete > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'
+              }`}>
+                <Trash2 size={15} />
+              </div>
+            </div>
+
+            <div className="bg-surface rounded-xl border border-border p-3 flex items-center justify-between gap-2 shadow-2xs">
+              <div>
+                <span className="text-[10px] font-bold text-text-muted uppercase block">Aktor Staf</span>
+                <span className="text-base font-extrabold text-violet-700 block mt-0.5">{formatNumber(kpi.totalActors)} Akun</span>
+              </div>
+              <div className="w-7 h-7 rounded-lg bg-violet-50 text-violet-700 flex items-center justify-center shrink-0">
+                <Users size={15} />
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ======================================================== */}
-      {/* 3. INTERACTIVE DOMAIN MODULE AUDIT COCKPIT (CARDS) */}
+      {/* 3. INTERACTIVE DOMAIN MODULE AUDIT COCKPIT */}
       {/* ======================================================== */}
       <section className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
@@ -566,8 +690,8 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
           )}
         </div>
 
-        {/* 6 Simplified Module Cards (2 rows of 3 on desktop) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        {/* 3A. DESKTOP CARDS GRID (>=md) */}
+        <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {domainCards.map((dom) => {
             const isSelected = selectedDomain === dom.id
             const percent = kpi.totalAll > 0 ? Math.round((dom.total / kpi.totalAll) * 100) : 0
@@ -670,6 +794,66 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
             )
           })}
         </div>
+
+        {/* 3B. MOBILE COMPACT MODULE TILES (<md) - ELIMINATES 900px OF SCROLLING */}
+        <div className="md:hidden flex flex-col gap-2">
+          {domainCards.map((dom) => {
+            const isSelected = selectedDomain === dom.id
+            const percent = kpi.totalAll > 0 ? Math.round((dom.total / kpi.totalAll) * 100) : 0
+
+            return (
+              <div
+                key={dom.id}
+                onClick={() => {
+                  setSelectedDomain(isSelected ? "ALL" : dom.id)
+                  setCurrentPage(1)
+                }}
+                className={`p-3 rounded-xl border flex items-center justify-between gap-2.5 transition-all min-h-[50px] cursor-pointer touch-manipulation ${
+                  isSelected
+                    ? 'bg-primary/5 border-primary ring-1 ring-primary/50 shadow-2xs'
+                    : 'bg-surface hover:bg-slate-50 border-border'
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
+                    DOMAIN_BG[dom.id] || "bg-slate-100 border-slate-200 text-slate-700"
+                  }`}>
+                    {DOMAIN_ICONS[dom.id] || <Activity size={16} />}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-extrabold text-xs text-text-main truncate">{dom.name}</span>
+                      {isSelected && (
+                        <span className="text-[9px] font-extrabold bg-primary text-white px-1.5 py-0.2 rounded">
+                          Aktif
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-text-muted font-medium block">
+                      {percent}% beban • {formatNumber(dom.total)} aksi
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200/60" title="Tambah">
+                    +{dom.breakdown.creates}
+                  </span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200/60" title="Ubah">
+                    {dom.breakdown.updates}
+                  </span>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                    dom.breakdown.deletes > 0 
+                      ? 'bg-rose-50 text-rose-800 border-rose-300 font-extrabold' 
+                      : 'bg-slate-50 text-slate-500 border-slate-200'
+                  }`} title="Hapus">
+                    {dom.breakdown.deletes}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </section>
 
       {/* ======================================================== */}
@@ -710,171 +894,386 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
               </div>
             </div>
 
-            {/* Smart Severity / Action Type Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 hide-scrollbar">
-              <button
-                onClick={() => { setSeverity("MUTATIONS"); setCurrentPage(1); }}
-                className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                  severity === "MUTATIONS"
-                    ? "bg-[#0f172a] text-white shadow-xs"
-                    : "bg-surface text-text-muted hover:text-text-main border border-border"
-                }`}
-              >
-                Hanya Mutasi Data ({formatNumber(kpi.totalMutasi)})
-              </button>
+            {/* 4A. DESKTOP FILTER CONTROLS (>=md) */}
+            <div className="hidden md:flex flex-col gap-4">
+              {/* Smart Severity / Action Type Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 hide-scrollbar">
+                <button
+                  onClick={() => { setSeverity("MUTATIONS"); setCurrentPage(1); }}
+                  className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    severity === "MUTATIONS"
+                      ? "bg-[#0f172a] text-white shadow-xs"
+                      : "bg-surface text-text-muted hover:text-text-main border border-border"
+                  }`}
+                >
+                  Hanya Mutasi Data ({formatNumber(kpi.totalMutasi)})
+                </button>
 
-              <button
-                onClick={() => { setSeverity("DELETE"); setCurrentPage(1); }}
-                className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
-                  severity === "DELETE"
-                    ? "bg-rose-600 text-white shadow-xs"
-                    : "bg-rose-50/60 text-rose-800 hover:bg-rose-100 border border-rose-200"
-                }`}
-              >
-                <Trash2 size={13} />
-                <span>Aksi Kritis / Hapus ({formatNumber(kpi.totalDelete)})</span>
-              </button>
+                <button
+                  onClick={() => { setSeverity("DELETE"); setCurrentPage(1); }}
+                  className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                    severity === "DELETE"
+                      ? "bg-rose-600 text-white shadow-xs"
+                      : "bg-rose-50/60 text-rose-800 hover:bg-rose-100 border border-rose-200"
+                  }`}
+                >
+                  <Trash2 size={13} />
+                  <span>Aksi Kritis / Hapus ({formatNumber(kpi.totalDelete)})</span>
+                </button>
 
-              <button
-                onClick={() => { setSeverity("UPDATE"); setCurrentPage(1); }}
-                className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
-                  severity === "UPDATE"
-                    ? "bg-blue-600 text-white shadow-xs"
-                    : "bg-blue-50/60 text-blue-800 hover:bg-blue-100 border border-blue-200"
-                }`}
-              >
-                <Edit3 size={13} />
-                <span>Perubahan / Edit ({formatNumber(kpi.totalUpdate)})</span>
-              </button>
+                <button
+                  onClick={() => { setSeverity("UPDATE"); setCurrentPage(1); }}
+                  className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                    severity === "UPDATE"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-blue-50/60 text-blue-800 hover:bg-blue-100 border border-blue-200"
+                  }`}
+                >
+                  <Edit3 size={13} />
+                  <span>Perubahan / Edit ({formatNumber(kpi.totalUpdate)})</span>
+                </button>
 
-              <button
-                onClick={() => { setSeverity("CREATE"); setCurrentPage(1); }}
-                className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
-                  severity === "CREATE"
-                    ? "bg-emerald-600 text-white shadow-xs"
-                    : "bg-emerald-50/60 text-emerald-800 hover:bg-emerald-100 border border-emerald-200"
-                }`}
-              >
-                <PlusCircle size={13} />
-                <span>Penambahan ({formatNumber(kpi.totalCreate)})</span>
-              </button>
+                <button
+                  onClick={() => { setSeverity("CREATE"); setCurrentPage(1); }}
+                  className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                    severity === "CREATE"
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "bg-emerald-50/60 text-emerald-800 hover:bg-emerald-100 border border-emerald-200"
+                  }`}
+                >
+                  <PlusCircle size={13} />
+                  <span>Penambahan ({formatNumber(kpi.totalCreate)})</span>
+                </button>
 
-              <button
-                onClick={() => { setSeverity("AUTH"); setCurrentPage(1); }}
-                className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
-                  severity === "AUTH"
-                    ? "bg-slate-700 text-white shadow-xs"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-                }`}
-              >
-                <User size={13} />
-                <span>Sesi & Login ({formatNumber(kpi.totalLogin)})</span>
-              </button>
+                <button
+                  onClick={() => { setSeverity("AUTH"); setCurrentPage(1); }}
+                  className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                    severity === "AUTH"
+                      ? "bg-slate-700 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+                  }`}
+                >
+                  <User size={13} />
+                  <span>Sesi & Login ({formatNumber(kpi.totalLogin)})</span>
+                </button>
 
-              <button
-                onClick={() => { setSeverity("ALL"); setCurrentPage(1); }}
-                className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                  severity === "ALL"
-                    ? "bg-primary text-white shadow-xs"
-                    : "bg-surface text-text-muted hover:text-text-main border border-border"
-                }`}
-              >
-                Semua Log ({formatNumber(kpi.totalAll)})
-              </button>
+                <button
+                  onClick={() => { setSeverity("ALL"); setCurrentPage(1); }}
+                  className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    severity === "ALL"
+                      ? "bg-primary text-white shadow-xs"
+                      : "bg-surface text-text-muted hover:text-text-main border border-border"
+                  }`}
+                >
+                  Semua Log ({formatNumber(kpi.totalAll)})
+                </button>
+              </div>
+
+              {/* Filter Inputs Grid: Search, Presets & Custom Dates */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-1">
+                {/* Search Bar */}
+                <div className="md:col-span-5 relative">
+                  <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+                  <input 
+                    type="text" 
+                    placeholder="Cari nama staf, keterangan mutasi, modul, atau aksi..." 
+                    value={searchTerm}
+                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                    className="w-full pl-10 pr-3 py-2.5 min-h-[44px] bg-surface border border-border rounded-xl text-xs font-medium text-text-main placeholder-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-2xs"
+                  />
+                </div>
+
+                {/* Date Presets Pills */}
+                <div className="md:col-span-3 flex items-center gap-1 bg-surface border border-border rounded-xl p-1 shadow-2xs min-h-[44px]">
+                  <button
+                    onClick={() => applyDatePreset("ALL")}
+                    className={`flex-1 min-h-[36px] py-1 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
+                      datePreset === "ALL" ? "bg-slate-900 text-white" : "text-text-muted hover:text-text-main"
+                    }`}
+                  >
+                    Semua
+                  </button>
+                  <button
+                    onClick={() => applyDatePreset("TODAY")}
+                    className={`flex-1 min-h-[36px] py-1 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
+                      datePreset === "TODAY" ? "bg-slate-900 text-white" : "text-text-muted hover:text-text-main"
+                    }`}
+                  >
+                    Hari Ini
+                  </button>
+                  <button
+                    onClick={() => applyDatePreset("7DAYS")}
+                    className={`flex-1 min-h-[36px] py-1 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
+                      datePreset === "7DAYS" ? "bg-slate-900 text-white" : "text-text-muted hover:text-text-main"
+                    }`}
+                  >
+                    7 Hari
+                  </button>
+                  <button
+                    onClick={() => applyDatePreset("30DAYS")}
+                    className={`flex-1 min-h-[36px] py-1 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
+                      datePreset === "30DAYS" ? "bg-slate-900 text-white" : "text-text-muted hover:text-text-main"
+                    }`}
+                  >
+                    30 Hari
+                  </button>
+                </div>
+
+                {/* Custom Date Range Picker */}
+                <div className="md:col-span-4 flex items-center gap-2 bg-surface border border-border rounded-xl px-3 py-1 shadow-2xs min-h-[44px]">
+                  <input 
+                    type="date" 
+                    value={startDate}
+                    onChange={(e) => { 
+                      setStartDate(e.target.value); 
+                      setDatePreset("CUSTOM"); 
+                      setCurrentPage(1); 
+                    }}
+                    className="bg-transparent text-xs text-text-main font-medium focus:outline-none w-full cursor-pointer py-1.5"
+                    title="Tanggal Mulai"
+                  />
+                  <span className="text-xs text-text-muted font-bold">-</span>
+                  <input 
+                    type="date" 
+                    value={endDate}
+                    onChange={(e) => { 
+                      setEndDate(e.target.value); 
+                      setDatePreset("CUSTOM"); 
+                      setCurrentPage(1); 
+                    }}
+                    className="bg-transparent text-xs text-text-main font-medium focus:outline-none w-full cursor-pointer py-1.5"
+                    title="Tanggal Selesai"
+                  />
+                  {(startDate || endDate) && (
+                    <button 
+                      onClick={() => { 
+                        setStartDate(""); 
+                        setEndDate(""); 
+                        setDatePreset("ALL"); 
+                        setCurrentPage(1); 
+                      }}
+                      className="p-1.5 hover:bg-rose-50 rounded-lg text-rose-600 transition-colors shrink-0 cursor-pointer"
+                      title="Hapus Filter Tanggal"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Filter Inputs Grid: Search, Presets & Custom Dates */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-1">
+            {/* 4B. MOBILE SMART CONTROLS (<md) - 0% HORIZONTAL SCROLL */}
+            <div className="md:hidden flex flex-col gap-2.5">
               {/* Search Bar */}
-              <div className="md:col-span-5 relative">
+              <div className="relative w-full">
                 <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
                 <input 
                   type="text" 
-                  placeholder="Cari nama staf, keterangan mutasi, modul, atau aksi..." 
+                  placeholder="Cari aktor, keterangan, modul..." 
                   value={searchTerm}
                   onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                  className="w-full pl-10 pr-3 py-2.5 min-h-[44px] bg-surface border border-border rounded-xl text-xs font-medium text-text-main placeholder-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-2xs"
+                  className="w-full pl-10 pr-8 py-2.5 min-h-[44px] bg-surface border border-border rounded-xl text-xs font-medium text-text-main placeholder-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-2xs"
                 />
-              </div>
-
-              {/* Date Presets Pills */}
-              <div className="md:col-span-3 flex items-center gap-1 bg-surface border border-border rounded-xl p-1 shadow-2xs min-h-[44px]">
-                <button
-                  onClick={() => applyDatePreset("ALL")}
-                  className={`flex-1 min-h-[36px] py-1 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
-                    datePreset === "ALL" ? "bg-slate-900 text-white" : "text-text-muted hover:text-text-main"
-                  }`}
-                >
-                  Semua
-                </button>
-                <button
-                  onClick={() => applyDatePreset("TODAY")}
-                  className={`flex-1 min-h-[36px] py-1 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
-                    datePreset === "TODAY" ? "bg-slate-900 text-white" : "text-text-muted hover:text-text-main"
-                  }`}
-                >
-                  Hari Ini
-                </button>
-                <button
-                  onClick={() => applyDatePreset("7DAYS")}
-                  className={`flex-1 min-h-[36px] py-1 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
-                    datePreset === "7DAYS" ? "bg-slate-900 text-white" : "text-text-muted hover:text-text-main"
-                  }`}
-                >
-                  7 Hari
-                </button>
-                <button
-                  onClick={() => applyDatePreset("30DAYS")}
-                  className={`flex-1 min-h-[36px] py-1 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
-                    datePreset === "30DAYS" ? "bg-slate-900 text-white" : "text-text-muted hover:text-text-main"
-                  }`}
-                >
-                  30 Hari
-                </button>
-              </div>
-
-              {/* Custom Date Range Picker */}
-              <div className="md:col-span-4 flex items-center gap-2 bg-surface border border-border rounded-xl px-3 py-1 shadow-2xs min-h-[44px]">
-                <input 
-                  type="date" 
-                  value={startDate}
-                  onChange={(e) => { 
-                    setStartDate(e.target.value); 
-                    setDatePreset("CUSTOM"); 
-                    setCurrentPage(1); 
-                  }}
-                  className="bg-transparent text-xs text-text-main font-medium focus:outline-none w-full cursor-pointer py-1.5"
-                  title="Tanggal Mulai"
-                />
-                <span className="text-xs text-text-muted font-bold">-</span>
-                <input 
-                  type="date" 
-                  value={endDate}
-                  onChange={(e) => { 
-                    setEndDate(e.target.value); 
-                    setDatePreset("CUSTOM"); 
-                    setCurrentPage(1); 
-                  }}
-                  className="bg-transparent text-xs text-text-main font-medium focus:outline-none w-full cursor-pointer py-1.5"
-                  title="Tanggal Selesai"
-                />
-                {(startDate || endDate) && (
+                {searchTerm && (
                   <button 
-                    onClick={() => { 
-                      setStartDate(""); 
-                      setEndDate(""); 
-                      setDatePreset("ALL"); 
-                      setCurrentPage(1); 
-                    }}
-                    className="p-1.5 hover:bg-rose-50 rounded-lg text-rose-600 transition-colors shrink-0 cursor-pointer"
-                    title="Hapus Filter Tanggal"
+                    onClick={() => { setSearchTerm(""); setCurrentPage(1); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main p-1"
                   >
                     <X size={14} />
                   </button>
                 )}
               </div>
+
+              {/* 3 Quick Segment Chips (100% Mobile Width, Fits Perfectly) */}
+              <div className="grid grid-cols-3 gap-1 bg-surface p-1 rounded-xl border border-border shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => { setSeverity("ALL"); setCurrentPage(1); }}
+                  className={`py-2 px-1 text-center text-[11px] font-bold rounded-lg transition-all min-h-[38px] ${
+                    severity === "ALL" ? 'bg-primary text-white shadow-2xs' : 'text-text-muted hover:text-text-main'
+                  }`}
+                >
+                  Semua
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSeverity("MUTATIONS"); setCurrentPage(1); }}
+                  className={`py-2 px-1 text-center text-[11px] font-bold rounded-lg transition-all min-h-[38px] ${
+                    severity === "MUTATIONS" ? 'bg-slate-900 text-white shadow-2xs' : 'text-text-muted hover:text-text-main'
+                  }`}
+                >
+                  Mutasi Riil
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSeverity("DELETE"); setCurrentPage(1); }}
+                  className={`py-2 px-1 text-center text-[11px] font-bold rounded-lg transition-all min-h-[38px] ${
+                    severity === "DELETE" ? 'bg-rose-600 text-white shadow-2xs' : 'text-rose-700 bg-rose-50/70 hover:bg-rose-100'
+                  }`}
+                >
+                  Aksi Hapus
+                </button>
+              </div>
+
+              {/* Filter Lengkap & Tanggal Button */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowMobileFilterSheet(true)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all min-h-[44px] cursor-pointer ${
+                    severity !== "ALL" || datePreset !== "ALL" || startDate || endDate
+                      ? 'bg-primary/10 border-primary text-primary shadow-2xs'
+                      : 'bg-surface hover:bg-slate-50 border-border text-text-main'
+                  }`}
+                >
+                  <Filter size={14} className="text-primary" />
+                  <span>Filter Lengkap & Tanggal</span>
+                  {(severity !== "ALL" || datePreset !== "ALL" || startDate || endDate) && (
+                    <span className="w-2 h-2 rounded-full bg-primary shrink-0 animate-pulse"></span>
+                  )}
+                </button>
+
+                {/* Reset Filter Button */}
+                {(severity !== "ALL" || datePreset !== "ALL" || startDate || endDate || selectedDomain !== "ALL" || searchTerm) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSeverity("MUTATIONS");
+                      setSelectedDomain("ALL");
+                      setDatePreset("ALL");
+                      setStartDate("");
+                      setEndDate("");
+                      setSearchTerm("");
+                      setCurrentPage(1);
+                    }}
+                    className="px-3 py-2.5 rounded-xl border border-border bg-surface hover:bg-slate-50 text-text-muted hover:text-rose-600 text-xs font-bold transition-all min-h-[44px] cursor-pointer shrink-0"
+                    title="Reset Semua Saringan"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Mobile Filter Bottom Sheet Modal */}
+          {showMobileFilterSheet && (
+            <div className="fixed inset-0 z-50 flex items-end justify-center">
+              <div 
+                className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+                onClick={() => setShowMobileFilterSheet(false)}
+              />
+              <div className="relative w-full max-w-lg bg-surface rounded-t-3xl border-t border-border p-5 z-10 shadow-2xl flex flex-col gap-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-200">
+                {/* Sheet Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-border">
+                  <div className="flex items-center gap-2">
+                    <Filter size={18} className="text-primary" />
+                    <h3 className="font-extrabold text-sm text-text-main">Saring Log Audit</h3>
+                  </div>
+                  <button
+                    onClick={() => setShowMobileFilterSheet(false)}
+                    className="p-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* Kategori Keparahan Aksi */}
+                <div>
+                  <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider block mb-2">
+                    Kategori Keparahan Aksi
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: "ALL", label: `Semua Log (${formatNumber(kpi.totalAll)})` },
+                      { id: "MUTATIONS", label: `Mutasi Riil (${formatNumber(kpi.totalMutasi)})` },
+                      { id: "DELETE", label: `Aksi Hapus (${formatNumber(kpi.totalDelete)})`, alert: true },
+                      { id: "UPDATE", label: `Perubahan (${formatNumber(kpi.totalUpdate)})` },
+                      { id: "CREATE", label: `Penambahan (${formatNumber(kpi.totalCreate)})` },
+                      { id: "AUTH", label: `Sesi & Login (${formatNumber(kpi.totalLogin)})` },
+                    ].map(opt => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => { setSeverity(opt.id as any); setCurrentPage(1); }}
+                        className={`p-2.5 rounded-xl border text-xs font-bold text-left transition-all min-h-[44px] cursor-pointer ${
+                          severity === opt.id
+                            ? opt.alert ? 'bg-rose-600 text-white border-rose-700' : 'bg-primary text-white border-primary'
+                            : opt.alert ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-surface border-border text-text-main hover:bg-slate-50'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Periode Waktu Presets */}
+                <div>
+                  <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider block mb-2">
+                    Periode Waktu
+                  </span>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[
+                      { id: "ALL", label: "Semua" },
+                      { id: "TODAY", label: "Hari Ini" },
+                      { id: "7DAYS", label: "7 Hari" },
+                      { id: "30DAYS", label: "30 Hari" },
+                    ].map(p => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => applyDatePreset(p.id)}
+                        className={`py-2 px-1 text-center text-xs font-bold rounded-xl border transition-all min-h-[40px] cursor-pointer ${
+                          datePreset === p.id
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'bg-surface border-border text-text-muted hover:text-text-main'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Rentang Tanggal Kustom */}
+                <div>
+                  <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider block mb-1.5">
+                    Rentang Tanggal Kustom
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-text-muted font-semibold">Mulai</label>
+                      <input 
+                        type="date" 
+                        value={startDate}
+                        onChange={(e) => { setStartDate(e.target.value); setDatePreset("CUSTOM"); setCurrentPage(1); }}
+                        className="p-2 bg-surface border border-border rounded-xl text-xs text-text-main min-h-[44px]"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-text-muted font-semibold">Sampai</label>
+                      <input 
+                        type="date" 
+                        value={endDate}
+                        onChange={(e) => { setEndDate(e.target.value); setDatePreset("CUSTOM"); setCurrentPage(1); }}
+                        className="p-2 bg-surface border border-border rounded-xl text-xs text-text-main min-h-[44px]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowMobileFilterSheet(false)}
+                  className="w-full py-3 rounded-xl bg-primary text-white font-extrabold text-xs shadow-md transition-colors hover:bg-primary-hover min-h-[46px] mt-2 cursor-pointer"
+                >
+                  Terapkan Filter
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* ======================================================== */}
           {/* VIEW A: DESKTOP TABLE VIEW (>=md) */}

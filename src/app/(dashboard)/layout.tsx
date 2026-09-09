@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma"
 import { getTenantContext } from "@/lib/tenant"
 import Sidebar from "@/components/layout/Sidebar"
 import Header from "@/components/layout/Header"
+import MobileBottomNav from "@/components/layout/MobileBottomNav"
 import { MobileMenuProvider } from "@/components/layout/MobileMenuContext"
 import { UserActivityTracker } from "@/components/UserActivityTracker"
 
@@ -73,10 +74,11 @@ export default async function DashboardLayout({
             activeYearId={activeYearId}
           />
           <UserActivityTracker />
-          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto overflow-x-hidden relative">
+          <main className="flex-1 p-4 md:p-6 lg:p-8 pb-24 md:pb-8 overflow-y-auto overflow-x-hidden relative">
             {children}
           </main>
         </div>
+        <MobileBottomNav role={userRole} />
       </div>
     </MobileMenuProvider>
   )
