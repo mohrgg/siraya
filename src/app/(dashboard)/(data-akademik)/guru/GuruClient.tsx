@@ -22,6 +22,8 @@ import {
   BadgeCheck,
   UploadCloud,
   User,
+  Users,
+  Award,
   X,
   Eye,
   Filter,
@@ -143,17 +145,27 @@ export default function GuruClient({
 
   const [formData, setFormData] = useState(defaultForm)
 
+  const scopedData = useMemo(() => {
+    return data.filter(item => {
+      if (activeUnitId && activeUnitId !== "all" && item.unitSekolahId !== activeUnitId) return false
+      if ((!activeUnitId || activeUnitId === "all") && unitFilter && item.unitSekolahId !== unitFilter) return false
+      return true
+    })
+  }, [data, activeUnitId, unitFilter])
+
   const executiveMetrics = useMemo(() => {
-    const totalGuru = data.length
-    const totalTetap = data.filter(g => g.statusKepegawaian === "GTY" || g.statusKepegawaian === "TETAP" || g.statusKepegawaian === "PNS").length
-    const totalHonorer = totalGuru - totalTetap
+    const totalGuru = scopedData.length
+    const totalAktif = scopedData.filter(g => g.isActive).length
+    const totalTetap = scopedData.filter(g => g.statusKepegawaian === "GTY" || g.statusKepegawaian === "TETAP" || g.statusKepegawaian === "PNS").length
+    const totalHonorer = scopedData.filter(g => g.statusKepegawaian === "HONORER" || g.statusKepegawaian === "GTT" || g.statusKepegawaian === "KONTRAK").length || Math.max(0, totalGuru - totalTetap)
     const pctTetap = totalGuru > 0 ? Math.round((totalTetap / totalGuru) * 100) : 0
-    const totalWali = data.filter(g => g.rombelWali && g.rombelWali.length > 0).length
-    const totalS1Plus = data.filter(g => g.pendidikan && (g.pendidikan.includes("S1") || g.pendidikan.includes("S2") || g.pendidikan.includes("S3"))).length
+    const totalWali = scopedData.filter(g => g.rombelWali && g.rombelWali.length > 0).length
+    const totalS1Plus = scopedData.filter(g => g.pendidikan && (g.pendidikan.includes("S1") || g.pendidikan.includes("S2") || g.pendidikan.includes("S3"))).length
     const pctS1Plus = totalGuru > 0 ? Math.round((totalS1Plus / totalGuru) * 100) : 0
 
     return {
       totalGuru,
+      totalAktif,
       totalTetap,
       totalHonorer,
       pctTetap,
@@ -161,7 +173,7 @@ export default function GuruClient({
       totalS1Plus,
       pctS1Plus
     }
-  }, [data])
+  }, [scopedData])
 
   const handleOpenAdd = () => {
     setFormData({
@@ -400,61 +412,53 @@ export default function GuruClient({
 
   return (
     <div className="space-y-6">
-      {/* Executive Teacher KPI Banner for KEPALA_SEKOLAH / YAYASAN */}
-      {isReadOnly && (
-        <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900">
-              Ringkasan Tenaga Pendidik
-            </h2>
-            <span className="text-xs bg-slate-50 px-2.5 py-1 rounded-lg text-slate-600 font-medium border border-slate-200">
-              {userRole === "YAYASAN" ? "Konsolidasi" : "Unit Sekolah"}
-            </span>
+      {/* 3 Card KPI Guru & Staf (Active for ALL Roles) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Users size={20} />
           </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-3 sm:mt-4">
-            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
-              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Total Guru</p>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl sm:text-2xl font-black text-slate-900">{executiveMetrics.totalGuru}</span>
-                <span className="text-xs font-medium text-slate-500">Guru</span>
-              </div>
-            </div>
-
-            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
-              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Status Kepegawaian</p>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl sm:text-2xl font-black text-slate-900">{executiveMetrics.totalTetap}</span>
-                <span className="text-xs font-semibold text-[#065f32]">GTY</span>
-                <span className="text-slate-300">/</span>
-                <span className="text-xs font-semibold text-amber-700">{executiveMetrics.totalHonorer} Honorer</span>
-              </div>
-            </div>
-
-            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
-              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Wali Kelas</p>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl sm:text-2xl font-black text-slate-900">{executiveMetrics.totalWali}</span>
-                <span className="text-xs font-medium text-slate-500">Kelas</span>
-              </div>
-            </div>
-
-            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
-              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Kualifikasi S1/S2</p>
-              <div className="flex items-baseline gap-1.5 mt-0.5">
-                <span className="text-xl sm:text-2xl font-black text-slate-900">{executiveMetrics.pctS1Plus}%</span>
-                <span className="text-xs font-semibold text-[#065f32]">({executiveMetrics.totalS1Plus} Orang)</span>
-              </div>
+          <div className="min-w-0">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Total Guru & Staf</p>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.totalGuru}</span>
+              <span className="text-[11px] font-medium text-emerald-600">({executiveMetrics.totalAktif} Aktif)</span>
             </div>
           </div>
         </div>
-      )}
+
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
+            <GraduationCap size={20} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Penugasan Wali</p>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.totalWali}</span>
+              <span className="text-[11px] font-medium text-text-muted">Wali Kelas</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <Award size={20} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Kualifikasi S1/S2</p>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.pctS1Plus}%</span>
+              <span className="text-[11px] font-medium text-emerald-600">({executiveMetrics.totalS1Plus} Sarjana)</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
-        {/* Dummy Tab Navigation for UI Consistency */}
+        {/* Tab Header Wajib Siraya */}
         <div className="flex gap-2 mb-6 border-b border-border">
           <button className="px-6 py-3 font-semibold text-sm border-b-2 border-primary text-primary transition-colors">
-            {isReadOnly ? "Direktori & Beban Tenaga Pendidik" : "Daftar Guru & Staf Aktif"}
+            Daftar Guru & Staf
           </button>
         </div>
 
