@@ -196,10 +196,15 @@ export async function hapusPenggunaPermanen(id: string) {
     throw new Error("Pengguna harus dinonaktifkan terlebih dahulu sebelum dapat dihapus permanen.")
   }
 
-  // Rule 2: Larangan hapus Superadmin terakhir
+  // Rule 2: Larangan hapus akun sendiri & pastikan ada Superadmin aktif lain
+  const session = await auth()
+  if (session?.user?.id === id) {
+    throw new Error("Tidak dapat menghapus akun Anda sendiri yang sedang digunakan!")
+  }
+
   if (user.role === "ADMIN") {
-    const adminCount = await prisma.pengguna.count({ where: { role: "ADMIN", isActive: true } })
-    if (adminCount <= 1) throw new Error("Tidak dapat menghapus Superadmin terakhir!")
+    const activeAdminCount = await prisma.pengguna.count({ where: { role: "ADMIN", isActive: true } })
+    if (activeAdminCount < 1) throw new Error("Tidak dapat menghapus Superadmin karena tidak ada Superadmin aktif lain di sistem!")
   }
 
   // Rule 3: Integritas Finansial - Jangan hapus user dengan riwayat transaksi
