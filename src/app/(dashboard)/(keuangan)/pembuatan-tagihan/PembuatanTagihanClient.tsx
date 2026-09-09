@@ -24,7 +24,8 @@ import {
   Toolbar, 
   ToolbarSearch, 
   ToolbarFilter, 
-  ToolbarActions
+  ToolbarActions,
+  ToolbarAddButton
 } from "@/components/ui/DataTableToolbar"
 
 type GridRow = {
@@ -571,9 +572,9 @@ export default function PembuatanTagihanClient({
 
             <Button 
               size="sm"
+              variant="primary"
               onClick={handleTampilkanKelas} 
               disabled={!subKelasId || isLoading}
-              className="px-4 py-1.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90 text-white rounded-xl"
             >
               {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
             </Button>
@@ -590,11 +591,10 @@ export default function PembuatanTagihanClient({
             {(kelasId || subKelasId || gridData.length > 0) && (
               <Button
                 size="sm"
-                variant="outline"
+                variant="secondary"
                 onClick={handleResetFilter}
                 disabled={isLoading}
                 title="Reset filter dan data"
-                className="px-3 py-1.5 h-auto whitespace-nowrap text-text-muted hover:text-text-main border-border hover:bg-gray-50 rounded-xl"
               >
                 <RotateCcw size={14} className="mr-1.5" />
                 Reset
@@ -603,12 +603,9 @@ export default function PembuatanTagihanClient({
 
             <ToolbarActions>
               {!isReadOnly && gridData.length > 0 && (
-                <Button 
-                  onClick={() => setIsModalOpen(true)}
-                  className="bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm whitespace-nowrap rounded-xl"
-                >
-                  <Plus size={16} className="mr-1.5" /> Tambah Tagihan
-                </Button>
+                <ToolbarAddButton onClick={() => setIsModalOpen(true)}>
+                  Tambah Tagihan
+                </ToolbarAddButton>
               )}
             </ToolbarActions>
           </Toolbar>
@@ -617,41 +614,29 @@ export default function PembuatanTagihanClient({
         {/* Tab 2: Direct Search for Individual Student */}
         {activeTab === "search" && (
           <div className="mb-6">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <div className="relative flex-1">
-                <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted/60 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault()
-                      handleCariSiswa()
-                    }
-                  }}
-                  placeholder="Ketik Nama Siswa, NISN, atau No Formulir lalu tekan Enter..."
-                  className="w-full pl-10 pr-10 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery("")
-                      setLastSearchedQuery("")
-                      setGridData([])
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main p-1"
-                  >
-                    <RotateCcw size={14} />
-                  </button>
-                )}
-              </div>
+            <Toolbar>
+              <ToolbarSearch
+                value={searchQuery}
+                onChange={(e: any) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    handleCariSiswa()
+                  }
+                }}
+                onClear={() => {
+                  setSearchQuery("")
+                  setLastSearchedQuery("")
+                  setGridData([])
+                }}
+                placeholder="Ketik Nama Siswa, NISN, atau No Formulir lalu tekan Enter..."
+                containerClassName="flex-1 max-w-md"
+              />
               <Button
                 size="sm"
+                variant="primary"
                 onClick={() => handleCariSiswa()}
                 disabled={!searchQuery.trim() || isLoading}
-                className="px-5 py-2.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90 text-white font-semibold rounded-xl shadow-sm"
               >
                 {isLoading ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Search size={16} className="mr-1.5" />}
                 Cari Siswa
@@ -659,28 +644,26 @@ export default function PembuatanTagihanClient({
               {(gridData.length > 0 || lastSearchedQuery) && (
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => {
                     setSearchQuery("")
                     setLastSearchedQuery("")
                     setGridData([])
                   }}
                   disabled={isLoading}
-                  className="px-4 py-2.5 h-auto whitespace-nowrap text-text-muted hover:text-text-main border-border rounded-xl hover:bg-gray-50"
                 >
                   <RotateCcw size={14} className="mr-1.5" />
                   Reset
                 </Button>
               )}
-              {!isReadOnly && gridData.length > 0 && (
-                <Button 
-                  onClick={() => setIsModalOpen(true)}
-                  className="bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm whitespace-nowrap rounded-xl px-4 py-2.5"
-                >
-                  <Plus size={16} className="mr-1.5" /> Tambah Tagihan
-                </Button>
-              )}
-            </div>
+              <ToolbarActions>
+                {!isReadOnly && gridData.length > 0 && (
+                  <ToolbarAddButton onClick={() => setIsModalOpen(true)}>
+                    Tambah Tagihan
+                  </ToolbarAddButton>
+                )}
+              </ToolbarActions>
+            </Toolbar>
 
             {lastSearchedQuery && (
               <div className="flex items-center justify-between bg-emerald-50/70 border border-emerald-200 text-emerald-800 text-xs px-4 py-2.5 rounded-xl mt-3">
@@ -895,7 +878,6 @@ export default function PembuatanTagihanClient({
                                 variant={row.isDirty ? "primary" : "outline"}
                                 onClick={() => handleSimpanBaris(row)}
                                 disabled={!row.isDirty || savingRowId === row.id}
-                                className="px-3 py-1.5 h-auto text-xs font-semibold transition-all shadow-sm"
                               >
                                 {savingRowId === row.id ? (
                                   <Loader2 size={14} className="animate-spin" />
@@ -958,24 +940,26 @@ export default function PembuatanTagihanClient({
                   </select>
                 </div>
                 
-                <div className="flex items-center gap-1">
-                  <button 
+                <div className="flex items-center gap-4">
+                  <Button 
+                    variant="outline"
+                    size="sm"
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50 transition-colors"
                   >
                     Sebelumnya
-                  </button>
-                  <span className="px-4 py-1.5 text-sm font-medium text-text-main">
+                  </Button>
+                  <span className="font-medium text-text-muted">
                     Hal {currentPage} dari {computedTotalPages}
                   </span>
-                  <button 
+                  <Button 
+                    variant="outline"
+                    size="sm"
                     onClick={() => setCurrentPage(p => Math.min(computedTotalPages, p + 1))}
-                    disabled={currentPage === computedTotalPages}
-                    className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50 transition-colors"
+                    disabled={currentPage === computedTotalPages || computedTotalPages === 0}
                   >
                     Berikutnya
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}

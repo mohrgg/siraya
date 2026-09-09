@@ -21,7 +21,8 @@ import ModalPilihRiwayatTransaksi from "./ModalPilihRiwayatTransaksi"
 import { 
   Toolbar, 
   ToolbarSearch, 
-  ToolbarFilter
+  ToolbarFilter,
+  ToolbarActions
 } from "@/components/ui/DataTableToolbar"
 
 type TagihanData = {
@@ -457,65 +458,55 @@ export default function PembayaranTagihanClient({
         {/* Tab 1: Loket Kasir Direct Search */}
         {activeTab === "search" && (
           <div className="mb-6">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <div className="relative flex-1">
-                <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted/60 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault()
-                      handleCariSiswa()
-                    }
-                  }}
-                  placeholder="Ketik Nama Siswa, NISN, atau No Formulir lalu tekan Enter..."
-                  className="w-full pl-10 pr-10 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery("")
-                      setLastSearchedQuery("")
-                      setGridData([])
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main p-1"
-                  >
-                    <RotateCcw size={14} />
-                  </button>
-                )}
-              </div>
+            <Toolbar>
+              <ToolbarSearch 
+                value={searchQuery}
+                onChange={(e: any) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    handleCariSiswa()
+                  }
+                }}
+                onClear={() => {
+                  setSearchQuery("")
+                  setLastSearchedQuery("")
+                  setGridData([])
+                }}
+                placeholder="Ketik Nama Siswa, NISN, atau No Formulir lalu tekan Enter..." 
+                containerClassName="flex-1 max-w-md"
+              />
+
               <Button
+                variant="primary"
                 size="sm"
                 onClick={() => handleCariSiswa()}
                 disabled={!searchQuery.trim() || isLoading}
-                className="px-5 py-2.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90 text-white font-semibold rounded-xl shadow-sm"
               >
-                {isLoading ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Search size={16} className="mr-1.5" />}
+                {isLoading ? <Loader2 size={14} className="animate-spin mr-1.5" /> : <Search size={14} className="mr-1.5" />}
                 Cari Siswa
               </Button>
+
               {(gridData.length > 0 || lastSearchedQuery) && (
                 <Button
+                  variant="secondary"
                   size="sm"
-                  variant="outline"
                   onClick={() => {
                     setSearchQuery("")
                     setLastSearchedQuery("")
                     setGridData([])
                   }}
                   disabled={isLoading}
-                  className="px-4 py-2.5 h-auto whitespace-nowrap text-text-muted hover:text-text-main border-border rounded-xl hover:bg-gray-50"
+                  title="Reset filter dan pencarian"
                 >
                   <RotateCcw size={14} className="mr-1.5" />
                   Reset
                 </Button>
               )}
-            </div>
+            </Toolbar>
 
             {lastSearchedQuery && (
-              <div className="flex items-center justify-between bg-emerald-50/70 border border-emerald-200 text-emerald-800 text-xs px-4 py-2.5 rounded-xl mt-3">
+              <div className="flex items-center justify-between bg-emerald-50/70 border border-emerald-200 text-emerald-800 text-xs px-4 py-2.5 rounded-xl">
                 <span>
                   Menampilkan hasil pencarian untuk: <strong className="font-semibold">&quot;{lastSearchedQuery}&quot;</strong> ({gridData.length} siswa ditemukan lintas kelas)
                 </span>
@@ -576,12 +567,13 @@ export default function PembayaranTagihanClient({
             />
 
             <Button 
+              variant="primary"
               size="sm"
               onClick={handleTampilkanKelas} 
               disabled={!subKelasId || isLoading}
-              className="px-4 py-1.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90 text-white rounded-xl"
             >
-              {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
+              {isLoading ? <Loader2 size={14} className="animate-spin mr-1.5" /> : null}
+              Tampilkan
             </Button>
 
             {gridData.length > 0 && (
@@ -595,12 +587,11 @@ export default function PembayaranTagihanClient({
 
             {(kelasId || subKelasId || gridData.length > 0) && (
               <Button
+                variant="secondary"
                 size="sm"
-                variant="outline"
                 onClick={handleResetFilter}
                 disabled={isLoading}
                 title="Reset filter dan pencarian"
-                className="px-3 py-1.5 h-auto whitespace-nowrap text-text-muted hover:text-text-main border-border hover:bg-gray-50 rounded-xl"
               >
                 <RotateCcw size={14} className="mr-1.5" />
                 Reset
@@ -615,20 +606,20 @@ export default function PembayaranTagihanClient({
             <div className="overflow-x-auto min-h-[400px]">
             <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
               <thead>
-                <tr className="border-b border-border bg-emerald-500 text-white text-xs uppercase tracking-wider">
-                  <th className="p-4 font-bold text-center w-12 sticky left-0 bg-emerald-500 z-20 shadow-[1px_0_0_0_#10b981]">NO</th>
-                  <th className="p-4 font-bold min-w-[200px] sticky left-12 bg-emerald-500 z-20 shadow-[1px_0_0_0_#10b981]">SISWA/I</th>
+                <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
+                  <th className="p-4 font-semibold text-center w-12 sticky left-0 bg-bg z-20 shadow-[1px_0_0_0_#e2e8f0]">NO</th>
+                  <th className="p-4 font-semibold min-w-[200px] sticky left-12 bg-bg z-20 shadow-[1px_0_0_0_#e2e8f0]">SISWA/I</th>
                   
                   {akunColumns.map(col => (
-                    <th key={col.id} className="p-4 font-bold text-center min-w-[150px]">
+                    <th key={col.id} className="p-4 font-semibold text-center min-w-[150px]">
                       <div>
                         {col.nama} <br/><span className="text-[10px] opacity-80 font-medium">[{col.kode}]</span>
                       </div>
                     </th>
                   ))}
                   
-                  <th className="p-4 font-bold text-right min-w-[150px]">TOTAL BERJALAN</th>
-                  {!isReadOnly && <th className="p-4 font-bold text-center w-24 sticky right-0 bg-emerald-500 z-20 shadow-[-1px_0_0_0_#10b981]">PROSES</th>}
+                  <th className="p-4 font-semibold text-right min-w-[150px]">TOTAL BERJALAN</th>
+                  {!isReadOnly && <th className="p-4 font-semibold text-center w-24 sticky right-0 bg-bg z-20 shadow-[-1px_0_0_0_#e2e8f0]">PROSES</th>}
                 </tr>
               </thead>
               <tbody>
@@ -769,9 +760,9 @@ export default function PembayaranTagihanClient({
                           <td className="p-4 text-center sticky right-0 bg-white z-10 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
                             <Button 
                               size="sm"
+                              variant="primary"
                               disabled={totalBerjalan === 0}
                               onClick={() => handleBayarClick(row)}
-                              className="px-4 py-2 font-bold rounded-lg text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-200"
                             >
                               Bayar
                             </Button>
@@ -829,24 +820,26 @@ export default function PembayaranTagihanClient({
                 </select>
               </div>
               
-              <div className="flex items-center gap-1">
-                <button 
+              <div className="flex items-center gap-4">
+                <Button 
+                  variant="outline"
+                  size="sm"
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50 transition-colors"
                 >
                   Sebelumnya
-                </button>
-                <span className="px-4 py-1.5 text-sm font-medium text-text-main">
+                </Button>
+                <span className="font-medium text-text-muted">
                   Hal {currentPage} dari {computedTotalPages}
                 </span>
-                <button 
+                <Button 
+                  variant="outline"
+                  size="sm"
                   onClick={() => setCurrentPage(p => Math.min(computedTotalPages, p + 1))}
-                  disabled={currentPage === computedTotalPages}
-                  className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50 transition-colors"
+                  disabled={currentPage === computedTotalPages || computedTotalPages === 0}
                 >
                   Berikutnya
-                </button>
+                </Button>
               </div>
             </div>
           )}
