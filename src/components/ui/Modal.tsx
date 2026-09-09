@@ -12,6 +12,7 @@ interface ModalProps {
   widthClassName?: string
   children: React.ReactNode
   footer?: React.ReactNode
+  headerAction?: React.ReactNode
 }
 
 export function Modal({ 
@@ -22,7 +23,8 @@ export function Modal({
   icon: Icon, 
   widthClassName = "max-w-lg", 
   children,
-  footer
+  footer,
+  headerAction
 }: ModalProps) {
   const [mounted, setMounted] = useState(false)
 
@@ -51,20 +53,23 @@ export function Modal({
               {subtitle && <p className="text-[11px] sm:text-xs text-text-muted mt-0.5 leading-relaxed truncate sm:whitespace-normal">{subtitle}</p>}
             </div>
           </div>
-          <button 
-            onClick={onClose} 
-            className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer"
-            type="button"
-            aria-label="Tutup"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {headerAction}
+            <button 
+              onClick={onClose} 
+              className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer"
+              type="button"
+              aria-label="Tutup"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
         <div className={`flex-1 min-h-0 p-4 sm:p-6 ${footer ? 'pb-6' : 'pb-28 sm:pb-6'} overflow-y-auto custom-scrollbar`}>
           {children}
         </div>
         {footer && (
-          <div className="shrink-0 p-4 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex items-center justify-end gap-3 pb-safe">
+          <div className="shrink-0 p-3.5 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex items-center justify-end gap-2.5 sm:gap-3 pb-24 sm:pb-5">
             {footer}
           </div>
         )}

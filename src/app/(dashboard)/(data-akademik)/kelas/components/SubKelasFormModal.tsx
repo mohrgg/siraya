@@ -62,11 +62,25 @@ export default function SubKelasFormModal({
       subtitle="Alokasi kelas dan penunjukan Wali Kelas untuk tahun ajaran aktif"
       icon={Users}
         widthClassName="max-w-xl"
+        headerAction={
+          <Button 
+            type="submit" 
+            form="form-subkelas" 
+            size="sm" 
+            isLoading={isSubmitting}
+            className="sm:hidden text-xs font-bold px-3 py-1.5 shadow-sm"
+          >
+            Simpan
+          </Button>
+        }
         footer={
-          <>
-            <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
-            <Button type="submit" form="form-subkelas" isLoading={isSubmitting}>Simpan Data</Button>
-          </>
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1 sm:flex-initial justify-center min-h-[40px] font-semibold">Batal</Button>
+            <Button type="submit" form="form-subkelas" isLoading={isSubmitting} className="flex-2 sm:flex-initial justify-center min-h-[40px] font-bold shadow-sm">
+              <span className="sm:hidden">Simpan</span>
+              <span className="hidden sm:inline">Simpan Data</span>
+            </Button>
+          </div>
         }
       >
         <form id="form-subkelas" onSubmit={onSave} className="flex flex-col gap-4">
