@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
+import { logAktivitas } from "@/lib/logger"
 
 // --- GRADES ---
 export async function getTingkatan(unitSekolahId?: string) {
@@ -26,6 +27,9 @@ export async function tambahTingkatan(data: { name: string, order: number, unitS
   const result = await prisma.tingkat.create({ 
     data: { name: data.name, order: data.order, unitSekolahId: data.unitSekolahId } 
   })
+
+  await logAktivitas("TAMBAH_TINGKATAN", "AKADEMIK_KELAS", `Menambahkan tingkatan: ${result.name} (Urutan: ${result.order})`)
+
   revalidatePath("/data-master")
   revalidatePath("/")
   return result
@@ -39,6 +43,9 @@ export async function editTingkatan(id: string, data: { name: string, order: num
     where: { id },
     data: { name: data.name, order: data.order, unitSekolahId: data.unitSekolahId } 
   })
+
+  await logAktivitas("EDIT_TINGKATAN", "AKADEMIK_KELAS", `Mengubah tingkatan: ${result.name} (Urutan: ${result.order})`)
+
   revalidatePath("/data-master")
   revalidatePath("/")
   return result
@@ -112,6 +119,9 @@ export async function tambahJurusan(data: { name: string, code: string, unitSeko
       }
     }
   })
+
+  await logAktivitas("TAMBAH_JURUSAN", "AKADEMIK_JURUSAN", `Menambahkan jurusan: ${result.name} (${result.code})`)
+
   revalidatePath("/(dashboard)/(data-yayasan)/jurusan", "page")
   revalidatePath("/data-master")
   return result
@@ -183,6 +193,10 @@ export async function tambahKelas(data: {
       waliKelasGuru: true
     }
   })
+
+  const waliInfo = result.waliKelas ? ` - Wali Kelas: ${result.waliKelas}` : ""
+  await logAktivitas("TAMBAH_KELAS", "AKADEMIK_KELAS", `Menambahkan rombel: ${(result as any).tingkat?.name || ""} ${result.name} (${(result as any).unitSekolah?.name || "-"})${waliInfo}`)
+
   revalidatePath("/data-master")
   revalidatePath("/kelas")
   return result
@@ -192,6 +206,9 @@ export async function hapusTingkatan(id: string) {
   const session = await auth()
   if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
   const result = await prisma.tingkat.update({ where: { id }, data: { isDeleted: true } })
+
+  await logAktivitas("HAPUS_TINGKATAN", "AKADEMIK_KELAS", `Menghapus tingkatan: ${result.name} (ID: ${id})`)
+
   revalidatePath("/data-master")
   revalidatePath("/")
   return result
@@ -232,6 +249,9 @@ export async function editJurusan(id: string, data: { name: string, code: string
       }
     }
   })
+
+  await logAktivitas("EDIT_JURUSAN", "AKADEMIK_JURUSAN", `Mengubah jurusan: ${result.name} (${result.code})`)
+
   revalidatePath("/(dashboard)/(data-yayasan)/jurusan", "page")
   revalidatePath("/data-master")
   return result
@@ -248,6 +268,9 @@ export async function hapusJurusan(id: string) {
       code: existing ? `${existing.code}_del_${Date.now().toString().slice(-6)}` : undefined
     } 
   })
+
+  await logAktivitas("HAPUS_JURUSAN", "AKADEMIK_JURUSAN", `Menghapus jurusan: ${existing?.name || result.id}`)
+
   revalidatePath("/(dashboard)/(data-yayasan)/jurusan", "page")
   revalidatePath("/data-master")
   return result
@@ -283,6 +306,10 @@ export async function editKelas(id: string, data: {
       waliKelasGuru: true
     }
   })
+
+  const waliInfo = result.waliKelas ? ` - Wali Kelas: ${result.waliKelas}` : ""
+  await logAktivitas("EDIT_KELAS", "AKADEMIK_KELAS", `Mengubah rombel: ${(result as any).tingkat?.name || ""} ${result.name}${waliInfo}`)
+
   revalidatePath("/data-master")
   revalidatePath("/kelas")
   return result
@@ -292,6 +319,9 @@ export async function hapusKelas(id: string) {
   const session = await auth()
   if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
   const result = await prisma.subKelas.update({ where: { id }, data: { isDeleted: true } })
+
+  await logAktivitas("HAPUS_KELAS", "AKADEMIK_KELAS", `Menghapus rombel kelas: ${result.name} (ID: ${id})`)
+
   revalidatePath("/data-master")
   return result
 }

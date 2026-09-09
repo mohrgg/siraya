@@ -567,6 +567,16 @@ export async function generateBackupData(selectedModules: string[], unitId: stri
       rawData["logAktivitas"] = logData
     }
 
+    // Log Aktivitas pencadangan database
+    await prisma.logAktivitas.create({
+      data: {
+        penggunaId: session.user.id as string,
+        aksi: "EKSPOR_BACKUP_DATABASE",
+        modul: "PENGATURAN_BACKUP",
+        keterangan: `Mengunduh file cadangan database yayasan untuk modul: ${selectedModules.join(", ")} (Scope: ${unitId || "GLOBAL"})`
+      }
+    })
+
     return { success: true, data: backupData, rawData }
   } catch (error: any) {
     console.error("Backup Error:", error)

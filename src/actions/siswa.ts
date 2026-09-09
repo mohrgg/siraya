@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
+import { logAktivitas } from "@/lib/logger"
 
 const cleanDash = (val: any) => {
   if (typeof val === 'string') {
@@ -217,6 +218,12 @@ export async function tambahSiswa(data: any) {
     return murid
   })
 
+  await logAktivitas(
+    "TAMBAH_SISWA",
+    "AKADEMIK_SISWA",
+    `Menambahkan siswa baru: ${result.name} (NISN: ${result.nisn || "-"}, NIS: ${result.nis || "-"})`
+  )
+
   revalidatePath("/data-master")
   return result
 }
@@ -304,6 +311,12 @@ export async function editSiswa(id: string, data: {
     return murid;
   })
 
+  await logAktivitas(
+    "EDIT_SISWA",
+    "AKADEMIK_SISWA",
+    `Mengubah data siswa: ${result.name} (ID: ${id})`
+  )
+
   revalidatePath("/data-master")
   return result
 }
@@ -315,6 +328,12 @@ export async function importSiswaBulk(studentsData: any[]) {
   const result = await prisma.murid.createMany({
     data: studentsData
   })
+
+  await logAktivitas(
+    "IMPOR_SISWA_MASSAL",
+    "AKADEMIK_SISWA",
+    `Mengimpor ${result.count} data siswa secara massal`
+  )
 
   revalidatePath("/data-master")
   return result
@@ -331,6 +350,13 @@ export async function hapusSiswa(id: string) {
       status: "TERHAPUS"
     }
   })
+
+  await logAktivitas(
+    "HAPUS_SISWA",
+    "AKADEMIK_SISWA",
+    `Menghapus siswa: ${result.name} (NISN: ${result.nisn || "-"}, ID: ${id})`
+  )
+
   revalidatePath("/data-master")
   return result
 }
@@ -348,6 +374,12 @@ export async function hapusSiswaBatch(ids: string[]) {
     }
   })
   
+  await logAktivitas(
+    "HAPUS_SISWA_MASSAL",
+    "AKADEMIK_SISWA",
+    `Menghapus ${result.count} siswa secara massal`
+  )
+
   revalidatePath("/data-master")
   return { success: result.count }
 }
@@ -415,6 +447,16 @@ export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: strin
 
   successCount = muridIds.length
 
+  const targetKelas = await prisma.subKelas.findUnique({
+    where: { id: newSubKelasId },
+    include: { tingkat: true }
+  })
+  await logAktivitas(
+    "NAIK_KELAS_MASSAL",
+    "AKADEMIK_SISWA",
+    `Menaikkan ${successCount} siswa ke kelas: ${targetKelas?.tingkat?.name || ""} ${targetKelas?.name || ""}`
+  )
+
   revalidatePath("/kelas")
   return { success: successCount }
 }
@@ -446,6 +488,12 @@ export async function luluskanSiswaBatch(muridIds: string[]) {
     }
   })
 
+  await logAktivitas(
+    "LULUSKAN_SISWA_MASSAL",
+    "AKADEMIK_SISWA",
+    `Meluluskan ${result.count} siswa ke status ALUMNI`
+  )
+
   revalidatePath("/kelas")
   return { success: result.count }
 }
@@ -476,6 +524,12 @@ export async function pindahkanSiswaBatch(muridIds: string[]) {
       isActive: false
     }
   })
+
+  await logAktivitas(
+    "MUTASI_SISWA_MASSAL",
+    "AKADEMIK_SISWA",
+    `Memindahkan ${result.count} siswa ke status PINDAH`
+  )
 
   revalidatePath("/kelas")
   return { success: result.count }
@@ -531,6 +585,12 @@ export async function reactivateSiswa(muridId: string, newSubKelasId: string, ta
       })
     }
   })
+
+  await logAktivitas(
+    "AKTIFKAN_SISWA",
+    "AKADEMIK_SISWA",
+    `Mengaktifkan kembali siswa: ${murid.name} (ID: ${muridId})`
+  )
 
   revalidatePath("/kelas")
   return { success: true }

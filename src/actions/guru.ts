@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
+import { logAktivitas } from "@/lib/logger"
 
 const cleanDash = (val: any) => (!val || val.trim() === "-" || val.trim() === "") ? null : val.trim();
 
@@ -128,6 +129,13 @@ export async function tambahGuru(data: {
     include: { unitSekolah: true, bidangStudi: true } as any
   })
 
+  const peranText = result.jenisPtk === "STAF" ? `Staf (${result.jabatan || "-"})` : `Guru (Mapel: ${(result as any).bidangStudi?.name || "-"})`
+  await logAktivitas(
+    result.jenisPtk === "STAF" ? "TAMBAH_STAF" : "TAMBAH_GURU",
+    "KEPEGAWAIAN",
+    `Menambahkan ${peranText}: ${result.name} (NIP: ${result.nip || "-"}, Unit: ${(result as any).unitSekolah?.name || "-"})`
+  )
+
   revalidatePath("/guru")
   revalidatePath("/kelas")
   return result
@@ -184,6 +192,13 @@ export async function editGuru(id: string, data: {
     })
   }
 
+  const peranText = result.jenisPtk === "STAF" ? `Staf (${result.jabatan || "-"})` : `Guru`
+  await logAktivitas(
+    result.jenisPtk === "STAF" ? "EDIT_STAF" : "EDIT_GURU",
+    "KEPEGAWAIAN",
+    `Mengubah data ${peranText}: ${result.name} (Status: ${result.statusKepegawaian || "-"})`
+  )
+
   revalidatePath(`/guru/${id}`)
   revalidatePath("/guru", "layout")
   revalidatePath("/kelas")
@@ -211,6 +226,13 @@ export async function hapusGuru(id: string) {
     })
   ])
 
+  const peranText = result.jenisPtk === "STAF" ? `staf` : `guru`
+  await logAktivitas(
+    result.jenisPtk === "STAF" ? "HAPUS_STAF" : "HAPUS_GURU",
+    "KEPEGAWAIAN",
+    `Menghapus ${peranText}: ${result.name} (ID: ${id})`
+  )
+
   revalidatePath("/guru")
   revalidatePath("/kelas")
   return result
@@ -225,6 +247,12 @@ export async function importGuruBulk(guruData: any[]) {
   const result = await prisma.guru.createMany({
     data: guruData
   })
+
+  await logAktivitas(
+    "IMPOR_GURU_MASSAL",
+    "KEPEGAWAIAN",
+    `Mengimpor ${result.count} data guru/staf secara massal`
+  )
 
   revalidatePath("/guru")
   return result
@@ -251,7 +279,13 @@ export async function hapusGuruMassal(ids: string[]) {
     })
   ])
 
+  await logAktivitas(
+    "HAPUS_GURU_MASSAL",
+    "KEPEGAWAIAN",
+    `Menghapus ${result.count} data guru/staf secara massal`
+  )
+
   revalidatePath("/guru")
   revalidatePath("/kelas")
-  return result
+  return { success: result.count }
 }

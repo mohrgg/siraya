@@ -146,6 +146,17 @@ export async function updateUnitSekolahKop(id: string, data: any) {
       where: { id },
       data: unitUpdatePayload
     })
+
+    // Log aktivitas
+    await prisma.logAktivitas.create({
+      data: {
+        penggunaId: session.user.id as string,
+        aksi: "UPDATE_KOP_SURAT_UNIT",
+        modul: "PENGATURAN",
+        keterangan: `Memperbarui kop surat dan data pejabat unit: ${updated.name}`
+      }
+    })
+
     revalidatePath("/pengaturan")
     return { success: true, data: updated }
   } catch (error: any) {

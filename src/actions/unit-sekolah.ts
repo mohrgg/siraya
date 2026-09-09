@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { sortSchoolClasses } from "@/lib/dashboard-queries"
+import { logAktivitas } from "@/lib/logger"
 
 export async function getUnitSekolah() {
   const session = await auth()
@@ -163,6 +164,9 @@ export async function tambahUnitSekolah(data: { name: string, level: string, add
       }
     }
   })
+
+  await logAktivitas("TAMBAH_UNIT", "PENGATURAN_UNIT", `Menambahkan unit sekolah: ${result.name} (Jenjang: ${result.level})`)
+
   revalidatePath("/(dashboard)/(data-yayasan)/unit-sekolah", "page")
   revalidatePath("/data-master")
   revalidatePath("/") // revalidate dashboard
@@ -187,6 +191,10 @@ export async function editUnitSekolah(id: string, data: { name?: string, level?:
       }
     }
   })
+
+  const ksInfo = result.namaKepalaSekolah ? ` - Kepsek: ${result.namaKepalaSekolah}` : ""
+  await logAktivitas("EDIT_UNIT", "PENGATURAN_UNIT", `Mengubah unit sekolah: ${result.name} (Jenjang: ${result.level})${ksInfo}`)
+
   revalidatePath("/(dashboard)/(data-yayasan)/unit-sekolah", "page")
   revalidatePath("/data-master")
   revalidatePath("/")
@@ -200,6 +208,9 @@ export async function hapusUnitSekolah(id: string) {
   const result = await prisma.unitSekolah.delete({
     where: { id }
   })
+
+  await logAktivitas("HAPUS_UNIT", "PENGATURAN_UNIT", `Menghapus unit sekolah: ${result.name} (ID: ${id})`)
+
   revalidatePath("/(dashboard)/(data-yayasan)/unit-sekolah", "page")
   revalidatePath("/data-master")
   revalidatePath("/")

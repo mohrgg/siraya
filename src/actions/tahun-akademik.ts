@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
+import { logAktivitas } from "@/lib/logger"
 
 export async function getTahunAkademik() {
   const session = await auth()
@@ -54,6 +55,12 @@ export async function setActiveTahunAkademik(id: string) {
     }
   })
 
+  await logAktivitas(
+    "GANTI_TAHUN_AKADEMIK_AKTIF",
+    "PENGATURAN_AKADEMIK",
+    `Mengubah tahun akademik aktif yayasan menjadi: ${year.name} (ID: ${id})`
+  )
+
   revalidatePath("/(dashboard)/(data-akademik)/tahun-akademik", "page")
   revalidatePath("/data-master")
   revalidatePath("/")
@@ -90,6 +97,12 @@ export async function tambahTahunAkademik(data: { name: string, isActive: boolea
     cookieStore.set("activeYearId", result.id, { path: "/", maxAge: 60 * 60 * 24 * 30 })
   }
   
+  await logAktivitas(
+    "TAMBAH_TAHUN_AKADEMIK",
+    "PENGATURAN_AKADEMIK",
+    `Menambahkan tahun akademik: ${result.name} (Status: ${result.isActive ? "Aktif" : "Non-Aktif"})`
+  )
+
   revalidatePath("/(dashboard)/(data-akademik)/tahun-akademik", "page")
   revalidatePath("/data-master")
   revalidatePath("/")
@@ -129,6 +142,12 @@ export async function editTahunAkademik(id: string, data: { name: string, isActi
     }
   })
 
+  await logAktivitas(
+    "EDIT_TAHUN_AKADEMIK",
+    "PENGATURAN_AKADEMIK",
+    `Mengubah tahun akademik: ${result.name} (Status: ${result.isActive ? "Aktif" : "Non-Aktif"})`
+  )
+
   revalidatePath("/(dashboard)/(data-akademik)/tahun-akademik", "page")
   revalidatePath("/data-master")
   revalidatePath("/")
@@ -147,6 +166,12 @@ export async function hapusTahunAkademik(id: string) {
     where: { id }
   })
   
+  await logAktivitas(
+    "HAPUS_TAHUN_AKADEMIK",
+    "PENGATURAN_AKADEMIK",
+    `Menghapus tahun akademik: ${result.name} (ID: ${id})`
+  )
+
   revalidatePath("/(dashboard)/(data-akademik)/tahun-akademik", "page")
   revalidatePath("/data-master")
   revalidatePath("/")
