@@ -541,32 +541,33 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
       </section>
 
       {/* ======================================================== */}
-      {/* 3. INTERACTIVE DOMAIN MODULE COCKPIT (6 CARDS GRID) */}
+      {/* 3. INTERACTIVE DOMAIN MODULE AUDIT COCKPIT (CARDS) */}
       {/* ======================================================== */}
       <section className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-0.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
           <div>
             <h2 className="text-sm sm:text-base font-extrabold text-text-main tracking-tight flex items-center gap-2">
               <Layers size={16} className="text-primary" />
-              Cockpit Aktivitas Per Modul
+              Aktivitas & Beban Modul
             </h2>
             <p className="text-xs text-text-muted mt-0.5">
-              Klik salah satu kartu di bawah ini untuk menyaring riwayat audit secara instan pada modul tersebut.
+              Pilih kartu modul untuk menyaring log audit berdasarkan domain operasional.
             </p>
           </div>
 
           {selectedDomain !== "ALL" && (
             <button
               onClick={() => setSelectedDomain("ALL")}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary-hover bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 transition-all self-start sm:self-auto cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary-hover bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/20 transition-all self-start sm:self-auto cursor-pointer min-h-[38px]"
             >
               <X size={13} />
-              <span>Reset Filter Modul ({AUDIT_DOMAINS.find(d => d.id === selectedDomain)?.name})</span>
+              <span>Reset Saring Modul ({AUDIT_DOMAINS.find(d => d.id === selectedDomain)?.name})</span>
             </button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+        {/* 6 Simplified Module Cards (2 rows of 3 on desktop) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {domainCards.map((dom) => {
             const isSelected = selectedDomain === dom.id
             const percent = kpi.totalAll > 0 ? Math.round((dom.total / kpi.totalAll) * 100) : 0
@@ -578,81 +579,92 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                   setSelectedDomain(isSelected ? "ALL" : dom.id)
                   setCurrentPage(1)
                 }}
-                className={`group relative rounded-2xl border p-4 transition-all duration-200 cursor-pointer flex flex-col justify-between select-none ${
-                  isSelected 
-                    ? 'border-primary ring-2 ring-primary/30 bg-emerald-50/30 shadow-md transform -translate-y-0.5' 
-                    : 'bg-surface border-border hover:border-slate-300 hover:shadow-sm'
+                className={`group rounded-2xl border p-4 sm:p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 min-h-[44px] ${
+                  isSelected
+                    ? "bg-primary/[0.03] border-primary ring-2 ring-primary/40 shadow-sm"
+                    : "bg-surface hover:bg-slate-50/70 border-border hover:border-slate-300 shadow-xs"
                 }`}
               >
-                {/* Active Indicator Top Pill */}
-                {isSelected && (
-                  <div className="absolute -top-2.5 right-3 bg-primary text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1">
-                    <Check size={10} strokeWidth={3} />
-                    <span>Aktif</span>
-                  </div>
-                )}
-
-                <div>
-                  {/* Card Header: Icon & Name */}
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
-                      DOMAIN_BG[dom.id] || 'bg-slate-100 border-slate-200 text-slate-700'
+                {/* 1. Domain Modul */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+                      DOMAIN_BG[dom.id] || "bg-slate-100 border-slate-200 text-slate-700"
                     }`}>
-                      {DOMAIN_ICONS[dom.id] || <Activity size={16} />}
+                      {DOMAIN_ICONS[dom.id] || <Activity size={18} />}
                     </div>
-                    <span className="text-[11px] font-mono font-bold text-text-muted bg-bg px-2 py-0.5 rounded-md border border-border">
-                      {formatNumber(dom.total)} aksi
-                    </span>
+                    <div className="min-w-0">
+                      <h3 className="font-extrabold text-sm sm:text-base text-text-main group-hover:text-primary transition-colors tracking-tight truncate">
+                        {dom.name}
+                      </h3>
+                      {isSelected && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-primary">
+                          <Check size={11} strokeWidth={3} />
+                          Filter Aktif
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <h3 className="font-extrabold text-sm text-text-main group-hover:text-primary transition-colors line-clamp-1">
-                    {dom.name}
-                  </h3>
-                  <p className="text-[11px] text-text-muted line-clamp-1 mt-0.5">
-                    {dom.description}
-                  </p>
+                  <span className="font-bold text-xs font-mono px-2.5 py-1 rounded-lg bg-bg border border-border text-text-main shrink-0">
+                    {formatNumber(dom.total)} aksi
+                  </span>
+                </div>
 
-                  {/* Micro Breakdown Badges */}
-                  <div className="flex flex-wrap items-center gap-1.5 mt-3">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200" title="Penambahan data">
-                      <PlusCircle size={10} className="text-emerald-600" />
-                      <span>{dom.breakdown.creates}</span>
-                      <span className="text-[9px] font-normal text-emerald-600">Tambah</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200" title="Perubahan data">
-                      <Edit3 size={10} className="text-blue-600" />
-                      <span>{dom.breakdown.updates}</span>
-                      <span className="text-[9px] font-normal text-blue-600">Ubah</span>
-                    </span>
-                    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border ${
-                      dom.breakdown.deletes > 0 
-                        ? 'bg-rose-50 text-rose-800 border-rose-300 font-extrabold' 
-                        : 'bg-slate-50 text-slate-500 border-slate-200'
-                    }`} title="Penghapusan data">
-                      <Trash2 size={10} className={dom.breakdown.deletes > 0 ? "text-rose-600" : "text-slate-400"} />
-                      <span>{dom.breakdown.deletes}</span>
-                      <span className={`text-[9px] font-normal ${dom.breakdown.deletes > 0 ? "text-rose-600" : "text-slate-500"}`}>Hapus</span>
-                    </span>
+                {/* 2. Volume & Proporsi */}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[11px] font-semibold text-text-muted">Volume & Proporsi</span>
+                    <span className="font-extrabold text-text-main font-mono">{percent}% beban</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className="bg-primary h-full rounded-full transition-all duration-500"
+                      style={{ width: `${Math.max(percent, 2)}%` }}
+                    />
                   </div>
                 </div>
 
-                {/* Card Footer: Recent Action Snippet */}
-                <div className="mt-4 pt-2.5 border-t border-border/70 text-[10px] text-text-muted">
-                  {dom.lastLog ? (
-                    <div className="space-y-0.5">
-                      <div className="flex items-center justify-between text-[10px] text-slate-500">
-                        <span className="font-semibold truncate max-w-[85px]">{dom.lastLog.actor}</span>
-                        <span className="font-mono text-[9px]">
-                          {format(new Date(dom.lastLog.createdAt), "dd/MM")}
-                        </span>
-                      </div>
-                      <p className="text-text-main font-medium truncate" title={dom.lastLog.keterangan}>
-                        {dom.lastLog.keterangan}
-                      </p>
+                {/* 3. Komposisi Tindakan */}
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-1.5">
+                    Komposisi Tindakan
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {/* Tambah */}
+                    <div 
+                      className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200/80 text-xs font-bold"
+                      title="Penambahan data baru"
+                    >
+                      <PlusCircle size={12} className="text-emerald-600 shrink-0" />
+                      <span>+{dom.breakdown.creates}</span>
+                      <span className="text-[10px] font-normal text-emerald-700 hidden xs:inline">Tambah</span>
                     </div>
-                  ) : (
-                    <span className="italic text-slate-400">Belum ada aktivitas</span>
-                  )}
+
+                    {/* Ubah */}
+                    <div 
+                      className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-blue-50 text-blue-800 border border-blue-200/80 text-xs font-bold"
+                      title="Perubahan / edit data"
+                    >
+                      <Edit3 size={12} className="text-blue-600 shrink-0" />
+                      <span>{dom.breakdown.updates}</span>
+                      <span className="text-[10px] font-normal text-blue-700 hidden xs:inline">Ubah</span>
+                    </div>
+
+                    {/* Hapus */}
+                    <div 
+                      className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-xs font-bold border ${
+                        dom.breakdown.deletes > 0 
+                          ? 'bg-rose-50 text-rose-800 border-rose-300 font-extrabold' 
+                          : 'bg-slate-50 text-slate-500 border-slate-200'
+                      }`}
+                      title="Penghapusan data"
+                    >
+                      <Trash2 size={12} className={dom.breakdown.deletes > 0 ? "text-rose-600 shrink-0" : "text-slate-400 shrink-0"} />
+                      <span>{dom.breakdown.deletes}</span>
+                      <span className={`text-[10px] font-normal ${dom.breakdown.deletes > 0 ? "text-rose-700" : "text-slate-500"} hidden xs:inline`}>Hapus</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             )
