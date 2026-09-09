@@ -32,7 +32,7 @@ export default async function KelasPage() {
   const isYayasan = tenant.role === "YAYASAN"
 
   return (
-    <div className="max-w-7xl mx-auto w-full">
+    <div className="w-full">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
           {isYayasan

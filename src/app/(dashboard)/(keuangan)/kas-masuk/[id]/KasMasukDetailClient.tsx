@@ -139,7 +139,7 @@ export default function KasMasukDetailClient({ transaksi, pengaturan }: { transa
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto w-full pb-24">
+    <div className="w-full pb-24">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">

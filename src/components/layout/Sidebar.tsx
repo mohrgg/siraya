@@ -64,9 +64,34 @@ const menuGroups = [
   }
 ] as { title: string, items: { href: string, label: string, icon: any, allowedRoles: string[], isGlobal?: boolean }[] }[]
 
-export default function Sidebar({ user, logoUrl }: { user: any; logoUrl?: string | null }) {
+export default function Sidebar({ 
+  user, 
+  logoUrl,
+  initialCollapsed = false 
+}: { 
+  user: any; 
+  logoUrl?: string | null;
+  initialCollapsed?: boolean;
+}) {
   const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(initialCollapsed)
+
+  // Sinkronisasi dengan localStorage saat mount
+  useEffect(() => {
+    const saved = localStorage.getItem("siraya_sidebar_collapsed")
+    if (saved !== null) {
+      setIsCollapsed(saved === "true")
+    }
+  }, [])
+
+  const handleToggleCollapse = () => {
+    setIsCollapsed(prev => {
+      const next = !prev
+      localStorage.setItem("siraya_sidebar_collapsed", String(next))
+      document.cookie = `siraya_sidebar_collapsed=${next}; path=/; max-age=31536000; SameSite=Lax`
+      return next
+    })
+  }
 
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
@@ -146,7 +171,7 @@ export default function Sidebar({ user, logoUrl }: { user: any; logoUrl?: string
         {/* Floating Toggle Button (Right Edge) - Desktop Only */}
         <button 
           className="absolute -right-3 top-8 w-7 h-7 rounded-full bg-surface border border-border text-primary hidden md:flex items-center justify-center hover:bg-surface-hover z-50 shadow-md transition-transform"
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={handleToggleCollapse}
           title={isCollapsed ? "Buka Sidebar" : "Tutup Sidebar"}
         >
           {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}

@@ -109,7 +109,7 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto w-full pb-24">
+    <div className="w-full pb-24">
       
       {/* Top Navigation */}
       <div className="flex items-start justify-between mb-6">

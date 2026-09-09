@@ -404,7 +404,7 @@ export default function PembayaranTagihanClient({
   }
 
   return (
-    <div className="max-w-7xl mx-auto w-full">
+    <div className="w-full">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Pembayaran Tagihan Siswa</h1>
         <p className="text-text-muted">

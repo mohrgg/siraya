@@ -189,7 +189,7 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto w-full">
+    <div className="w-full">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
           {isReadOnly ? "Audit Penerimaan Kas Masuk" : "Kas Masuk (Penerimaan)"}

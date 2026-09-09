@@ -180,7 +180,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
+    <div className="w-full animate-in fade-in duration-500">
       
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>

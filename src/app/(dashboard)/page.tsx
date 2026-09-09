@@ -57,7 +57,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
     if (activeTab === "yayasan") {
       const data = await getYayasanDashboardData(activeYearId)
       return (
-        <div className="max-w-[1600px] mx-auto w-full">
+        <div className="w-full">
           <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
           <YayasanDashboard role="ADMIN" {...data} />
         </div>
@@ -69,7 +69,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
       if (activeUnitId === "all") {
         const data = await getYayasanDashboardData(activeYearId)
         return (
-          <div className="max-w-[1600px] mx-auto w-full">
+          <div className="w-full">
             <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
             <YayasanDashboard role="ADMIN" {...data} />
           </div>
@@ -80,7 +80,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
 
       if (!selectedUnit) {
         return (
-          <div className="max-w-[1600px] mx-auto w-full">
+          <div className="w-full">
             <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
             <div className="flex items-center justify-center h-64 text-text-muted font-medium">Belum ada unit sekolah terdaftar.</div>
           </div>
@@ -89,7 +89,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
 
       const data = await getUnitDashboardData(selectedUnit.id, activeYearId)
       return (
-        <div className="max-w-[1600px] mx-auto w-full">
+        <div className="w-full">
           <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={selectedUnit.id} />
           <UnitDashboard role="ADMIN" unitName={selectedUnit.name || 'Unit'} {...data} />
         </div>
@@ -99,7 +99,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
     if (activeTab === "operasional") {
       const data = await getAdminOperasionalData()
       return (
-        <div className="max-w-[1600px] mx-auto w-full">
+        <div className="w-full">
           <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
           <OperasionalDashboard userName={session?.user?.name || undefined} {...data} />
         </div>
@@ -109,7 +109,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
     // Default fallback
     const data = await getYayasanDashboardData(activeYearId)
     return (
-      <div className="max-w-[1600px] mx-auto w-full">
+      <div className="w-full">
         <DashboardNavTabs role="ADMIN" units={schoolUnits} activeUnitId={activeUnitId} />
         <YayasanDashboard role="ADMIN" {...data} />
       </div>
@@ -122,7 +122,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
     
     if (!activeUnitId) {
       return (
-        <div className="max-w-[1600px] mx-auto w-full">
+        <div className="w-full">
           <DashboardNavTabs role="TATA_USAHA" />
           <div className="flex items-center justify-center h-64 text-text-muted font-medium">Belum ada unit sekolah terdaftar.</div>
         </div>
@@ -131,7 +131,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
 
     const data = await getUnitDashboardData(activeUnitId, activeYearId)
     return (
-      <div className="max-w-[1600px] mx-auto w-full">
+      <div className="w-full">
         <DashboardNavTabs role="TATA_USAHA" />
         <UnitDashboard role="TATA_USAHA" unitName={activeUnit?.name || 'Unit Sekolah'} {...data} />
       </div>
@@ -148,7 +148,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
       if (selectedUnit) {
         const data = await getUnitDashboardData(selectedUnit.id, activeYearId)
         return (
-          <div className="max-w-[1600px] mx-auto w-full">
+          <div className="w-full">
             <DashboardNavTabs role="YAYASAN" units={schoolUnits} activeUnitId={selectedUnit.id} />
             <UnitDashboard role="YAYASAN" unitName={selectedUnit.name || 'Unit'} {...data} />
           </div>
@@ -158,7 +158,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
 
     const data = await getYayasanDashboardData(activeYearId)
     return (
-      <div className="max-w-[1600px] mx-auto w-full">
+      <div className="w-full">
         <DashboardNavTabs role="YAYASAN" units={schoolUnits} activeUnitId={activeUnitId} />
         <YayasanDashboard role="YAYASAN" {...data} />
       </div>
@@ -170,7 +170,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
   
   if (!activeUnitId) {
     return (
-      <div className="max-w-[1600px] mx-auto w-full">
+      <div className="w-full">
         <DashboardNavTabs role="KEPALA_SEKOLAH" />
         <div className="flex items-center justify-center h-64 text-text-muted font-medium">Belum ada unit sekolah terdaftar.</div>
       </div>
@@ -179,7 +179,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
 
   const data = await getKepsekData(activeUnitId, activeYearId)
   return (
-    <div className="max-w-[1600px] mx-auto w-full">
+    <div className="w-full">
       <DashboardNavTabs role="KEPALA_SEKOLAH" />
       <KepsekDashboard activeUnit={activeUnit} activeYear={activeYear} {...data} />
     </div>

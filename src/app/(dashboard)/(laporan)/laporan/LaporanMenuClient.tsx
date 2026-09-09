@@ -17,7 +17,7 @@ export default function LaporanMenuClient({ userRole }: { userRole?: string }) {
   const isSupervisory = isKepsek || isYayasan
 
   return (
-    <div className="max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
+    <div className="w-full animate-in fade-in duration-500">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
           {isYayasan

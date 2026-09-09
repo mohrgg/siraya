@@ -29,7 +29,7 @@ export default async function MuridDetailPage({ params }: PageProps) {
   ])
 
   return (
-    <div className="max-w-[1600px] mx-auto w-full pb-12 animate-in fade-in duration-300">
+    <div className="w-full pb-12 animate-in fade-in duration-300">
       <MuridDetailClient 
         initialMurid={res.data} 
         isReadOnly={isReadOnly} 

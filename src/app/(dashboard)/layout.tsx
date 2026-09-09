@@ -44,6 +44,7 @@ export default async function DashboardLayout({
   let activeUnitId = tenant.unitId || "all"
 
   const activeYearId = cookieStore.get("activeYearId")?.value || academicYears.find((y: any) => y.isActive)?.id || academicYears[0]?.id
+  const isSidebarCollapsed = cookieStore.get("siraya_sidebar_collapsed")?.value === "true"
 
   return (
     <MobileMenuProvider>
@@ -57,6 +58,7 @@ export default async function DashboardLayout({
             mustChangePassword: tenant.user.mustChangePassword
           }} 
           logoUrl={pengaturan?.logoUrl || "/logo.png"}
+          initialCollapsed={isSidebarCollapsed}
         />
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           <Header 

@@ -166,7 +166,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto w-full">
+    <div className="w-full">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Pengaturan Sistem</h1>
