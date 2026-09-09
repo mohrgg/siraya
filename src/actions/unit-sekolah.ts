@@ -9,7 +9,17 @@ export async function getUnitSekolah() {
   if (!session) throw new Error("Unauthorized")
 
   const units = await prisma.unitSekolah.findMany({
-    orderBy: { name: "asc" }
+    orderBy: { name: "asc" },
+    include: {
+      _count: {
+        select: {
+          murid: { where: { isActive: true, isDeleted: false } },
+          subKelas: { where: { isDeleted: false } },
+          guru: { where: { isActive: true, isDeleted: false } },
+          jurusan: { where: { isDeleted: false } },
+        }
+      }
+    }
   })
 
   // Urutan hierarki level sekolah
@@ -39,7 +49,20 @@ export async function tambahUnitSekolah(data: { name: string, level: string, add
   const session = await auth()
   if (!session || session.user.role !== "ADMIN") throw new Error("Akses ditolak. Hanya Super Admin yang diizinkan.")
 
-  const result = await prisma.unitSekolah.create({ data })
+  const result = await prisma.unitSekolah.create({ 
+    data,
+    include: {
+      _count: {
+        select: {
+          murid: { where: { isActive: true, isDeleted: false } },
+          subKelas: { where: { isDeleted: false } },
+          guru: { where: { isActive: true, isDeleted: false } },
+          jurusan: { where: { isDeleted: false } },
+        }
+      }
+    }
+  })
+  revalidatePath("/(dashboard)/(data-yayasan)/unit-sekolah", "page")
   revalidatePath("/data-master")
   revalidatePath("/") // revalidate dashboard
   return result
@@ -51,8 +74,19 @@ export async function editUnitSekolah(id: string, data: { name?: string, level?:
 
   const result = await prisma.unitSekolah.update({
     where: { id },
-    data
+    data,
+    include: {
+      _count: {
+        select: {
+          murid: { where: { isActive: true, isDeleted: false } },
+          subKelas: { where: { isDeleted: false } },
+          guru: { where: { isActive: true, isDeleted: false } },
+          jurusan: { where: { isDeleted: false } },
+        }
+      }
+    }
   })
+  revalidatePath("/(dashboard)/(data-yayasan)/unit-sekolah", "page")
   revalidatePath("/data-master")
   revalidatePath("/")
   return result
@@ -65,6 +99,7 @@ export async function hapusUnitSekolah(id: string) {
   const result = await prisma.unitSekolah.delete({
     where: { id }
   })
+  revalidatePath("/(dashboard)/(data-yayasan)/unit-sekolah", "page")
   revalidatePath("/data-master")
   revalidatePath("/")
   return result

@@ -54,7 +54,14 @@ export async function getJurusan(unitSekolahId?: string) {
       isDeleted: false,
       ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId && unitSekolahId !== "all" ? { unitSekolahId } : {}))
     },
-    include: { unitSekolah: true },
+    include: { 
+      unitSekolah: true,
+      _count: {
+        select: {
+          subKelas: { where: { isDeleted: false } }
+        }
+      }
+    },
     orderBy: [
       { unitSekolah: { name: "asc" } },
       { name: "asc" }
@@ -80,8 +87,15 @@ export async function tambahJurusan(data: { name: string, code: string, unitSeko
         data: {
           name: data.name,
           isDeleted: false
+        },
+        include: {
+          unitSekolah: true,
+          _count: {
+            select: { subKelas: { where: { isDeleted: false } } }
+          }
         }
       })
+      revalidatePath("/(dashboard)/(data-yayasan)/jurusan", "page")
       revalidatePath("/data-master")
       return result
     } else {
@@ -89,7 +103,16 @@ export async function tambahJurusan(data: { name: string, code: string, unitSeko
     }
   }
 
-  const result = await prisma.jurusan.create({ data })
+  const result = await prisma.jurusan.create({ 
+    data,
+    include: {
+      unitSekolah: true,
+      _count: {
+        select: { subKelas: { where: { isDeleted: false } } }
+      }
+    }
+  })
+  revalidatePath("/(dashboard)/(data-yayasan)/jurusan", "page")
   revalidatePath("/data-master")
   return result
 }
@@ -199,7 +222,17 @@ export async function editJurusan(id: string, data: { name: string, code: string
     }
   }
 
-  const result = await prisma.jurusan.update({ where: { id }, data })
+  const result = await prisma.jurusan.update({ 
+    where: { id }, 
+    data,
+    include: {
+      unitSekolah: true,
+      _count: {
+        select: { subKelas: { where: { isDeleted: false } } }
+      }
+    }
+  })
+  revalidatePath("/(dashboard)/(data-yayasan)/jurusan", "page")
   revalidatePath("/data-master")
   return result
 }
@@ -215,6 +248,7 @@ export async function hapusJurusan(id: string) {
       code: existing ? `${existing.code}_del_${Date.now().toString().slice(-6)}` : undefined
     } 
   })
+  revalidatePath("/(dashboard)/(data-yayasan)/jurusan", "page")
   revalidatePath("/data-master")
   return result
 }

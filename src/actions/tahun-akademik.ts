@@ -11,8 +11,53 @@ export async function getTahunAkademik() {
   return prisma.tahunAkademik.findMany({
     orderBy: {
       name: "desc"
+    },
+    include: {
+      _count: {
+        select: {
+          subKelas: { where: { isDeleted: false } },
+          tagihan: true,
+        }
+      }
     }
   })
+}
+
+export async function setActiveTahunAkademik(id: string) {
+  const session = await auth()
+  if (!session || session.user.role !== "ADMIN") throw new Error("Akses ditolak. Hanya Super Admin yang diizinkan.")
+
+  const year = await prisma.tahunAkademik.findUnique({ where: { id } })
+  if (!year) throw new Error("Tahun Akademik tidak ditemukan.")
+
+  // Deactivate all others
+  await prisma.tahunAkademik.updateMany({
+    where: { isActive: true },
+    data: { isActive: false }
+  })
+
+  // Set active cookie for current user
+  const { cookies } = await import("next/headers")
+  const cookieStore = await cookies()
+  cookieStore.set("activeYearId", id, { path: "/", maxAge: 60 * 60 * 24 * 30 })
+
+  const result = await prisma.tahunAkademik.update({
+    where: { id },
+    data: { isActive: true },
+    include: {
+      _count: {
+        select: {
+          subKelas: { where: { isDeleted: false } },
+          tagihan: true,
+        }
+      }
+    }
+  })
+
+  revalidatePath("/(dashboard)/(data-akademik)/tahun-akademik", "page")
+  revalidatePath("/data-master")
+  revalidatePath("/")
+  return result
 }
 
 export async function tambahTahunAkademik(data: { name: string, isActive: boolean }) {
@@ -28,10 +73,26 @@ export async function tambahTahunAkademik(data: { name: string, isActive: boolea
   }
 
   const result = await prisma.tahunAkademik.create({
-    data
+    data,
+    include: {
+      _count: {
+        select: {
+          subKelas: { where: { isDeleted: false } },
+          tagihan: true,
+        }
+      }
+    }
   })
+
+  if (data.isActive) {
+    const { cookies } = await import("next/headers")
+    const cookieStore = await cookies()
+    cookieStore.set("activeYearId", result.id, { path: "/", maxAge: 60 * 60 * 24 * 30 })
+  }
   
   revalidatePath("/(dashboard)/(data-akademik)/tahun-akademik", "page")
+  revalidatePath("/data-master")
+  revalidatePath("/")
   return result
 }
 
@@ -57,10 +118,20 @@ export async function editTahunAkademik(id: string, data: { name: string, isActi
 
   const result = await prisma.tahunAkademik.update({
     where: { id },
-    data
+    data,
+    include: {
+      _count: {
+        select: {
+          subKelas: { where: { isDeleted: false } },
+          tagihan: true,
+        }
+      }
+    }
   })
 
   revalidatePath("/(dashboard)/(data-akademik)/tahun-akademik", "page")
+  revalidatePath("/data-master")
+  revalidatePath("/")
   return result
 }
 
@@ -76,6 +147,8 @@ export async function hapusTahunAkademik(id: string) {
     where: { id }
   })
   
+  revalidatePath("/(dashboard)/(data-akademik)/tahun-akademik", "page")
   revalidatePath("/data-master")
+  revalidatePath("/")
   return result
 }
