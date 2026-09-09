@@ -181,29 +181,40 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
         )}
       </div>
 
-      {/* TABS */}
-      <div className="flex gap-1 mb-6 bg-bg rounded-xl p-1.5 w-max">
-        <button 
-          onClick={() => setActiveTab("profil")} 
-          className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === "profil" ? "bg-surface shadow-sm text-primary" : "text-text-muted hover:text-text-main"}`}
-        >
-          <Building2 size={16} /> Identitas & Kop Surat
-        </button>
-        <button 
-          onClick={() => setActiveTab("rekening")} 
-          className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === "rekening" ? "bg-surface shadow-sm text-primary" : "text-text-muted hover:text-text-main"}`}
-        >
-          <Landmark size={16} /> Rekening & Penomoran
-        </button>
-        <button 
-          onClick={() => setActiveTab("backup")} 
-          className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === "backup" ? "bg-surface shadow-sm text-primary" : "text-text-muted hover:text-text-main"}`}
-        >
-          <Database size={16} /> Backup Data
-        </button>
-      </div>
-
       <div className="bg-surface rounded-2xl border border-border shadow-sm p-6 sm:p-8">
+        {/* TABS HEADER */}
+        <div className="flex gap-2 mb-6 border-b border-border overflow-x-auto">
+          <button 
+            onClick={() => setActiveTab("profil")} 
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 ${
+              activeTab === "profil" 
+                ? "border-primary text-primary" 
+                : "border-transparent text-text-muted hover:text-text-main"
+            }`}
+          >
+            <Building2 size={16} /> Identitas & Kop Surat
+          </button>
+          <button 
+            onClick={() => setActiveTab("rekening")} 
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 ${
+              activeTab === "rekening" 
+                ? "border-primary text-primary" 
+                : "border-transparent text-text-muted hover:text-text-main"
+            }`}
+          >
+            <Landmark size={16} /> Rekening & Penomoran
+          </button>
+          <button 
+            onClick={() => setActiveTab("backup")} 
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 ${
+              activeTab === "backup" 
+                ? "border-primary text-primary" 
+                : "border-transparent text-text-muted hover:text-text-main"
+            }`}
+          >
+            <Database size={16} /> Backup Data
+          </button>
+        </div>
         
         {/* TAB 1: IDENTITAS */}
         {activeTab === "profil" && (
