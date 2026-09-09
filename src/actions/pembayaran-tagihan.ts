@@ -41,17 +41,15 @@ export async function getMuridWithTagihanUnpaid(filters: {
   try {
     const hasSearch = !!(filters.searchName && filters.searchName.trim() !== "")
     const q = hasSearch ? filters.searchName!.trim() : ""
+    const isGlobal = !filters.unitSekolahId || filters.unitSekolahId === "all"
 
     const whereClause: any = {
-      unitSekolahId: filters.unitSekolahId,
       status: "AKTIF",
-      riwayatKelas: {
-        some: {
-          tahunAkademikId: filters.tahunAkademikId,
-          ...(!hasSearch && filters.subKelasId ? { subKelasId: filters.subKelasId } : {}),
-          ...(!hasSearch && filters.kelasId && !filters.subKelasId ? { subKelas: { tingkatId: filters.kelasId } } : {})
-        }
-      }
+      isDeleted: false
+    }
+
+    if (!isGlobal) {
+      whereClause.unitSekolahId = filters.unitSekolahId
     }
 
     if (hasSearch) {
@@ -60,6 +58,21 @@ export async function getMuridWithTagihanUnpaid(filters: {
         { nisn: { contains: q, mode: "insensitive" } },
         { formNo: { contains: q, mode: "insensitive" } }
       ]
+      if (filters.subKelasId) {
+        whereClause.riwayatKelas = {
+          some: {
+            subKelasId: filters.subKelasId
+          }
+        }
+      }
+    } else {
+      whereClause.riwayatKelas = {
+        some: {
+          tahunAkademikId: filters.tahunAkademikId,
+          ...(filters.subKelasId ? { subKelasId: filters.subKelasId } : {}),
+          ...(filters.kelasId && !filters.subKelasId ? { subKelas: { tingkatId: filters.kelasId } } : {})
+        }
+      }
     }
 
     const data = await prisma.murid.findMany({
@@ -70,8 +83,8 @@ export async function getMuridWithTagihanUnpaid(filters: {
         nisn: true,
         formNo: true,
         riwayatKelas: {
-          where: {
-            tahunAkademikId: filters.tahunAkademikId
+          orderBy: {
+            createdAt: 'desc'
           },
           select: {
             subKelas: {

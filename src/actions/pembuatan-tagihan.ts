@@ -124,21 +124,97 @@ export async function getAkunPendapatan(activeUnitId?: string) {
 // ==========================================
 
 /**
- * Mendapatkan daftar murid di subkelas beserta semua tagihannya di tahun akademik tertentu.
+ * Mendapatkan daftar murid di subkelas beserta semua tagihannya di tahun akademik tertentu,
+ * atau mencari murid langsung lintas kelas berdasarkan nama/NISN.
  */
-export async function getMuridWithTagihan(subKelasId: string, tahunAkademikId: string) {
+export async function getMuridWithTagihan(
+  subKelasIdOrOptions: string | { subKelasId?: string, searchName?: string, unitSekolahId?: string, tahunAkademikId: string }, 
+  tahunAkademikIdParam?: string
+) {
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
 
-  // 1. Ambil daftar murid yang tergabung di riwayat kelas ini
+  let subKelasId = typeof subKelasIdOrOptions === "string" ? subKelasIdOrOptions : subKelasIdOrOptions.subKelasId
+  let tahunAkademikId = typeof subKelasIdOrOptions === "string" ? tahunAkademikIdParam! : subKelasIdOrOptions.tahunAkademikId
+  let searchName = typeof subKelasIdOrOptions === "object" ? subKelasIdOrOptions.searchName : undefined
+  let unitSekolahId = typeof subKelasIdOrOptions === "object" ? subKelasIdOrOptions.unitSekolahId : undefined
+
+  if (searchName && searchName.trim()) {
+    const q = searchName.trim()
+    const whereMurid: any = {
+      isDeleted: false,
+      isActive: true,
+      OR: [
+        { name: { contains: q, mode: 'insensitive' } },
+        { nisn: { contains: q, mode: 'insensitive' } },
+        { formNo: { contains: q, mode: 'insensitive' } }
+      ]
+    }
+    if (unitSekolahId && unitSekolahId !== 'all') {
+      whereMurid.unitSekolahId = unitSekolahId
+    }
+    if (subKelasId) {
+      whereMurid.riwayatKelas = {
+        some: { subKelasId }
+      }
+    }
+
+    const muridList = await prisma.murid.findMany({
+      where: whereMurid,
+      include: {
+        riwayatKelas: {
+          orderBy: { createdAt: 'desc' },
+          select: {
+            subKelas: {
+              select: { id: true, name: true }
+            }
+          },
+          take: 1
+        },
+        tagihan: {
+          where: { tahunAkademikId },
+          include: { akun: true }
+        },
+        _count: {
+          select: {
+            tagihan: {
+              where: {
+                sisaTagihan: { gt: 0 },
+                tahunAkademikId: { not: tahunAkademikId }
+              }
+            }
+          }
+        }
+      },
+      orderBy: { name: 'asc' }
+    })
+
+    return muridList
+  }
+
+  // Mode Berdasarkan Subkelas
+  if (!subKelasId) return []
+
   const riwayatKelas = await prisma.riwayatKelas.findMany({
     where: {
       subKelasId,
       tahunAkademikId
     },
     include: {
+      subKelas: {
+        select: { id: true, name: true }
+      },
       murid: {
         include: {
+          riwayatKelas: {
+            where: { subKelasId, tahunAkademikId },
+            select: {
+              subKelas: {
+                select: { id: true, name: true }
+              }
+            },
+            take: 1
+          },
           tagihan: {
             where: {
               tahunAkademikId
@@ -168,9 +244,15 @@ export async function getMuridWithTagihan(subKelasId: string, tahunAkademikId: s
   // 2. Ekstrak data murid dan tagihannya
   const seenIds = new Set<string>()
   const muridList = riwayatKelas
-    .map(rk => rk.murid)
+    .map(rk => {
+      const m = rk.murid as any
+      if (m && (!m.riwayatKelas || m.riwayatKelas.length === 0) && rk.subKelas) {
+        m.riwayatKelas = [{ subKelas: rk.subKelas }]
+      }
+      return m
+    })
     .filter(m => {
-      if (m.isDeleted || !m.isActive || seenIds.has(m.id)) return false
+      if (!m || m.isDeleted || !m.isActive || seenIds.has(m.id)) return false
       seenIds.add(m.id)
       return true
     })

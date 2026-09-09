@@ -14,7 +14,7 @@ import {
   saveColumnOrder,
   updateTagihanKolomMassal
 } from "@/actions/pembuatan-tagihan"
-import { Plus, Search, Filter, Loader2, Save, MoreVertical, Edit2, Trash2, X, GripHorizontal } from "lucide-react"
+import { Plus, Search, Filter, Loader2, Save, MoreVertical, Edit2, Trash2, X, GripHorizontal, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 import ModalTambahTagihan from "./ModalTambahTagihan"
@@ -32,6 +32,7 @@ type GridRow = {
   name: string
   nisn: string
   formNo: string
+  subKelasName?: string
   tagihanMap: Record<string, number> // columnId -> jumlah
   lockedMap: Record<string, boolean> // columnId -> is locked
   isDirty: boolean
@@ -62,6 +63,12 @@ export default function PembuatanTagihanClient({
 }) {
   const isReadOnly = user.role === "KEPALA_SEKOLAH"
 
+  // Tabs: 'class' (Rombel / Kelas) vs 'search' (Tagihan Individu / Cari Siswa Langsung)
+  const [activeTab, setActiveTab] = useState<"class" | "search">("class")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [lastSearchedQuery, setLastSearchedQuery] = useState("")
+  const [filterQuery, setFilterQuery] = useState("")
+
   // Filter States
   const [kelasList, setKelasList] = useState<any[]>([])
   const [kelasId, setKelasId] = useState("")
@@ -74,7 +81,6 @@ export default function PembuatanTagihanClient({
   const [isLoading, setIsLoading] = useState(false)
   const [gridData, setGridData] = useState<GridRow[]>([])
   const [akunColumns, setAkunColumns] = useState<TagihanColumn[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
   const [targetList, setTargetList] = useState<string[]>([])
 
   // Modal States
@@ -186,13 +192,15 @@ export default function PembuatanTagihanClient({
         lMap[compId] = t.sisaTagihan < t.jumlah 
       })
 
-      const hasOldDebts = murid._count?.tagihan > 0
+      const hasOldDebts = (murid._count?.tagihan || 0) > 0
+      const subKelasName = murid.riwayatKelas?.[0]?.subKelas?.name || ""
 
       return {
         id: murid.id,
         name: murid.name,
         nisn: murid.nisn || "-",
         formNo: murid.formNo || "-",
+        subKelasName,
         tagihanMap: tMap,
         lockedMap: lMap,
         isDirty: false,
@@ -200,15 +208,17 @@ export default function PembuatanTagihanClient({
       }
     })
     setGridData(rows)
+    setCurrentPage(1)
   }
 
-  const handleTampilkan = async () => {
+  const handleTampilkanKelas = async () => {
     if (!subKelasId || !activeTahunAkademikId) {
       toast.error("Pilih Subkelas dan Tahun Akademik terlebih dahulu")
       return
     }
 
     setIsLoading(true)
+    setLastSearchedQuery("")
     try {
       const [data, order] = await Promise.all([
         getMuridWithTagihan(subKelasId, activeTahunAkademikId),
@@ -216,11 +226,60 @@ export default function PembuatanTagihanClient({
       ])
       setGlobalColumnOrder(order)
       processData(data, order)
+      if (data.length === 0) {
+        toast("Tidak ada data murid di rombel ini", { icon: "ℹ️" })
+      }
     } catch (error: any) {
       toast.error("Gagal mengambil data: " + error.message)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleCariSiswa = async (overrideSearch?: string) => {
+    const querySearch = typeof overrideSearch === "string" ? overrideSearch : searchQuery
+    const q = querySearch.trim()
+    if (!q) {
+      toast.error("Ketik nama siswa, NISN, atau no formulir")
+      return
+    }
+    if (!activeTahunAkademikId) {
+      toast.error("Tahun Akademik aktif tidak ditemukan")
+      return
+    }
+
+    setIsLoading(true)
+    setLastSearchedQuery(q)
+    try {
+      const [data, order] = await Promise.all([
+        getMuridWithTagihan({
+          searchName: q,
+          unitSekolahId: activeUnitId,
+          tahunAkademikId: activeTahunAkademikId
+        }),
+        getColumnOrder(activeUnitId)
+      ])
+      setGlobalColumnOrder(order)
+      processData(data, order)
+      if (data.length === 0) {
+        toast("Tidak ada data murid yang ditemukan", { icon: "ℹ️" })
+      }
+    } catch (error: any) {
+      toast.error("Gagal mencari siswa: " + error.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleResetFilter = () => {
+    setSearchQuery("")
+    setLastSearchedQuery("")
+    setFilterQuery("")
+    setKelasId(kelasList.length > 0 ? kelasList[0].id : "")
+    setJurusanId("")
+    setSubKelasId("")
+    setGridData([])
+    setCurrentPage(1)
   }
 
   const handleModalSubmit = async (data: { 
@@ -254,7 +313,12 @@ export default function PembuatanTagihanClient({
       })
       toast.success("Berhasil membuat tagihan massal!")
       setIsModalOpen(false)
-      await handleTampilkan()
+
+      if (activeTab === "search" && lastSearchedQuery) {
+        await handleCariSiswa(lastSearchedQuery)
+      } else if (subKelasId) {
+        await handleTampilkanKelas()
+      }
     } catch (error: any) {
       toast.error(error.message || "Gagal membuat tagihan")
     } finally {
@@ -329,7 +393,11 @@ export default function PembuatanTagihanClient({
       
       toast.success("Kolom tagihan berhasil diubah")
       setIsEditModalOpen(false)
-      handleTampilkan() // Reload to get fresh column names and amounts
+      if (activeTab === "search" && lastSearchedQuery) {
+        handleCariSiswa(lastSearchedQuery)
+      } else if (subKelasId) {
+        handleTampilkanKelas()
+      }
     } catch (error: any) {
       toast.error("Gagal: " + error.message)
     } finally {
@@ -344,7 +412,11 @@ export default function PembuatanTagihanClient({
       await hapusTagihanMassal(subKelasId, activeTahunAkademikId, deletingCol.akunId, deletingCol.namaTagihan)
       toast.success("Berhasil menghapus komponen tagihan")
       setIsDeleteModalOpen(false)
-      await handleTampilkan()
+      if (activeTab === "search" && lastSearchedQuery) {
+        handleCariSiswa(lastSearchedQuery)
+      } else if (subKelasId) {
+        handleTampilkanKelas()
+      }
     } catch (error: any) {
       toast.error(error.message || "Gagal menghapus tagihan")
     } finally {
@@ -358,12 +430,14 @@ export default function PembuatanTagihanClient({
   }
 
   const filteredData = useMemo(() => {
-    const res = gridData.filter(row => 
-      row.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      row.formNo.toLowerCase().includes(searchTerm.toLowerCase())
+    if (!filterQuery.trim()) return gridData
+    const q = filterQuery.toLowerCase()
+    return gridData.filter(row => 
+      row.name.toLowerCase().includes(q) || 
+      row.formNo.toLowerCase().includes(q) ||
+      row.nisn.toLowerCase().includes(q)
     )
-    return res
-  }, [gridData, searchTerm])
+  }, [gridData, filterQuery])
 
   // Pagination Logic
   const computedTotalPages = Math.ceil(filteredData.length / pageSize)
@@ -375,7 +449,7 @@ export default function PembuatanTagihanClient({
   // Reset pagination when filter or search changes
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, subKelasId, kelasId, pageSize])
+  }, [filterQuery, subKelasId, kelasId, pageSize])
 
   // Drag Auto-Scroll Logic
   const handleDragOverContainer = (e: React.DragEvent) => {
@@ -406,82 +480,228 @@ export default function PembuatanTagihanClient({
   const activeKelasName = kelasList.find(k => k.id === kelasId)?.name || ""
 
   return (
-    <div className="max-w-[1600px] mx-auto w-full">
+    <div className="max-w-7xl mx-auto w-full">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Pembuatan Tagihan Siswa</h1>
-        <p className="text-text-muted">Kelola tagihan massal untuk siswa berdasarkan komponen biaya</p>
+        <p className="text-text-muted">
+          Kelola dan atur nominal tagihan komponen biaya secara matriks per siswa • Tahun Ajaran {activeTahunAkademikName}
+        </p>
       </div>
 
-      {/* Main Content Card (Match KasKeluar Layout) */}
+      {/* Main Content Card */}
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6 mb-6">
         
         {/* Tabs Navigation */}
         <div className="flex gap-2 mb-6 border-b border-border">
-          <button className="px-6 py-3 font-semibold text-sm transition-colors border-b-2 border-primary text-primary">
-            Daftar Tagihan Siswa
+          <button 
+            type="button"
+            onClick={() => {
+              setActiveTab("class")
+              setGridData([])
+              setSearchQuery("")
+              setLastSearchedQuery("")
+              setFilterQuery("")
+            }}
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 ${
+              activeTab === "class"
+                ? "border-primary text-primary"
+                : "border-transparent text-text-muted hover:text-text-main"
+            }`}
+          >
+            <Filter size={16} />
+            Berdasarkan Rombel / Kelas
+          </button>
+          <button 
+            type="button"
+            onClick={() => {
+              setActiveTab("search")
+              setGridData([])
+              setFilterQuery("")
+            }}
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 ${
+              activeTab === "search"
+                ? "border-primary text-primary"
+                : "border-transparent text-text-muted hover:text-text-main"
+            }`}
+          >
+            <Search size={16} />
+            Cari Siswa Langsung (Tagihan Individu)
           </button>
         </div>
 
-        {/* Filters and Actions Row */}
-        <Toolbar>
-          <ToolbarSearch 
-            value={searchTerm}
-            onChange={(e: any) => setSearchTerm(e.target.value)}
-            placeholder="Cari Siswa / No Pendaftaran..." 
-            disabled={gridData.length === 0}
-          />
-
-          <ToolbarFilter
-            icon={<Filter size={14} />}
-            value={kelasId}
-            onChange={(val) => setKelasId(val as string)}
-            options={[
-              { label: "Kelas...", value: "" },
-              ...kelasList.map(kelas => ({ label: kelas.name, value: kelas.id }))
-            ]}
-          />
-
-          {jurusanList.length > 0 && (
+        {/* Tab 1: Filters and Actions Row for Class */}
+        {activeTab === "class" && (
+          <Toolbar>
             <ToolbarFilter
-              value={jurusanId}
-              onChange={(val) => setJurusanId(val as string)}
+              icon={<Filter size={14} />}
+              value={kelasId}
+              onChange={(val) => {
+                setKelasId(val as string)
+                setSubKelasId("")
+              }}
               options={[
-                { label: "Jurusan...", value: "" },
-                ...jurusanList.map(jurusan => ({ label: jurusan.name, value: jurusan.id }))
+                { label: "Pilih Kelas...", value: "" },
+                ...kelasList.map(kelas => ({ label: kelas.name, value: kelas.id }))
               ]}
             />
-          )}
 
-          <ToolbarFilter
-            value={subKelasId}
-            onChange={(val) => setSubKelasId(val as string)}
-            disabled={!kelasId}
-            options={[
-              { label: "Subkelas...", value: "" },
-              ...subKelasList.map(sk => ({ label: sk.name, value: sk.id }))
-            ]}
-          />
+            {jurusanList.length > 0 && (
+              <ToolbarFilter
+                value={jurusanId}
+                onChange={(val) => {
+                  setJurusanId(val as string)
+                  setSubKelasId("")
+                }}
+                options={[
+                  { label: "Semua Jurusan", value: "" },
+                  ...jurusanList.map(jurusan => ({ label: jurusan.name, value: jurusan.id }))
+                ]}
+              />
+            )}
 
-          <Button 
-            size="sm"
-            onClick={handleTampilkan} 
-            disabled={!subKelasId || isLoading}
-            className="px-4 py-1.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90"
-          >
-            {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
-          </Button>
+            <ToolbarFilter
+              value={subKelasId}
+              onChange={(val) => setSubKelasId(val as string)}
+              disabled={!kelasId}
+              options={[
+                { label: kelasId ? "Pilih Subkelas..." : "Pilih Kelas Dulu", value: "" },
+                ...subKelasList.map(sk => ({ label: sk.name, value: sk.id }))
+              ]}
+            />
 
-          <ToolbarActions>
-            {!isReadOnly && gridData.length > 0 && (
-              <Button 
-                onClick={() => setIsModalOpen(true)}
-                className="bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm whitespace-nowrap"
+            <Button 
+              size="sm"
+              onClick={handleTampilkanKelas} 
+              disabled={!subKelasId || isLoading}
+              className="px-4 py-1.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90 text-white rounded-xl"
+            >
+              {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
+            </Button>
+
+            {gridData.length > 0 && (
+              <ToolbarSearch 
+                value={filterQuery}
+                onChange={(e: any) => setFilterQuery(e.target.value)}
+                onClear={() => setFilterQuery("")}
+                placeholder="Filter nama siswa di rombel ini..." 
+              />
+            )}
+
+            {(kelasId || subKelasId || gridData.length > 0) && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleResetFilter}
+                disabled={isLoading}
+                title="Reset filter dan data"
+                className="px-3 py-1.5 h-auto whitespace-nowrap text-text-muted hover:text-text-main border-border hover:bg-gray-50 rounded-xl"
               >
-                <Plus size={16} className="mr-1.5" /> Tambah Tagihan
+                <RotateCcw size={14} className="mr-1.5" />
+                Reset
               </Button>
             )}
-          </ToolbarActions>
-        </Toolbar>
+
+            <ToolbarActions>
+              {!isReadOnly && gridData.length > 0 && (
+                <Button 
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm whitespace-nowrap rounded-xl"
+                >
+                  <Plus size={16} className="mr-1.5" /> Tambah Tagihan
+                </Button>
+              )}
+            </ToolbarActions>
+          </Toolbar>
+        )}
+
+        {/* Tab 2: Direct Search for Individual Student */}
+        {activeTab === "search" && (
+          <div className="mb-6">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
+                <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted/60 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      handleCariSiswa()
+                    }
+                  }}
+                  placeholder="Ketik Nama Siswa, NISN, atau No Formulir lalu tekan Enter..."
+                  className="w-full pl-10 pr-10 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("")
+                      setLastSearchedQuery("")
+                      setGridData([])
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main p-1"
+                  >
+                    <RotateCcw size={14} />
+                  </button>
+                )}
+              </div>
+              <Button
+                size="sm"
+                onClick={() => handleCariSiswa()}
+                disabled={!searchQuery.trim() || isLoading}
+                className="px-5 py-2.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90 text-white font-semibold rounded-xl shadow-sm"
+              >
+                {isLoading ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Search size={16} className="mr-1.5" />}
+                Cari Siswa
+              </Button>
+              {(gridData.length > 0 || lastSearchedQuery) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setSearchQuery("")
+                    setLastSearchedQuery("")
+                    setGridData([])
+                  }}
+                  disabled={isLoading}
+                  className="px-4 py-2.5 h-auto whitespace-nowrap text-text-muted hover:text-text-main border-border rounded-xl hover:bg-gray-50"
+                >
+                  <RotateCcw size={14} className="mr-1.5" />
+                  Reset
+                </Button>
+              )}
+              {!isReadOnly && gridData.length > 0 && (
+                <Button 
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm whitespace-nowrap rounded-xl px-4 py-2.5"
+                >
+                  <Plus size={16} className="mr-1.5" /> Tambah Tagihan
+                </Button>
+              )}
+            </div>
+
+            {lastSearchedQuery && (
+              <div className="flex items-center justify-between bg-emerald-50/70 border border-emerald-200 text-emerald-800 text-xs px-4 py-2.5 rounded-xl mt-3">
+                <span>
+                  Menampilkan hasil pencarian untuk: <strong className="font-semibold">&quot;{lastSearchedQuery}&quot;</strong> ({gridData.length} siswa ditemukan lintas kelas)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("")
+                    setLastSearchedQuery("")
+                    setGridData([])
+                  }}
+                  className="underline hover:text-emerald-950 font-medium"
+                >
+                  Bersihkan Pencarian
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Table / Empty State Container */}
         {gridData.length > 0 ? (
@@ -625,7 +845,18 @@ export default function PembuatanTagihanClient({
                                 </p>
                               )}
                             </div>
-                            <p className="text-xs text-text-muted mt-0.5">{row.nisn} • {row.formNo}</p>
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                              {row.subKelasName ? (
+                                <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-200">
+                                  {row.subKelasName}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-semibold bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200">
+                                  Belum ada rombel
+                                </span>
+                              )}
+                              <p className="text-xs text-text-muted">{row.nisn} • {row.formNo}</p>
+                            </div>
                           </td>
                           
                           {akunColumns.map(col => {
@@ -751,13 +982,37 @@ export default function PembuatanTagihanClient({
           </>
         ) : (
           !isLoading && (
-            <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted">
-              <Filter className="mb-4 text-text-muted/50" size={48} strokeWidth={1} />
-              <h3 className="text-lg font-bold text-text-main mb-2">Pilih Filter Terlebih Dahulu</h3>
-              <p className="max-w-md">
-                Silakan pilih <strong>Kelas</strong> dan <strong>Subkelas</strong> pada kolom filter di atas, lalu klik tombol <strong>Tampilkan</strong> untuk melihat atau membuat tagihan siswa.
-              </p>
-            </div>
+            activeTab === "search" ? (
+              lastSearchedQuery ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted">
+                  <Search className="mb-4 text-text-muted/40" size={44} strokeWidth={1.5} />
+                  <h3 className="text-base font-bold text-text-main mb-1">Siswa Tidak Ditemukan</h3>
+                  <p className="max-w-md text-sm text-text-muted">
+                    Tidak ditemukan siswa dengan kata kunci &quot;{lastSearchedQuery}&quot;. Pastikan ejaan nama, NISN, atau no formulir sudah benar.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-emerald-600 border border-emerald-100 shadow-sm">
+                    <Search size={28} strokeWidth={1.75} />
+                  </div>
+                  <h3 className="text-base font-bold text-text-main mb-1">Mode Tagihan Individu: Cari Siswa Langsung</h3>
+                  <p className="max-w-md text-sm text-text-muted">
+                    Ketik <strong>Nama Siswa</strong>, <strong>NISN</strong>, atau <strong>No Formulir</strong> pada kolom pencarian di atas lalu tekan <strong>Enter</strong> untuk membuat atau menyesuaikan nominal tagihan siswa secara langsung tanpa perlu memuat seluruh rombel.
+                  </p>
+                </div>
+              )
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted">
+                <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-4 text-gray-400 border border-gray-100 shadow-sm">
+                  <Filter size={28} strokeWidth={1.75} />
+                </div>
+                <h3 className="text-base font-bold text-text-main mb-1">Pilih Rombel / Kelas Terlebih Dahulu</h3>
+                <p className="max-w-md text-sm text-text-muted">
+                  Silakan pilih <strong>Kelas</strong> dan <strong>Subkelas</strong> pada filter di atas, lalu klik <strong>Tampilkan</strong> untuk melihat atau membuat tagihan seluruh siswa di rombel tersebut.
+                </p>
+              </div>
+            )
           )
         )}
       </div>

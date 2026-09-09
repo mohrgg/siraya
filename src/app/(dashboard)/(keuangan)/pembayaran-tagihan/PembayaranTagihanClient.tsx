@@ -65,6 +65,12 @@ export default function PembayaranTagihanClient({
 }) {
   const isReadOnly = user.role === "KEPALA_SEKOLAH"
 
+  // Tabs: 'search' (Loket Kasir) vs 'class' (Rombel / Kelas)
+  const [activeTab, setActiveTab] = useState<"search" | "class">("search")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [lastSearchedQuery, setLastSearchedQuery] = useState("")
+  const [filterQuery, setFilterQuery] = useState("")
+
   // Filter States
   const [kelasList, setKelasList] = useState<any[]>([])
   const [kelasId, setKelasId] = useState("")
@@ -77,7 +83,6 @@ export default function PembayaranTagihanClient({
   const [isLoading, setIsLoading] = useState(false)
   const [gridData, setGridData] = useState<GridRow[]>([])
   const [akunColumns, setAkunColumns] = useState<{id: string, nama: string, kode: string}[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
 
   const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
@@ -181,7 +186,9 @@ export default function PembayaranTagihanClient({
   }
 
   const handleResetFilter = () => {
-    setSearchTerm("")
+    setSearchQuery("")
+    setLastSearchedQuery("")
+    setFilterQuery("")
     setKelasId("")
     setJurusanId("")
     setSubKelasId("")
@@ -190,12 +197,11 @@ export default function PembayaranTagihanClient({
     setCurrentPage(1)
   }
 
-  const handleTampilkan = async (overrideSearch?: string) => {
-    const querySearch = typeof overrideSearch === "string" ? overrideSearch : searchTerm
-    const hasSearch = querySearch.trim().length > 0
-
-    if (!hasSearch && !subKelasId) {
-      toast.error("Pilih Subkelas atau ketik nama siswa untuk mencari")
+  const handleCariSiswa = async (overrideSearch?: string) => {
+    const querySearch = typeof overrideSearch === "string" ? overrideSearch : searchQuery
+    const q = querySearch.trim()
+    if (!q) {
+      toast.error("Ketik nama siswa, NISN, atau no formulir")
       return
     }
     if (!activeTahunAkademikId) {
@@ -203,20 +209,51 @@ export default function PembayaranTagihanClient({
       return
     }
     setIsLoading(true)
+    setLastSearchedQuery(q)
     try {
       const [res, order] = await Promise.all([
         getMuridWithTagihanUnpaid({
           unitSekolahId: activeUnitId,
           tahunAkademikId: activeTahunAkademikId,
-          kelasId: hasSearch ? undefined : (kelasId || undefined),
-          subKelasId: hasSearch ? undefined : (subKelasId || undefined),
-          searchName: querySearch.trim() || undefined
+          searchName: q
         }),
         getColumnOrder(activeUnitId)
       ])
       processData(res, order)
       if (res.length === 0) {
         toast("Tidak ada data murid yang ditemukan", { icon: "ℹ️" })
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Gagal mencari siswa")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleTampilkanKelas = async () => {
+    if (!subKelasId) {
+      toast.error("Pilih Subkelas terlebih dahulu")
+      return
+    }
+    if (!activeTahunAkademikId) {
+      toast.error("Tahun Akademik aktif tidak ditemukan")
+      return
+    }
+    setIsLoading(true)
+    setLastSearchedQuery("")
+    try {
+      const [res, order] = await Promise.all([
+        getMuridWithTagihanUnpaid({
+          unitSekolahId: activeUnitId,
+          tahunAkademikId: activeTahunAkademikId,
+          kelasId: kelasId || undefined,
+          subKelasId: subKelasId
+        }),
+        getColumnOrder(activeUnitId)
+      ])
+      processData(res, order)
+      if (res.length === 0) {
+        toast("Tidak ada data murid di rombel ini", { icon: "ℹ️" })
       }
     } catch (error: any) {
       toast.error(error.message || "Gagal mengambil data")
@@ -230,12 +267,14 @@ export default function PembayaranTagihanClient({
   }
 
   const filteredData = useMemo(() => {
+    if (!filterQuery.trim()) return gridData
+    const q = filterQuery.toLowerCase()
     return gridData.filter(row => 
-      row.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      row.formNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      row.nisn.toLowerCase().includes(searchTerm.toLowerCase())
+      row.name.toLowerCase().includes(q) || 
+      row.formNo.toLowerCase().includes(q) ||
+      row.nisn.toLowerCase().includes(q)
     )
-  }, [gridData, searchTerm])
+  }, [gridData, filterQuery])
 
   const computedTotalPages = Math.max(1, Math.ceil(filteredData.length / pageSize))
   const paginatedData = useMemo(() => {
@@ -327,7 +366,12 @@ export default function PembayaranTagihanClient({
         total: totalBayar
       })
       
-      handleTampilkan() // refresh data
+      // Refresh current data
+      if (activeTab === "search" && lastSearchedQuery) {
+        handleCariSiswa(lastSearchedQuery)
+      } else if (subKelasId) {
+        handleTampilkanKelas()
+      }
     } else {
       toast.error(res.message || "Gagal memproses pembayaran")
     }
@@ -359,94 +403,211 @@ export default function PembayaranTagihanClient({
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto w-full">
+    <div className="max-w-7xl mx-auto w-full">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Pembayaran Tagihan Siswa</h1>
-        <p className="text-text-muted">Proses pembayaran tagihan komponen biaya secara matriks per siswa</p>
+        <p className="text-text-muted">
+          Proses pembayaran tagihan komponen biaya secara matriks per siswa • Tahun Ajaran {activeTahunAkademikName}
+        </p>
       </div>
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6 mb-6">
         {/* Tabs Navigation */}
         <div className="flex gap-2 mb-6 border-b border-border">
-          <button className="px-6 py-3 font-semibold text-sm transition-colors border-b-2 border-primary text-primary">
-            Daftar Tagihan Siswa
+          <button 
+            type="button"
+            onClick={() => {
+              setActiveTab("search")
+              setGridData([])
+              setFilterQuery("")
+              setKelasId("")
+              setJurusanId("")
+              setSubKelasId("")
+              setSubKelasList([])
+            }}
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 ${
+              activeTab === "search"
+                ? "border-primary text-primary"
+                : "border-transparent text-text-muted hover:text-text-main"
+            }`}
+          >
+            <Search size={16} />
+            Cari Siswa Langsung (Loket Kasir)
+          </button>
+          <button 
+            type="button"
+            onClick={() => {
+              setActiveTab("class")
+              setGridData([])
+              setSearchQuery("")
+              setLastSearchedQuery("")
+              setFilterQuery("")
+            }}
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 ${
+              activeTab === "class"
+                ? "border-primary text-primary"
+                : "border-transparent text-text-muted hover:text-text-main"
+            }`}
+          >
+            <Filter size={16} />
+            Filter Berdasarkan Rombel / Kelas
           </button>
         </div>
 
-        <Toolbar>
-          <ToolbarSearch 
-            value={searchTerm}
-            onChange={(e: any) => setSearchTerm(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault()
-                handleTampilkan(searchTerm)
-              }
-            }}
-            onClear={handleResetFilter}
-            placeholder="Cari siswa atau NISN..." 
-          />
+        {/* Tab 1: Loket Kasir Direct Search */}
+        {activeTab === "search" && (
+          <div className="mb-6">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
+                <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted/60 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      handleCariSiswa()
+                    }
+                  }}
+                  placeholder="Ketik Nama Siswa, NISN, atau No Formulir lalu tekan Enter..."
+                  className="w-full pl-10 pr-10 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("")
+                      setLastSearchedQuery("")
+                      setGridData([])
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main p-1"
+                  >
+                    <RotateCcw size={14} />
+                  </button>
+                )}
+              </div>
+              <Button
+                size="sm"
+                onClick={() => handleCariSiswa()}
+                disabled={!searchQuery.trim() || isLoading}
+                className="px-5 py-2.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90 text-white font-semibold rounded-xl shadow-sm"
+              >
+                {isLoading ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Search size={16} className="mr-1.5" />}
+                Cari Siswa
+              </Button>
+              {(gridData.length > 0 || lastSearchedQuery) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setSearchQuery("")
+                    setLastSearchedQuery("")
+                    setGridData([])
+                  }}
+                  disabled={isLoading}
+                  className="px-4 py-2.5 h-auto whitespace-nowrap text-text-muted hover:text-text-main border-border rounded-xl hover:bg-gray-50"
+                >
+                  <RotateCcw size={14} className="mr-1.5" />
+                  Reset
+                </Button>
+              )}
+            </div>
 
-          <ToolbarFilter
-            icon={<Filter size={14} />}
-            value={kelasId}
-            onChange={(val) => {
-              setKelasId(val as string)
-              setSubKelasId("")
-            }}
-            options={[
-              { label: "Pilih Kelas...", value: "" },
-              ...kelasList.map(kelas => ({ label: kelas.name, value: kelas.id }))
-            ]}
-          />
+            {lastSearchedQuery && (
+              <div className="flex items-center justify-between bg-emerald-50/70 border border-emerald-200 text-emerald-800 text-xs px-4 py-2.5 rounded-xl mt-3">
+                <span>
+                  Menampilkan hasil pencarian untuk: <strong className="font-semibold">&quot;{lastSearchedQuery}&quot;</strong> ({gridData.length} siswa ditemukan lintas kelas)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("")
+                    setLastSearchedQuery("")
+                    setGridData([])
+                  }}
+                  className="underline hover:text-emerald-950 font-medium"
+                >
+                  Bersihkan Pencarian
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
-          {jurusanList.length > 0 && (
+        {/* Tab 2: Filter by Class */}
+        {activeTab === "class" && (
+          <Toolbar>
             <ToolbarFilter
-              value={jurusanId}
+              icon={<Filter size={14} />}
+              value={kelasId}
               onChange={(val) => {
-                setJurusanId(val as string)
+                setKelasId(val as string)
                 setSubKelasId("")
               }}
               options={[
-                { label: "Semua Jurusan", value: "" },
-                ...jurusanList.map(jurusan => ({ label: jurusan.name, value: jurusan.id }))
+                { label: "Pilih Kelas...", value: "" },
+                ...kelasList.map(kelas => ({ label: kelas.name, value: kelas.id }))
               ]}
             />
-          )}
 
-          <ToolbarFilter
-            value={subKelasId}
-            onChange={(val) => setSubKelasId(val as string)}
-            disabled={!kelasId}
-            options={[
-              { label: kelasId ? "Pilih Subkelas..." : "Pilih Kelas Dulu", value: "" },
-              ...subKelasList.map(sk => ({ label: sk.name, value: sk.id }))
-            ]}
-          />
+            {jurusanList.length > 0 && (
+              <ToolbarFilter
+                value={jurusanId}
+                onChange={(val) => {
+                  setJurusanId(val as string)
+                  setSubKelasId("")
+                }}
+                options={[
+                  { label: "Semua Jurusan", value: "" },
+                  ...jurusanList.map(jurusan => ({ label: jurusan.name, value: jurusan.id }))
+                ]}
+              />
+            )}
 
-          <Button 
-            size="sm"
-            onClick={() => handleTampilkan(searchTerm)} 
-            disabled={(!subKelasId && !searchTerm.trim()) || isLoading}
-            className="px-4 py-1.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90 text-white"
-          >
-            {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
-          </Button>
+            <ToolbarFilter
+              value={subKelasId}
+              onChange={(val) => setSubKelasId(val as string)}
+              disabled={!kelasId}
+              options={[
+                { label: kelasId ? "Pilih Subkelas..." : "Pilih Kelas Dulu", value: "" },
+                ...subKelasList.map(sk => ({ label: sk.name, value: sk.id }))
+              ]}
+            />
 
-          {(searchTerm || kelasId || subKelasId || gridData.length > 0) && (
-            <Button
+            <Button 
               size="sm"
-              variant="outline"
-              onClick={handleResetFilter}
-              disabled={isLoading}
-              title="Reset filter dan pencarian"
-              className="px-3 py-1.5 h-auto whitespace-nowrap text-text-muted hover:text-text-main border-border hover:bg-gray-50"
+              onClick={handleTampilkanKelas} 
+              disabled={!subKelasId || isLoading}
+              className="px-4 py-1.5 h-auto whitespace-nowrap bg-albas-green hover:bg-albas-green/90 text-white rounded-xl"
             >
-              <RotateCcw size={14} className="mr-1.5" />
-              Reset
+              {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
             </Button>
-          )}
-        </Toolbar>
+
+            {gridData.length > 0 && (
+              <ToolbarSearch 
+                value={filterQuery}
+                onChange={(e: any) => setFilterQuery(e.target.value)}
+                onClear={() => setFilterQuery("")}
+                placeholder="Filter nama siswa di rombel ini..." 
+              />
+            )}
+
+            {(kelasId || subKelasId || gridData.length > 0) && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleResetFilter}
+                disabled={isLoading}
+                title="Reset filter dan pencarian"
+                className="px-3 py-1.5 h-auto whitespace-nowrap text-text-muted hover:text-text-main border-border hover:bg-gray-50 rounded-xl"
+              >
+                <RotateCcw size={14} className="mr-1.5" />
+                Reset
+              </Button>
+            )}
+          </Toolbar>
+        )}
 
         {/* Table Container */}
         {gridData.length > 0 ? (
@@ -692,13 +853,37 @@ export default function PembayaranTagihanClient({
           </>
         ) : (
           !isLoading && (
-            <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted">
-              <Filter className="mb-4 text-text-muted/50" size={48} strokeWidth={1} />
-              <h3 className="text-lg font-bold text-text-main mb-2">Pilih Filter atau Cari Siswa</h3>
-              <p className="max-w-md">
-                Silakan pilih <strong>Kelas & Subkelas</strong> atau ketik <strong>Nama Siswa / NISN</strong> pada kolom pencarian lalu tekan <strong>Enter</strong> untuk melihat tagihan.
-              </p>
-            </div>
+            activeTab === "search" ? (
+              lastSearchedQuery ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted">
+                  <Search className="mb-4 text-text-muted/40" size={44} strokeWidth={1.5} />
+                  <h3 className="text-base font-bold text-text-main mb-1">Siswa Tidak Ditemukan</h3>
+                  <p className="max-w-md text-sm text-text-muted">
+                    Tidak ditemukan siswa dengan kata kunci &quot;{lastSearchedQuery}&quot; pada tahun ajaran ini. Pastikan ejaan nama, NISN, atau no formulir sudah benar.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-emerald-600 border border-emerald-100 shadow-sm">
+                    <Search size={28} strokeWidth={1.75} />
+                  </div>
+                  <h3 className="text-base font-bold text-text-main mb-1">Mode Loket Kasir: Cari Siswa Langsung</h3>
+                  <p className="max-w-md text-sm text-text-muted">
+                    Ketik <strong>Nama Siswa</strong>, <strong>NISN</strong>, atau <strong>No Formulir</strong> pada kolom pencarian di atas lalu tekan <strong>Enter</strong> untuk memeriksa tagihan dan memproses pembayaran tanpa perlu memilih rombel.
+                  </p>
+                </div>
+              )
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted">
+                <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-4 text-gray-400 border border-gray-100 shadow-sm">
+                  <Filter size={28} strokeWidth={1.75} />
+                </div>
+                <h3 className="text-base font-bold text-text-main mb-1">Pilih Rombel / Kelas</h3>
+                <p className="max-w-md text-sm text-text-muted">
+                  Silakan pilih <strong>Kelas</strong> dan <strong>Subkelas</strong> pada filter di atas, lalu klik <strong>Tampilkan</strong> untuk memuat daftar tagihan seluruh siswa di rombel tersebut.
+                </p>
+              </div>
+            )
           )
         )}
       </div>
