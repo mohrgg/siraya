@@ -1,4 +1,4 @@
-import { Users, Edit2, Key, XCircle, ShieldCheck, Search, Filter } from "lucide-react"
+import { Users, UserX, Edit2, Key, XCircle, CheckCircle2, ShieldCheck, Filter } from "lucide-react"
 import { Toolbar, ToolbarSearch, ToolbarFilter, ToolbarActions, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
 import { useSortableData } from "@/hooks/useSortableData"
 import { SortableHeader } from "@/components/ui/SortableHeader"
@@ -9,7 +9,9 @@ export default function UserList({
   filterRole, setFilterRole, 
   filterUnit, setFilterUnit, 
   units, openAddUser, openEditUser, 
-  setResetUserId, setDisableUserId 
+  setResetUserId, setDisableUserId,
+  isInactiveTab = false,
+  setActivateUserId
 }: any) {
   
   const { items: sortedData, requestSort, sortConfig } = useSortableData(filteredUsers, { key: "role", direction: "asc" })
@@ -56,9 +58,11 @@ export default function UserList({
             ]}
           />
           <ToolbarActions>
-            <ToolbarAddButton onClick={openAddUser}>
-              Tambah Pengguna
-            </ToolbarAddButton>
+            {!isInactiveTab && (
+              <ToolbarAddButton onClick={openAddUser}>
+                Tambah Pengguna
+              </ToolbarAddButton>
+            )}
           </ToolbarActions>
         </Toolbar>
       </div>
@@ -136,13 +140,21 @@ export default function UserList({
                       >
                         <Key size={16} />
                       </button>
-                      {u.isActive && (
+                      {u.isActive ? (
                         <button 
                           onClick={() => setDisableUserId(u.id)} 
                           className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" 
                           title="Nonaktifkan Akun"
                         >
                           <XCircle size={16} />
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => setActivateUserId(u.id)} 
+                          className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-emerald-200 hover:border-emerald-600 transition-colors" 
+                          title="Aktifkan Akun"
+                        >
+                          <CheckCircle2 size={16} />
                         </button>
                       )}
                     </div>
@@ -151,11 +163,21 @@ export default function UserList({
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="py-20 text-center">
+                <td colSpan={5} className="py-20 text-center">
                   <div className="flex flex-col items-center justify-center">
-                    <Users size={48} className="text-gray-300 mb-4" />
-                    <h3 className="text-lg font-bold text-gray-900">Tidak ada pengguna</h3>
-                    <p className="text-gray-500 text-sm mt-1">Coba ubah kriteria pencarian atau filter Anda.</p>
+                    {isInactiveTab ? (
+                      <UserX size={48} className="text-gray-300 mb-4" />
+                    ) : (
+                      <Users size={48} className="text-gray-300 mb-4" />
+                    )}
+                    <h3 className="text-lg font-bold text-gray-900">
+                      {isInactiveTab ? "Tidak ada pengguna nonaktif" : "Tidak ada pengguna aktif"}
+                    </h3>
+                    <p className="text-gray-500 text-sm mt-1">
+                      {isInactiveTab 
+                        ? "Semua akun pengguna saat ini berstatus aktif dalam sistem."
+                        : "Coba ubah kriteria pencarian atau filter Anda."}
+                    </p>
                   </div>
                 </td>
               </tr>

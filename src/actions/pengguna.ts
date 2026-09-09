@@ -160,6 +160,21 @@ export async function nonaktifkanPengguna(id: string) {
   revalidatePath("/manajemen-user")
 }
 
+export async function aktifkanPengguna(id: string) {
+  await requireAdmin()
+  
+  const user = await prisma.pengguna.findUnique({ where: { id } })
+  if (!user) throw new Error("Pengguna tidak ditemukan")
+
+  await prisma.pengguna.update({
+    where: { id },
+    data: { isActive: true }
+  })
+  
+  await logAktivitas("AKTIFKAN_PENGGUNA", "MANAJEMEN_USER", `Mengaktifkan kembali akun: ${user.email}`)
+  revalidatePath("/manajemen-user")
+}
+
 // ========== DIVISI ==========
 
 export async function getDivisi() {

@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react"
 import { 
-  tambahPengguna, editPengguna, resetPasswordPengguna, nonaktifkanPengguna,
+  tambahPengguna, editPengguna, resetPasswordPengguna, nonaktifkanPengguna, aktifkanPengguna,
   tambahDivisi, editDivisi, hapusDivisi 
 } from "@/actions/pengguna"
 import toast from "react-hot-toast"
 
 export function useUserData(initialUsers: any[], initialDivisi: any[], units: any[]) {
-  const [activeTab, setActiveTab] = useState<"users" | "divisi">("users")
+  const [activeTab, setActiveTab] = useState<"active" | "inactive" | "divisi">("active")
   const [users, setUsers] = useState(initialUsers)
   const [divisis, setDivisis] = useState(initialDivisi)
 
@@ -22,21 +22,28 @@ export function useUserData(initialUsers: any[], initialDivisi: any[], units: an
 
   const [resetUserId, setResetUserId] = useState<string | null>(null)
   const [disableUserId, setDisableUserId] = useState<string | null>(null)
+  const [activateUserId, setActivateUserId] = useState<string | null>(null)
   
   // Modals state Divisi
   const [showDivModal, setShowDivModal] = useState(false)
   const [formDiv, setFormDiv] = useState({ id: "", name: "", description: "" })
   const [deleteDivId, setDeleteDivId] = useState<string | null>(null)
 
-  // Derived filtered users
+  // Tab counts
+  const activeCount = useMemo(() => users.filter(u => u.isActive).length, [users])
+  const inactiveCount = useMemo(() => users.filter(u => !u.isActive).length, [users])
+
+  // Derived filtered users based on activeTab
   const filteredUsers = useMemo(() => {
+    const targetActive = activeTab === "active"
     return users.filter(u => {
+      if (activeTab !== "divisi" && u.isActive !== targetActive) return false
       const matchSearch = (u.name.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase()))
       const matchRole = filterRole ? u.role === filterRole : true
       const matchUnit = filterUnit ? (filterUnit === "GLOBAL" ? !u.unitSekolahId : u.unitSekolahId === filterUnit) : true
       return matchSearch && matchRole && matchUnit
     })
-  }, [users, searchQuery, filterRole, filterUnit])
+  }, [users, activeTab, searchQuery, filterRole, filterUnit])
 
   // Handlers User
   const openAddUser = () => {
@@ -104,6 +111,20 @@ export function useUserData(initialUsers: any[], initialDivisi: any[], units: an
     }
   }
 
+  const handleActivateUser = async () => {
+    if (!activateUserId) return
+    setIsSubmitting(true)
+    try {
+      await aktifkanPengguna(activateUserId)
+      toast.success("Pengguna berhasil diaktifkan kembali")
+      window.location.reload()
+    } catch (err: any) { 
+      toast.error(err.message) 
+    } finally { 
+      setIsSubmitting(false) 
+    }
+  }
+
   // Handlers Divisi
   const handleSubmitDivisi = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -137,6 +158,7 @@ export function useUserData(initialUsers: any[], initialDivisi: any[], units: an
   return {
     activeTab, setActiveTab,
     users, divisis,
+    activeCount, inactiveCount,
     searchQuery, setSearchQuery,
     filterRole, setFilterRole,
     filterUnit, setFilterUnit,
@@ -146,11 +168,12 @@ export function useUserData(initialUsers: any[], initialDivisi: any[], units: an
     isSubmitting,
     resetUserId, setResetUserId,
     disableUserId, setDisableUserId,
+    activateUserId, setActivateUserId,
     showDivModal, setShowDivModal,
     formDiv, setFormDiv,
     deleteDivId, setDeleteDivId,
     openAddUser, openEditUser,
-    handleSubmitUser, handleResetPass, handleDisableUser,
+    handleSubmitUser, handleResetPass, handleDisableUser, handleActivateUser,
     handleSubmitDivisi, handleDeleteDivisi
   }
 }
