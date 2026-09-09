@@ -2,6 +2,7 @@
 
 import { Users, UserCheck, UserX, Building } from "lucide-react"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import { TabNavigation } from "@/components/ui/TabNavigation"
 import { useUserData } from "./hooks/useUserData"
 
 import UserList from "./components/UserList"
@@ -57,39 +58,16 @@ export default function UserClient({
 
       {/* CONTENT CARD */}
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 flex flex-col mb-6">
-        {/* TABS */}
-        <div className="flex gap-2 mb-6 border-b border-border overflow-x-auto">
-          <button 
-            onClick={() => setActiveTab("active")} 
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 ${activeTab === "active" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text-main"}`}
-          >
-            <UserCheck size={16} />
-            Pengguna Aktif
-            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeTab === "active" ? "bg-primary/10 text-primary" : "bg-bg text-text-muted border border-border"}`}>
-              {activeCount}
-            </span>
-          </button>
-          <button 
-            onClick={() => setActiveTab("inactive")} 
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 ${activeTab === "inactive" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text-main"}`}
-          >
-            <UserX size={16} />
-            Pengguna Nonaktif
-            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeTab === "inactive" ? "bg-rose-50 text-rose-600 border border-rose-200" : "bg-bg text-text-muted border border-border"}`}>
-              {inactiveCount}
-            </span>
-          </button>
-          <button 
-            onClick={() => setActiveTab("divisi")} 
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 ${activeTab === "divisi" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text-main"}`}
-          >
-            <Building size={16} />
-            Master Divisi
-            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeTab === "divisi" ? "bg-primary/10 text-primary" : "bg-bg text-text-muted border border-border"}`}>
-              {divisis.length}
-            </span>
-          </button>
-        </div>
+        {/* Tab Navigation Standar Siraya */}
+        <TabNavigation
+          tabs={[
+            { id: "active", label: "Pengguna Aktif", icon: UserCheck, badge: activeCount },
+            { id: "inactive", label: "Pengguna Nonaktif", icon: UserX, badge: inactiveCount },
+            { id: "divisi", label: "Master Divisi", icon: Building, badge: divisis.length }
+          ]}
+          activeTab={activeTab}
+          onChange={(tabId) => setActiveTab(tabId as "active" | "inactive" | "divisi")}
+        />
 
         {activeTab === "active" && (
           <UserList 

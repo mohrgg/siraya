@@ -12,8 +12,10 @@ import {
   prosesPembayaranTagihan,
   getRiwayatTransaksiByTagihan
 } from "@/actions/pembayaran-tagihan"
-import { Search, Filter, Loader2, CheckSquare, History, RotateCcw } from "lucide-react"
+import { Search, Filter, Loader2, CheckSquare, History, RotateCcw, Users } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import { TabNavigation } from "@/components/ui/TabNavigation"
+import { TableScrollHint } from "@/components/ui/TableScrollHint"
 import toast from "react-hot-toast"
 import ModalPembayaranTagihan, { TagihanItem } from "./ModalPembayaranTagihan"
 import ModalResiPembayaran, { ReceiptData } from "./ModalResiPembayaran"
@@ -413,47 +415,27 @@ export default function PembayaranTagihanClient({
       </div>
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6 mb-6">
-        {/* Tabs Navigation */}
-        <div className="flex gap-2 mb-6 border-b border-border">
-          <button 
-            type="button"
-            onClick={() => {
-              setActiveTab("search")
-              setGridData([])
-              setFilterQuery("")
+        <TabNavigation
+          tabs={[
+            { id: "search", label: "Cari Siswa Langsung (Kasir)", icon: Search },
+            { id: "class", label: "Pilih Berdasarkan Kelas", icon: Users }
+          ]}
+          activeTab={activeTab}
+          onChange={(id) => {
+            setActiveTab(id as "search" | "class")
+            setGridData([])
+            setFilterQuery("")
+            if (id === "search") {
               setKelasId("")
               setJurusanId("")
               setSubKelasId("")
               setSubKelasList([])
-            }}
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === "search"
-                ? "border-primary text-primary"
-                : "border-transparent text-text-muted hover:text-text-main"
-            }`}
-          >
-            <Search size={16} />
-            Cari Siswa Langsung (Loket Kasir)
-          </button>
-          <button 
-            type="button"
-            onClick={() => {
-              setActiveTab("class")
-              setGridData([])
+            } else {
               setSearchQuery("")
               setLastSearchedQuery("")
-              setFilterQuery("")
-            }}
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === "class"
-                ? "border-primary text-primary"
-                : "border-transparent text-text-muted hover:text-text-main"
-            }`}
-          >
-            <Filter size={16} />
-            Filter Berdasarkan Rombel / Kelas
-          </button>
-        </div>
+            }
+          }}
+        />
 
         {/* Tab 1: Loket Kasir Direct Search */}
         {activeTab === "search" && (
@@ -603,6 +585,7 @@ export default function PembayaranTagihanClient({
         {/* Table Container */}
         {gridData.length > 0 ? (
           <>
+            <TableScrollHint totalRows={gridData.length} />
             <div className="overflow-x-auto min-h-[400px]">
             <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
               <thead>

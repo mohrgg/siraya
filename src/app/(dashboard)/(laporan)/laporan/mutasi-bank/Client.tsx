@@ -12,6 +12,7 @@ import toast from "react-hot-toast"
 import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
 import PrintFooter from "@/components/shared/print/PrintFooter"
+import { PageHeader } from "@/components/ui/PageHeader"
 
 export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], akunKasBank = [], userRole, userUnitId, userName, isGlobal }: { pengaturan?: any, schoolUnits?: any[], akunKasBank?: any[], userRole?: string, userUnitId?: string, userName?: string, isGlobal?: boolean }) {
   const router = useRouter()
@@ -150,48 +151,45 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
   return (
     <div className="w-full animate-in fade-in duration-500">
       
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
-        <div>
-          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Mutasi Kas / Bank</h1>
-          <p className="text-text-muted">Laporan rincian pemasukan dan pengeluaran pada satu akun Kas/Bank</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => router.push("/laporan")}
-            className="gap-2 font-bold bg-surface text-text-main hover:bg-surface-hover shadow-sm"
-          >
-            <ArrowLeft size={16} /> Kembali
-          </Button>
-          <Button 
-            variant="outline"
-            size="sm" 
-            onClick={handleExportExcel}
-            className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm"
-            disabled={!data || data.mutasi.length === 0}
-          >
-            <FileSpreadsheet size={16} className="mr-1.5" /> Excel
-          </Button>
-          <Button 
-            variant="outline"
-            size="sm" 
-            onClick={handleExportPdf}
-            className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm"
-            disabled={!data || data.mutasi.length === 0}
-          >
-            <FileText size={16} className="mr-1.5" /> PDF
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handlePrint} 
-            className="font-semibold bg-surface shadow-sm border-gray-200 text-gray-700 hover:bg-gray-50"
-            disabled={!data || data.mutasi.length === 0}
-          >
-            <Printer size={16} className="mr-1.5" /> Cetak
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        className="print:hidden"
+        backHref="/laporan"
+        backLabel="Kembali ke Menu Laporan"
+        backShortLabel="Kembali"
+        title="Mutasi Kas / Bank"
+        subtitle="Laporan rincian pemasukan dan pengeluaran pada satu akun Kas/Bank"
+        action={
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+            <Button 
+              variant="outline"
+              size="sm" 
+              onClick={handleExportExcel}
+              className="flex-1 sm:flex-initial justify-center opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm cursor-pointer min-h-[38px] sm:min-h-[36px]"
+              disabled={!data || data.mutasi.length === 0}
+            >
+              <FileSpreadsheet size={16} className="mr-1.5" /> Excel
+            </Button>
+            <Button 
+              variant="outline"
+              size="sm" 
+              onClick={handleExportPdf}
+              className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm cursor-pointer min-h-[38px] sm:min-h-[36px]"
+              disabled={!data || data.mutasi.length === 0}
+            >
+              <FileText size={16} className="mr-1.5" /> PDF
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handlePrint} 
+              className="flex-1 sm:flex-initial justify-center font-semibold bg-surface shadow-sm border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer min-h-[38px] sm:min-h-[36px]"
+              disabled={!data || data.mutasi.length === 0}
+            >
+              <Printer size={16} className="mr-1.5" /> Cetak
+            </Button>
+          </div>
+        }
+      />
 
       {/* Filter Card */}
       <div className="bg-surface p-5 rounded-2xl shadow-sm border border-border mb-6 print:hidden">

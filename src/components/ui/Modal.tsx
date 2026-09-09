@@ -11,6 +11,7 @@ interface ModalProps {
   icon?: React.ElementType
   widthClassName?: string
   children: React.ReactNode
+  footer?: React.ReactNode
 }
 
 export function Modal({ 
@@ -20,7 +21,8 @@ export function Modal({
   subtitle, 
   icon: Icon, 
   widthClassName = "max-w-lg", 
-  children 
+  children,
+  footer
 }: ModalProps) {
   const [mounted, setMounted] = useState(false)
 
@@ -58,9 +60,14 @@ export function Modal({
             <X size={20} />
           </button>
         </div>
-        <div className="p-4 sm:p-6 pb-12 sm:pb-6 overflow-y-auto custom-scrollbar">
+        <div className={`flex-1 min-h-0 p-4 sm:p-6 ${footer ? 'pb-6' : 'pb-28 sm:pb-6'} overflow-y-auto custom-scrollbar`}>
           {children}
         </div>
+        {footer && (
+          <div className="shrink-0 p-4 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex items-center justify-end gap-3 pb-safe">
+            {footer}
+          </div>
+        )}
       </div>
     </div>,
     document.body

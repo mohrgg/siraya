@@ -9,6 +9,8 @@ import {
 import { Button } from "@/components/ui/Button"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { Modal } from "@/components/ui/Modal"
+import { TabNavigation } from "@/components/ui/TabNavigation"
+import { TableScrollHint } from "@/components/ui/TableScrollHint"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 import { useSortableData } from "@/hooks/useSortableData"
 import { 
@@ -220,13 +222,23 @@ export default function TahunAkademikClient({
         subtitle="Konfigurasi tahun ajaran dan penentuan tahun operasional sistem"
         icon={Calendar}
         widthClassName="max-w-lg"
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+              Batal
+            </Button>
+            <Button type="submit" form="form-tahun-akademik" isLoading={isSubmitting}>
+              {formData.id ? "Simpan Perubahan" : "Simpan Tahun Ajaran"}
+            </Button>
+          </>
+        }
       >
         <div className="mb-5 p-3.5 bg-amber-50/80 border border-amber-100 rounded-xl text-xs text-amber-800 flex gap-2.5 items-center">
           <Sparkles size={16} className="text-amber-600 shrink-0" />
           <div>Tahun akademik yang diset <b>Aktif</b> akan menjadi tahun berjalan utama sistem secara global.</div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form id="form-tahun-akademik" onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text-main">Pilih Tahun Ajaran <span className="text-rose-500">*</span></label>
             <select 
@@ -267,15 +279,6 @@ export default function TahunAkademikClient({
             <label htmlFor="isActive" className="font-semibold cursor-pointer text-text-main text-sm">
               Jadikan Sebagai Tahun Aktif Berjalan
             </label>
-          </div>
-          
-          <div className="flex gap-3 mt-4 justify-end">
-            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-              Batal
-            </Button>
-            <Button type="submit" isLoading={isSubmitting}>
-              {formData.id ? "Simpan Perubahan" : "Simpan Tahun Ajaran"}
-            </Button>
           </div>
         </form>
       </Modal>
@@ -330,12 +333,9 @@ export default function TahunAkademikClient({
 
       {/* Main Unified Card */}
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
-        {/* Tab Header Wajib Siraya */}
-        <div className="flex gap-2 mb-6 border-b border-border">
-          <button className="px-6 py-3 font-semibold text-sm transition-colors border-b-2 border-primary text-primary">
-            Daftar Tahun Akademik
-          </button>
-        </div>
+        <TabNavigation
+          tabs={[{ id: "tahun", label: "Daftar Tahun Akademik", icon: Calendar, badge: initialData.length }]}
+        />
 
         {/* Toolbar: Search & Add Button */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -363,6 +363,7 @@ export default function TahunAkademikClient({
         </div>
 
         {/* Detail Table */}
+        <TableScrollHint totalRows={sortedData.length} />
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
             <thead className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">

@@ -2,6 +2,7 @@ import { Users, UserX, Edit2, Key, XCircle, CheckCircle2, Trash2, ShieldCheck, F
 import { Toolbar, ToolbarSearch, ToolbarFilter, ToolbarActions, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
 import { useSortableData } from "@/hooks/useSortableData"
 import { SortableHeader } from "@/components/ui/SortableHeader"
+import { TableScrollHint } from "@/components/ui/TableScrollHint"
 
 export default function UserList({ 
   filteredUsers, 
@@ -69,6 +70,8 @@ export default function UserList({
         </Toolbar>
       </div>
       
+      <TableScrollHint totalRows={sortedData.length} />
+
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
           <thead className="border-b-2 border-border text-text-muted text-xs uppercase tracking-wider bg-surface">

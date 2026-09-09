@@ -42,6 +42,9 @@ import {
   ToolbarAddButton, 
   ToolbarDivider 
 } from "@/components/ui/DataTableToolbar"
+import { TabNavigation } from "@/components/ui/TabNavigation"
+import { TableScrollHint } from "@/components/ui/TableScrollHint"
+
 
 type Guru = {
   id: string
@@ -547,52 +550,20 @@ export default function GuruClient({
 
       {/* Main Unified Card */}
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
-        {/* Tab Header Wajib Siraya: Clean Antislop UI & Mobile 44px Touch Targets */}
-        <div className="flex gap-2 mb-6 border-b border-border overflow-x-auto hide-scrollbar -mx-2 px-2 sm:mx-0 sm:px-0">
-          <button 
-            type="button"
-            onClick={() => {
-              setActiveTab("GURU")
-              setSelectedGurus([])
-              setStatusFilter("")
-              setSearchTerm("")
-            }}
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap min-h-[44px] shrink-0 ${
-              activeTab === "GURU"
-                ? "border-primary text-primary"
-                : "border-transparent text-text-muted hover:text-text-main hover:border-border"
-            }`}
-          >
-            <span>Guru (Tenaga Pendidik)</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-              activeTab === "GURU" ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-600"
-            }`}>
-              {guruList.length}
-            </span>
-          </button>
-
-          <button 
-            type="button"
-            onClick={() => {
-              setActiveTab("STAF")
-              setSelectedGurus([])
-              setStatusFilter("")
-              setSearchTerm("")
-            }}
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap min-h-[44px] shrink-0 ${
-              activeTab === "STAF"
-                ? "border-primary text-primary"
-                : "border-transparent text-text-muted hover:text-text-main hover:border-border"
-            }`}
-          >
-            <span>Staf & Karyawan (Tendik)</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-              activeTab === "STAF" ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-600"
-            }`}>
-              {stafList.length}
-            </span>
-          </button>
-        </div>
+        {/* Tab Navigation Standar Siraya */}
+        <TabNavigation
+          tabs={[
+            { id: "GURU", label: "Guru (Tenaga Pendidik)", badge: guruList.length, icon: GraduationCap },
+            { id: "STAF", label: "Staf & Karyawan (Tendik)", badge: stafList.length, icon: Briefcase }
+          ]}
+          activeTab={activeTab}
+          onChange={(tabId) => {
+            setActiveTab(tabId as "GURU" | "STAF")
+            setSelectedGurus([])
+            setStatusFilter("")
+            setSearchTerm("")
+          }}
+        />
 
         {/* Top Filter & Toolbar */}
         <Toolbar>
@@ -648,6 +619,9 @@ export default function GuruClient({
             )}
           </ToolbarActions>
         </Toolbar>
+
+        {/* Indikator scroll tabel mobile */}
+        <TableScrollHint totalRows={sortedData.length} />
 
         {/* Data Table */}
         <div className="overflow-x-auto">

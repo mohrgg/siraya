@@ -11,6 +11,8 @@ import { SortableHeader } from "@/components/ui/SortableHeader"
 import { useSortableData } from "@/hooks/useSortableData"
 import { tambahSubKlasifikasi, editSubKlasifikasi, hapusSubKlasifikasi, tambahAkunDetail, editAkunDetail, hapusAkunDetail } from "@/actions/akun-keuangan"
 import toast from "react-hot-toast"
+import { TabNavigation } from "@/components/ui/TabNavigation"
+import { TableScrollHint } from "@/components/ui/TableScrollHint"
 
 type Klasifikasi = { id: string, kode: string, nama: string }
 type SubKlasifikasi = { id: string, kode: string, nama: string, klasifikasiAkunId: string, klasifikasi?: Klasifikasi, _count?: { akunDetail: number } }
@@ -429,20 +431,14 @@ export default function AkunKeuanganClient({
         <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
           
           {/* Tabs Navigation */}
-          <div className="flex gap-2 mb-6 border-b border-border">
-            <button 
-              className={`px-6 py-3 font-semibold text-sm transition-colors ${activeTab === 'SUBKLASIFIKASI' ? 'border-b-2 border-primary text-primary' : 'text-text-muted hover:text-text-main'}`}
-              onClick={() => setActiveTab('SUBKLASIFIKASI')}
-            >
-              Kategori / Subklasifikasi
-            </button>
-            <button 
-              className={`px-6 py-3 font-semibold text-sm transition-colors ${activeTab === 'AKUN' ? 'border-b-2 border-primary text-primary' : 'text-text-muted hover:text-text-main'}`}
-              onClick={() => setActiveTab('AKUN')}
-            >
-              Daftar Akun Transaksi
-            </button>
-          </div>
+          <TabNavigation
+            tabs={[
+              { id: 'SUBKLASIFIKASI', label: 'Kategori / Subklasifikasi', icon: Layers, badge: subKlasifikasi.length },
+              { id: 'AKUN', label: 'Daftar Akun Transaksi', icon: BookOpen, badge: akunDetail.length }
+            ]}
+            activeTab={activeTab}
+            onChange={(id) => setActiveTab(id as 'AKUN' | 'SUBKLASIFIKASI')}
+          />
 
           {/* Top Filter & Toolbar */}
           <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
@@ -502,7 +498,9 @@ export default function AkunKeuanganClient({
 
         {/* Tab Content: AKUN */}
         {activeTab === 'AKUN' && (
-          <div className="overflow-x-auto">
+          <div>
+            <TableScrollHint totalRows={filteredAkun.length} />
+            <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
@@ -571,12 +569,15 @@ export default function AkunKeuanganClient({
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
         {/* Tab Content: SUBKLASIFIKASI */}
         {activeTab === 'SUBKLASIFIKASI' && (
-          <div className="overflow-x-auto">
+          <div>
+            <TableScrollHint totalRows={filteredSubKlas.length} />
+            <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
@@ -626,10 +627,11 @@ export default function AkunKeuanganClient({
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         )}
-        </div>
       </div>
+    </div>
     </div>
   )
 }

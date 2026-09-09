@@ -116,8 +116,14 @@ export default function TingkatFormModal({
       title={formData.id ? "Edit Tingkat" : "Tambah Tingkat Baru"}
       subtitle="Manajemen tingkatan kelas sesuai kurikulum unit sekolah"
       icon={Layers}
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
+          <Button type="submit" form="form-tingkat" isLoading={isSubmitting}>Simpan Data</Button>
+        </>
+      }
     >
-      <form onSubmit={onSave} className="flex flex-col gap-4">
+      <form id="form-tingkat" onSubmit={onSave} className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-semibold text-text-main mb-1.5">Unit Sekolah</label>
           <select 
@@ -219,11 +225,6 @@ export default function TingkatFormModal({
               : "Tentukan angka jenjang secara manual. Tingkat dengan angka lebih kecil dianggap lebih muda/rendah."
             }
           </p>
-        </div>
-
-        <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-border">
-          <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
-          <Button type="submit" isLoading={isSubmitting}>Simpan Data</Button>
         </div>
       </form>
     </Modal>

@@ -13,6 +13,7 @@ import toast from "react-hot-toast"
 import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
 import PrintFooter from "@/components/shared/print/PrintFooter"
+import { PageHeader } from "@/components/ui/PageHeader"
 
 export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], grades = [], classrooms = [], userRole, userUnitId, userName }: { pengaturan?: any, schoolUnits?: any[], grades?: any[], classrooms?: any[], userRole?: string, userUnitId?: string, userName?: string }) {
   const router = useRouter()
@@ -182,45 +183,42 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
   return (
     <div className="w-full animate-in fade-in duration-500">
       
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
-        <div>
-          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Laporan Tunggakan Siswa</h1>
-          <p className="text-text-muted">Menampilkan daftar rincian sisa tunggakan per murid</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => router.push("/laporan")}
-            className="gap-2 font-bold bg-surface text-text-main hover:bg-surface-hover shadow-sm"
-          >
-            <ArrowLeft size={16} /> Kembali
-          </Button>
-          <Button 
-            variant="outline"
-            size="sm" 
-            onClick={handleExportExcel}
-            className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm"
-          >
-            <FileSpreadsheet size={16} className="mr-1.5" /> Excel
-          </Button>
-          <Button 
-            variant="outline"
-            size="sm" 
-            onClick={handleExportPdf}
-            className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm"
-          >
-            <FileText size={16} className="mr-1.5" /> PDF
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handlePrint}
-            className="font-semibold bg-surface hover:bg-surface-hover shadow-sm"
-          >
-            <Printer size={16} className="mr-1.5" /> Cetak
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        className="print:hidden"
+        backHref="/laporan"
+        backLabel="Kembali ke Menu Laporan"
+        backShortLabel="Kembali"
+        title="Laporan Tunggakan Siswa"
+        subtitle="Menampilkan daftar rincian sisa tunggakan per murid"
+        action={
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+            <Button 
+              variant="outline"
+              size="sm" 
+              onClick={handleExportExcel}
+              className="flex-1 sm:flex-initial justify-center opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm cursor-pointer min-h-[38px] sm:min-h-[36px]"
+            >
+              <FileSpreadsheet size={16} className="mr-1.5" /> Excel
+            </Button>
+            <Button 
+              variant="outline"
+              size="sm" 
+              onClick={handleExportPdf}
+              className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm cursor-pointer min-h-[38px] sm:min-h-[36px]"
+            >
+              <FileText size={16} className="mr-1.5" /> PDF
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handlePrint}
+              className="flex-1 sm:flex-initial justify-center font-semibold bg-surface hover:bg-surface-hover shadow-sm border-gray-200 text-gray-700 cursor-pointer min-h-[38px] sm:min-h-[36px]"
+            >
+              <Printer size={16} className="mr-1.5" /> Cetak
+            </Button>
+          </div>
+        }
+      />
 
       {/* Filter Card */}
       <div className="bg-surface p-5 rounded-2xl shadow-sm border border-border mb-6">

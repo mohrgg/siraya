@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { ArrowLeft, Plus, Trash2, Save, Receipt, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import BackButton from "@/components/ui/BackButton"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { updateKasMasuk } from "@/actions/kas-masuk"
@@ -90,21 +91,17 @@ export default function EditKasMasukClient({ transaksi, kasBankAccounts, pendapa
   }
 
   return (
-    <div className="w-full pb-24">
+    <div className="w-full pb-36 md:pb-24">
       
       {/* Top Navigation */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
+          <BackButton href={`/kas-masuk/${transaksi.id}`} label="Kembali ke Detail Kas Masuk" shortLabel="Kembali" className="mb-2" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight mb-1">
             Ubah Kas Masuk
           </h1>
-          <p className="text-text-muted font-medium">Edit transaksi penerimaan uang.</p>
+          <p className="text-text-muted font-medium text-sm">Edit transaksi penerimaan uang.</p>
         </div>
-        <Link href="/kas-masuk">
-          <Button variant="outline" className="text-text-muted hover:text-text-main">
-            <ArrowLeft size={16} className="mr-1.5" /> Batal
-          </Button>
-        </Link>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -334,11 +331,11 @@ export default function EditKasMasukClient({ transaksi, kasBankAccounts, pendapa
         </div>
 
         {/* Action Bar (Sticky Bottom) */}
-        <div className="fixed bottom-0 left-0 right-0 md:left-[265px] bg-white border-t border-border p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex justify-end gap-3 z-30">
-          <Link href="/kas-masuk">
-            <Button type="button" variant="outline" className="min-w-[100px]">Batal</Button>
+        <div className="fixed bottom-14 md:bottom-0 left-0 right-0 md:left-[265px] bg-white/95 backdrop-blur-md border-t border-border p-3 sm:p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex justify-end gap-3 z-30">
+          <Link href={`/kas-masuk/${transaksi.id}`} className="flex-1 sm:flex-initial">
+            <Button type="button" variant="outline" className="w-full min-w-[100px] min-h-[38px]">Batal</Button>
           </Link>
-          <Button type="submit" isLoading={isSubmitting} className="min-w-[150px] shadow-md shadow-primary/20">
+          <Button type="submit" isLoading={isSubmitting} className="flex-1 sm:flex-initial min-w-[150px] min-h-[38px] shadow-md shadow-primary/20">
             <Save size={16} className="mr-1.5" /> Simpan Perubahan
           </Button>
         </div>

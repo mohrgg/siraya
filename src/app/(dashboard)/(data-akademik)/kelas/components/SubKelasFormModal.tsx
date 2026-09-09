@@ -61,9 +61,15 @@ export default function SubKelasFormModal({
       title={formData.id ? "Edit Sub Kelas (Rombel)" : "Tambah Sub Kelas (Rombel)"}
       subtitle="Alokasi kelas dan penunjukan Wali Kelas untuk tahun ajaran aktif"
       icon={Users}
-      widthClassName="max-w-xl"
-    >
-      <form onSubmit={onSave} className="flex flex-col gap-4">
+        widthClassName="max-w-xl"
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
+            <Button type="submit" form="form-subkelas" isLoading={isSubmitting}>Simpan Data</Button>
+          </>
+        }
+      >
+        <form id="form-subkelas" onSubmit={onSave} className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-semibold text-text-main mb-1.5">Unit Sekolah</label>
           <select 
@@ -183,10 +189,6 @@ export default function SubKelasFormModal({
               </div>
             </div>
           )}
-        </div>
-        <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-border">
-          <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
-          <Button type="submit" isLoading={isSubmitting}>Simpan Data</Button>
         </div>
       </form>
     </Modal>

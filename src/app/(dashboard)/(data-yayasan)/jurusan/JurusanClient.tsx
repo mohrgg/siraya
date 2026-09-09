@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { Modal } from "@/components/ui/Modal"
+import { TabNavigation } from "@/components/ui/TabNavigation"
+import { TableScrollHint } from "@/components/ui/TableScrollHint"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 import { useSortableData } from "@/hooks/useSortableData"
 import { tambahJurusan, editJurusan, hapusJurusan } from "@/actions/kelas"
@@ -243,13 +245,23 @@ export default function JurusanClient({
         subtitle="Konfigurasi kompetensi keahlian dan peminatan kurikulum unit sekolah"
         icon={BookOpen}
         widthClassName="max-w-lg"
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+              Batal
+            </Button>
+            <Button type="submit" form="form-jurusan" isLoading={isSubmitting}>
+              {formData.id ? "Simpan Perubahan" : "Simpan Jurusan"}
+            </Button>
+          </>
+        }
       >
         <div className="mb-5 p-3.5 bg-blue-50/80 border border-blue-100 rounded-xl text-xs text-blue-800 flex gap-2.5 items-center">
           <Sparkles size={16} className="text-blue-600 shrink-0" />
           <div>Jurusan ini hanya akan muncul saat mengelola rombel / kelas pada unit sekolah yang bersangkutan.</div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form id="form-jurusan" onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Unit Selector */}
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text-main">
@@ -314,26 +326,14 @@ export default function JurusanClient({
               </div>
             </div>
           )}
-          
-          <div className="flex gap-3 mt-4 justify-end">
-            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-              Batal
-            </Button>
-            <Button type="submit" isLoading={isSubmitting}>
-              {formData.id ? "Simpan Perubahan" : "Simpan Jurusan"}
-            </Button>
-          </div>
         </form>
       </Modal>
 
       {/* Main Unified Card */}
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
-        {/* Tab Header Wajib Siraya */}
-        <div className="flex gap-2 mb-6 border-b border-border">
-          <button className="px-6 py-3 font-semibold text-sm transition-colors border-b-2 border-primary text-primary">
-            Daftar Program / Jurusan
-          </button>
-        </div>
+        <TabNavigation
+          tabs={[{ id: "jurusan", label: "Daftar Program / Jurusan", icon: BookOpen, badge: data.length }]}
+        />
 
         {/* Quick Filter Pills (Khusus Mode Konsolidasi Semua Unit) */}
         {isConsolidatedView && units.length > 0 && (
@@ -457,7 +457,9 @@ export default function JurusanClient({
                 </div>
 
                 {/* Table for this Unit */}
-                <div className="overflow-x-auto">
+                <div className="p-3 sm:p-0">
+                  <TableScrollHint totalRows={unitMajors.length} />
+                  <div className="overflow-x-auto">
                   <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
                     <thead className="border-b border-border bg-bg/30 text-text-muted text-xs uppercase tracking-wider">
                       <tr>
@@ -523,6 +525,7 @@ export default function JurusanClient({
                       )}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               </div>
             )

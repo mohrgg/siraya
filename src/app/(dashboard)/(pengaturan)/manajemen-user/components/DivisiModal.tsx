@@ -16,8 +16,14 @@ export default function DivisiModal({
       subtitle="Pengelompokan divisi kerja atau bidang tugas staf"
       icon={Briefcase}
       widthClassName="max-w-md"
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={() => setShowDivModal(false)}>Batal</Button>
+          <Button type="submit" form="form-divisi" isLoading={isSubmitting}>Simpan</Button>
+        </>
+      }
     >
-      <form onSubmit={handleSubmitDivisi} className="flex flex-col gap-4">
+      <form id="form-divisi" onSubmit={handleSubmitDivisi} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main">Nama Divisi <span className="text-red-500">*</span></label>
           <Input value={formDiv.name} onChange={e => setFormDiv({...formDiv, name: e.target.value})} required autoFocus />
@@ -25,10 +31,6 @@ export default function DivisiModal({
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main">Keterangan</label>
           <Input value={formDiv.description} onChange={e => setFormDiv({...formDiv, description: e.target.value})} />
-        </div>
-        <div className="flex gap-3 mt-4 justify-end">
-          <Button type="button" variant="outline" onClick={() => setShowDivModal(false)}>Batal</Button>
-          <Button type="submit" isLoading={isSubmitting}>Simpan</Button>
         </div>
       </form>
     </Modal>

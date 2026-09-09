@@ -92,9 +92,9 @@ export function ToolbarFilter({ icon = <Filter size={14} />, value, onChange, op
   )
 }
 
-export function ToolbarActions({ children }: { children: React.ReactNode }) {
+export function ToolbarActions({ children, className = "" }: { children: React.ReactNode, className?: string }) {
   return (
-    <div className="flex gap-2 flex-wrap items-center w-full justify-end">
+    <div className={`flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end ${className}`}>
       {children}
     </div>
   )
@@ -105,62 +105,108 @@ export function ToolbarDivider() {
   return <div className="h-6 w-px bg-border mx-1 hidden sm:block"></div>
 }
 
-export function ToolbarExportExcel({ onClick, disabled, isExporting, label = "Excel" }: { onClick: () => void, disabled?: boolean, isExporting?: boolean, label?: string }) {
+export function ToolbarExportExcel({ 
+  onClick, 
+  disabled, 
+  isExporting, 
+  label = "Excel",
+  className = ""
+}: { 
+  onClick: () => void, 
+  disabled?: boolean, 
+  isExporting?: boolean, 
+  label?: string,
+  className?: string
+}) {
   return (
     <Button
       variant="outline"
       size="sm"
       onClick={onClick}
       disabled={disabled || isExporting}
-      className="border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 focus:ring-green-500/50"
+      className={`flex-1 sm:flex-initial min-w-[75px] justify-center border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 focus:ring-green-500/50 ${className}`}
     >
-      <FileSpreadsheet size={16} className="mr-1.5" />
-      {isExporting ? 'Mengekspor...' : label}
+      <FileSpreadsheet size={16} className="mr-1.5 shrink-0" />
+      <span className="truncate">{isExporting ? 'Mengekspor...' : label}</span>
     </Button>
   )
 }
 
-export function ToolbarExportPDF({ onClick, disabled, isExporting, label = "PDF" }: { onClick: () => void, disabled?: boolean, isExporting?: boolean, label?: string }) {
+export function ToolbarExportPDF({ 
+  onClick, 
+  disabled, 
+  isExporting, 
+  label = "PDF",
+  className = ""
+}: { 
+  onClick: () => void, 
+  disabled?: boolean, 
+  isExporting?: boolean, 
+  label?: string,
+  className?: string
+}) {
   return (
     <Button
       variant="outline"
       size="sm"
       onClick={onClick}
       disabled={disabled || isExporting}
-      className="border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 focus:ring-rose-500/50"
+      className={`flex-1 sm:flex-initial min-w-[75px] justify-center border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 focus:ring-rose-500/50 ${className}`}
     >
-      <FileText size={16} className="mr-1.5" />
-      {isExporting ? 'Mengekspor...' : label}
+      <FileText size={16} className="mr-1.5 shrink-0" />
+      <span className="truncate">{isExporting ? 'Mengekspor...' : label}</span>
     </Button>
   )
 }
 
-export function ToolbarImportExcel({ onClick, disabled, label = "Impor Excel" }: { onClick: () => void, disabled?: boolean, label?: string }) {
+export function ToolbarImportExcel({ 
+  onClick, 
+  disabled, 
+  label = "Impor Excel",
+  className = ""
+}: { 
+  onClick: () => void, 
+  disabled?: boolean, 
+  label?: string,
+  className?: string
+}) {
   return (
     <Button
       variant="outline"
       size="sm"
       onClick={onClick}
       disabled={disabled}
-      className="border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 focus:ring-emerald-500/50"
+      className={`flex-1 sm:flex-initial min-w-[90px] justify-center border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 focus:ring-emerald-500/50 ${className}`}
     >
-      <UploadCloud size={16} className="mr-1.5" />
-      {label}
+      <UploadCloud size={16} className="mr-1.5 shrink-0" />
+      <span className="truncate">{label}</span>
     </Button>
   )
 }
 
-export function ToolbarAddButton({ onClick, disabled, children, icon = <Plus size={16} className="mr-1.5" /> }: { onClick: () => void, disabled?: boolean, children: React.ReactNode, icon?: React.ReactNode }) {
+export function ToolbarAddButton({ 
+  onClick, 
+  disabled, 
+  children, 
+  icon = <Plus size={16} className="mr-1.5 shrink-0" />,
+  className = ""
+}: { 
+  onClick: () => void, 
+  disabled?: boolean, 
+  children: React.ReactNode, 
+  icon?: React.ReactNode,
+  className?: string
+}) {
   return (
     <Button
       variant="primary"
       size="sm"
       onClick={onClick}
       disabled={disabled}
-      className="shadow-sm"
+      className={`w-full sm:w-auto justify-center shadow-sm min-h-[38px] font-bold ${className}`}
     >
       {icon}
-      <span>{children}</span>
+      <span className="truncate">{children}</span>
     </Button>
   )
 }

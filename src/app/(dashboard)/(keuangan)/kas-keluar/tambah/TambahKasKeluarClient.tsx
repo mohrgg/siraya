@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { ArrowLeft, Plus, Trash2, Save, Receipt, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import BackButton from "@/components/ui/BackButton"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { generateNoReferensi, createKasKeluar } from "@/actions/kas-keluar"
@@ -113,21 +114,17 @@ export default function TambahKasKeluarClient({ kasBankAccounts, pengeluaranAcco
   }
 
   return (
-    <div className="w-full pb-24">
+    <div className="w-full pb-36 md:pb-24">
       
       {/* Top Navigation */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
+          <BackButton href="/kas-keluar" label="Kembali ke Daftar Kas Keluar" shortLabel="Kembali" className="mb-2" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight mb-1">
             Tambah Kas Keluar
           </h1>
-          <p className="text-text-muted">Catat penerimaan dana / pendapatan umum ke dalam sistem</p>
+          <p className="text-text-muted text-sm">Catat pengeluaran dana / beban umum ke dalam sistem</p>
         </div>
-        <Link href="/kas-keluar">
-          <Button variant="outline" className="flex items-center gap-2 bg-white border-border hover:bg-bg shadow-sm">
-            <ArrowLeft size={16} className="text-text-muted" /> <span className="text-text-main font-medium text-sm">Kembali</span>
-          </Button>
-        </Link>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -393,11 +390,11 @@ export default function TambahKasKeluarClient({ kasBankAccounts, pengeluaranAcco
         </div>
 
         {/* Action Bar (Sticky Bottom) */}
-        <div className="fixed bottom-0 left-0 right-0 md:left-[265px] bg-white border-t border-border p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex justify-end gap-3 z-30">
-          <Link href="/kas-keluar">
-            <Button type="button" variant="outline" className="min-w-[100px]">Batal</Button>
+        <div className="fixed bottom-14 md:bottom-0 left-0 right-0 md:left-[265px] bg-white/95 backdrop-blur-md border-t border-border p-3 sm:p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex justify-end gap-3 z-30">
+          <Link href="/kas-keluar" className="flex-1 sm:flex-initial">
+            <Button type="button" variant="outline" className="w-full min-w-[100px] min-h-[38px]">Batal</Button>
           </Link>
-          <Button type="submit" isLoading={isSubmitting} className="min-w-[150px] shadow-md shadow-primary/20">
+          <Button type="submit" isLoading={isSubmitting} className="flex-1 sm:flex-initial min-w-[150px] min-h-[38px] shadow-md shadow-primary/20">
             <Save size={16} className="mr-1.5" /> Simpan Transaksi
           </Button>
         </div>

@@ -162,22 +162,18 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
       
       <PageHeader
         className="print:hidden"
+        backHref="/laporan"
+        backLabel="Kembali ke Menu Laporan"
+        backShortLabel="Kembali"
         title="Pemasukan & Pengeluaran"
         subtitle="Laporan Laba/Rugi sekolah dalam rentang waktu tertentu"
         action={
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button 
-              variant="outline" 
-              onClick={() => router.push("/laporan")}
-              className="gap-2 font-bold bg-surface text-text-main hover:bg-surface-hover shadow-sm cursor-pointer"
-            >
-              <ArrowLeft size={16} /> Kembali
-            </Button>
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             <Button 
               variant="outline"
               size="sm" 
               onClick={handleExportExcel}
-              className="opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm cursor-pointer"
+              className="flex-1 sm:flex-initial justify-center opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm cursor-pointer min-h-[38px] sm:min-h-[36px]"
             >
               <FileSpreadsheet size={16} className="mr-1.5" /> Excel
             </Button>
@@ -185,7 +181,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
               variant="outline"
               size="sm" 
               onClick={handleExportPdf}
-              className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm cursor-pointer"
+              className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm cursor-pointer min-h-[38px] sm:min-h-[36px]"
             >
               <FileText size={16} className="mr-1.5" /> PDF
             </Button>
@@ -193,7 +189,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
               variant="outline" 
               size="sm" 
               onClick={handlePrint} 
-              className="font-semibold bg-surface shadow-sm border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer"
+              className="flex-1 sm:flex-initial justify-center font-semibold bg-surface shadow-sm border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer min-h-[38px] sm:min-h-[36px]"
             >
               <Printer size={16} className="mr-1.5" /> Cetak
             </Button>

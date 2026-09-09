@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Search, Loader2, FileSpreadsheet, FileIcon as FilePdf, RefreshCw, Receipt, CheckCircle2, AlertCircle, TrendingUp } from "lucide-react"
+import { Search, Loader2, FileSpreadsheet, FileIcon as FilePdf, RefreshCw, Receipt, CheckCircle2, AlertCircle, TrendingUp, PieChart, Users } from "lucide-react"
 import { toast } from "react-hot-toast"
 import { Button } from "@/components/ui/Button"
+import { TabNavigation } from "@/components/ui/TabNavigation"
+import { TableScrollHint } from "@/components/ui/TableScrollHint"
 import { getRekapitulasiTunggakan } from "@/actions/rekapitulasi-tunggakan"
 import { exportTablePdf } from "@/lib/pdf"
 import { buildInstitutionInfo, getSignatoryKiri } from "@/lib/pdf-helpers"
@@ -454,20 +456,14 @@ export default function RekapitulasiTunggakanClient({
           {/* CARD 1: MAIN CARD */}
           <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6 mb-6">
             {/* TAB HEADERS */}
-            <div className="flex gap-2 mb-6 border-b border-border">
-              <button 
-                onClick={() => setActiveTab('ringkasan')}
-                className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'ringkasan' ? 'border-primary text-primary' : 'border-transparent text-text-muted hover:text-text-main hover:border-border'}`}
-              >
-                Ringkasan Tagihan & Tunggakan
-              </button>
-              <button 
-                onClick={() => setActiveTab('detail')}
-                className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'detail' ? 'border-primary text-primary' : 'border-transparent text-text-muted hover:text-text-main hover:border-border'}`}
-              >
-                Detail Laporan Per Kelas
-              </button>
-            </div>
+            <TabNavigation
+              tabs={[
+                { id: 'ringkasan', label: 'Ringkasan Tunggakan', icon: PieChart, badge: rekapData.length },
+                { id: 'detail', label: 'Detail Laporan Per Kelas', icon: Users }
+              ]}
+              activeTab={activeTab}
+              onChange={(id) => setActiveTab(id as 'ringkasan' | 'detail')}
+            />
 
             {/* TAB CONTENT: RINGKASAN - BAGIAN 1: TABEL RINGKASAN */}
             {activeTab === 'ringkasan' && (

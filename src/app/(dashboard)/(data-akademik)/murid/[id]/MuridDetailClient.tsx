@@ -10,6 +10,7 @@ import {
   FileSpreadsheet, Loader2
 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import { BackButton } from "@/components/ui/BackButton"
 import { ToolbarExportExcel, ToolbarExportPDF } from "@/components/ui/DataTableToolbar"
 import MuridFormModal from "@/components/modals/MuridFormModal"
 import { editSiswa } from "@/actions/siswa"
@@ -265,21 +266,20 @@ export default function MuridDetailClient({
       
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 print:hidden">
-        <Button 
-          variant="outline" 
-          onClick={() => router.push("/kelas")}
-          className="gap-2 self-start font-bold bg-white text-gray-700 hover:bg-gray-100"
-        >
-          <ArrowLeft size={16} /> Kembali ke Daftar Kelas
-        </Button>
+        <BackButton 
+          href="/kelas"
+          label="Kembali ke Daftar Kelas"
+          shortLabel="Kembali"
+        />
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
           <Button 
             variant="outline" 
+            size="sm"
             onClick={handleCopyLink}
-            className="gap-2 text-xs font-semibold bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+            className="gap-2 text-xs font-semibold bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 justify-center"
           >
-            <Share2 size={15} /> Salin Tautan Profil
+            <Share2 size={15} /> <span className="truncate">Salin Tautan</span>
           </Button>
           <ToolbarExportExcel 
             onClick={handleExportExcel}
@@ -291,18 +291,20 @@ export default function MuridDetailClient({
           />
           <Button 
             variant="outline" 
+            size="sm"
             onClick={handlePrint}
-            className="gap-2 text-xs font-semibold bg-white hover:bg-gray-100"
+            className="gap-2 text-xs font-semibold bg-white hover:bg-gray-100 justify-center"
           >
-            <Printer size={15} /> Cetak Profil
+            <Printer size={15} /> <span className="truncate">Cetak Profil</span>
           </Button>
           {!isReadOnly && (
             <Button 
               variant="primary" 
+              size="sm"
               onClick={() => setShowEditModal(true)}
-              className="gap-2 text-xs font-bold shadow-sm"
+              className="gap-2 text-xs font-bold shadow-sm col-span-2 sm:col-span-1 justify-center min-h-[38px]"
             >
-              <Edit2 size={15} /> Edit Data Siswa
+              <Edit2 size={15} /> <span className="truncate">Edit Data Siswa</span>
             </Button>
           )}
         </div>

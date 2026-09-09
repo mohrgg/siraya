@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { ArrowLeft, Printer, FileDown, Receipt, BookOpen, Edit, Link2, FileText } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import BackButton from "@/components/ui/BackButton"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { format } from "date-fns"
@@ -140,33 +141,32 @@ export default function KasMasukDetailClient({ transaksi, pengaturan }: { transa
 
   return (
     <div className="w-full pb-24">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
-            Detail Kas Masuk
-          </h1>
-          <p className="text-text-muted">No. Ref: {transaksi.noReferensi}</p>
+      {/* Top Action Bar & Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col gap-2">
+          <BackButton href="/kas-masuk" label="Kembali ke Daftar Kas Masuk" shortLabel="Kembali" />
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight mt-1 mb-1">
+              Detail Kas Masuk
+            </h1>
+            <p className="text-text-muted text-sm">No. Ref: {transaksi.noReferensi}</p>
+          </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button 
             variant="outline"
             size="sm"
             onClick={activeTab === 'resi' ? handleExportResiPDF : handleExportJurnalPDF}
             disabled={isExportingPDF}
-            className="opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800"
+            className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 min-h-[38px] sm:min-h-[36px]"
           >
             <FileText size={16} className="mr-1.5" /> 
-            {isExportingPDF ? "Mengekspor..." : `Cetak ${activeTab === 'resi' ? 'Resi' : 'Jurnal'}`}
+            <span className="truncate">{isExportingPDF ? "Mengekspor..." : `Cetak ${activeTab === 'resi' ? 'Resi' : 'Jurnal'}`}</span>
           </Button>
-          <Link href={`/kas-masuk/${transaksi.id}/edit`}>
-            <Button variant="outline" size="sm" className="bg-white border-border hover:bg-bg shadow-sm text-blue-500">
-              <Edit size={16} className="mr-2" /> Ubah
-            </Button>
-          </Link>
-          <Link href="/kas-masuk">
-            <Button variant="outline" size="sm" className="flex items-center gap-2 bg-white border-border hover:bg-bg shadow-sm ml-2">
-              <ArrowLeft size={16} className="text-text-muted" /> <span className="text-text-main font-medium text-sm">Kembali</span>
+          <Link href={`/kas-masuk/${transaksi.id}/edit`} className="flex-1 sm:flex-initial">
+            <Button variant="outline" size="sm" className="w-full justify-center bg-white border-border hover:bg-bg shadow-sm text-blue-600 min-h-[38px] sm:min-h-[36px]">
+              <Edit size={16} className="mr-1.5" /> Ubah
             </Button>
           </Link>
         </div>

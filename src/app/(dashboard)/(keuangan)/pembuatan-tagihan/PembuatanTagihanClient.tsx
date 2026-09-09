@@ -14,8 +14,10 @@ import {
   saveColumnOrder,
   updateTagihanKolomMassal
 } from "@/actions/pembuatan-tagihan"
-import { Plus, Search, Filter, Loader2, Save, MoreVertical, Edit2, Trash2, X, GripHorizontal, RotateCcw } from "lucide-react"
+import { Plus, Search, Filter, Loader2, Save, MoreVertical, Edit2, Trash2, X, GripHorizontal, RotateCcw, Users } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import { TabNavigation } from "@/components/ui/TabNavigation"
+import { TableScrollHint } from "@/components/ui/TableScrollHint"
 import toast from "react-hot-toast"
 import ModalTambahTagihan from "./ModalTambahTagihan"
 import ModalEditTagihanKolom from "./ModalEditTagihanKolom"
@@ -491,44 +493,23 @@ export default function PembuatanTagihanClient({
 
       {/* Main Content Card */}
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6 mb-6">
-        
         {/* Tabs Navigation */}
-        <div className="flex gap-2 mb-6 border-b border-border">
-          <button 
-            type="button"
-            onClick={() => {
-              setActiveTab("class")
-              setGridData([])
+        <TabNavigation
+          tabs={[
+            { id: "class", label: "Berdasarkan Rombel / Kelas", icon: Users },
+            { id: "search", label: "Cari Siswa Langsung (Individu)", icon: Search }
+          ]}
+          activeTab={activeTab}
+          onChange={(id) => {
+            setActiveTab(id as "class" | "search")
+            setGridData([])
+            setFilterQuery("")
+            if (id === "class") {
               setSearchQuery("")
               setLastSearchedQuery("")
-              setFilterQuery("")
-            }}
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === "class"
-                ? "border-primary text-primary"
-                : "border-transparent text-text-muted hover:text-text-main"
-            }`}
-          >
-            <Filter size={16} />
-            Berdasarkan Rombel / Kelas
-          </button>
-          <button 
-            type="button"
-            onClick={() => {
-              setActiveTab("search")
-              setGridData([])
-              setFilterQuery("")
-            }}
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === "search"
-                ? "border-primary text-primary"
-                : "border-transparent text-text-muted hover:text-text-main"
-            }`}
-          >
-            <Search size={16} />
-            Cari Siswa Langsung (Tagihan Individu)
-          </button>
-        </div>
+            }
+          }}
+        />
 
         {/* Tab 1: Filters and Actions Row for Class */}
         {activeTab === "class" && (
@@ -689,6 +670,7 @@ export default function PembuatanTagihanClient({
         {/* Table / Empty State Container */}
         {gridData.length > 0 ? (
           <>
+            <TableScrollHint totalRows={gridData.length} />
             <div 
               ref={scrollContainerRef}
               className="overflow-x-auto min-h-[400px]"

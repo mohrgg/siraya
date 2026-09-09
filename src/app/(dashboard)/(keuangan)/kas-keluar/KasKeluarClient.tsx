@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { Search, Plus, Printer, Download, RefreshCw, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown, FileSpreadsheet, FileText } from "lucide-react"
+import { Search, Plus, Printer, Download, RefreshCw, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown, FileSpreadsheet, FileText, ArrowUpRight } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import { TabNavigation } from "@/components/ui/TabNavigation"
+import { TableScrollHint } from "@/components/ui/TableScrollHint"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import Link from "next/link"
@@ -230,14 +232,10 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
         
-        {/* Tabs Navigation (Single Tab for Consistency) */}
-        <div className="flex gap-2 mb-6 border-b border-border">
-          <button 
-            className="px-6 py-3 font-semibold text-sm transition-colors border-b-2 border-primary text-primary"
-          >
-            {isReadOnly ? "Daftar Audit Kas Keluar" : "Daftar Kas Keluar"}
-          </button>
-        </div>
+        {/* Tabs Navigation */}
+        <TabNavigation
+          tabs={[{ id: "kas-keluar", label: isReadOnly ? "Daftar Audit Kas Keluar" : "Daftar Kas Keluar", icon: ArrowUpRight, badge: filteredData.length }]}
+        />
 
         {/* Filters and Actions */}
         <Toolbar>
@@ -306,6 +304,7 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
         </Toolbar>
 
         {/* Table */}
+        <TableScrollHint totalRows={filteredData.length} />
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
             <thead>

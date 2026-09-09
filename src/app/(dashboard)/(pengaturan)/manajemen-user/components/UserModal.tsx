@@ -108,8 +108,14 @@ export default function UserModal({
       subtitle="Atur hak akses login, unit penugasan, dan pengaturan keamanan akun"
       icon={UserCheck}
       widthClassName="max-w-xl"
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={() => setShowUserModal(false)}>Batal</Button>
+          <Button type="submit" form="form-user" isLoading={isSubmitting}>Simpan Pengguna</Button>
+        </>
+      }
     >
-      <form onSubmit={onFormSubmit} className="flex flex-col gap-4">
+      <form id="form-user" onSubmit={onFormSubmit} className="flex flex-col gap-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text-main">Nama Lengkap <span className="text-red-500">*</span></label>
@@ -278,11 +284,6 @@ export default function UserModal({
             <label htmlFor="isActive" className="text-sm font-medium text-text-main cursor-pointer">Akun Aktif (Bisa Login)</label>
           </div>
         )}
-
-        <div className="flex gap-3 mt-4 justify-end">
-          <Button type="button" variant="outline" onClick={() => setShowUserModal(false)}>Batal</Button>
-          <Button type="submit" isLoading={isSubmitting}>Simpan Pengguna</Button>
-        </div>
       </form>
     </Modal>
   )

@@ -1,4 +1,5 @@
 import React from "react"
+import { BackButton } from "./BackButton"
 
 interface PageHeaderProps {
   title: string
@@ -6,14 +7,40 @@ interface PageHeaderProps {
   action?: React.ReactNode
   badge?: string
   className?: string
+  backHref?: string
+  onBack?: () => void
+  backLabel?: string
+  backShortLabel?: string
 }
 
-export function PageHeader({ title, subtitle, action, badge, className = "" }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  subtitle,
+  action,
+  badge,
+  className = "",
+  backHref,
+  onBack,
+  backLabel,
+  backShortLabel
+}: PageHeaderProps) {
+  const hasBack = Boolean(backHref || onBack)
+
   return (
     <div className={`mb-6 bg-surface/80 backdrop-blur-xs rounded-2xl border border-border p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${className}`}>
-      <div className="flex items-start gap-3.5 min-w-0">
-        <div className="w-1.5 h-10 bg-primary rounded-full mt-0.5 shrink-0" />
-        <div className="min-w-0">
+      <div className="flex items-start gap-3.5 min-w-0 flex-1">
+        {hasBack ? (
+          <BackButton
+            href={backHref}
+            onClick={onBack}
+            label={backLabel}
+            shortLabel={backShortLabel}
+            className="mt-0.5"
+          />
+        ) : (
+          <div className="w-1.5 h-10 bg-primary rounded-full mt-0.5 shrink-0" />
+        )}
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-text-main tracking-tight">
               {title}
@@ -32,7 +59,7 @@ export function PageHeader({ title, subtitle, action, badge, className = "" }: P
         </div>
       </div>
       {action && (
-        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto w-full sm:w-auto">
           {action}
         </div>
       )}

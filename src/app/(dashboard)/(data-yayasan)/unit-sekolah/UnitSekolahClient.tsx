@@ -17,6 +17,8 @@ import { useSortableData } from "@/hooks/useSortableData"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 import UnitAuditSideDrawer, { UnitAuditData } from "@/components/dashboard/UnitAuditSideDrawer"
 import toast from "react-hot-toast"
+import { TabNavigation } from "@/components/ui/TabNavigation"
+import { TableScrollHint } from "@/components/ui/TableScrollHint"
 
 export type UnitSekolah = { 
   id: string
@@ -263,8 +265,18 @@ export default function UnitSekolahClient({
         subtitle="Kelola konfigurasi institusi dan data operasional unit pendidikan"
         icon={Building2}
         widthClassName="max-w-xl"
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+              Batal
+            </Button>
+            <Button type="submit" form="form-unit-sekolah" isLoading={isSubmitting}>
+              {formData.id ? "Simpan Perubahan" : "Simpan / Buat Unit Sekolah"}
+            </Button>
+          </>
+        }
       >
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form id="form-unit-sekolah" onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2 flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-text-main">Nama Unit Sekolah <span className="text-rose-500">*</span></label>
@@ -358,15 +370,6 @@ export default function UnitSekolahClient({
               </label>
             </div>
           )}
-          
-          <div className="flex gap-3 mt-4 justify-end">
-            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-              Batal
-            </Button>
-            <Button type="submit" isLoading={isSubmitting}>
-              {formData.id ? "Simpan Perubahan" : "Simpan / Buat Unit Sekolah"}
-            </Button>
-          </div>
         </form>
       </Modal>
 
@@ -427,12 +430,9 @@ export default function UnitSekolahClient({
 
       {/* Main Unified Card */}
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
-        {/* Tab Header Wajib Siraya */}
-        <div className="flex gap-2 mb-6 border-b border-border">
-          <button className="px-6 py-3 font-semibold text-sm transition-colors border-b-2 border-primary text-primary">
-            Daftar Unit Sekolah
-          </button>
-        </div>
+        <TabNavigation
+          tabs={[{ id: "unit", label: "Daftar Unit Sekolah", icon: Building2, badge: data.length }]}
+        />
 
         {/* Toolbar & Filter Bar */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -617,7 +617,9 @@ export default function UnitSekolahClient({
           </div>
         ) : (
           /* VIEW 2: DETAIL TABLE */
-          <div className="overflow-x-auto">
+          <div>
+            <TableScrollHint totalRows={sortedData.length} />
+            <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
               <thead className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
                 <tr>
@@ -710,7 +712,8 @@ export default function UnitSekolahClient({
               </tbody>
             </table>
           </div>
-        )}
+        </div>
+      )}
       </div>
 
       {/* Side Drawer: Unit Audit */}

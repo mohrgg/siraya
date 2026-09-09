@@ -11,6 +11,7 @@ import TabMurid from "./components/TabMurid"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { Button } from "@/components/ui/Button"
 import { X, Users, Layers, BarChart3, GraduationCap } from "lucide-react"
+import { TabNavigation } from "@/components/ui/TabNavigation"
 import ImportMuridModal from "@/components/modals/ImportMuridModal"
 import MuridFormModal from "@/components/modals/MuridFormModal"
 import TingkatFormModal from "./components/TingkatFormModal"
@@ -467,123 +468,22 @@ export default function KelasClient({
       </div>
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6">
-        {/* Mobile 2x2 Segmented Touch Grid (<md) - 0% Overflow & Zero Swipe Fatigue */}
-        <div className="md:hidden grid grid-cols-2 gap-1.5 p-1 bg-bg border border-border rounded-2xl mb-5">
-          {isReadOnly ? (
-            <>
-              <button
-                type="button"
-                onClick={() => data.setActiveTab("sub-kelas")}
-                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
-                  data.activeTab === "sub-kelas"
-                    ? "bg-surface text-primary shadow-xs border border-border font-black"
-                    : "text-text-muted hover:text-text-main"
-                }`}
-              >
-                <span className="truncate">Kapasitas Rombel</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => data.setActiveTab("murid")}
-                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
-                  data.activeTab === "murid"
-                    ? "bg-surface text-primary shadow-xs border border-border font-black"
-                    : "text-text-muted hover:text-text-main"
-                }`}
-              >
-                <span className="truncate">Direktori Siswa</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => data.setActiveTab("alumni")}
-                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
-                  data.activeTab === "alumni"
-                    ? "bg-surface text-primary shadow-xs border border-border font-black"
-                    : "text-text-muted hover:text-text-main"
-                }`}
-              >
-                <span className="truncate">Riwayat & Alumni</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => data.setActiveTab("kelas")}
-                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
-                  data.activeTab === "kelas"
-                    ? "bg-surface text-primary shadow-xs border border-border font-black"
-                    : "text-text-muted hover:text-text-main"
-                }`}
-              >
-                <span className="truncate">Tingkat Pendidikan</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => data.setActiveTab("kelas")}
-                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
-                  data.activeTab === "kelas"
-                    ? "bg-surface text-primary shadow-xs border border-border font-black"
-                    : "text-text-muted hover:text-text-main"
-                }`}
-              >
-                <span className="truncate">Tingkat (Kelas)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => data.setActiveTab("sub-kelas")}
-                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
-                  data.activeTab === "sub-kelas"
-                    ? "bg-surface text-primary shadow-xs border border-border font-black"
-                    : "text-text-muted hover:text-text-main"
-                }`}
-              >
-                <span className="truncate">Rombel (Sub Kelas)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => data.setActiveTab("murid")}
-                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
-                  data.activeTab === "murid"
-                    ? "bg-surface text-primary shadow-xs border border-border font-black"
-                    : "text-text-muted hover:text-text-main"
-                }`}
-              >
-                <span className="truncate">Murid Aktif</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => data.setActiveTab("alumni")}
-                className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center min-h-[44px] flex items-center justify-center cursor-pointer ${
-                  data.activeTab === "alumni"
-                    ? "bg-surface text-primary shadow-xs border border-border font-black"
-                    : "text-text-muted hover:text-text-main"
-                }`}
-              >
-                <span className="truncate">Riwayat & Alumni</span>
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Desktop Tab Navigation (>=md) - Kept Clean & Intact */}
-        <div className="hidden md:flex gap-2 mb-6 border-b border-border">
-          {isReadOnly ? (
-            <>
-              <TabButton id="sub-kelas" label="Kapasitas & Distribusi Rombel" />
-              <TabButton id="murid" label="Direktori Siswa Aktif" />
-              <TabButton id="alumni" label="Riwayat & Alumni" />
-              <TabButton id="kelas" label="Tingkat Pendidikan" />
-            </>
-          ) : (
-            <>
-              <TabButton id="kelas" label="Daftar Kelas (Tingkat)" />
-              <TabButton id="sub-kelas" label="Daftar Sub Kelas (Rombel)" />
-              <TabButton id="murid" label="Murid Aktif" />
-              <TabButton id="alumni" label="Riwayat & Alumni" />
-            </>
-          )}
-        </div>
+        {/* Standardized Tab Navigation */}
+        <TabNavigation
+          tabs={isReadOnly ? [
+            { id: "sub-kelas", label: "Kapasitas Rombel", shortLabel: "Rombel", icon: Users, badge: data.classrooms.length },
+            { id: "murid", label: "Direktori Siswa", shortLabel: "Siswa", icon: GraduationCap },
+            { id: "alumni", label: "Riwayat & Alumni", shortLabel: "Alumni", icon: BarChart3 },
+            { id: "kelas", label: "Tingkat Pendidikan", shortLabel: "Tingkat", icon: Layers, badge: data.grades.length },
+          ] : [
+            { id: "kelas", label: "Tingkat (Kelas)", shortLabel: "Tingkat", icon: Layers, badge: data.grades.length },
+            { id: "sub-kelas", label: "Rombel (Sub Kelas)", shortLabel: "Rombel", icon: Users, badge: data.classrooms.length },
+            { id: "murid", label: "Murid Aktif", shortLabel: "Murid", icon: GraduationCap },
+            { id: "alumni", label: "Riwayat & Alumni", shortLabel: "Alumni", icon: BarChart3 },
+          ]}
+          activeTab={data.activeTab}
+          onChange={(id) => data.setActiveTab(id as any)}
+        />
 
         {/* Toolbar */}
         <KelasToolbar

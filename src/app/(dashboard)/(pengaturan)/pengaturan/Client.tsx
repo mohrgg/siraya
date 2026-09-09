@@ -11,6 +11,7 @@ import PrintFooter from "@/components/shared/print/PrintFooter"
 import LogoUploader from "@/components/shared/LogoUploader"
 
 import { PageHeader } from "@/components/ui/PageHeader"
+import { TabNavigation } from "@/components/ui/TabNavigation"
 import { sortUnitsByLevel } from "@/lib/constants/units"
 
 export default function PengaturanClient({ initialSettings, units = [] }: { initialSettings: any, units?: any[] }) {
@@ -186,79 +187,15 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
       />
 
       <div className="bg-surface rounded-2xl border border-border shadow-sm p-4 sm:p-8">
-        {/* MOBILE 3-SEGMENTED TABS (<md) - 0% HORIZONTAL SCROLL */}
-        <div className="md:hidden grid grid-cols-3 gap-1 p-1 bg-bg border border-border rounded-2xl mb-6">
-          <button 
-            type="button"
-            onClick={() => setActiveTab("profil")} 
-            className={`py-2 px-1 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 min-h-[46px] cursor-pointer ${
-              activeTab === "profil" 
-                ? "bg-surface text-primary shadow-xs border border-border font-black" 
-                : "text-text-muted hover:text-text-main"
-            }`}
-          >
-            <Building2 size={15} />
-            <span className="truncate">Identitas</span>
-          </button>
-          <button 
-            type="button"
-            onClick={() => setActiveTab("rekening")} 
-            className={`py-2 px-1 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 min-h-[46px] cursor-pointer ${
-              activeTab === "rekening" 
-                ? "bg-surface text-primary shadow-xs border border-border font-black" 
-                : "text-text-muted hover:text-text-main"
-            }`}
-          >
-            <Landmark size={15} />
-            <span className="truncate">Rekening</span>
-          </button>
-          <button 
-            type="button"
-            onClick={() => setActiveTab("backup")} 
-            className={`py-2 px-1 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 min-h-[46px] cursor-pointer ${
-              activeTab === "backup" 
-                ? "bg-surface text-primary shadow-xs border border-border font-black" 
-                : "text-text-muted hover:text-text-main"
-            }`}
-          >
-            <Database size={15} />
-            <span className="truncate">Backup</span>
-          </button>
-        </div>
-
-        {/* DESKTOP TABS HEADER (>=md) */}
-        <div className="hidden md:flex gap-2 mb-6 border-b border-border overflow-x-auto">
-          <button 
-            onClick={() => setActiveTab("profil")} 
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 cursor-pointer ${
-              activeTab === "profil" 
-                ? "border-primary text-primary" 
-                : "border-transparent text-text-muted hover:text-text-main"
-            }`}
-          >
-            <Building2 size={16} /> Identitas & Kop Surat
-          </button>
-          <button 
-            onClick={() => setActiveTab("rekening")} 
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 cursor-pointer ${
-              activeTab === "rekening" 
-                ? "border-primary text-primary" 
-                : "border-transparent text-text-muted hover:text-text-main"
-            }`}
-          >
-            <Landmark size={16} /> Rekening & Penomoran
-          </button>
-          <button 
-            onClick={() => setActiveTab("backup")} 
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 shrink-0 cursor-pointer ${
-              activeTab === "backup" 
-                ? "border-primary text-primary" 
-                : "border-transparent text-text-muted hover:text-text-main"
-            }`}
-          >
-            <Database size={16} /> Backup Data
-          </button>
-        </div>
+        <TabNavigation
+          tabs={[
+            { id: "profil", label: "Identitas & Kop Surat", shortLabel: "Identitas", icon: Building2 },
+            { id: "rekening", label: "Rekening & Penomoran", shortLabel: "Rekening", icon: Landmark },
+            { id: "backup", label: "Backup Data", shortLabel: "Backup", icon: Database },
+          ]}
+          activeTab={activeTab}
+          onChange={(id) => setActiveTab(id as any)}
+        />
         
         {/* TAB 1: IDENTITAS */}
         {activeTab === "profil" && (

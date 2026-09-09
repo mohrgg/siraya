@@ -22,6 +22,8 @@ import {
   Printer
 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import BackButton from "@/components/ui/BackButton"
+import { ToolbarExportExcel, ToolbarExportPDF } from "@/components/ui/DataTableToolbar"
 import toast from "react-hot-toast"
 import { getStatusBadgeStyle, normalizeStatusKepegawaian, isValidMonitoringStatus } from "@/lib/constants/kepegawaian"
 import PrintHeader from "@/components/shared/print/PrintHeader"
@@ -198,51 +200,45 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
       <PrintHeader unitInfo={initialData.unitSekolah} pengaturan={pengaturan} />
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 print:hidden">
-        <Button 
-          variant="outline" 
-          onClick={() => router.push("/guru")}
-          className="gap-2 self-start font-bold bg-white text-gray-700 hover:bg-gray-100"
-        >
-          <ArrowLeft size={16} /> Kembali ke {isStaf ? "Daftar Staf" : "Daftar Guru"}
-        </Button>
+        <BackButton 
+          href="/guru"
+          label={isStaf ? "Kembali ke Daftar Staf" : "Kembali ke Daftar Guru"}
+          shortLabel="Kembali"
+        />
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
           <Button 
             variant="outline" 
+            size="sm"
             onClick={handleCopyLink}
-            className="gap-2 text-xs font-semibold bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+            className="gap-2 text-xs font-semibold bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 justify-center"
           >
-            <Share2 size={15} /> Salin Tautan Profil
+            <Share2 size={15} /> <span className="truncate">Salin Tautan</span>
           </Button>
-          <Button 
-            variant="outline" 
+          <ToolbarExportExcel 
             onClick={handleExportExcel}
             disabled={isExportingExcel}
-            className="gap-1.5 text-xs font-semibold bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-          >
-            <FileSpreadsheet size={15} /> {isExportingExcel ? "Mengunduh..." : "Excel"}
-          </Button>
-          <Button 
-            variant="outline" 
+          />
+          <ToolbarExportPDF 
             onClick={handleExportPDF}
             disabled={isExportingPDF}
-            className="gap-1.5 text-xs font-semibold bg-white text-rose-600 border-rose-200 hover:bg-rose-50"
-          >
-            <FileText size={15} /> {isExportingPDF ? "Mengunduh..." : "PDF"}
-          </Button>
+          />
           <Button 
             variant="outline" 
+            size="sm"
             onClick={handlePrint}
-            className="gap-2 text-xs font-semibold bg-white hover:bg-gray-100"
+            className="gap-2 text-xs font-semibold bg-white hover:bg-gray-100 justify-center"
           >
-            <Printer size={15} /> Cetak Profil
+            <Printer size={15} /> <span className="truncate">Cetak Profil</span>
           </Button>
           {!isReadOnly && (
             <Button 
-              className="gap-2 text-xs font-bold shadow-sm"
+              variant="primary"
+              size="sm"
+              className="gap-2 text-xs font-bold shadow-sm col-span-2 sm:col-span-1 justify-center min-h-[38px]"
               onClick={() => setIsEditing(true)}
             >
-              <Edit2 size={15} /> Edit Data {isStaf ? "Staf" : "Guru"}
+              <Edit2 size={15} /> <span className="truncate">Edit Data {isStaf ? "Staf" : "Guru"}</span>
             </Button>
           )}
         </div>
