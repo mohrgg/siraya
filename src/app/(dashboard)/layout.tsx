@@ -78,7 +78,16 @@ export default async function DashboardLayout({
             {children}
           </main>
         </div>
-        <MobileBottomNav role={userRole} />
+        <MobileBottomNav 
+          user={{
+            name: tenant.user.name,
+            email: tenant.user.email,
+            role: tenant.role,
+            avatar: tenant.user.avatar,
+            mustChangePassword: tenant.user.mustChangePassword
+          }}
+          logoUrl={pengaturan?.logoUrl || "/logo.png"}
+        />
       </div>
     </MobileMenuProvider>
   )

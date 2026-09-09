@@ -13,56 +13,7 @@ import {
 } from "lucide-react"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import ChangePasswordModal from "@/components/modals/ChangePasswordModal"
-import { useMobileMenu } from "./MobileMenuContext"
-import { X } from "lucide-react"
-
-const menuGroups = [
-  {
-    title: "UTAMA",
-    items: [
-      { href: "/", label: "Dashboard", icon: LayoutDashboard, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
-    ]
-  },
-  {
-    title: "DATA YAYASAN",
-    items: [
-      { href: "/unit-sekolah", label: "Unit Sekolah", icon: Building, allowedRoles: ["ADMIN", "YAYASAN"], isGlobal: true },
-      { href: "/jurusan", label: "Program & Jurusan", icon: BookOpen, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
-    ]
-  },
-  {
-    title: "DATA AKADEMIK",
-    items: [
-      { href: "/tahun-akademik", label: "Tahun Akademik", icon: Calendar, allowedRoles: ["ADMIN", "YAYASAN"], isGlobal: true },
-      { href: "/guru", label: "Guru & Staf", icon: GraduationCap, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
-      { href: "/kelas", label: "Kelas & Murid", icon: Users2, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
-    ]
-  },
-  {
-    title: "KEUANGAN",
-    items: [
-      { href: "/akun-keuangan", label: "Akun Keuangan", icon: Landmark, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"], isGlobal: true },
-      { href: "/kas-masuk", label: "Kas Masuk", icon: ArrowDownToLine, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
-      { href: "/kas-keluar", label: "Kas Keluar", icon: ArrowUpFromLine, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
-      { href: "/pembuatan-tagihan", label: "Pembuatan Tagihan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA"] },
-      { href: "/pembayaran-tagihan", label: "Pembayaran Tagihan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA"] },
-      { href: "/rekapitulasi-tunggakan", label: "Rekap. Tagihan & Tunggakan", icon: FilePlus, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
-    ]
-  },
-  {
-    title: "LAPORAN",
-    items: [
-      { href: "/laporan", label: "Laporan Keuangan", icon: PieChart, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"], isGlobal: true },
-    ]
-  },
-  {
-    title: "PENGATURAN",
-    items: [
-      { href: "/manajemen-user", label: "Manajemen User", icon: Users, allowedRoles: ["ADMIN"], isGlobal: true },
-      { href: "/pengaturan", label: "Pengaturan", icon: Settings, allowedRoles: ["ADMIN"], isGlobal: true },
-    ]
-  }
-] as { title: string, items: { href: string, label: string, icon: any, allowedRoles: string[], isGlobal?: boolean }[] }[]
+import { getFilteredMenuGroups } from "@/lib/constants/navigation"
 
 export default function Sidebar({ 
   user, 
@@ -103,160 +54,15 @@ export default function Sidebar({
     }
   }, [user?.mustChangePassword])
 
-  const isKepsek = user?.role === "KEPALA_SEKOLAH"
-  const isYayasan = user?.role === "YAYASAN"
-
-  const filteredGroups = menuGroups.map(group => {
-    let title = group.title
-    if (isKepsek) {
-      if (group.title === "DATA AKADEMIK") title = "AKADEMIK & MUTU"
-      if (group.title === "KEUANGAN") title = "AUDIT KEUANGAN UNIT"
-      if (group.title === "LAPORAN") title = "PENGESAHAN & LAPORAN"
-    }
-
-    const items = group.items
-      .filter(item => item.allowedRoles.includes(user?.role || "TATA_USAHA"))
-      .map(item => {
-        if (isKepsek) {
-          if (item.href === "/kelas") return { ...item, label: "Kapasitas & Rombel" }
-          if (item.href === "/guru") return { ...item, label: "Beban & Data Guru" }
-          if (item.href === "/rekapitulasi-tunggakan") return { ...item, label: "Monitoring SPP & Tagihan" }
-          if (item.href === "/kas-masuk") return { ...item, label: "Audit Kas Masuk" }
-          if (item.href === "/kas-keluar") return { ...item, label: "Audit Kas Keluar" }
-          if (item.href === "/laporan") return { ...item, label: "Laporan & Pengesahan" }
-        }
-        return item
-      })
-
-    return {
-      ...group,
-      title,
-      items
-    }
-  }).filter(group => group.items.length > 0)
+  const filteredGroups = getFilteredMenuGroups(user?.role)
 
   const getInitials = (name: string) => {
     if (!name) return "U"
     return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
   }
 
-  const { isMobileMenuOpen, closeMobileMenu } = useMobileMenu()
-
   return (
     <>
-      {/* ======================================================== */}
-      {/* 1. MOBILE NAVIGATION SHEET (MODERN SLIDE-OVER DRAWER) */}
-      {/* ======================================================== */}
-      <div 
-        className={`fixed inset-0 z-50 md:hidden transition-all duration-300 ${
-          isMobileMenuOpen ? 'pointer-events-auto visible' : 'pointer-events-none invisible'
-        }`}
-        aria-hidden={!isMobileMenuOpen}
-      >
-        {/* Soft Backdrop with blur */}
-        <div 
-          className={`fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-300 ${
-            isMobileMenuOpen ? 'opacity-100' : 'opacity-0'
-          }`}
-          onClick={closeMobileMenu}
-        />
-
-        {/* Slide-over Drawer (Width 82vw, max 320px so main page context remains visible) */}
-        <div 
-          className={`fixed inset-y-0 left-0 w-[82vw] max-w-[320px] bg-surface text-text-main border-r border-border shadow-2xl flex flex-col h-full transform transition-transform duration-300 ease-out z-50 ${
-            isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
-        >
-          {/* Header */}
-          <div className="p-4 border-b border-border flex items-center justify-between gap-3 bg-bg/50">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center p-1.5 border border-primary/20 shrink-0">
-                <img src={logoUrl || "/logo.png"} alt="Logo Siraya" className="w-full h-full object-contain" onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                }} />
-                <div className="hidden font-bold text-primary text-sm">AB</div>
-              </div>
-              <div className="min-w-0">
-                <span className="font-extrabold text-base text-text-main tracking-tight block leading-tight">SIRAYA</span>
-                <span className="text-[10px] text-text-muted font-medium truncate block">Yayasan Al Basyariah</span>
-              </div>
-            </div>
-
-            <button
-              onClick={closeMobileMenu}
-              className="w-10 h-10 rounded-xl bg-surface hover:bg-slate-100 flex items-center justify-center text-text-muted hover:text-text-main border border-border transition-colors cursor-pointer shrink-0"
-              aria-label="Tutup Menu"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          {/* User Quick Profile Card */}
-          <div className="p-3 mx-3 mt-3 rounded-xl bg-bg border border-border flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center shrink-0 border border-emerald-200 text-xs">
-              {getInitials(user?.name || "")}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-text-main truncate">{user?.name || "Pengguna"}</p>
-              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/10 text-primary">
-                {user?.role === "YAYASAN" ? "PENGURUS" : user?.role}
-              </span>
-            </div>
-          </div>
-
-          {/* Navigation Items (Categorized & Finger-friendly) */}
-          <nav className="flex-1 overflow-y-auto p-3 space-y-4">
-            {filteredGroups.map((group) => (
-              <div key={group.title}>
-                <div className="text-[10px] font-bold text-text-muted tracking-wider px-2 mb-1.5 uppercase">
-                  {group.title}
-                </div>
-                <div className="space-y-1">
-                  {group.items.map((item) => {
-                    const Icon = item.icon
-                    const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
-                    
-                    return (
-                      <Link 
-                        key={item.href} 
-                        href={item.href}
-                        onClick={closeMobileMenu}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all min-h-[44px] ${
-                          isActive 
-                            ? "bg-primary text-white shadow-2xs" 
-                            : "text-text-muted hover:text-text-main hover:bg-slate-100"
-                        }`}
-                      >
-                        <Icon size={18} className={isActive ? "text-white" : "text-text-muted"} />
-                        <span className="truncate">{item.label}</span>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-          </nav>
-
-          {/* Footer Actions */}
-          <div className="p-3 border-t border-border flex items-center justify-between gap-2 bg-bg/50">
-            <button 
-              onClick={() => { closeMobileMenu(); setShowChangePasswordModal(true); }}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-semibold text-text-muted hover:text-text-main bg-surface border border-border transition-colors min-h-[40px] cursor-pointer" 
-            >
-              <Key size={14} />
-              <span>Ganti Sandi</span>
-            </button>
-            <button 
-              onClick={() => { closeMobileMenu(); setShowLogoutModal(true); }}
-              className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors min-h-[40px] cursor-pointer" 
-            >
-              <LogOut size={14} />
-              <span>Keluar</span>
-            </button>
-          </div>
-        </div>
-      </div>
 
       {/* ======================================================== */}
       {/* 2. DESKTOP PERMANENT SIDEBAR (>=md) */}

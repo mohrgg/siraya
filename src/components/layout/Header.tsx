@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { RefreshCw, Menu } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 import { setGlobalContext } from "@/actions/app-context"
-import { useMobileMenu } from "./MobileMenuContext"
 
 type SchoolUnit = { id: string; name: string }
 type AcademicYear = { id: string; name: string }
@@ -37,7 +36,6 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
     }
   }, [activeYearId])
   
-  const { toggleMobileMenu } = useMobileMenu()
 
   const handleChange = (type: "unit" | "year", value: string) => {
     let newUnit = unit
@@ -66,90 +64,89 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
   const isUnitLocked = !isHoldingRole && schoolUnits.length <= 1;
 
   return (
-    <header className="h-auto min-h-[80px] py-4 px-4 md:px-6 bg-surface border-b border-border flex flex-col md:flex-row md:items-center justify-between shadow-sm shrink-0 gap-4 md:gap-0">
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          {toggleMobileMenu && (
-            <button 
-              className="md:hidden p-2 -ml-2 rounded-lg text-gray-500 hover:bg-gray-100 shrink-0"
-              onClick={toggleMobileMenu}
-            >
-              <Menu size={24} />
-            </button>
-          )}
-          
-          <div className="flex flex-1 md:flex-none flex-row gap-2 md:gap-6 overflow-x-auto hide-scrollbar">
-            <div className="flex flex-col gap-1.5 shrink-0">
-              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-1">Unit Sekolah</label>
-              <div className="relative">
-                <select 
-                  className={`appearance-none border text-sm font-semibold py-2 pl-4 pr-10 rounded-xl focus:outline-none min-w-[180px] ${
-                    isUnitLocked 
-                      ? "cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200" 
-                      : "cursor-pointer bg-surface border-border text-text-main shadow-sm hover:shadow-md transition-shadow focus:ring-2 focus:ring-primary/30"
-                  }`}
-                  value={unit} 
-                  onChange={(e) => handleChange("unit", e.target.value)}
-                  disabled={isPending || isUnitLocked}
-                >
-                  {(user?.role === "ADMIN" || user?.role === "YAYASAN") && (
-                    <option value="all">Semua Unit (Konsolidasi)</option>
-                  )}
-                  {[...schoolUnits]
-                    .sort((a, b) => {
-                      const getLvl = (n: string) => {
-                        const str = n.toUpperCase();
-                        if (str.includes("SD")) return 1;
-                        if (str.includes("SMP")) return 2;
-                        if (str.includes("SMA")) return 3;
-                        if (str.includes("SMK")) return 4;
-                        return 5;
-                      };
-                      return getLvl(a.name) - getLvl(b.name);
-                    })
-                    .map(u => (
-                      <option key={u.id} value={u.id}>{u.name}</option>
-                    ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-primary">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
+    <header className="py-3 px-3.5 md:py-4 md:px-6 bg-surface border-b border-border flex items-center justify-between shadow-2xs shrink-0">
+      <div className="flex items-center justify-between gap-2.5 md:gap-6 w-full">
+        {/* Dropdown Container: 2 Kolom proporsional di mobile (50/50), inline di desktop */}
+        <div className="grid grid-cols-2 gap-2 flex-1 min-w-0 md:flex md:flex-none md:gap-6">
+          {/* 1. Unit Sekolah */}
+          <div className="flex flex-col gap-1 min-w-0">
+            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-0.5 truncate">
+              Unit Sekolah
+            </label>
+            <div className="relative">
+              <select 
+                className={`appearance-none border text-xs sm:text-sm font-semibold py-2 pl-3 pr-7 rounded-xl focus:outline-none w-full md:min-w-[180px] truncate ${
+                  isUnitLocked 
+                    ? "cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200" 
+                    : "cursor-pointer bg-surface border-border text-text-main shadow-2xs hover:shadow-xs transition-shadow focus:ring-2 focus:ring-primary/30"
+                }`}
+                value={unit} 
+                onChange={(e) => handleChange("unit", e.target.value)}
+                disabled={isPending || isUnitLocked}
+              >
+                {(user?.role === "ADMIN" || user?.role === "YAYASAN") && (
+                  <option value="all">Semua Unit (Konsolidasi)</option>
+                )}
+                {[...schoolUnits]
+                  .sort((a, b) => {
+                    const getLvl = (n: string) => {
+                      const str = n.toUpperCase();
+                      if (str.includes("SD")) return 1;
+                      if (str.includes("SMP")) return 2;
+                      if (str.includes("SMA")) return 3;
+                      if (str.includes("SMK")) return 4;
+                      return 5;
+                    };
+                    return getLvl(a.name) - getLvl(b.name);
+                  })
+                  .map(u => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
+                  ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
             </div>
-          
-          <div className="flex flex-col gap-1.5 shrink-0">
-            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-1">Tahun Akademik</label>
-          <div className="relative">
-            <select 
-              className="appearance-none bg-surface border border-border shadow-sm hover:shadow-md transition-shadow text-sm font-semibold text-text-main py-2 pl-4 pr-10 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-[180px]" 
-              value={year} 
-              onChange={(e) => handleChange("year", e.target.value)}
-              disabled={isPending}
-            >
-              {academicYears.map(y => (
-                <option key={y.id} value={y.id}>{y.name}</option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-primary">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 9l-7 7-7-7" />
-              </svg>
+          </div>
+        
+          {/* 2. Tahun Akademik */}
+          <div className="flex flex-col gap-1 min-w-0">
+            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-0.5 truncate">
+              Tahun Akademik
+            </label>
+            <div className="relative">
+              <select 
+                className="appearance-none bg-surface border border-border shadow-2xs hover:shadow-xs transition-shadow text-xs sm:text-sm font-semibold text-text-main py-2 pl-3 pr-7 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 w-full md:min-w-[180px] truncate" 
+                value={year} 
+                onChange={(e) => handleChange("year", e.target.value)}
+                disabled={isPending}
+              >
+                {academicYears.map(y => (
+                  <option key={y.id} value={y.id}>{y.name}</option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-      
-      <div className="flex items-center justify-end w-full md:w-auto mt-4 md:mt-0 gap-3 border-t md:border-t-0 border-border pt-4 md:pt-0">
-        <button 
-          onClick={handleManualRefresh}
-          disabled={isPending}
-          className="p-2.5 rounded-xl bg-gray-50 text-gray-600 hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50 border border-gray-200"
-          title="Refresh Data"
-        >
-          <RefreshCw size={18} className={isPending ? "animate-spin" : ""} />
-        </button>
+
+        {/* 3. Tombol Refresh Ringkas */}
+        <div className="flex items-end shrink-0 pt-3 md:pt-0">
+          <button 
+            onClick={handleManualRefresh}
+            disabled={isPending}
+            className="h-9 w-9 md:h-10 md:w-10 rounded-xl bg-bg hover:bg-primary/10 text-text-muted hover:text-primary transition-colors disabled:opacity-50 border border-border flex items-center justify-center cursor-pointer shadow-2xs"
+            title="Segarkan Konteks"
+          >
+            <RefreshCw size={16} className={isPending ? "animate-spin text-primary" : ""} />
+          </button>
+        </div>
       </div>
     </header>
   )
