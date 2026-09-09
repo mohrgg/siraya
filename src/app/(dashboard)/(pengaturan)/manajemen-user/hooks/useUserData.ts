@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react"
 import { 
   tambahPengguna, editPengguna, resetPasswordPengguna, nonaktifkanPengguna, aktifkanPengguna, hapusPenggunaPermanen,
-  tambahDivisi, editDivisi, hapusDivisi 
+  bukaKunciPengguna, tambahDivisi, editDivisi, hapusDivisi 
 } from "@/actions/pengguna"
 import toast from "react-hot-toast"
 
@@ -17,13 +17,14 @@ export function useUserData(initialUsers: any[], initialDivisi: any[], units: an
 
   // Modals state User
   const [showUserModal, setShowUserModal] = useState(false)
-  const [formUser, setFormUser] = useState({ id: "", name: "", email: "", role: "TATA_USAHA", unitSekolahId: "", divisiId: "", isActive: true, password: "" })
+  const [formUser, setFormUser] = useState({ id: "", name: "", email: "", role: "TATA_USAHA", unitSekolahId: "", divisiId: "", isActive: true, password: "", mustChangePassword: true })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [resetUserId, setResetUserId] = useState<string | null>(null)
   const [disableUserId, setDisableUserId] = useState<string | null>(null)
   const [activateUserId, setActivateUserId] = useState<string | null>(null)
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
+  const [unlockUserId, setUnlockUserId] = useState<string | null>(null)
   
   // Modals state Divisi
   const [showDivModal, setShowDivModal] = useState(false)
@@ -48,7 +49,7 @@ export function useUserData(initialUsers: any[], initialDivisi: any[], units: an
 
   // Handlers User
   const openAddUser = () => {
-    setFormUser({ id: "", name: "", email: "", role: "TATA_USAHA", unitSekolahId: "", divisiId: "", isActive: true, password: "" })
+    setFormUser({ id: "", name: "", email: "", role: "TATA_USAHA", unitSekolahId: "", divisiId: "", isActive: true, password: "", mustChangePassword: true })
     setShowUserModal(true)
   }
 
@@ -61,7 +62,8 @@ export function useUserData(initialUsers: any[], initialDivisi: any[], units: an
       unitSekolahId: u.unitSekolahId || "", 
       divisiId: u.divisiId || "", 
       isActive: u.isActive, 
-      password: "" 
+      password: "",
+      mustChangePassword: u.mustChangePassword ?? false
     })
     setShowUserModal(true)
   }
@@ -171,6 +173,21 @@ export function useUserData(initialUsers: any[], initialDivisi: any[], units: an
     }
   }
 
+  const handleUnlockUser = async () => {
+    if (!unlockUserId) return
+    setIsSubmitting(true)
+    try {
+      await bukaKunciPengguna(unlockUserId)
+      toast.success("Kunci akun pengguna berhasil dibuka!")
+      setUnlockUserId(null)
+      window.location.reload()
+    } catch (err: any) {
+      toast.error(err.message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return {
     activeTab, setActiveTab,
     users, divisis,
@@ -186,11 +203,13 @@ export function useUserData(initialUsers: any[], initialDivisi: any[], units: an
     disableUserId, setDisableUserId,
     activateUserId, setActivateUserId,
     deleteUserId, setDeleteUserId,
+    unlockUserId, setUnlockUserId,
     showDivModal, setShowDivModal,
     formDiv, setFormDiv,
     deleteDivId, setDeleteDivId,
     openAddUser, openEditUser,
     handleSubmitUser, handleResetPass, handleDisableUser, handleActivateUser, handleDeleteUserPermanen,
+    handleUnlockUser,
     handleSubmitDivisi, handleDeleteDivisi
   }
 }

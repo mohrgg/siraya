@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { signOut } from "next-auth/react"
 import { 
   LayoutDashboard, Building, BookOpen, 
@@ -70,6 +70,13 @@ export default function Sidebar({ user, logoUrl }: { user: any; logoUrl?: string
 
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
+
+  // Otomatis buka modal ganti password jika pengguna memiliki status wajib ganti password
+  useEffect(() => {
+    if (user?.mustChangePassword) {
+      setShowChangePasswordModal(true)
+    }
+  }, [user?.mustChangePassword])
 
   const isKepsek = user?.role === "KEPALA_SEKOLAH"
   const isYayasan = user?.role === "YAYASAN"
@@ -256,6 +263,7 @@ export default function Sidebar({ user, logoUrl }: { user: any; logoUrl?: string
       <ChangePasswordModal 
         isOpen={showChangePasswordModal}
         onClose={() => setShowChangePasswordModal(false)}
+        isMandatory={!!user?.mustChangePassword}
       />
     </>
   )

@@ -53,7 +53,8 @@ export default async function DashboardLayout({
             name: tenant.user.name,
             email: tenant.user.email,
             role: tenant.role,
-            avatar: tenant.user.avatar
+            avatar: tenant.user.avatar,
+            mustChangePassword: tenant.user.mustChangePassword
           }} 
           logoUrl={pengaturan?.logoUrl || "/logo.png"}
         />

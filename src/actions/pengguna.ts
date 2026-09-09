@@ -31,9 +31,27 @@ export async function getPengguna() {
   return data.map(({ password, ...user }) => user)
 }
 
+// Helper validasi kekuatan kata sandi
+export async function validatePasswordStrength(password: string): Promise<{ valid: boolean; message?: string }> {
+  if (!password || password.length < 8) {
+    return { valid: false, message: "Kata sandi minimal 8 karakter." }
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: "Kata sandi harus mengandung minimal 1 huruf besar (kapital)." }
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: "Kata sandi harus mengandung minimal 1 huruf kecil." }
+  }
+  if (!/[0-9]/.test(password) && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    return { valid: false, message: "Kata sandi harus mengandung minimal 1 angka atau simbol khusus." }
+  }
+  return { valid: true }
+}
+
 export async function tambahPengguna(data: {
   name: string, email: string, role: string,
-  unitSekolahId?: string, divisiId?: string, password?: string
+  unitSekolahId?: string, divisiId?: string, password?: string,
+  mustChangePassword?: boolean
 }) {
   await requireAdmin()
   
@@ -42,6 +60,12 @@ export async function tambahPengguna(data: {
 
   if (data.role !== "ADMIN" && data.role !== "YAYASAN" && !data.unitSekolahId) {
     throw new Error("Unit Sekolah wajib diisi untuk role selain ADMIN dan YAYASAN.")
+  }
+
+  // Jika password kustom diisi dan bukan default "albas123", validasi kekuatannya
+  if (data.password && data.password !== "albas123") {
+    const check = await validatePasswordStrength(data.password)
+    if (!check.valid) throw new Error(check.message)
   }
 
   // Default password is 'albas123' if not provided
@@ -54,11 +78,12 @@ export async function tambahPengguna(data: {
       role: data.role,
       unitSekolahId: data.unitSekolahId || null,
       divisiId: data.divisiId || null,
-      password: hashedPassword
+      password: hashedPassword,
+      mustChangePassword: data.mustChangePassword !== undefined ? data.mustChangePassword : true
     }
   })
 
-  await logAktivitas("TAMBAH_PENGGUNA", "MANAJEMEN_USER", `Menambahkan akun baru: ${data.email} (${data.role})`)
+  await logAktivitas("TAMBAH_PENGGUNA", "MANAJEMEN_USER", `Menambahkan akun baru: ${data.email} (${data.role}) - Wajib Ganti Password: ${user.mustChangePassword ? "Ya" : "Tidak"}`)
 
   revalidatePath("/manajemen-user")
   return { id: user.id }
@@ -66,7 +91,8 @@ export async function tambahPengguna(data: {
 
 export async function editPengguna(id: string, data: {
   name: string, email: string, role: string,
-  unitSekolahId?: string, divisiId?: string, isActive: boolean, password?: string
+  unitSekolahId?: string, divisiId?: string, isActive: boolean, password?: string,
+  mustChangePassword?: boolean
 }) {
   await requireAdmin()
 
@@ -88,8 +114,17 @@ export async function editPengguna(id: string, data: {
     isActive: data.isActive
   }
 
+  if (data.mustChangePassword !== undefined) {
+    updateData.mustChangePassword = data.mustChangePassword
+  }
+
   if (data.password && data.password.trim() !== "") {
+    if (data.password !== "albas123") {
+      const check = await validatePasswordStrength(data.password)
+      if (!check.valid) throw new Error(check.message)
+    }
     updateData.password = await bcrypt.hash(data.password, 10)
+    updateData.lastPasswordChangeAt = new Date()
   }
 
   await prisma.pengguna.update({
@@ -104,14 +139,40 @@ export async function editPengguna(id: string, data: {
 
 export async function resetPasswordPengguna(id: string) {
   await requireAdmin()
+  const user = await prisma.pengguna.findUnique({ where: { id } })
+  if (!user) throw new Error("Pengguna tidak ditemukan")
+
   const hashedPassword = await bcrypt.hash("albas123", 10)
   
   await prisma.pengguna.update({
     where: { id },
-    data: { password: hashedPassword }
+    data: { 
+      password: hashedPassword,
+      mustChangePassword: true,
+      failedLoginAttempts: 0,
+      lockedUntil: null
+    }
   })
   
-  await logAktivitas("RESET_PASSWORD", "MANAJEMEN_USER", `Mereset password akun dengan ID: ${id}`)
+  await logAktivitas("RESET_PASSWORD", "MANAJEMEN_USER", `Mereset kata sandi akun ${user.email} ke default dan mengaktifkan wajib ganti sandi saat login.`)
+  revalidatePath("/manajemen-user")
+}
+
+export async function bukaKunciPengguna(id: string) {
+  await requireAdmin()
+  const user = await prisma.pengguna.findUnique({ where: { id } })
+  if (!user) throw new Error("Pengguna tidak ditemukan")
+
+  await prisma.pengguna.update({
+    where: { id },
+    data: {
+      failedLoginAttempts: 0,
+      lockedUntil: null
+    }
+  })
+
+  await logAktivitas("BUKA_KUNCI_PENGGUNA", "MANAJEMEN_USER", `Membuka kunci akun pengguna: ${user.email}`)
+  revalidatePath("/manajemen-user")
 }
 
 export async function gantiPasswordMandiri(oldPassword: string, newPassword: string) {
@@ -130,17 +191,32 @@ export async function gantiPasswordMandiri(oldPassword: string, newPassword: str
 
   const isMatch = await bcrypt.compare(oldPassword, user.password)
   if (!isMatch) {
-    throw new Error("Password lama salah.")
+    throw new Error("Kata sandi lama tidak sesuai.")
+  }
+
+  const check = await validatePasswordStrength(newPassword)
+  if (!check.valid) {
+    throw new Error(check.message)
+  }
+
+  if (oldPassword === newPassword) {
+    throw new Error("Kata sandi baru tidak boleh sama dengan kata sandi lama.")
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10)
   
   await prisma.pengguna.update({
     where: { id: user.id },
-    data: { password: hashedPassword }
+    data: { 
+      password: hashedPassword,
+      mustChangePassword: false,
+      lastPasswordChangeAt: new Date(),
+      failedLoginAttempts: 0,
+      lockedUntil: null
+    }
   })
 
-  await logAktivitas("GANTI_PASSWORD_MANDIRI", "PROFIL", `Pengguna mengganti passwordnya sendiri`)
+  await logAktivitas("GANTI_PASSWORD_MANDIRI", "PROFIL", `Pengguna memperbarui kata sandi secara mandiri.`)
 }
 
 export async function nonaktifkanPengguna(id: string) {

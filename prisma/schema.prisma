@@ -18,13 +18,17 @@ model Pengguna {
   unitSekolahId String? // Null berarti akses global ke semua unit
   divisiId      String? // Relasi ke tabel Divisi
 
-  avatar       String?      @db.VarChar(255)
-  isActive     Boolean      @default(true)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  lastActiveAt DateTime?
-  unitSekolah  UnitSekolah? @relation(fields: [unitSekolahId], references: [id])
-  divisi       Divisi?      @relation(fields: [divisiId], references: [id])
+  avatar               String?      @db.VarChar(255)
+  isActive             Boolean      @default(true)
+  failedLoginAttempts  Int          @default(0)
+  lockedUntil          DateTime?
+  mustChangePassword   Boolean      @default(false)
+  lastPasswordChangeAt DateTime?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  lastActiveAt         DateTime?
+  unitSekolah          UnitSekolah? @relation(fields: [unitSekolahId], references: [id])
+  divisi               Divisi?      @relation(fields: [divisiId], references: [id])
 
   logAktivitas      LogAktivitas[]
   transaksiDibuat   Transaksi[]    @relation("PembuatTransaksi")

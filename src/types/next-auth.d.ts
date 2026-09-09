@@ -8,6 +8,7 @@ declare module "next-auth" {
       unitSekolahId: string | null
       divisiId: string | null
       avatar: string | null
+      mustChangePassword?: boolean
     } & DefaultSession["user"]
   }
 
@@ -16,5 +17,6 @@ declare module "next-auth" {
     unitSekolahId: string | null
     divisiId: string | null
     avatar: string | null
+    mustChangePassword?: boolean
   }
 }

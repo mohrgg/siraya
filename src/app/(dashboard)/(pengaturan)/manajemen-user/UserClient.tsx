@@ -29,11 +29,13 @@ export default function UserClient({
     disableUserId, setDisableUserId,
     activateUserId, setActivateUserId,
     deleteUserId, setDeleteUserId,
+    unlockUserId, setUnlockUserId,
     showDivModal, setShowDivModal,
     formDiv, setFormDiv,
     deleteDivId, setDeleteDivId,
     openAddUser, openEditUser,
     handleSubmitUser, handleResetPass, handleDisableUser, handleActivateUser, handleDeleteUserPermanen,
+    handleUnlockUser,
     handleSubmitDivisi, handleDeleteDivisi
   } = useUserData(initialUsers, initialDivisi, units)
 
@@ -46,7 +48,8 @@ export default function UserClient({
         </div>
       </div>
 
-      <ConfirmModal isOpen={!!resetUserId} title="Reset Password" message="Yakin ingin mereset password pengguna ini menjadi 'albas123'?" onCancel={() => setResetUserId(null)} onConfirm={handleResetPass} isLoading={isSubmitting} confirmText="Reset Password" confirmVariant="primary" />
+      <ConfirmModal isOpen={!!resetUserId} title="Reset Password" message="Yakin ingin mereset password pengguna ini menjadi 'albas123'? Pengguna akan diwajibkan mengganti kata sandi saat login berikutnya." onCancel={() => setResetUserId(null)} onConfirm={handleResetPass} isLoading={isSubmitting} confirmText="Reset Password" confirmVariant="primary" />
+      <ConfirmModal isOpen={!!unlockUserId} title="Buka Kunci Akun" message="Yakin ingin membuka kunci akun ini sekarang? Percobaan login gagal akan direset menjadi 0 sehingga pengguna dapat langsung login kembali." onCancel={() => setUnlockUserId(null)} onConfirm={handleUnlockUser} isLoading={isSubmitting} confirmText="Buka Kunci Akun" confirmVariant="primary" />
       <ConfirmModal isOpen={!!disableUserId} title="Nonaktifkan Akun" message="Yakin ingin menonaktifkan pengguna ini? Mereka tidak akan bisa login lagi ke sistem." onCancel={() => setDisableUserId(null)} onConfirm={handleDisableUser} isLoading={isSubmitting} confirmText="Nonaktifkan" confirmVariant="danger" />
       <ConfirmModal isOpen={!!activateUserId} title="Aktifkan Akun" message="Yakin ingin mengaktifkan kembali pengguna ini agar dapat login ke sistem?" onCancel={() => setActivateUserId(null)} onConfirm={handleActivateUser} isLoading={isSubmitting} confirmText="Aktifkan Akun" confirmVariant="primary" />
       <ConfirmModal isOpen={!!deleteUserId} title="Hapus Pengguna Permanen" message="PERINGATAN: Akun ini akan dihapus secara permanen dari basis data dan tidak dapat dipulihkan. Seluruh riwayat aktivitas pada audit log akan tetap aman diarsipkan. Yakin ingin menghapus permanen?" onCancel={() => setDeleteUserId(null)} onConfirm={handleDeleteUserPermanen} isLoading={isSubmitting} confirmText="Hapus Permanen" confirmVariant="danger" />
@@ -97,6 +100,7 @@ export default function UserClient({
             units={units}
             openAddUser={openAddUser} openEditUser={openEditUser}
             setResetUserId={setResetUserId} setDisableUserId={setDisableUserId}
+            setUnlockUserId={setUnlockUserId}
             isInactiveTab={false}
             setActivateUserId={setActivateUserId}
           />
@@ -111,6 +115,7 @@ export default function UserClient({
             units={units}
             openAddUser={openAddUser} openEditUser={openEditUser}
             setResetUserId={setResetUserId} setDisableUserId={setDisableUserId}
+            setUnlockUserId={setUnlockUserId}
             isInactiveTab={true}
             setActivateUserId={setActivateUserId}
             setDeleteUserId={setDeleteUserId}
