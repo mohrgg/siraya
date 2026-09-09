@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma"
+import { normalizeStatusKepegawaian } from "@/lib/constants/kepegawaian"
 
 // Helper pengurutan alami jenjang & kelas (1-12 atau I-XII)
 function getLevelOrder(str: string): { level: number; suffix: string } {
@@ -354,15 +355,28 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
     prisma.guru.count({ where: { unitSekolahId: unitId, isDeleted: false, isActive: true } })
   ])
 
-  // Status Guru
+  // Status Guru: Hanya status valid (abaikan "-", "", "Belum Ditentukan")
   const guruStatusDist = await prisma.guru.groupBy({
     by: ['statusKepegawaian'],
-    where: { unitSekolahId: unitId, isDeleted: false, isActive: true },
+    where: { 
+      unitSekolahId: unitId, 
+      isDeleted: false, 
+      isActive: true,
+      statusKepegawaian: {
+        notIn: ["-", "", "Belum Ditentukan"]
+      }
+    },
     _count: { _all: true }
   })
-  const guruStatusData = guruStatusDist.map(s => ({
-    name: s.statusKepegawaian || 'Lainnya',
-    value: s._count._all
+  const statusCountMap = new Map<string, number>()
+  for (const s of guruStatusDist) {
+    const norm = normalizeStatusKepegawaian(s.statusKepegawaian)
+    if (!norm || norm === "-") continue
+    statusCountMap.set(norm, (statusCountMap.get(norm) || 0) + s._count._all)
+  }
+  const guruStatusData = Array.from(statusCountMap.entries()).map(([name, value]) => ({
+    name,
+    value
   }))
 
   const guruPendidikanDist = await prisma.guru.groupBy({

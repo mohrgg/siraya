@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { logAktivitas } from "@/lib/logger"
+import { normalizeStatusKepegawaian } from "@/lib/constants/kepegawaian"
 
 export async function POST(req: Request) {
   try {
@@ -42,7 +43,8 @@ export async function POST(req: Request) {
 
       const noTelp = (row["No Telepon"] || "").toString().trim()
       const email = (row["Email"] || "").toString().trim()
-      const statusKepegawaian = (row["Status Kepegawaian *"] || row["Status Kepegawaian"] || "-").toString().trim()
+      const rawStatus = (row["Status Kepegawaian *"] || row["Status Kepegawaian"] || "").toString().trim()
+      const statusKepegawaian = normalizeStatusKepegawaian(rawStatus)
       const pendidikan = (row["Pendidikan Terakhir"] || "").toString().trim()
       const bidangStudi = (row["Bidang Studi"] || "").toString().trim()
       

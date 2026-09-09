@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
+import { getStatusBadgeStyle, normalizeStatusKepegawaian, isValidMonitoringStatus } from "@/lib/constants/kepegawaian"
 import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
 import PrintFooter from "@/components/shared/print/PrintFooter"
@@ -236,13 +237,15 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
           {/* Identity Details */}
           <div>
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-              <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
-                initialData.statusKepegawaian === "GTY" ? "bg-emerald-100 text-emerald-700" :
-                initialData.statusKepegawaian === "PNS" ? "bg-purple-100 text-purple-700" :
-                "bg-blue-100 text-blue-700"
-              } border border-black/5`}>
-                {initialData.statusKepegawaian}
-              </span>
+              {isValidMonitoringStatus(initialData.statusKepegawaian) ? (
+                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getStatusBadgeStyle(initialData.statusKepegawaian)}`}>
+                  {normalizeStatusKepegawaian(initialData.statusKepegawaian)}
+                </span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                  Belum Ditentukan
+                </span>
+              )}
               <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 text-gray-700 border border-border">
                 {initialData.unitSekolah.name}
               </span>

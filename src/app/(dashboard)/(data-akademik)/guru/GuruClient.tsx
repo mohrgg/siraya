@@ -30,6 +30,13 @@ import {
   Mail,
   BookOpen
 } from "lucide-react"
+import { 
+  isStatusTetap, 
+  isStatusHonorer, 
+  isValidMonitoringStatus, 
+  getStatusBadgeStyle, 
+  normalizeStatusKepegawaian 
+} from "@/lib/constants/kepegawaian"
 import Link from "next/link"
 import { tambahGuru, editGuru, hapusGuru, hapusGuruMassal } from "@/actions/guru"
 import toast from "react-hot-toast"
@@ -133,7 +140,7 @@ export default function GuruClient({
     gender: "Laki-laki",
     phone: "",
     email: "",
-    statusKepegawaian: "-",
+    statusKepegawaian: "",
     pendidikan: "S1",
     bidangStudiId: "",
     bankName: "",
@@ -156,8 +163,8 @@ export default function GuruClient({
   const executiveMetrics = useMemo(() => {
     const totalGuru = scopedData.length
     const totalAktif = scopedData.filter(g => g.isActive).length
-    const totalTetap = scopedData.filter(g => g.statusKepegawaian === "GTY" || g.statusKepegawaian === "TETAP" || g.statusKepegawaian === "PNS").length
-    const totalHonorer = scopedData.filter(g => g.statusKepegawaian === "HONORER" || g.statusKepegawaian === "GTT" || g.statusKepegawaian === "KONTRAK").length || Math.max(0, totalGuru - totalTetap)
+    const totalTetap = scopedData.filter(g => isStatusTetap(g.statusKepegawaian)).length
+    const totalHonorer = scopedData.filter(g => isStatusHonorer(g.statusKepegawaian)).length
     const pctTetap = totalGuru > 0 ? Math.round((totalTetap / totalGuru) * 100) : 0
     const totalWali = scopedData.filter(g => g.rombelWali && g.rombelWali.length > 0).length
     const totalS1Plus = scopedData.filter(g => g.pendidikan && (g.pendidikan.includes("S1") || g.pendidikan.includes("S2") || g.pendidikan.includes("S3"))).length
@@ -191,7 +198,7 @@ export default function GuruClient({
       gender: item.gender || "Laki-laki",
       phone: item.phone || "",
       email: item.email || "",
-      statusKepegawaian: item.statusKepegawaian || "-",
+      statusKepegawaian: item.statusKepegawaian && item.statusKepegawaian !== "-" ? item.statusKepegawaian : "",
       pendidikan: item.pendidikan || "S1",
       bidangStudiId: item.bidangStudiId || "",
       bankName: item.bankName || "",
@@ -272,10 +279,10 @@ export default function GuruClient({
       if (activeUnitId && activeUnitId !== "all" && item.unitSekolahId !== activeUnitId) return false
       if ((!activeUnitId || activeUnitId === "all") && unitFilter && item.unitSekolahId !== unitFilter) return false
       if (statusFilter) {
-        if (statusFilter === "-") {
-          if (item.statusKepegawaian && item.statusKepegawaian !== "-") return false
+        if (statusFilter === "UNASSIGNED") {
+          if (isValidMonitoringStatus(item.statusKepegawaian)) return false
         } else {
-          if (item.statusKepegawaian !== statusFilter) return false
+          if (normalizeStatusKepegawaian(item.statusKepegawaian) !== statusFilter) return false
         }
       }
       if (searchTerm.trim()) {
@@ -297,12 +304,13 @@ export default function GuruClient({
 
   const availableStatuses = useMemo(() => {
     const statuses = new Set<string>()
-    let hasEmpty = false
+    let hasUnassigned = false
     data.forEach(item => {
-      if (item.statusKepegawaian && item.statusKepegawaian !== "-") {
-        statuses.add(item.statusKepegawaian)
+      const norm = normalizeStatusKepegawaian(item.statusKepegawaian)
+      if (norm) {
+        statuses.add(norm)
       } else {
-        hasEmpty = true
+        hasUnassigned = true
       }
     })
     
@@ -311,8 +319,8 @@ export default function GuruClient({
       label: status
     }))
 
-    if (hasEmpty) {
-      options.push({ value: "-", label: "Belum Diisi (-)" })
+    if (hasUnassigned) {
+      options.push({ value: "UNASSIGNED", label: "Belum Ditentukan" })
     }
 
     return options
@@ -602,13 +610,15 @@ export default function GuruClient({
                         <div className="font-medium text-text-main">{item.unitSekolah?.name || "-"}</div>
                       </td>
                       <td className="p-4 text-center hidden lg:table-cell">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
-                          item.statusKepegawaian === "GTY" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                          item.statusKepegawaian === "PNS" ? "bg-purple-50 text-purple-700 border border-purple-200" :
-                          "bg-indigo-50 text-indigo-700 border border-indigo-200"
-                        }`}>
-                          {item.statusKepegawaian || "-"}
-                        </span>
+                        {isValidMonitoringStatus(item.statusKepegawaian) ? (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getStatusBadgeStyle(item.statusKepegawaian)}`}>
+                            {normalizeStatusKepegawaian(item.statusKepegawaian)}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-500 border border-slate-200" title="Status kepegawaian belum ditentukan">
+                            Belum Ditentukan
+                          </span>
+                        )}
                       </td>
                       <td className="p-4 hidden xl:table-cell">
                         {item.phone ? (

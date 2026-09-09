@@ -47,7 +47,7 @@ export default function SubKelasFormModal({
       id: formData.waliKelasGuruId,
       name: `${formData.waliKelas || 'Guru Terpilih'} (Telah Dihapus/Nonaktif)`,
       unitSekolah: { name: "Nonaktif" },
-      statusKepegawaian: "-"
+      statusKepegawaian: ""
     }] : []),
     ...initialTeachers.filter((t: any) => t.unitSekolahId === formData.unitSekolahId)
   ].sort((a: any, b: any) => {
@@ -158,7 +158,7 @@ export default function SubKelasFormModal({
             <option value="">-- Belum Dipilih --</option>
             {teachersForUnit.map((t: any) => (
               <option key={t.id} value={t.id}>
-                {t.name} • {t.unitSekolah?.name || "Yayasan"} ({t.nip ? `NIP: ${t.nip}` : t.statusKepegawaian})
+                {t.name} • {t.unitSekolah?.name || "Yayasan"} ({t.nip ? `NIP: ${t.nip}` : (t.statusKepegawaian && t.statusKepegawaian !== "-" ? t.statusKepegawaian : "Guru")})
               </option>
             ))}
           </select>

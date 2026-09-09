@@ -8,6 +8,7 @@ import toast from "react-hot-toast"
 import * as XLSX from "xlsx"
 import { useRouter } from "next/navigation"
 import { SideDrawer } from "@/components/ui/SideDrawer"
+import { normalizeStatusKepegawaian } from "@/lib/constants/kepegawaian"
 
 interface ImportGuruModalProps {
   isOpen: boolean
@@ -105,16 +106,11 @@ export default function ImportGuruModal({
         if (jk.toUpperCase() === "L") jk = "Laki-laki"
         else if (jk.toUpperCase() === "P") jk = "Perempuan"
         
-        let statusKepegawaian = (row["Status Kepegawaian *"] || row["Status Kepegawaian"] || "").toString().trim()
-        if (!statusKepegawaian) {
-          statusKepegawaian = "-"
-        }
+        const rawStatus = (row["Status Kepegawaian *"] || row["Status Kepegawaian"] || "").toString().trim()
+        const statusKepegawaian = normalizeStatusKepegawaian(rawStatus)
 
         const errors: string[] = []
         if (!nama) errors.push("Nama Lengkap wajib diisi")
-        if (!["-", "GTY", "GTT", "PNS", "DPK", "PPPK", "Honor", "Staf TU", "Satpam", "OB"].includes(statusKepegawaian)) {
-          errors.push(`Status Kepegawaian '${statusKepegawaian}' tidak valid. Hanya: -, GTY, GTT, PNS, DPK, PPPK, Honor, Staf TU, Satpam, OB.`)
-        }
 
         return {
           rowNum,

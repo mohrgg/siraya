@@ -3,15 +3,17 @@ import { Building, Award, Briefcase, Hash, CheckCircle2 } from "lucide-react"
 import { Input } from "@/components/ui/Input"
 import { DynamicSelect } from "@/components/ui/DynamicSelect"
 import { getBidangStudiList, createBidangStudi, deleteBidangStudi } from "@/actions/bidang-studi"
+import { STATUS_KEPEGAWAIAN_LIST, normalizeStatusKepegawaian } from "@/lib/constants/kepegawaian"
 
 export default function TabKepegawaian({ formData, handleChange, schoolUnits, availableStatuses }: any) {
   const [opsiBidangStudi, setOpsiBidangStudi] = useState<any[]>([])
   const [isCustomStatus, setIsCustomStatus] = useState(false)
 
+  const currentNormalized = normalizeStatusKepegawaian(formData.statusKepegawaian)
   const knownStatuses = Array.from(new Set([
-    "-", "GTY", "GTT", "PNS", "Staf TU", 
-    ...(availableStatuses?.map((s: any) => s.value) || []),
-    formData.statusKepegawaian
+    ...STATUS_KEPEGAWAIAN_LIST,
+    ...(availableStatuses?.map((s: any) => normalizeStatusKepegawaian(s.value)) || []),
+    currentNormalized
   ])).filter(Boolean)
 
   useEffect(() => {
@@ -101,7 +103,7 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits, av
                 type="button"
                 onClick={() => {
                   setIsCustomStatus(false)
-                  handleChange("statusKepegawaian", "-")
+                  handleChange("statusKepegawaian", "")
                 }}
                 className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-semibold transition-colors"
               >
@@ -111,7 +113,7 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits, av
           ) : (
             <select 
               className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium text-sm transition-all" 
-              value={formData.statusKepegawaian || "-"} 
+              value={currentNormalized} 
               onChange={e => {
                 if (e.target.value === "LAINNYA") {
                   setIsCustomStatus(true)
@@ -122,9 +124,10 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits, av
               }}
               required
             >
+              <option value="">-- Pilih Status Kepegawaian --</option>
               {knownStatuses.map(status => (
                 <option key={status as string} value={status as string}>
-                  {status === "-" ? "- (Tanpa Status / Kosong)" : status as string}
+                  {status as string}
                 </option>
               ))}
               <option value="LAINNYA" className="font-bold text-primary">➕ Lainnya (Ketik Sendiri)...</option>
