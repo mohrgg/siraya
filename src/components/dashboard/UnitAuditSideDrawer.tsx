@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { setGlobalContext } from '@/actions/app-context'
 import { 
   X, ChevronLeft, ChevronRight, School, Users, 
-  Layers, GraduationCap, Wallet, ArrowRight, CheckCircle2, AlertTriangle, LayoutDashboard 
+  Layers, GraduationCap, Wallet, ArrowRight, CheckCircle2, AlertTriangle, LayoutDashboard,
+  Coins 
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -19,6 +20,9 @@ export interface UnitAuditData {
   tagihanTotal?: number
   tagihanTerbayar?: number
   tagihanSisa?: number
+  kasMasuk?: number
+  kasKeluar?: number
+  saldoKas?: number
   classes?: Array<{
     name: string
     total: number
@@ -73,6 +77,28 @@ export default function UnitAuditSideDrawer({
     startSync(async () => {
       await setGlobalContext(unitId, "")
       window.location.href = `/rekapitulasi-tunggakan?unitId=${unitId}`
+    })
+  }
+
+  const handleOpenKasMasuk = (unitId?: string) => {
+    if (!unitId) {
+      window.location.href = '/kas-masuk'
+      return
+    }
+    startSync(async () => {
+      await setGlobalContext(unitId, "")
+      window.location.href = `/kas-masuk?unitId=${unitId}`
+    })
+  }
+
+  const handleOpenKasKeluar = (unitId?: string) => {
+    if (!unitId) {
+      window.location.href = '/kas-keluar'
+      return
+    }
+    startSync(async () => {
+      await setGlobalContext(unitId, "")
+      window.location.href = `/kas-keluar?unitId=${unitId}`
     })
   }
 
@@ -313,6 +339,55 @@ export default function UnitAuditSideDrawer({
                       style={{ width: `${Math.min(100, Math.max(0, kolektibilitasVal))}%` }}
                     />
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Ringkasan Finansial Arus Kas Operasional */}
+            <div className="space-y-3 pt-4 border-t border-slate-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <Coins size={16} className="text-blue-600" />
+                    Audit Kas & Keuangan Operasional
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Arus kas riil pemasukan dan pengeluaran pada unit ini.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={isSyncing}
+                    onClick={() => handleOpenKasMasuk(activeUnit?.id)}
+                    className="text-xs font-semibold text-emerald-700 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    Kas Masuk <ArrowRight size={12} />
+                  </button>
+                  <span className="text-slate-300">•</span>
+                  <button
+                    type="button"
+                    disabled={isSyncing}
+                    onClick={() => handleOpenKasKeluar(activeUnit?.id)}
+                    className="text-xs font-semibold text-rose-700 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    Kas Keluar <ArrowRight size={12} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-medium">Total Kas Masuk:</span>
+                  <span className="font-bold text-[#065f32]">{formatCurrency(activeUnit.kasMasuk || 0)}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-medium">Total Kas Keluar:</span>
+                  <span className="font-bold text-rose-600">{formatCurrency(activeUnit.kasKeluar || 0)}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100 font-semibold">
+                  <span className="text-slate-700">Saldo Kas Bersih Unit:</span>
+                  <span className={`font-bold ${(activeUnit.saldoKas || 0) >= 0 ? 'text-blue-700' : 'text-rose-700'}`}>
+                    {formatCurrency(activeUnit.saldoKas || 0)}
+                  </span>
                 </div>
               </div>
             </div>

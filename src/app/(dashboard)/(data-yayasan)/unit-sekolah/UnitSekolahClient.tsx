@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
 import { 
@@ -40,6 +40,22 @@ export type UnitSekolah = {
     guru: number
     jurusan: number
   }
+  tagihanTotal?: number
+  tagihanTerbayar?: number
+  tagihanSisa?: number
+  kolektibilitas?: number | null
+  kasMasuk?: number
+  kasKeluar?: number
+  saldoKas?: number
+  classes?: Array<{
+    name: string
+    total: number
+    rombelList?: Array<{
+      id?: string
+      name: string
+      total: number
+    }>
+  }>
   createdAt?: Date
   updatedAt?: Date
 }
@@ -54,6 +70,11 @@ export default function UnitSekolahClient({
   const router = useRouter()
   const isReadOnly = userRole !== "ADMIN"
   const [data, setData] = useState<UnitSekolah[]>(initialData)
+
+  useEffect(() => {
+    setData(initialData)
+  }, [initialData])
+
   const [searchTerm, setSearchTerm] = useState("")
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid")
 
@@ -97,14 +118,21 @@ export default function UnitSekolahClient({
   const totalRombel = data.reduce((acc, u) => acc + (u._count?.subKelas || 0), 0)
   const totalGuru = data.reduce((acc, u) => acc + (u._count?.guru || 0), 0)
 
-  // Prepare drawer data list
+  // Prepare drawer data list with real aggregated metrics
   const drawerUnitDataList: UnitAuditData[] = data.map(u => ({
     id: u.id,
     name: u.name,
     total: u._count?.murid || 0,
     rombel: u._count?.subKelas || 0,
     guru: u._count?.guru || 0,
-    kolektibilitas: 100
+    kolektibilitas: u.kolektibilitas ?? null,
+    tagihanTotal: u.tagihanTotal || 0,
+    tagihanTerbayar: u.tagihanTerbayar || 0,
+    tagihanSisa: u.tagihanSisa || 0,
+    kasMasuk: u.kasMasuk || 0,
+    kasKeluar: u.kasKeluar || 0,
+    saldoKas: u.saldoKas || 0,
+    classes: u.classes || []
   }))
 
   const handleOpenDrawerForUnit = (unitId: string) => {
