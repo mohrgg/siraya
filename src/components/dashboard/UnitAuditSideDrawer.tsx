@@ -111,7 +111,7 @@ export default function UnitAuditSideDrawer({
   }
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
-  const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
+  const formatCurrency = (num: number) => `Rp ${new Intl.NumberFormat('id-ID').format(num || 0)}`
 
   const kolektibilitasVal = typeof activeUnit.kolektibilitas === 'number' ? activeUnit.kolektibilitas : 0
   const isSehat = kolektibilitasVal >= 80

@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ['*.trycloudflare.com', '*.ngrok-free.app'],
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },

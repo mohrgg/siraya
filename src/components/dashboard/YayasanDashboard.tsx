@@ -91,7 +91,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
   }
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
-  const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
+  const formatCurrency = (num: number) => `Rp ${new Intl.NumberFormat('id-ID').format(num || 0)}`
 
   // Urutan hierarki jenjang sekolah dari paling kecil ke paling besar (TK -> SD -> SMP -> SMA -> SMK)
   const getUnitLevel = (name: string) => {

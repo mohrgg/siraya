@@ -94,12 +94,14 @@ export function AdaptiveValue({
       ref={containerRef} 
       className="w-full min-w-0 overflow-hidden flex items-baseline"
       style={{ containerType: "inline-size" }}
+      suppressHydrationWarning
     >
       <Component
         ref={textRef as any}
         style={{ fontSize: `${fontSize}px` }}
         className={`tracking-tight font-black whitespace-nowrap leading-none select-text ${className}`}
         title={stringVal}
+        suppressHydrationWarning
         {...props}
       >
         {stringVal}

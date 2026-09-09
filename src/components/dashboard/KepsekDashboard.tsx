@@ -26,7 +26,7 @@ export default function KepsekDashboard(props: any) {
   } = props
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
-  const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
+  const formatCurrency = (num: number) => `Rp ${new Intl.NumberFormat('id-ID').format(num || 0)}`
 
   // Hitung metrik turunan eksekutif
   const avgPerRombel = totalRombel > 0 ? Math.round(totalMurid / totalRombel) : 0

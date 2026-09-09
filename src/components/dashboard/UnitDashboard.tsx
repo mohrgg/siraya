@@ -70,7 +70,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
   const [selectedRombelDrilldown, setSelectedRombelDrilldown] = useState<any>(null)
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
-  const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
+  const formatCurrency = (num: number) => `Rp ${new Intl.NumberFormat('id-ID').format(num || 0)}`
 
   const handleQuickAction = (actionName: string) => {
     toast.success(`Membuka fitur: ${actionName}`)

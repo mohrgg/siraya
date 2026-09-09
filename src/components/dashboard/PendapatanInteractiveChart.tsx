@@ -13,7 +13,7 @@ interface PendapatanInteractiveChartProps {
   hideContainerCard?: boolean
 }
 
-const formatCurrency = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0)
+const formatCurrency = (num: number) => `Rp ${new Intl.NumberFormat('id-ID').format(num || 0)}`
 
 export default function PendapatanInteractiveChart({ 
   hariIniData, mingguIniData, bulanIniData, perUnitData = [],

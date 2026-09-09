@@ -6,6 +6,7 @@ import prisma from "./prisma"
 const DUMMY_HASH = "$2a$10$wN9v8Yf3Xw27q8bUvG5qkeLvhxJpM4k7zV9P0L3J1nN9q9bUvG5qk"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   providers: [
     CredentialsProvider({
       name: "Credentials",
