@@ -43,8 +43,14 @@ export default function MobileBottomNav({ user, logoUrl }: MobileBottomNavProps)
   const isAkademikActive = pathname.startsWith('/kelas') || 
                            pathname.startsWith('/guru') || 
                            pathname.startsWith('/tahun-akademik') || 
-                           pathname.startsWith('/jurusan')
+                           pathname.startsWith('/jurusan') ||
+                           pathname.startsWith('/murid')
   const isLaporanActive = pathname.startsWith('/laporan')
+
+  // Smart routing per role for payment / finance
+  const isKepsekOrYayasan = userRole === 'KEPALA_SEKOLAH' || userRole === 'YAYASAN'
+  const pembayaranHref = isKepsekOrYayasan ? '/rekapitulasi-tunggakan' : '/pembayaran-tagihan'
+  const pembayaranLabel = isKepsekOrYayasan ? 'Tunggakan' : 'Pembayaran'
 
   const getInitials = (name: string) => {
     if (!name) return "U"
@@ -71,7 +77,7 @@ export default function MobileBottomNav({ user, logoUrl }: MobileBottomNavProps)
         className="md:hidden fixed bottom-0 inset-x-0 bg-surface/95 backdrop-blur-md border-t border-border z-40 px-2 py-1 shadow-lg safe-area-bottom"
       >
         <div className="grid grid-cols-5 gap-1 items-center max-w-md mx-auto">
-          {/* Slot 1: Beranda */}
+          {/* Slot 1: Dashboard */}
           <Link
             href="/"
             className={`flex flex-col items-center justify-center py-1.5 px-0.5 rounded-xl transition-all min-h-[48px] touch-manipulation ${
@@ -81,12 +87,12 @@ export default function MobileBottomNav({ user, logoUrl }: MobileBottomNavProps)
             }`}
           >
             <LayoutDashboard size={18} strokeWidth={isDashboardActive && !isModalOpen ? 2.5 : 2} />
-            <span className="text-[10px] mt-1 tracking-tight leading-none">Beranda</span>
+            <span className="text-[10px] mt-1 tracking-tight leading-none truncate max-w-full px-0.5">Dashboard</span>
           </Link>
 
-          {/* Slot 2: Keuangan */}
+          {/* Slot 2: Pembayaran (Keuangan) */}
           <Link
-            href="/kas-masuk"
+            href={pembayaranHref}
             className={`flex flex-col items-center justify-center py-1.5 px-0.5 rounded-xl transition-all min-h-[48px] touch-manipulation ${
               isKeuanganActive && !isModalOpen
                 ? 'text-primary font-bold bg-primary/10'
@@ -94,7 +100,7 @@ export default function MobileBottomNav({ user, logoUrl }: MobileBottomNavProps)
             }`}
           >
             <CreditCard size={18} strokeWidth={isKeuanganActive && !isModalOpen ? 2.5 : 2} />
-            <span className="text-[10px] mt-1 tracking-tight leading-none">Keuangan</span>
+            <span className="text-[10px] mt-1 tracking-tight leading-none truncate max-w-full px-0.5">{pembayaranLabel}</span>
           </Link>
 
           {/* Slot 3: CENTER PROMINENT MENU HUB (APP LAUNCHER) */}
@@ -117,7 +123,7 @@ export default function MobileBottomNav({ user, logoUrl }: MobileBottomNavProps)
             </span>
           </button>
 
-          {/* Slot 4: Akademik */}
+          {/* Slot 4: Kelas & Murid (Akademik) */}
           <Link
             href="/kelas"
             className={`flex flex-col items-center justify-center py-1.5 px-0.5 rounded-xl transition-all min-h-[48px] touch-manipulation ${
@@ -127,7 +133,7 @@ export default function MobileBottomNav({ user, logoUrl }: MobileBottomNavProps)
             }`}
           >
             <GraduationCap size={18} strokeWidth={isAkademikActive && !isModalOpen ? 2.5 : 2} />
-            <span className="text-[10px] mt-1 tracking-tight leading-none">Akademik</span>
+            <span className="text-[10px] mt-1 tracking-tight leading-none truncate max-w-full px-0.5">Akademik</span>
           </Link>
 
           {/* Slot 5: Laporan */}
@@ -140,7 +146,7 @@ export default function MobileBottomNav({ user, logoUrl }: MobileBottomNavProps)
             }`}
           >
             <PieChart size={18} strokeWidth={isLaporanActive && !isModalOpen ? 2.5 : 2} />
-            <span className="text-[10px] mt-1 tracking-tight leading-none">Laporan</span>
+            <span className="text-[10px] mt-1 tracking-tight leading-none truncate max-w-full px-0.5">Laporan</span>
           </Link>
         </div>
       </nav>

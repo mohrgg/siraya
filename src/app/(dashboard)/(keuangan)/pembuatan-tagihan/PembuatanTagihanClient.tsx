@@ -679,8 +679,8 @@ export default function PembuatanTagihanClient({
               <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
-                    <th className="p-4 font-semibold text-center w-12 sticky left-0 bg-bg z-30 shadow-[1px_0_0_0_#e2e8f0]">NO</th>
-                    <th className="p-4 font-semibold min-w-[200px] sticky left-12 bg-bg z-30 shadow-[1px_0_0_0_#e2e8f0]">SISWA/I</th>
+                    <th className="p-4 font-semibold text-center w-12 md:sticky md:left-0 bg-bg md:z-30 md:shadow-[1px_0_0_0_#e2e8f0]">NO</th>
+                    <th className="p-4 font-semibold min-w-[200px] md:sticky md:left-12 bg-bg md:z-30 md:shadow-[1px_0_0_0_#e2e8f0]">SISWA/I</th>
                     
                     {akunColumns.map(col => (
                       <th 
@@ -777,7 +777,7 @@ export default function PembuatanTagihanClient({
                     ))}
                     
                     <th className="p-4 font-semibold text-right min-w-[150px]">TAGIHAN BERJALAN (TOTAL)</th>
-                    {!isReadOnly && <th className="p-4 font-semibold text-center w-24 sticky right-0 bg-bg z-30 shadow-[-1px_0_0_0_#e2e8f0]">AKSI</th>}
+                    {!isReadOnly && <th className="p-4 font-semibold text-center w-24 md:sticky md:right-0 bg-bg md:z-30 md:shadow-[-1px_0_0_0_#e2e8f0]">AKSI</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -796,10 +796,10 @@ export default function PembuatanTagihanClient({
                       
                       return (
                         <tr key={row.id} className={`border-b border-border/50 hover:bg-bg/50 transition-colors ${row.isDirty ? 'bg-amber-50/30' : ''}`}>
-                          <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-20 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                          <td className="p-4 text-center text-text-muted font-medium md:sticky md:left-0 bg-white md:z-20 md:shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
                             {(currentPage - 1) * pageSize + idx + 1}.
                           </td>
-                          <td className="p-4 sticky left-12 bg-white z-20 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                          <td className="p-4 md:sticky md:left-12 bg-white md:z-20 md:shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
                             <div>
                               <p className={`font-semibold leading-tight truncate max-w-[200px] ${row.hasOldDebts ? 'text-red-500' : 'text-text-main'}`} title={row.name}>
                                 {row.name}
@@ -854,7 +854,7 @@ export default function PembuatanTagihanClient({
                             Rp. {formatRupiah(rowTotal)}
                           </td>
                           {!isReadOnly && (
-                            <td className="p-4 text-center sticky right-0 bg-white z-20 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
+                            <td className="p-4 text-center md:sticky md:right-0 bg-white md:z-20 md:shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-bg/50">
                               <Button 
                                 size="sm"
                                 variant={row.isDirty ? "primary" : "outline"}
@@ -877,7 +877,7 @@ export default function PembuatanTagihanClient({
                 {filteredData.length > 0 && (
                   <tfoot className="bg-gray-50 font-bold">
                     <tr>
-                      <td colSpan={2} className="p-4 text-right text-text-main sticky left-0 bg-gray-50 z-10 shadow-[1px_0_0_0_#e2e8f0]">
+                      <td colSpan={2} className="p-4 text-right text-text-main md:sticky md:left-0 bg-gray-50 md:z-10 md:shadow-[1px_0_0_0_#e2e8f0]">
                         TOTAL KESELURUHAN
                       </td>
                       {akunColumns.map(col => {
@@ -897,7 +897,7 @@ export default function PembuatanTagihanClient({
                           return sum + (isLocked ? 0 : (row.tagihanMap[col.id] || 0))
                         }, 0), 0))}
                       </td>
-                      <td className="p-4 sticky right-0 bg-gray-50 z-20 shadow-[-1px_0_0_0_#e2e8f0]"></td>
+                      <td className="p-4 md:sticky md:right-0 bg-gray-50 md:z-20 md:shadow-[-1px_0_0_0_#e2e8f0]"></td>
                     </tr>
                   </tfoot>
                 )}

@@ -590,8 +590,8 @@ export default function PembayaranTagihanClient({
             <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
-                  <th className="p-4 font-semibold text-center w-12 sticky left-0 bg-bg z-20 shadow-[1px_0_0_0_#e2e8f0]">NO</th>
-                  <th className="p-4 font-semibold min-w-[200px] sticky left-12 bg-bg z-20 shadow-[1px_0_0_0_#e2e8f0]">SISWA/I</th>
+                  <th className="p-4 font-semibold text-center w-12 md:sticky md:left-0 bg-bg md:z-20 md:shadow-[1px_0_0_0_#e2e8f0]">NO</th>
+                  <th className="p-4 font-semibold min-w-[200px] md:sticky md:left-12 bg-bg md:z-20 md:shadow-[1px_0_0_0_#e2e8f0]">SISWA/I</th>
                   
                   {akunColumns.map(col => (
                     <th key={col.id} className="p-4 font-semibold text-center min-w-[150px]">
@@ -602,7 +602,7 @@ export default function PembayaranTagihanClient({
                   ))}
                   
                   <th className="p-4 font-semibold text-right min-w-[150px]">TOTAL BERJALAN</th>
-                  {!isReadOnly && <th className="p-4 font-semibold text-center w-24 sticky right-0 bg-bg z-20 shadow-[-1px_0_0_0_#e2e8f0]">PROSES</th>}
+                  {!isReadOnly && <th className="p-4 font-semibold text-center w-24 md:sticky md:right-0 bg-bg md:z-20 md:shadow-[-1px_0_0_0_#e2e8f0]">PROSES</th>}
                 </tr>
               </thead>
               <tbody>
@@ -627,10 +627,10 @@ export default function PembayaranTagihanClient({
                     
                     return (
                       <tr key={row.id} className="border-b border-border hover:bg-gray-50 transition-colors group">
-                        <td className="p-4 text-center text-text-muted font-medium sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
+                        <td className="p-4 text-center text-text-muted font-medium md:sticky md:left-0 bg-white md:z-10 md:shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
                           {((currentPage - 1) * pageSize) + idx + 1}.
                         </td>
-                        <td className="p-4 sticky left-12 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
+                        <td className="p-4 md:sticky md:left-12 bg-white md:z-10 md:shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
                           <div>
                             <p className={`font-bold leading-tight truncate max-w-[200px] ${row.hasOldDebts ? 'text-red-500' : 'text-text-main'}`} title={row.name}>
                               {row.name}
@@ -740,7 +740,7 @@ export default function PembayaranTagihanClient({
                           </div>
                         </td>
                         {!isReadOnly && (
-                          <td className="p-4 text-center sticky right-0 bg-white z-10 shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
+                          <td className="p-4 text-center md:sticky md:right-0 bg-white md:z-10 md:shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
                             <Button 
                               size="sm"
                               variant="primary"
@@ -759,7 +759,7 @@ export default function PembayaranTagihanClient({
               {filteredData.length > 0 && (
                 <tfoot className="bg-gray-50 font-bold border-t-2 border-border/60">
                   <tr>
-                    <td colSpan={2} className="p-4 text-right text-text-main sticky left-0 bg-gray-50 z-10 shadow-[1px_0_0_0_#e2e8f0]">
+                    <td colSpan={2} className="p-4 text-right text-text-main md:sticky md:left-0 bg-gray-50 md:z-10 md:shadow-[1px_0_0_0_#e2e8f0]">
                       TOTAL SISA TAGIHAN
                     </td>
                     {akunColumns.map(col => {
@@ -778,7 +778,7 @@ export default function PembayaranTagihanClient({
                         return acc + row.tagihanList.reduce((sum, tag) => sum + Math.max(0, tag.sisaTagihan), 0)
                       }, 0))}
                     </td>
-                    <td className="p-4 sticky right-0 bg-gray-50 z-20 shadow-[-1px_0_0_0_#e2e8f0]"></td>
+                    <td className="p-4 md:sticky md:right-0 bg-gray-50 md:z-20 md:shadow-[-1px_0_0_0_#e2e8f0]"></td>
                   </tr>
                 </tfoot>
               )}
