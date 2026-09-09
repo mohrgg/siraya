@@ -10,7 +10,7 @@ import TabSubKelas from "./components/TabSubKelas"
 import TabMurid from "./components/TabMurid"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { Button } from "@/components/ui/Button"
-import { X } from "lucide-react"
+import { X, Users, Layers, BarChart3, GraduationCap } from "lucide-react"
 import ImportMuridModal from "@/components/modals/ImportMuridModal"
 import MuridFormModal from "@/components/modals/MuridFormModal"
 import TingkatFormModal from "./components/TingkatFormModal"
@@ -409,57 +409,62 @@ export default function KelasClient({
         isLoading={data.isPromoting}
       />
 
-      {/* Executive Capacity Banner for KEPALA_SEKOLAH / YAYASAN */}
-      {isReadOnly && (
-        <div className="mb-6 p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900">
-              Ringkasan Rombongan Belajar
-            </h2>
-            <span className="text-xs bg-slate-50 px-2.5 py-1 rounded-lg text-slate-600 font-medium border border-slate-200">
-              Standar: 20-36 Siswa
-            </span>
+      {/* 4 Card KPI Kelas & Murid (Active for ALL Roles) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Users size={20} />
           </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-3 sm:mt-4">
-            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
-              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Total Siswa</p>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl sm:text-2xl font-black text-slate-900">{executiveMetrics.totalMuridInRombel}</span>
-                <span className="text-xs font-medium text-slate-500">Siswa</span>
-              </div>
-            </div>
-
-            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
-              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Total Rombel</p>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl sm:text-2xl font-black text-slate-900">{executiveMetrics.totalRombel}</span>
-                <span className="text-xs font-medium text-slate-500">Kelas</span>
-              </div>
-            </div>
-
-            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
-              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Kepadatan Rombel</p>
-              <div className="flex items-baseline gap-1.5 mt-0.5">
-                <span className={`text-xl sm:text-2xl font-black ${executiveMetrics.rombelOvercapacity > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
-                  {executiveMetrics.rombelOvercapacity}
-                </span>
-                <span className="text-xs font-semibold text-rose-700">Padat</span>
-                <span className="text-slate-300">/</span>
-                <span className="text-xs font-semibold text-amber-700">{executiveMetrics.rombelMinim} Minim</span>
-              </div>
-            </div>
-
-            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
-              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Wali Kelas</p>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl sm:text-2xl font-black text-slate-900">{executiveMetrics.rombelWithWali}</span>
-                <span className="text-xs font-medium text-slate-500">/ {executiveMetrics.totalRombel} Kelas</span>
-              </div>
+          <div className="min-w-0">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Total Siswa</p>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="text-xl sm:text-2xl font-black text-text-main">{new Intl.NumberFormat('id-ID').format(executiveMetrics.totalMuridInRombel)}</span>
+              <span className="text-[11px] font-medium text-text-muted">(Rerata {executiveMetrics.avgPerRombel}/Kls)</span>
             </div>
           </div>
         </div>
-      )}
+
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <Layers size={20} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Total Rombel</p>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.totalRombel}</span>
+              <span className="text-[11px] font-medium text-text-muted">Kelas / Rombel</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <BarChart3 size={20} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Kepadatan Rombel</p>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.rombelIdeal}</span>
+              <span className="text-[11px] font-semibold text-emerald-600">Ideal</span>
+              <span className="text-text-muted/40">/</span>
+              <span className="text-[11px] font-semibold text-amber-600">{executiveMetrics.rombelOvercapacity + executiveMetrics.rombelMinim} Anomali</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
+            <GraduationCap size={20} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Penugasan Wali</p>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.rombelWithWali}</span>
+              <span className="text-[11px] font-medium text-emerald-600">/ {executiveMetrics.totalRombel} Terisi</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
         {/* Tab Navigation */}

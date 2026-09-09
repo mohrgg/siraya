@@ -32,18 +32,18 @@ export default async function KelasPage() {
   const isYayasan = tenant.role === "YAYASAN"
 
   return (
-    <div className="max-w-[1600px] mx-auto w-full">
+    <div className="max-w-7xl mx-auto w-full">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
           {isYayasan
-            ? "Monitoring Rombel Seluruh Unit"
+            ? "Direktori Kelas & Rombel"
             : isKepsek
             ? "Kapasitas & Distribusi Rombel"
             : "Kelas & Murid"}
         </h1>
         <p className="text-text-muted">
           {isYayasan
-            ? "Pengawasan kapasitas rombongan belajar, rasio siswa, dan penugasan wali kelas lintas unit sekolah."
+            ? "Pengawasan kapasitas rombongan belajar, rasio siswa, dan penugasan wali kelas lintas unit"
             : isKepsek
             ? "Monitoring daya tampung rombongan belajar, rasio murid, dan penugasan wali kelas"
             : "Kelola data rombongan belajar dan data siswa"}
