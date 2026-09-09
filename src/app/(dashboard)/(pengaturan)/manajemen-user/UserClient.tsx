@@ -28,11 +28,12 @@ export default function UserClient({
     resetUserId, setResetUserId,
     disableUserId, setDisableUserId,
     activateUserId, setActivateUserId,
+    deleteUserId, setDeleteUserId,
     showDivModal, setShowDivModal,
     formDiv, setFormDiv,
     deleteDivId, setDeleteDivId,
     openAddUser, openEditUser,
-    handleSubmitUser, handleResetPass, handleDisableUser, handleActivateUser,
+    handleSubmitUser, handleResetPass, handleDisableUser, handleActivateUser, handleDeleteUserPermanen,
     handleSubmitDivisi, handleDeleteDivisi
   } = useUserData(initialUsers, initialDivisi, units)
 
@@ -48,6 +49,7 @@ export default function UserClient({
       <ConfirmModal isOpen={!!resetUserId} title="Reset Password" message="Yakin ingin mereset password pengguna ini menjadi 'albas123'?" onCancel={() => setResetUserId(null)} onConfirm={handleResetPass} isLoading={isSubmitting} />
       <ConfirmModal isOpen={!!disableUserId} title="Nonaktifkan Akun" message="Yakin ingin menonaktifkan pengguna ini? Mereka tidak akan bisa login lagi ke sistem." onCancel={() => setDisableUserId(null)} onConfirm={handleDisableUser} isLoading={isSubmitting} />
       <ConfirmModal isOpen={!!activateUserId} title="Aktifkan Akun" message="Yakin ingin mengaktifkan kembali pengguna ini agar dapat login ke sistem?" onCancel={() => setActivateUserId(null)} onConfirm={handleActivateUser} isLoading={isSubmitting} />
+      <ConfirmModal isOpen={!!deleteUserId} title="Hapus Pengguna Permanen" message="PERINGATAN: Akun ini akan dihapus secara permanen dari basis data dan tidak dapat dipulihkan. Seluruh riwayat aktivitas pada audit log akan tetap aman diarsipkan. Yakin ingin menghapus permanen?" onCancel={() => setDeleteUserId(null)} onConfirm={handleDeleteUserPermanen} isLoading={isSubmitting} />
       <ConfirmModal isOpen={!!deleteDivId} title="Hapus Divisi" message="Yakin ingin menghapus divisi ini?" onCancel={() => setDeleteDivId(null)} onConfirm={handleDeleteDivisi} isLoading={isSubmitting} />
 
       {/* CONTENT CARD */}
@@ -111,6 +113,7 @@ export default function UserClient({
             setResetUserId={setResetUserId} setDisableUserId={setDisableUserId}
             isInactiveTab={true}
             setActivateUserId={setActivateUserId}
+            setDeleteUserId={setDeleteUserId}
           />
         )}
 

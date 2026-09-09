@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react"
 import { 
-  tambahPengguna, editPengguna, resetPasswordPengguna, nonaktifkanPengguna, aktifkanPengguna,
+  tambahPengguna, editPengguna, resetPasswordPengguna, nonaktifkanPengguna, aktifkanPengguna, hapusPenggunaPermanen,
   tambahDivisi, editDivisi, hapusDivisi 
 } from "@/actions/pengguna"
 import toast from "react-hot-toast"
@@ -23,6 +23,7 @@ export function useUserData(initialUsers: any[], initialDivisi: any[], units: an
   const [resetUserId, setResetUserId] = useState<string | null>(null)
   const [disableUserId, setDisableUserId] = useState<string | null>(null)
   const [activateUserId, setActivateUserId] = useState<string | null>(null)
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
   
   // Modals state Divisi
   const [showDivModal, setShowDivModal] = useState(false)
@@ -125,6 +126,21 @@ export function useUserData(initialUsers: any[], initialDivisi: any[], units: an
     }
   }
 
+  const handleDeleteUserPermanen = async () => {
+    if (!deleteUserId) return
+    setIsSubmitting(true)
+    try {
+      await hapusPenggunaPermanen(deleteUserId)
+      toast.success("Pengguna berhasil dihapus permanen")
+      setDeleteUserId(null)
+      window.location.reload()
+    } catch (err: any) { 
+      toast.error(err.message) 
+    } finally { 
+      setIsSubmitting(false) 
+    }
+  }
+
   // Handlers Divisi
   const handleSubmitDivisi = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -169,11 +185,12 @@ export function useUserData(initialUsers: any[], initialDivisi: any[], units: an
     resetUserId, setResetUserId,
     disableUserId, setDisableUserId,
     activateUserId, setActivateUserId,
+    deleteUserId, setDeleteUserId,
     showDivModal, setShowDivModal,
     formDiv, setFormDiv,
     deleteDivId, setDeleteDivId,
     openAddUser, openEditUser,
-    handleSubmitUser, handleResetPass, handleDisableUser, handleActivateUser,
+    handleSubmitUser, handleResetPass, handleDisableUser, handleActivateUser, handleDeleteUserPermanen,
     handleSubmitDivisi, handleDeleteDivisi
   }
 }

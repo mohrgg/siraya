@@ -1,4 +1,4 @@
-import { Users, UserX, Edit2, Key, XCircle, CheckCircle2, ShieldCheck, Filter } from "lucide-react"
+import { Users, UserX, Edit2, Key, XCircle, CheckCircle2, Trash2, ShieldCheck, Filter } from "lucide-react"
 import { Toolbar, ToolbarSearch, ToolbarFilter, ToolbarActions, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
 import { useSortableData } from "@/hooks/useSortableData"
 import { SortableHeader } from "@/components/ui/SortableHeader"
@@ -11,7 +11,8 @@ export default function UserList({
   units, openAddUser, openEditUser, 
   setResetUserId, setDisableUserId,
   isInactiveTab = false,
-  setActivateUserId
+  setActivateUserId,
+  setDeleteUserId
 }: any) {
   
   const { items: sortedData, requestSort, sortConfig } = useSortableData(filteredUsers, { key: "role", direction: "asc" })
@@ -149,13 +150,22 @@ export default function UserList({
                           <XCircle size={16} />
                         </button>
                       ) : (
-                        <button 
-                          onClick={() => setActivateUserId(u.id)} 
-                          className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-emerald-200 hover:border-emerald-600 transition-colors" 
-                          title="Aktifkan Akun"
-                        >
-                          <CheckCircle2 size={16} />
-                        </button>
+                        <>
+                          <button 
+                            onClick={() => setActivateUserId(u.id)} 
+                            className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-emerald-200 hover:border-emerald-600 transition-colors" 
+                            title="Aktifkan Akun"
+                          >
+                            <CheckCircle2 size={16} />
+                          </button>
+                          <button 
+                            onClick={() => setDeleteUserId && setDeleteUserId(u.id)} 
+                            className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" 
+                            title="Hapus Permanen"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </>
                       )}
                     </div>
                   </td>

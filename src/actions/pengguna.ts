@@ -17,6 +17,9 @@ const requireAdmin = async () => {
 export async function getPengguna() {
   await requireAdmin()
   const data = await prisma.pengguna.findMany({
+    where: {
+      role: { not: "SYSTEM" }
+    },
     include: {
       unitSekolah: { select: { name: true } },
       divisi: { select: { name: true } }
@@ -172,6 +175,88 @@ export async function aktifkanPengguna(id: string) {
   })
   
   await logAktivitas("AKTIFKAN_PENGGUNA", "MANAJEMEN_USER", `Mengaktifkan kembali akun: ${user.email}`)
+  revalidatePath("/manajemen-user")
+}
+
+export async function hapusPenggunaPermanen(id: string) {
+  await requireAdmin()
+
+  const user = await prisma.pengguna.findUnique({
+    where: { id },
+    include: {
+      transaksiDibuat: { select: { id: true }, take: 1 },
+      transaksiDiterima: { select: { id: true }, take: 1 }
+    }
+  })
+
+  if (!user) throw new Error("Pengguna tidak ditemukan")
+
+  // Rule 1: Hanya boleh hapus jika pengguna nonaktif
+  if (user.isActive) {
+    throw new Error("Pengguna harus dinonaktifkan terlebih dahulu sebelum dapat dihapus permanen.")
+  }
+
+  // Rule 2: Larangan hapus Superadmin terakhir
+  if (user.role === "ADMIN") {
+    const adminCount = await prisma.pengguna.count({ where: { role: "ADMIN", isActive: true } })
+    if (adminCount <= 1) throw new Error("Tidak dapat menghapus Superadmin terakhir!")
+  }
+
+  // Rule 3: Integritas Finansial - Jangan hapus user dengan riwayat transaksi
+  if (user.transaksiDibuat.length > 0 || user.transaksiDiterima.length > 0) {
+    throw new Error("Pengguna tidak dapat dihapus permanen karena memiliki riwayat pencatatan transaksi keuangan. Cukup biarkan dalam status Nonaktif agar audit keuangan tetap terjaga.")
+  }
+
+  // Rule 4: Preservasi Audit Log - Re-linking ke Sentinel System Archive User
+  const SYSTEM_DELETED_EMAIL = "system-deleted@albasyariah.local"
+  
+  let systemUser = await prisma.pengguna.findUnique({
+    where: { email: SYSTEM_DELETED_EMAIL }
+  })
+
+  if (!systemUser) {
+    const dummyPassword = await bcrypt.hash("SystemProtected123!", 10)
+    systemUser = await prisma.pengguna.create({
+      data: {
+        name: "Pengguna Terhapus",
+        email: SYSTEM_DELETED_EMAIL,
+        password: dummyPassword,
+        role: "SYSTEM",
+        isActive: false
+      }
+    })
+  }
+
+  // Ambil semua riwayat log aktivitas milik user ini
+  const userLogs = await prisma.logAktivitas.findMany({
+    where: { penggunaId: id }
+  })
+
+  // Perbarui keterangan dengan prefix identitas asli & re-assign ke systemUser
+  if (userLogs.length > 0) {
+    for (const log of userLogs) {
+      await prisma.logAktivitas.update({
+        where: { id: log.id },
+        data: {
+          penggunaId: systemUser.id,
+          keterangan: `[Eks: ${user.name} (${user.email})] ${log.keterangan}`
+        }
+      })
+    }
+  }
+
+  // Hapus akun pengguna secara permanen dari basis data
+  await prisma.pengguna.delete({
+    where: { id }
+  })
+
+  // Catat aksi penghapusan permanen oleh Admin yang sedang bertugas
+  await logAktivitas(
+    "HAPUS_PENGGUNA_PERMANEN",
+    "MANAJEMEN_USER",
+    `Menghapus permanen akun: ${user.name} (${user.email}). Sebanyak ${userLogs.length} riwayat aktivitas telah dialihkan ke arsip sistem.`
+  )
+
   revalidatePath("/manajemen-user")
 }
 
