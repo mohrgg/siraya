@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/Button"
-import { Plus, Edit2, Trash2, Layers, Book, Search, X } from "lucide-react"
+import { Plus, Edit2, Trash2, Layers, Book, BookOpen, Wallet, Receipt, Search, X } from "lucide-react"
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { SideDrawer } from "@/components/ui/SideDrawer"
@@ -49,6 +49,22 @@ export default function AkunKeuanganClient({
   const [klasifikasi] = useState<Klasifikasi[]>(initialKlasifikasi)
   const [subKlasifikasi, setSubKlasifikasi] = useState<SubKlasifikasi[]>(initialSubKlasifikasi)
   const [akunDetail, setAkunDetail] = useState<AkunDetail[]>(initialAkunDetail)
+
+  const kpiMetrics = useMemo(() => {
+    const totalAkun = akunDetail.length
+    const totalAkunAktif = akunDetail.filter(a => a.isActive).length
+    const totalSubKlas = subKlasifikasi.length
+    const totalKasBank = akunDetail.filter(a => a.isKasBank).length
+    const totalSPP = akunDetail.filter(a => a.isSPP).length
+
+    return {
+      totalAkun,
+      totalAkunAktif,
+      totalSubKlas,
+      totalKasBank,
+      totalSPP
+    }
+  }, [akunDetail, subKlasifikasi])
 
   // Drawer States
   const [isSubKlasDrawerOpen, setIsSubKlasDrawerOpen] = useState(false)
@@ -355,6 +371,61 @@ export default function AkunKeuanganClient({
 
       {/* Main Container */}
       <div className="space-y-6">
+        {/* 4 Card KPI Bagan Akun Keuangan */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <BookOpen size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Total Akun Transaksi</p>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-xl sm:text-2xl font-black text-text-main">{kpiMetrics.totalAkun}</span>
+                <span className="text-[11px] font-medium text-emerald-600">({kpiMetrics.totalAkunAktif} Aktif)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+              <Layers size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Subklasifikasi</p>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-xl sm:text-2xl font-black text-text-main">{kpiMetrics.totalSubKlas}</span>
+                <span className="text-[11px] font-medium text-text-muted">Kelompok Akun</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <Wallet size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Akun Kas & Bank</p>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-xl sm:text-2xl font-black text-text-main">{kpiMetrics.totalKasBank}</span>
+                <span className="text-[11px] font-medium text-emerald-600">Akun Likuid</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+              <Receipt size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Pos Tagihan SPP</p>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-xl sm:text-2xl font-black text-text-main">{kpiMetrics.totalSPP}</span>
+                <span className="text-[11px] font-medium text-text-muted">Tagihan Rutin</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
           
           {/* Tabs Navigation */}
