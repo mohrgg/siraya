@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Search, Loader2, FileSpreadsheet, FileIcon as FilePdf, RefreshCw } from "lucide-react"
+import { Search, Loader2, FileSpreadsheet, FileIcon as FilePdf, RefreshCw, Receipt, CheckCircle2, AlertCircle, TrendingUp } from "lucide-react"
 import { toast } from "react-hot-toast"
 import { Button } from "@/components/ui/Button"
 import { getRekapitulasiTunggakan } from "@/actions/rekapitulasi-tunggakan"
@@ -317,102 +317,114 @@ export default function RekapitulasiTunggakanClient({
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto w-full">
+    <div className="max-w-7xl mx-auto w-full">
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
-          {isExecutive ? (isGlobal ? "Monitoring SPP Konsolidasi Yayasan" : "Monitoring SPP & Tagihan Siswa") : "Rekapitulasi Tagihan & Tunggakan"}
+          Rekapitulasi Tagihan & Tunggakan
         </h1>
         <p className="text-text-muted">
-          {isExecutive
-            ? (isGlobal 
-                ? `Audit efektivitas penerimaan pembayaran, rasio kolektibilitas SPP, dan daftar rombel lintas unit yayasan (${activeTahunAkademikName})`
-                : `Audit efektivitas penerimaan pembayaran, rasio kolektibilitas SPP, dan daftar rombel prioritas (${activeTahunAkademikName})`)
-            : `Berisi ringkasan tagihan serta tunggakan siswa per kelas (${activeTahunAkademikName})`}
+          {isGlobal 
+            ? `Audit realisasi penerimaan pembayaran, kolektibilitas SPP, dan piutang siswa lintas unit (${activeTahunAkademikName})`
+            : `Audit realisasi penerimaan pembayaran, kolektibilitas SPP, dan piutang siswa per kelas (${activeTahunAkademikName})`}
         </p>
       </div>
 
-      {/* Executive SPP Summary for KEPALA_SEKOLAH / YAYASAN */}
-      {isExecutive && (
-        <div className="mb-6 p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-            <div>
-              <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900">
-                Ringkasan Tagihan & Tunggakan
-              </h2>
-              <p className="text-xs text-slate-500 font-medium mt-0.5"><span>{activeUnitName}</span> • TA {activeTahunAkademikName}</p>
+      {/* 4 Card KPI Rekapitulasi Tagihan & Tunggakan (Active for ALL Roles) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">
+              Total Tagihan
+            </p>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div className="flex items-center gap-2">
-              <ToolbarExportPDF 
-                onClick={handleExportPdfRingkasan}
-                label="Cetak Lembar Eksekutif (PDF)"
+          </div>
+          <div className="min-w-0">
+            <div className="my-0.5">
+              <AdaptiveValue 
+                value={`Rp ${formatRupiah(executiveMetrics.totalTagihan)}`}
+                className="text-text-main"
+                maxFontSize={22}
+                minFontSize={12}
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-3 sm:mt-4">
-            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
-              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">{isGlobal ? "Total Tagihan Yayasan" : "Total Tagihan Unit"}</p>
-              <div className="my-1">
-                <AdaptiveValue 
-                  value={`Rp ${formatRupiah(executiveMetrics.totalTagihan)}`}
-                  className="text-slate-900"
-                  maxFontSize={24}
-                  minFontSize={14}
-                />
-              </div>
-            </div>
-
-            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
-              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Realisasi Penerimaan</p>
-              <div className="my-1">
-                <AdaptiveValue 
-                  value={`Rp ${formatRupiah(executiveMetrics.totalDibayar)}`}
-                  className="text-[#065f32]"
-                  maxFontSize={24}
-                  minFontSize={14}
-                />
-              </div>
-              <div className="flex items-center gap-2 mt-1.5">
-                <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                  <div 
-                    className="bg-[#065f32] h-full rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, executiveMetrics.pctKolektibilitas)}%` }}
-                  />
-                </div>
-                <span className="text-xs font-bold text-[#065f32]">{executiveMetrics.pctKolektibilitas}%</span>
-              </div>
-            </div>
-
-            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
-              <p className="text-[11px] sm:text-xs font-bold text-rose-700 uppercase tracking-wider">Sisa Piutang</p>
-              <div className="my-1">
-                <AdaptiveValue 
-                  value={`Rp ${formatRupiah(executiveMetrics.totalTunggakan)}`}
-                  className="text-rose-600"
-                  maxFontSize={24}
-                  minFontSize={14}
-                />
-              </div>
-            </div>
-
-            <div className="bg-slate-50/70 rounded-xl p-3.5 sm:p-4 border border-slate-100">
-              <p className="text-[11px] sm:text-xs font-bold text-amber-700 uppercase tracking-wider">Prioritas Penagihan</p>
-              {executiveMetrics.topTunggakanRombel.length > 0 ? (
-                <div className="mt-1 space-y-1">
-                  {executiveMetrics.topTunggakanRombel.slice(0, 2).map((r, i) => (
-                    <div key={r.subKelasId} className="flex justify-between items-center text-[11px]">
-                      <span className="font-semibold text-slate-800 truncate max-w-[90px]">{i + 1}. {r.subKelasName}</span>
-                      <span className="text-amber-800 font-mono font-semibold">Rp {formatRupiah(r.totalTunggakan)}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-slate-500 mt-2">Semua tagihan lunas</p>
-              )}
-            </div>
+            <p className="text-[11px] font-medium text-text-muted mt-0.5 truncate">TA {activeTahunAkademikName}</p>
           </div>
         </div>
-      )}
+
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">
+              Realisasi Masuk
+            </p>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <div className="my-0.5">
+              <AdaptiveValue 
+                value={`Rp ${formatRupiah(executiveMetrics.totalDibayar)}`}
+                className="text-emerald-600"
+                maxFontSize={22}
+                minFontSize={12}
+              />
+            </div>
+            <p className="text-[11px] font-semibold text-emerald-600 mt-0.5 truncate">Kolektibilitas {executiveMetrics.pctKolektibilitas}%</p>
+          </div>
+        </div>
+
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-[11px] sm:text-xs font-semibold text-rose-700 uppercase tracking-wider truncate">
+              Sisa Piutang
+            </p>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <div className="my-0.5">
+              <AdaptiveValue 
+                value={`Rp ${formatRupiah(executiveMetrics.totalTunggakan)}`}
+                className="text-rose-600"
+                maxFontSize={22}
+                minFontSize={12}
+              />
+            </div>
+            <p className="text-[11px] font-semibold text-rose-600 mt-0.5 truncate">
+              {executiveMetrics.totalTunggakan > 0 ? "Belum Tertagih" : "Lunas Terbayar"}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">
+              Prioritas Rombel
+            </p>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <div className="my-0.5">
+              <AdaptiveValue 
+                value={(executiveMetrics.topTunggakanRombel[0]?.subKelasName || "Semua Lunas").replace(/^\[.*?\]\s*/, '')}
+                className="text-text-main"
+                maxFontSize={20}
+                minFontSize={12}
+              />
+            </div>
+            <p className="text-[11px] font-medium text-amber-600 mt-0.5 truncate">
+              {executiveMetrics.topTunggakanRombel[0] 
+                ? `Rp ${formatRupiah(executiveMetrics.topTunggakanRombel[0].totalTunggakan)}` 
+                : "Nihil Tunggakan"}
+            </p>
+          </div>
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16 bg-surface rounded-2xl shadow-sm border border-border">

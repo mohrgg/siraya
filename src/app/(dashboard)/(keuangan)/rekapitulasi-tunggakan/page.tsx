@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
-import { getTahunAkademikAktif } from "@/actions/pembuatan-tagihan"
+import { getTahunAkademikAktif, getTahunAkademikList } from "@/actions/pembuatan-tagihan"
 import { getPengaturan } from "@/actions/pengaturan"
 import { getUnitSekolah } from "@/actions/unit-sekolah"
 import RekapitulasiTunggakanClient from "./RekapitulasiTunggakanClient"
@@ -26,13 +26,26 @@ export default async function RekapitulasiTunggakanPage(props: { searchParams: P
     }
   }
   
-  const tahunAkademikAktif = await getTahunAkademikAktif()
-  const pengaturan = await getPengaturan()
+  const cookieStore = await cookies()
+  const activeYearIdCookie = cookieStore.get("activeYearId")?.value
+
+  const [
+    tahunAkademikAktif,
+    tahunAkademikList,
+    pengaturan
+  ] = await Promise.all([
+    getTahunAkademikAktif(),
+    getTahunAkademikList(),
+    getPengaturan()
+  ])
   
-  let activeTahunAkademikId = tahunAkademikAktif ? tahunAkademikAktif.id : ""
+  const activeTahunAkademikId = searchParams?.tahunAkademikId || activeYearIdCookie || (tahunAkademikAktif ? tahunAkademikAktif.id : "")
+  
   let activeTahunAkademikName = "Tidak Ada Tahun Aktif"
-  
-  if (tahunAkademikAktif) {
+  const foundYear = tahunAkademikList.find(y => y.id === activeTahunAkademikId)
+  if (foundYear) {
+    activeTahunAkademikName = foundYear.name
+  } else if (tahunAkademikAktif) {
     activeTahunAkademikName = tahunAkademikAktif.name
   }
 

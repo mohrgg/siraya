@@ -5,23 +5,24 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from "react"
 interface AdaptiveValueProps extends React.HTMLAttributes<HTMLElement> {
   value: string | number
   className?: string
-  maxFontSize?: number // in px, default: 30 (equivalent to text-3xl)
-  minFontSize?: number // in px, default: 14 (equivalent to text-sm)
+  maxFontSize?: number // in px, default: 28
+  minFontSize?: number // in px, default: 12
   as?: "span" | "div" | "p" | "h2" | "h3"
 }
 
 /**
  * AdaptiveValue:
- * Menampilkan teks nilai/nominal finansial secara dinamis.
- * - Jika nominal pendek (misal: "47", "12", "Rp 500.000"), ukuran font tetap BESAR standar (maxFontSize, misal: 30px / text-3xl).
- * - Jika nominal panjang mendekati atau melebihi batas lebar kartu (misal: "Rp 226.400.000"),
- *   font otomatis mengecil (auto-shrink) secara proporsional agar SELURUH angka tetap terlihat penuh tanpa elipsis (...) dan tanpa overflow.
+ * Menampilkan teks nilai/nominal finansial secara dinamis (Fluid Typography & Dynamic Font Scaling).
+ * - Jika nominal pendek (misal: "47", "12", "Rp 500.000"), ukuran font tetap BESAR standar (maxFontSize).
+ * - Jika nominal panjang mendekati atau melebihi batas lebar kartu (misal: "Rp 255.900.000", "Rp 1.500.000.000"),
+ *   font otomatis mengecil (auto-shrink) secara proporsional agar SELURUH angka tetap berada di dalam card
+ *   tanpa elipsis (...) dan tanpa overflow.
  */
 export function AdaptiveValue({
   value,
   className = "",
-  maxFontSize = 30,
-  minFontSize = 14,
+  maxFontSize = 28,
+  minFontSize = 12,
   as: Component = "span",
   ...props
 }: AdaptiveValueProps) {
@@ -30,7 +31,15 @@ export function AdaptiveValue({
   const stringVal = String(value ?? "")
 
   // Perkiraan awal SSR agar tidak ada flash layout shift
-  const initialSize = stringVal.length > 15 ? 20 : stringVal.length > 12 ? 24 : maxFontSize
+  const initialSize =
+    stringVal.length > 16
+      ? Math.max(minFontSize, Math.min(maxFontSize, 13))
+      : stringVal.length > 13
+      ? Math.max(minFontSize, Math.min(maxFontSize, 16))
+      : stringVal.length > 10
+      ? Math.max(minFontSize, Math.min(maxFontSize, 20))
+      : maxFontSize
+
   const [fontSize, setFontSize] = useState<number>(initialSize)
 
   const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect
@@ -81,7 +90,11 @@ export function AdaptiveValue({
   }, [stringVal, maxFontSize, minFontSize])
 
   return (
-    <div ref={containerRef} className="w-full min-w-0 overflow-hidden flex items-baseline">
+    <div 
+      ref={containerRef} 
+      className="w-full min-w-0 overflow-hidden flex items-baseline"
+      style={{ containerType: "inline-size" }}
+    >
       <Component
         ref={textRef as any}
         style={{ fontSize: `${fontSize}px` }}
