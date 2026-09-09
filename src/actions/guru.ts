@@ -12,9 +12,9 @@ export async function getGuruList(unitSekolahId?: string) {
   if (!session) throw new Error("Unauthorized")
 
   const where: any = { isDeleted: false, isActive: true }
-  if (session.user.role !== "ADMIN" && session.user.unitSekolahId) {
+  if (!["ADMIN", "YAYASAN"].includes(session.user.role) && session.user.unitSekolahId) {
     where.unitSekolahId = session.user.unitSekolahId
-  } else if (unitSekolahId) {
+  } else if (unitSekolahId && unitSekolahId !== "all") {
     where.unitSekolahId = unitSekolahId
   }
 
@@ -44,9 +44,9 @@ export async function getGuruPaginated({
   if (!session) throw new Error("Unauthorized")
 
   const where: any = { isDeleted: false }
-  if (session.user.role !== "ADMIN" && session.user.unitSekolahId) {
+  if (!["ADMIN", "YAYASAN"].includes(session.user.role) && session.user.unitSekolahId) {
     where.unitSekolahId = session.user.unitSekolahId
-  } else if (unitSekolahId) {
+  } else if (unitSekolahId && unitSekolahId !== "all") {
     where.unitSekolahId = unitSekolahId
   }
   if (jenisPtk) {

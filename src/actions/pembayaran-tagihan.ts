@@ -8,11 +8,12 @@ import { auth } from "@/lib/auth"
 export async function getAkunKasBankList(unitSekolahId?: string) {
   unstable_noStore()
   try {
+    const isGlobal = !unitSekolahId || unitSekolahId === "all"
     const data = await prisma.akunDetail.findMany({
       where: {
         isKasBank: true,
         isActive: true,
-        unitSekolahId: unitSekolahId
+        ...(isGlobal ? {} : { unitSekolahId })
       },
       select: {
         id: true,

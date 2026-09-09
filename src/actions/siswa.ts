@@ -20,7 +20,7 @@ export async function getSiswa(unitSekolahId?: string, subKelasId?: string) {
 
   const where: any = {
     isDeleted: false,
-    ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId ? { unitSekolahId } : {})),
+    ...(!["ADMIN", "YAYASAN"].includes(session.user.role) && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId && unitSekolahId !== "all" ? { unitSekolahId } : {})),
   }
 
   if (subKelasId) {
