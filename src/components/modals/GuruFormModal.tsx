@@ -34,6 +34,8 @@ export default function GuruFormModal({ isOpen, onClose, onSave, initialData, sc
     if (isOpen) {
       setFormData({
         ...initialData,
+        jenisPtk: initialData?.jenisPtk || "GURU",
+        jabatan: initialData?.jabatan || "",
         statusKepegawaian: initialData?.statusKepegawaian && initialData.statusKepegawaian !== "-" ? initialData.statusKepegawaian : "",
         pendidikan: initialData?.pendidikan || "S1",
         isActive: initialData?.isActive !== undefined ? initialData.isActive : true,
@@ -72,12 +74,20 @@ export default function GuruFormModal({ isOpen, onClose, onSave, initialData, sc
     </div>
   )
 
+  const isStaf = formData.jenisPtk === "STAF"
+  const modalTitle = formData.id 
+    ? (isStaf ? "Edit Profil Staf & Karyawan" : "Edit Profil Guru")
+    : (isStaf ? "Tambah Staf & Karyawan (Tendik)" : "Tambah Guru (Tenaga Pendidik)")
+  const modalSubtitle = isStaf
+    ? "Kelengkapan data kepegawaian dan penugasan operasional non-kependidikan."
+    : "Kelengkapan data kepegawaian dan profil pengajar."
+
   return (
     <SideDrawer
       isOpen={isOpen}
       onClose={onClose}
-      title={formData.id ? "Edit Profil Guru" : "Tambah Guru & Staf"}
-      subtitle="Kelengkapan data kepegawaian dan profil pengajar."
+      title={modalTitle}
+      subtitle={modalSubtitle}
       icon={<Briefcase className="text-primary" />}
       widthClassName="max-w-3xl"
       footer={footer}
@@ -109,7 +119,7 @@ export default function GuruFormModal({ isOpen, onClose, onSave, initialData, sc
         <div className="flex-1">
           <form id="guruForm" onSubmit={handleSubmit} className="space-y-6 pb-6">
             {activeTab === "pribadi" && <TabPribadi formData={formData} handleChange={handleChange} />}
-            {activeTab === "kepegawaian" && <TabKepegawaian formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} availableStatuses={availableStatuses} />}
+            {activeTab === "kepegawaian" && <TabKepegawaian formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} />}
             {activeTab === "pendidikan" && <TabPendidikan formData={formData} handleChange={handleChange} />}
             {activeTab === "honorarium" && <TabHonorarium formData={formData} handleChange={handleChange} />}
           </form>

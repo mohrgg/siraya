@@ -28,12 +28,14 @@ export async function getGuruPaginated({
   unitSekolahId,
   search = "",
   statusFilter = "",
+  jenisPtk = "",
   page = 1,
   limit = 20
 }: {
   unitSekolahId?: string
   search?: string
   statusFilter?: string
+  jenisPtk?: string
   page?: number
   limit?: number
 }) {
@@ -46,6 +48,9 @@ export async function getGuruPaginated({
   } else if (unitSekolahId) {
     where.unitSekolahId = unitSekolahId
   }
+  if (jenisPtk) {
+    where.jenisPtk = jenisPtk
+  }
   if (statusFilter) {
     where.statusKepegawaian = statusFilter
   }
@@ -53,7 +58,8 @@ export async function getGuruPaginated({
     where.OR = [
       { name: { contains: search, mode: "insensitive" } },
       { nip: { contains: search, mode: "insensitive" } },
-      { bidangStudi: { name: { contains: search, mode: "insensitive" } } }
+      { bidangStudi: { name: { contains: search, mode: "insensitive" } } },
+      { jabatan: { contains: search, mode: "insensitive" } }
     ]
   }
 
@@ -90,6 +96,8 @@ export async function tambahGuru(data: {
   phone?: string
   email?: string
   statusKepegawaian?: string
+  jenisPtk?: string
+  jabatan?: string
   pendidikan?: string
   bidangStudiId?: string
   bankName?: string
@@ -103,14 +111,17 @@ export async function tambahGuru(data: {
   }
 
   const { id, unitSekolah, rombelWali, createdAt, updatedAt, ...guruData } = data as any;
+  const jenisPtk = guruData.jenisPtk === "STAF" ? "STAF" : "GURU"
   const result = await prisma.guru.create({
     data: {
       ...guruData,
+      jenisPtk,
+      jabatan: jenisPtk === "STAF" ? (guruData.jabatan ? guruData.jabatan.trim() : null) : null,
       nip: cleanDash(guruData.nip),
       phone: guruData.phone || null,
       email: guruData.email || null,
       pendidikan: guruData.pendidikan || null,
-      bidangStudiId: guruData.bidangStudiId || null,
+      bidangStudiId: jenisPtk === "STAF" ? null : (guruData.bidangStudiId || null),
       bankAccount: guruData.bankAccount || null,
       bankAccountName: guruData.bankAccountName || null
     },
@@ -129,6 +140,8 @@ export async function editGuru(id: string, data: {
   phone?: string
   email?: string
   statusKepegawaian?: string
+  jenisPtk?: string
+  jabatan?: string
   pendidikan?: string
   bidangStudiId?: string
   bankName?: string
@@ -143,6 +156,7 @@ export async function editGuru(id: string, data: {
   }
 
   const { id: _, unitSekolah, rombelWali, createdAt, updatedAt, bidangStudi, ...guruData } = data as any;
+  const isStaf = guruData.jenisPtk === "STAF"
   const result = await prisma.guru.update({
     where: { id },
     data: {
@@ -151,7 +165,8 @@ export async function editGuru(id: string, data: {
       phone: guruData.phone === "" ? null : guruData.phone,
       email: guruData.email === "" ? null : guruData.email,
       pendidikan: guruData.pendidikan === "" ? null : guruData.pendidikan,
-      bidangStudiId: guruData.bidangStudiId === "" ? null : guruData.bidangStudiId,
+      bidangStudiId: isStaf ? null : (guruData.bidangStudiId === "" ? null : guruData.bidangStudiId),
+      jabatan: isStaf ? (guruData.jabatan ? guruData.jabatan.trim() : null) : null,
       bankAccount: guruData.bankAccount === "" ? null : guruData.bankAccount,
       bankAccountName: guruData.bankAccountName === "" ? null : guruData.bankAccountName
     },

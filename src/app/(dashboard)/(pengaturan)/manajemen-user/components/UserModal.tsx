@@ -71,7 +71,7 @@ export default function UserModal({
     navigator.clipboard.writeText(generated)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-    toast.success("Password aman dibuat & disalin ke clipboard!", { icon: "🔑" })
+    toast.success("Password aman dibuat & disalin ke clipboard!")
   }
 
   const handleCopyPassword = () => {

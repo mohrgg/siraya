@@ -312,7 +312,7 @@ export default function ModalPembayaranTagihan({
                                 {PREDEFINED_POTONGAN.map(kat => (
                                   <option key={kat} value={kat}>{kat}</option>
                                 ))}
-                                <option value="LAINNYA" className="font-bold text-emerald-600">➕ Ketik Sendiri...</option>
+                                <option value="LAINNYA" className="font-bold text-emerald-600">+ Ketik Sendiri...</option>
                               </select>
                             )
                           )}

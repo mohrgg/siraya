@@ -44,6 +44,8 @@ type GuruData = {
   phone: string | null
   email: string | null
   statusKepegawaian: string
+  jenisPtk?: string
+  jabatan?: string | null
   pendidikan: string | null
   bidangStudiId: string | null
   bidangStudi: { id: string, name: string } | null
@@ -57,6 +59,7 @@ type GuruData = {
 
 export default function GuruDetailClient({ initialData, isReadOnly = false, pengaturan, userName, schoolUnits = [] }: { initialData: GuruData, isReadOnly?: boolean, pengaturan?: any, userName?: string, schoolUnits?: any[] }) {
   const router = useRouter()
+  const isStaf = initialData.jenisPtk === "STAF"
 
   const [activeTab, setActiveTab] = useState<"profil" | "keuangan" | "rombel">("profil")
   const [isExportingExcel, setIsExportingExcel] = useState(false)
@@ -66,7 +69,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
   const handleSaveModal = async (formData: any) => {
     try {
       await editGuru(formData.id, formData)
-      toast.success("Berhasil mengubah data guru")
+      toast.success(`Berhasil mengubah data ${isStaf ? "staf" : "guru"}`)
       setIsEditing(false)
       router.refresh()
     } catch (error: any) {
@@ -76,7 +79,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href)
-    toast.success("Tautan profil guru disalin!")
+    toast.success(`Tautan profil ${isStaf ? "staf" : "guru"} disalin!`)
   }
 
   const formatWhatsAppUrl = (phone: string | null) => {
@@ -99,27 +102,35 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
     setIsExportingExcel(true)
     try {
       const { exportToExcel } = await import("@/lib/excel")
-      const dataToExport = [{
+      const rowData: any = {
         "NIP / NIK": initialData.nip || "-",
         "Nama Lengkap": initialData.name,
         "Unit Sekolah": initialData.unitSekolah?.name || "-",
         "Jenis Kelamin": initialData.gender,
         "Status Kepegawaian": initialData.statusKepegawaian,
-        "Pendidikan Terakhir": initialData.pendidikan || "-",
-        "Bidang Studi": initialData.bidangStudi?.name || "-",
-        "No. HP / WA": initialData.phone || "-",
-        "Email": initialData.email || "-",
-        "Bank": initialData.bankName || "-",
-        "No. Rekening": initialData.bankAccount || "-",
-        "Atas Nama": initialData.bankAccountName || "-",
-        "Wali Kelas": initialData.rombelWali?.map(r => r.name).join(", ") || "-"
-      }]
+        "Pendidikan Terakhir": initialData.pendidikan || "-"
+      }
+      if (isStaf) {
+        rowData["Jabatan / Posisi"] = initialData.jabatan || "-"
+      } else {
+        rowData["Bidang Studi"] = initialData.bidangStudi?.name || "-"
+      }
+      rowData["No. HP / WA"] = initialData.phone || "-"
+      rowData["Email"] = initialData.email || "-"
+      rowData["Bank"] = initialData.bankName || "-"
+      rowData["No. Rekening"] = initialData.bankAccount || "-"
+      rowData["Atas Nama"] = initialData.bankAccountName || "-"
+      if (!isStaf) {
+        rowData["Wali Kelas"] = initialData.rombelWali?.map(r => r.name).join(", ") || "-"
+      }
+
       const dateStr = new Date().toISOString().split('T')[0]
-      exportToExcel(dataToExport, `Profil_Guru_${initialData.name}_${dateStr}`.replace(/\s+/g, '_'), {
-        title: `Profil Guru: ${initialData.name}`,
+      const filePrefix = isStaf ? "Profil_Staf" : "Profil_Guru"
+      exportToExcel([rowData], `${filePrefix}_${initialData.name}_${dateStr}`.replace(/\s+/g, '_'), {
+        title: `Profil ${isStaf ? "Staf" : "Guru"}: ${initialData.name}`,
         unitInfo: initialData.unitSekolah || { name: pengaturan?.namaYayasan || "Yayasan Siraya" }
       })
-      toast.success("Berhasil mengunduh Excel Profil Guru")
+      toast.success(`Berhasil mengunduh Excel Profil ${isStaf ? "Staf" : "Guru"}`)
     } catch (err: any) {
       toast.error("Gagal ekspor Excel: " + err.message)
     } finally {
@@ -133,27 +144,38 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
       const { exportTablePdf } = await import("@/lib/pdf")
       const { buildInstitutionInfo, getSignatoryKiri } = await import("@/lib/pdf-helpers")
       const dateStr = new Date().toISOString().split('T')[0]
-      const headers = ["Keterangan / Field", "Informasi Guru"]
-      const pdfRows = [
+      const headers = ["Keterangan / Field", isStaf ? "Informasi Staf" : "Informasi Guru"]
+      const pdfRows: any[] = [
         ["Nama Lengkap", initialData.name],
         ["NIP / NIK", initialData.nip || "-"],
-        ["Unit Sekolah", initialData.unitSekolah?.name || "-"],
+        ["Unit Penugasan", initialData.unitSekolah?.name || "-"],
+        ["Kategori PTK", isStaf ? "Tenaga Kependidikan (Tendik / Staf)" : "Tenaga Pendidik (Guru)"],
         ["Jenis Kelamin", initialData.gender],
         ["Status Kepegawaian", initialData.statusKepegawaian],
-        ["Pendidikan Terakhir", initialData.pendidikan || "-"],
-        ["Bidang Studi", initialData.bidangStudi?.name || "-"],
+        ["Pendidikan Terakhir", initialData.pendidikan || "-"]
+      ]
+      if (isStaf) {
+        pdfRows.push(["Jabatan / Posisi", initialData.jabatan || "-"])
+      } else {
+        pdfRows.push(["Bidang Studi", initialData.bidangStudi?.name || "-"])
+      }
+      pdfRows.push(
         ["No. HP / WA", initialData.phone || "-"],
         ["Email", initialData.email || "-"],
-        ["Bank / Rekening", `${initialData.bankName || "-"} / ${initialData.bankAccount || "-"}`],
-        ["Wali Kelas", initialData.rombelWali?.map(r => r.name).join(", ") || "-"]
-      ]
+        ["Bank / Rekening", `${initialData.bankName || "-"} / ${initialData.bankAccount || "-"}`]
+      )
+      if (!isStaf) {
+        pdfRows.push(["Wali Kelas", initialData.rombelWali?.map(r => r.name).join(", ") || "-"])
+      }
+
+      const filePrefix = isStaf ? "Profil_Staf" : "Profil_Guru"
       exportTablePdf({
         institutionInfo: buildInstitutionInfo(pengaturan, initialData.unitSekolah),
-        title: `Profil Guru - ${initialData.name}`,
+        title: `Profil ${isStaf ? "Staf" : "Guru"} - ${initialData.name}`,
         subtitle: `NIP: ${initialData.nip || "-"} • Unit: ${initialData.unitSekolah?.name || "-"}`,
         headers,
         data: pdfRows,
-        filename: `Profil_Guru_${initialData.name}_${dateStr}`.replace(/\s+/g, '_'),
+        filename: `${filePrefix}_${initialData.name}_${dateStr}`.replace(/\s+/g, '_'),
         config: { orientation: 'portrait' },
         penandatanganKiri: getSignatoryKiri(pengaturan, initialData.unitSekolah),
         penandatanganKanan: {
@@ -161,7 +183,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
           nama: userName || "____________________"
         }
       })
-      toast.success("Berhasil mengunduh PDF Profil Guru")
+      toast.success(`Berhasil mengunduh PDF Profil ${isStaf ? "Staf" : "Guru"}`)
     } catch (err: any) {
       toast.error("Gagal ekspor PDF: " + err.message)
     } finally {
@@ -181,7 +203,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
           onClick={() => router.push("/guru")}
           className="gap-2 self-start font-bold bg-white text-gray-700 hover:bg-gray-100"
         >
-          <ArrowLeft size={16} /> Kembali ke Daftar Guru
+          <ArrowLeft size={16} /> Kembali ke {isStaf ? "Daftar Staf" : "Daftar Guru"}
         </Button>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -220,7 +242,7 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
               className="gap-2 text-xs font-bold shadow-sm"
               onClick={() => setIsEditing(true)}
             >
-              <Edit2 size={15} /> Edit Data Guru
+              <Edit2 size={15} /> Edit Data {isStaf ? "Staf" : "Guru"}
             </Button>
           )}
         </div>
@@ -237,6 +259,14 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
           {/* Identity Details */}
           <div>
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
+                isStaf 
+                  ? "bg-purple-50 text-purple-700 border-purple-200" 
+                  : "bg-blue-50 text-blue-700 border-blue-200"
+              }`}>
+                {isStaf ? <Briefcase size={12} /> : <GraduationCap size={12} />}
+                {isStaf ? "Tenaga Kependidikan" : "Tenaga Pendidik"}
+              </span>
               {isValidMonitoringStatus(initialData.statusKepegawaian) ? (
                 <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getStatusBadgeStyle(initialData.statusKepegawaian)}`}>
                   {normalizeStatusKepegawaian(initialData.statusKepegawaian)}
@@ -269,13 +299,23 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
               Aktif
             </div>
           </div>
-          <div className="bg-bg border border-border rounded-xl p-3 sm:p-4 shadow-2xs min-w-[120px]">
-            <div className="text-[10px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Tugas Wali</div>
-            <div className="text-base sm:text-lg font-black text-text-main flex items-center gap-1.5">
-              <Building2 size={16} className="text-primary" />
-              {initialData.rombelWali.length} <span className="text-xs font-medium text-text-muted">Kelas</span>
+          {isStaf ? (
+            <div className="bg-bg border border-border rounded-xl p-3 sm:p-4 shadow-2xs min-w-[120px]">
+              <div className="text-[10px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Jabatan Staf</div>
+              <div className="text-sm sm:text-base font-black text-text-main flex items-center gap-1.5 truncate max-w-[180px]" title={initialData.jabatan || "Staf"}>
+                <Briefcase size={16} className="text-primary shrink-0" />
+                <span className="truncate">{initialData.jabatan || "Staf"}</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-bg border border-border rounded-xl p-3 sm:p-4 shadow-2xs min-w-[120px]">
+              <div className="text-[10px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Tugas Wali</div>
+              <div className="text-base sm:text-lg font-black text-text-main flex items-center gap-1.5">
+                <Building2 size={16} className="text-primary" />
+                {initialData.rombelWali.length} <span className="text-xs font-medium text-text-muted">Kelas</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
@@ -300,16 +340,18 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
             <CreditCard size={18} />
             Informasi Keuangan
           </button>
-          <button 
-            onClick={() => setActiveTab("rombel")}
-            className={`flex items-center gap-2 px-6 py-4 font-semibold text-sm transition-colors whitespace-nowrap ${
-              activeTab === "rombel" ? "border-b-2 border-primary text-primary bg-primary/5" : "text-text-muted hover:text-text-main hover:bg-gray-50"
-            }`}
-          >
-            <Building2 size={18} />
-            Tugas Wali Kelas
-            <span className="ml-1.5 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">{initialData.rombelWali.length}</span>
-          </button>
+          {(!isStaf || (initialData.rombelWali && initialData.rombelWali.length > 0)) && (
+            <button 
+              onClick={() => setActiveTab("rombel")}
+              className={`flex items-center gap-2 px-6 py-4 font-semibold text-sm transition-colors whitespace-nowrap ${
+                activeTab === "rombel" ? "border-b-2 border-primary text-primary bg-primary/5" : "text-text-muted hover:text-text-main hover:bg-gray-50"
+              }`}
+            >
+              <Building2 size={18} />
+              Tugas Wali Kelas
+              <span className="ml-1.5 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">{initialData.rombelWali.length}</span>
+            </button>
+          )}
         </div>
 
         <div className="p-6">
@@ -378,9 +420,21 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs font-medium text-text-muted mb-1">Bidang Studi / Tugas Tambahan</div>
-                      <div className="text-sm font-medium text-text-main bg-gray-50 p-2.5 rounded-lg border border-border mt-1">
-                        {initialData.bidangStudi?.name || "Tidak ada rincian tugas khusus"}
+                      <div className="text-xs font-medium text-text-muted mb-1">
+                        {isStaf ? "Jabatan / Posisi Penugasan" : "Bidang Studi / Tugas Mengajar"}
+                      </div>
+                      <div className="text-sm font-medium text-text-main bg-gray-50 p-2.5 rounded-lg border border-border mt-1 flex items-center gap-2">
+                        {isStaf ? (
+                          <>
+                            <Briefcase size={15} className="text-primary shrink-0" />
+                            <span>{initialData.jabatan || "Staf Sekolah / Kantor"}</span>
+                          </>
+                        ) : (
+                          <>
+                            <GraduationCap size={15} className="text-primary shrink-0" />
+                            <span>{initialData.bidangStudi?.name || "Tidak ada rincian tugas khusus"}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

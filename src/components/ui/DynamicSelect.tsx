@@ -17,6 +17,9 @@ interface DynamicSelectProps {
   onDelete: (id: string) => Promise<void>
   placeholder?: string
   disabled?: boolean
+  valueMode?: "id" | "name"
+  deleteTitle?: string
+  deleteMessage?: string
 }
 
 export function DynamicSelect({
@@ -26,7 +29,10 @@ export function DynamicSelect({
   onAdd,
   onDelete,
   placeholder = "Pilih opsi...",
-  disabled = false
+  disabled = false,
+  valueMode = "id",
+  deleteTitle = "Hapus Opsi",
+  deleteMessage = "Apakah Anda yakin ingin menghapus opsi ini?"
 }: DynamicSelectProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
@@ -47,7 +53,7 @@ export function DynamicSelect({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const selectedOption = options.find(o => o.id === value)
+  const selectedOption = options.find(o => valueMode === "name" ? o.name === value : o.id === value)
 
   const handleAdd = async () => {
     if (!newOptionName.trim() || loadingAction) return
@@ -79,8 +85,12 @@ export function DynamicSelect({
     if (!itemToDelete) return
     setLoadingAction(true)
     try {
+      const deletedItem = options.find(o => o.id === itemToDelete)
       await onDelete(itemToDelete)
-      if (value === itemToDelete) {
+      const isCurrentSelected = valueMode === "name"
+        ? value === deletedItem?.name
+        : value === itemToDelete
+      if (isCurrentSelected) {
         onChange("") // Reset value jika yang dihapus sedang dipilih
       }
     } finally {
@@ -114,28 +124,31 @@ export function DynamicSelect({
                 Belum ada opsi tersedia.
               </div>
             ) : (
-              options.map(opt => (
-                <div 
-                  key={opt.id} 
-                  className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer group transition-colors ${
-                    value === opt.id ? "bg-primary/10 text-primary" : "hover:bg-gray-50 text-gray-700"
-                  }`}
-                  onClick={() => {
-                    onChange(opt.id)
-                    setIsOpen(false)
-                  }}
-                >
-                  <span className="text-sm font-medium">{opt.name}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => handleDeleteClick(e, opt.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
-                    title="Hapus opsi"
+              options.map(opt => {
+                const isSelected = valueMode === "name" ? value === opt.name : value === opt.id
+                return (
+                  <div 
+                    key={opt.id} 
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer group transition-colors ${
+                      isSelected ? "bg-primary/10 text-primary" : "hover:bg-gray-50 text-gray-700"
+                    }`}
+                    onClick={() => {
+                      onChange(valueMode === "name" ? opt.name : opt.id)
+                      setIsOpen(false)
+                    }}
                   >
-                    {loadingAction ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                  </button>
-                </div>
-              ))
+                    <span className="text-sm font-medium">{opt.name}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteClick(e, opt.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
+                      title="Hapus opsi"
+                    >
+                      {loadingAction ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                    </button>
+                  </div>
+                )
+              })
             )}
           </div>
 
@@ -191,8 +204,8 @@ export function DynamicSelect({
         isOpen={!!itemToDelete}
         onCancel={() => setItemToDelete(null)}
         onConfirm={handleConfirmDelete}
-        title="Hapus Opsi"
-        message="Apakah Anda yakin ingin menghapus opsi ini?"
+        title={deleteTitle}
+        message={deleteMessage}
         confirmText="Ya, Hapus"
         cancelText="Batal"
         isLoading={loadingAction}

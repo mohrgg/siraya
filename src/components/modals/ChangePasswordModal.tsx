@@ -79,7 +79,7 @@ export default function ChangePasswordModal({
     try {
       setIsSubmitting(true)
       await gantiPasswordMandiri(oldPassword, newPassword)
-      toast.success("Kata sandi berhasil diperbarui! Mengalihkan ke halaman login...", { icon: "🔒" })
+      toast.success("Kata sandi berhasil diperbarui! Mengalihkan ke halaman login...")
       
       // Auto logout setelah berhasil
       setTimeout(() => {

@@ -25,7 +25,14 @@ export type StatusKepegawaian = typeof STATUS_KEPEGAWAIAN_LIST[number]
 export function normalizeStatusKepegawaian(val?: string | null): string {
   if (!val) return ""
   const trimmed = val.trim()
-  if (trimmed === "-" || trimmed === "") return ""
+  if (
+    trimmed === "-" || 
+    trimmed === "" || 
+    trimmed.toUpperCase() === "UNASSIGNED" || 
+    trimmed.toLowerCase() === "belum ditentukan"
+  ) {
+    return ""
+  }
 
   const upper = trimmed.toUpperCase()
 

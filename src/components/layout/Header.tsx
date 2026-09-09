@@ -92,7 +92,7 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
                   disabled={isPending || isUnitLocked}
                 >
                   {(user?.role === "ADMIN" || user?.role === "YAYASAN") && (
-                    <option value="all">🏢 Semua Unit (Konsolidasi)</option>
+                    <option value="all">Semua Unit (Konsolidasi)</option>
                   )}
                   {[...schoolUnits]
                     .sort((a, b) => {

@@ -8,8 +8,10 @@ declare const globalThis: {
   prismaGlobal: ReturnType<typeof prismaClientSingleton> | undefined;
 } & typeof global;
 
-// Selalu buat instance baru saat file ini direload agar field baru di schema terdeteksi
-const prisma = prismaClientSingleton()
+// Selalu buat instance baru saat file ini direload atau jika ada model baru yang belum terdeteksi
+const prisma = (globalThis.prismaGlobal && (globalThis.prismaGlobal as any).statusKepegawaian)
+  ? globalThis.prismaGlobal
+  : prismaClientSingleton()
 
 export default prisma
 

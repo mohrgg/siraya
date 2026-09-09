@@ -1,34 +1,98 @@
 import React, { useState, useEffect } from "react"
-import { Building, Award, Briefcase, Hash, CheckCircle2 } from "lucide-react"
+import { Building, Award, Briefcase, Hash, CheckCircle2, GraduationCap, Users } from "lucide-react"
 import { Input } from "@/components/ui/Input"
 import { DynamicSelect } from "@/components/ui/DynamicSelect"
 import { getBidangStudiList, createBidangStudi, deleteBidangStudi } from "@/actions/bidang-studi"
-import { STATUS_KEPEGAWAIAN_LIST, normalizeStatusKepegawaian } from "@/lib/constants/kepegawaian"
+import { getStatusKepegawaianList, createStatusKepegawaian, deleteStatusKepegawaian } from "@/actions/status-kepegawaian"
+import { getJabatanStafList, createJabatanStaf, deleteJabatanStaf } from "@/actions/jabatan-staf"
+import { normalizeStatusKepegawaian } from "@/lib/constants/kepegawaian"
+import toast from "react-hot-toast"
 
-export default function TabKepegawaian({ formData, handleChange, schoolUnits, availableStatuses }: any) {
+export default function TabKepegawaian({ formData, handleChange, schoolUnits }: any) {
   const [opsiBidangStudi, setOpsiBidangStudi] = useState<any[]>([])
-  const [isCustomStatus, setIsCustomStatus] = useState(false)
+  const [opsiStatusKepegawaian, setOpsiStatusKepegawaian] = useState<any[]>([])
+  const [opsiJabatanStaf, setOpsiJabatanStaf] = useState<any[]>([])
 
-  const currentNormalized = normalizeStatusKepegawaian(formData.statusKepegawaian)
-  const knownStatuses = Array.from(new Set([
-    ...STATUS_KEPEGAWAIAN_LIST,
-    ...(availableStatuses?.map((s: any) => normalizeStatusKepegawaian(s.value)) || []),
-    currentNormalized
-  ])).filter(Boolean)
+  const currentJenisPtk = formData.jenisPtk || "GURU"
 
   useEffect(() => {
-    if (formData.statusKepegawaian === "LAINNYA") {
-      setIsCustomStatus(true)
+    loadStatusKepegawaian()
+    loadJabatanStaf()
+  }, [])
+
+  const loadStatusKepegawaian = async () => {
+    const { data, error } = await getStatusKepegawaianList()
+    if (error) {
+      toast.error(error)
+    } else {
+      setOpsiStatusKepegawaian(data || [])
     }
-  }, [formData.statusKepegawaian])
+  }
+
+  const handleAddStatusKepegawaian = async (name: string) => {
+    const res = await createStatusKepegawaian(name)
+    if (!res.success) {
+      toast.error(res.error || "Gagal menambahkan status kepegawaian")
+    } else if (res.data) {
+      toast.success(`Status "${res.data.name}" berhasil ditambahkan`)
+      setOpsiStatusKepegawaian(prev => {
+        if (prev.some(o => o.id === res.data!.id)) return prev
+        return [...prev, res.data!].sort((a, b) => a.name.localeCompare(b.name))
+      })
+      handleChange("statusKepegawaian", res.data.name)
+    }
+  }
+
+  const handleDeleteStatusKepegawaian = async (id: string) => {
+    const res = await deleteStatusKepegawaian(id)
+    if (!res.success) {
+      toast.error(res.error || "Gagal menghapus status kepegawaian")
+    } else {
+      toast.success("Status kepegawaian berhasil dihapus")
+      setOpsiStatusKepegawaian(prev => prev.filter(o => o.id !== id))
+    }
+  }
+
+  const loadJabatanStaf = async () => {
+    const { data, error } = await getJabatanStafList()
+    if (error) {
+      toast.error(error)
+    } else {
+      setOpsiJabatanStaf(data || [])
+    }
+  }
+
+  const handleAddJabatanStaf = async (name: string) => {
+    const res = await createJabatanStaf(name)
+    if (!res.success) {
+      toast.error(res.error || "Gagal menambahkan jabatan staf")
+    } else if (res.data) {
+      toast.success(`Jabatan "${res.data.name}" berhasil ditambahkan`)
+      setOpsiJabatanStaf(prev => {
+        if (prev.some(o => o.id === res.data!.id)) return prev
+        return [...prev, res.data!].sort((a, b) => a.name.localeCompare(b.name))
+      })
+      handleChange("jabatan", res.data.name)
+    }
+  }
+
+  const handleDeleteJabatanStaf = async (id: string) => {
+    const res = await deleteJabatanStaf(id)
+    if (!res.success) {
+      toast.error(res.error || "Gagal menghapus jabatan staf")
+    } else {
+      toast.success("Jabatan staf berhasil dihapus")
+      setOpsiJabatanStaf(prev => prev.filter(o => o.id !== id))
+    }
+  }
 
   useEffect(() => {
-    if (formData.unitSekolahId) {
+    if (formData.unitSekolahId && currentJenisPtk === "GURU") {
       loadBidangStudi(formData.unitSekolahId)
     } else {
       setOpsiBidangStudi([])
     }
-  }, [formData.unitSekolahId])
+  }, [formData.unitSekolahId, currentJenisPtk])
 
   const loadBidangStudi = async (unitId: string) => {
     const { data } = await getBidangStudiList(unitId)
@@ -36,10 +100,15 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits, av
   }
 
   const handleAddBidangStudi = async (name: string) => {
-    if (!formData.unitSekolahId) return alert("Pilih Unit Sekolah terlebih dahulu")
+    if (!formData.unitSekolahId) {
+      toast.error("Pilih Unit Sekolah terlebih dahulu")
+      return
+    }
     const { data, error } = await createBidangStudi(name, formData.unitSekolahId)
-    if (error) alert(error)
-    else if (data) {
+    if (error) {
+      toast.error(error)
+    } else if (data) {
+      toast.success(`Bidang studi "${data.name}" berhasil ditambahkan`)
       setOpsiBidangStudi(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
       handleChange("bidangStudiId", data.id)
     }
@@ -47,11 +116,22 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits, av
 
   const handleDeleteBidangStudi = async (id: string) => {
     const { error } = await deleteBidangStudi(id)
-    if (error) alert(error)
+    if (error) toast.error(error)
     else {
+      toast.success("Bidang studi berhasil dihapus")
       setOpsiBidangStudi(prev => prev.filter(o => o.id !== id))
     }
   }
+
+  const handleSelectJenisPtk = (type: "GURU" | "STAF") => {
+    handleChange("jenisPtk", type)
+    if (type === "GURU") {
+      handleChange("jabatan", "")
+    } else {
+      handleChange("bidangStudiId", "")
+    }
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-start gap-3.5">
@@ -61,8 +141,42 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits, av
         <div>
           <h4 className="text-sm font-bold text-text-main">Data Kepegawaian & Tugas Yayasan</h4>
           <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
-            Pastikan unit sekolah dan status kepegawaian sesuai dengan SK penugasan terbaru.
+            Pilih klasifikasi peran (Guru / Staf) dan pastikan unit serta status kepegawaian sesuai penugasan terbaru.
           </p>
+        </div>
+      </div>
+
+      {/* Selector Jenis Peran / PTK (Clean Antislop UI & Mobile 44px Target) */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-semibold text-text-main flex items-center gap-1.5">
+          <Users size={15} className="text-primary" />
+          Kategori Tenaga Kependidikan (PTK) <span className="text-red-500">*</span>
+        </label>
+        <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100/80 rounded-xl border border-border">
+          <button
+            type="button"
+            onClick={() => handleSelectJenisPtk("GURU")}
+            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all min-h-[44px] ${
+              currentJenisPtk === "GURU"
+                ? "bg-white text-primary shadow-xs border border-border"
+                : "text-text-muted hover:text-text-main"
+            }`}
+          >
+            <GraduationCap size={16} className={currentJenisPtk === "GURU" ? "text-primary" : "text-text-muted"} />
+            <span>Guru (Tenaga Pendidik)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSelectJenisPtk("STAF")}
+            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all min-h-[44px] ${
+              currentJenisPtk === "STAF"
+                ? "bg-white text-primary shadow-xs border border-border"
+                : "text-text-muted hover:text-text-main"
+            }`}
+          >
+            <Briefcase size={16} className={currentJenisPtk === "STAF" ? "text-primary" : "text-text-muted"} />
+            <span>Staf & Karyawan (Tendik)</span>
+          </button>
         </div>
       </div>
 
@@ -70,7 +184,7 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits, av
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main flex items-center gap-1.5">
             <Building size={15} className="text-primary" />
-            Unit Sekolah Penugasan <span className="text-red-500">*</span>
+            {currentJenisPtk === "GURU" ? "Unit Sekolah Penugasan" : "Unit / Kantor Penugasan"} <span className="text-red-500">*</span>
           </label>
           <select 
             className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium text-sm transition-all" 
@@ -78,7 +192,7 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits, av
             onChange={e => handleChange("unitSekolahId", e.target.value)} 
             required
           >
-            <option value="" disabled>-- Pilih Unit Sekolah --</option>
+            <option value="" disabled>-- Pilih Unit Penugasan --</option>
             {schoolUnits.map((u: any) => (
               <option key={u.id} value={u.id}>{u.name}</option>
             ))}
@@ -90,69 +204,60 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits, av
             <Award size={15} className="text-primary" />
             Status Kepegawaian <span className="text-red-500">*</span>
           </label>
-          {isCustomStatus ? (
-            <div className="flex gap-2">
-              <Input 
-                className="flex-1"
-                placeholder="Ketik status baru..."
-                value={formData.statusKepegawaian === "LAINNYA" ? "" : formData.statusKepegawaian}
-                onChange={e => handleChange("statusKepegawaian", e.target.value)}
-                autoFocus
-              />
-              <button 
-                type="button"
-                onClick={() => {
-                  setIsCustomStatus(false)
-                  handleChange("statusKepegawaian", "")
-                }}
-                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-semibold transition-colors"
-              >
-                Batal
-              </button>
-            </div>
-          ) : (
-            <select 
-              className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium text-sm transition-all" 
-              value={currentNormalized} 
-              onChange={e => {
-                if (e.target.value === "LAINNYA") {
-                  setIsCustomStatus(true)
-                  handleChange("statusKepegawaian", "")
-                } else {
-                  handleChange("statusKepegawaian", e.target.value)
-                }
-              }}
-              required
-            >
-              <option value="">-- Pilih Status Kepegawaian --</option>
-              {knownStatuses.map(status => (
-                <option key={status as string} value={status as string}>
-                  {status as string}
-                </option>
-              ))}
-              <option value="LAINNYA" className="font-bold text-primary">➕ Lainnya (Ketik Sendiri)...</option>
-            </select>
-          )}
+          <DynamicSelect 
+            value={formData.statusKepegawaian || ""}
+            onChange={(val) => handleChange("statusKepegawaian", val)}
+            options={opsiStatusKepegawaian}
+            onAdd={handleAddStatusKepegawaian}
+            onDelete={handleDeleteStatusKepegawaian}
+            placeholder="-- Pilih Status Kepegawaian --"
+            valueMode="name"
+            deleteTitle="Hapus Status Kepegawaian"
+            deleteMessage="Apakah Anda yakin ingin menghapus status kepegawaian ini? Status hanya dapat dihapus jika tidak sedang digunakan oleh pegawai manapun."
+          />
         </div>
 
-        <div className="flex flex-col gap-1.5 md:col-span-2">
-          <label className="text-sm font-semibold text-text-main flex items-center gap-1.5">
-            <Briefcase size={15} className="text-primary" />
-            Bidang Studi / Tugas Mengajar Utama
-          </label>
-          <DynamicSelect 
-            value={formData.bidangStudiId || ""}
-            onChange={(val) => handleChange("bidangStudiId", val)}
-            options={opsiBidangStudi}
-            onAdd={handleAddBidangStudi}
-            onDelete={handleDeleteBidangStudi}
-            placeholder="Pilih Bidang Studi..."
-            disabled={!formData.unitSekolahId}
-          />
-          {!formData.unitSekolahId && (
-            <span className="text-[11px] text-amber-500">Pilih unit sekolah terlebih dahulu untuk melihat opsi bidang studi.</span>
-          )}
-        </div>
+        {currentJenisPtk === "GURU" ? (
+          <div className="flex flex-col gap-1.5 md:col-span-2">
+            <label className="text-sm font-semibold text-text-main flex items-center gap-1.5">
+              <GraduationCap size={15} className="text-primary" />
+              Bidang Studi / Tugas Mengajar Utama
+            </label>
+            <DynamicSelect 
+              value={formData.bidangStudiId || ""}
+              onChange={(val) => handleChange("bidangStudiId", val)}
+              options={opsiBidangStudi}
+              onAdd={handleAddBidangStudi}
+              onDelete={handleDeleteBidangStudi}
+              placeholder="Pilih Bidang Studi..."
+              disabled={!formData.unitSekolahId}
+            />
+            {!formData.unitSekolahId && (
+              <span className="text-[11px] text-amber-500">Pilih unit sekolah terlebih dahulu untuk melihat opsi bidang studi.</span>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1.5 md:col-span-2">
+            <label className="text-sm font-semibold text-text-main flex items-center gap-1.5">
+              <Briefcase size={15} className="text-primary" />
+              Jabatan / Posisi Penugasan Staf <span className="text-red-500">*</span>
+            </label>
+            <DynamicSelect 
+              value={formData.jabatan || ""}
+              onChange={(val) => handleChange("jabatan", val)}
+              options={opsiJabatanStaf}
+              onAdd={handleAddJabatanStaf}
+              onDelete={handleDeleteJabatanStaf}
+              placeholder="-- Pilih atau Tambah Jabatan Staf --"
+              valueMode="name"
+              deleteTitle="Hapus Jabatan Staf"
+              deleteMessage="Apakah Anda yakin ingin menghapus jabatan staf ini? Jabatan hanya dapat dihapus jika tidak sedang digunakan oleh staf manapun."
+            />
+            <span className="text-[11px] text-text-muted">
+              Anda dapat memilih dari daftar atau mengetikkan jabatan staf baru jika belum tersedia.
+            </span>
+          </div>
+        )}
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main flex items-center gap-1.5">
@@ -169,14 +274,16 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits, av
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main flex items-center gap-1.5">
             <CheckCircle2 size={15} className="text-primary" />
-            Status Aktif Tugas
+            Status Keaktifan
           </label>
           <select 
             className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium text-sm transition-all" 
             value={formData.isActive === false ? "false" : "true"} 
             onChange={e => handleChange("isActive", e.target.value === "true")}
           >
-            <option value="true">Aktif Mengajar / Bertugas</option>
+            <option value="true">
+              {currentJenisPtk === "GURU" ? "Aktif Mengajar" : "Aktif Bertugas"}
+            </option>
             <option value="false">Tidak Aktif / Non-Aktif / Cuti</option>
           </select>
         </div>

@@ -3,32 +3,21 @@
 import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
-import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 import { useSortableData } from "@/hooks/useSortableData"
 import { 
   Edit2, 
-  Plus, 
   Trash2, 
   GraduationCap, 
-  Search, 
-  Download, 
-  FileSpreadsheet, 
-  FileText, 
-  Phone, 
-  MessageCircle,
-  Building2,
-  BadgeCheck,
-  UploadCloud,
-  User,
-  Users,
-  Award,
-  X,
-  Eye,
-  Filter,
-  Mail,
-  BookOpen
+  Building2, 
+  User, 
+  Users, 
+  Award, 
+  X, 
+  Eye, 
+  Phone,
+  Briefcase
 } from "lucide-react"
 import { 
   isStatusTetap, 
@@ -62,6 +51,8 @@ type Guru = {
   phone: string | null
   email: string | null
   statusKepegawaian: string
+  jenisPtk?: string
+  jabatan?: string | null
   pendidikan: string | null
   bidangStudiId: string | null
   bidangStudi?: { id: string; name: string } | null
@@ -109,6 +100,9 @@ export default function GuruClient({
     setData(initialData)
   }, [initialData])
 
+  // Dedicated Tab: "GURU" (Tenaga Pendidik) vs "STAF" (Tenaga Kependidikan)
+  const [activeTab, setActiveTab] = useState<"GURU" | "STAF">("GURU")
+
   const [statusFilter, setStatusFilter] = useState<string>("")
   const [unitFilter, setUnitFilter] = useState<string>("")
   const [searchTerm, setSearchTerm] = useState<string>("")
@@ -123,7 +117,7 @@ export default function GuruClient({
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [activeUnitId, statusFilter, searchTerm, unitFilter])
+  }, [activeUnitId, activeTab, statusFilter, searchTerm, unitFilter])
 
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -141,6 +135,8 @@ export default function GuruClient({
     phone: "",
     email: "",
     statusKepegawaian: "",
+    jenisPtk: activeTab as string,
+    jabatan: "",
     pendidikan: "S1",
     bidangStudiId: "",
     bankName: "",
@@ -150,8 +146,9 @@ export default function GuruClient({
     isActive: true
   }
 
-  const [formData, setFormData] = useState(defaultForm)
+  const [formData, setFormData] = useState<any>(defaultForm)
 
+  // Scope data to unit filter
   const scopedData = useMemo(() => {
     return data.filter(item => {
       if (activeUnitId && activeUnitId !== "all" && item.unitSekolahId !== activeUnitId) return false
@@ -160,31 +157,76 @@ export default function GuruClient({
     })
   }, [data, activeUnitId, unitFilter])
 
-  const executiveMetrics = useMemo(() => {
-    const totalGuru = scopedData.length
-    const totalAktif = scopedData.filter(g => g.isActive).length
-    const totalTetap = scopedData.filter(g => isStatusTetap(g.statusKepegawaian)).length
-    const totalHonorer = scopedData.filter(g => isStatusHonorer(g.statusKepegawaian)).length
-    const pctTetap = totalGuru > 0 ? Math.round((totalTetap / totalGuru) * 100) : 0
-    const totalWali = scopedData.filter(g => g.rombelWali && g.rombelWali.length > 0).length
-    const totalS1Plus = scopedData.filter(g => g.pendidikan && (g.pendidikan.includes("S1") || g.pendidikan.includes("S2") || g.pendidikan.includes("S3"))).length
-    const pctS1Plus = totalGuru > 0 ? Math.round((totalS1Plus / totalGuru) * 100) : 0
-
-    return {
-      totalGuru,
-      totalAktif,
-      totalTetap,
-      totalHonorer,
-      pctTetap,
-      totalWali,
-      totalS1Plus,
-      pctS1Plus
-    }
+  // Split into Guru and Staf lists
+  const guruList = useMemo(() => {
+    return scopedData.filter(item => (item.jenisPtk || "GURU") === "GURU")
   }, [scopedData])
+
+  const stafList = useMemo(() => {
+    return scopedData.filter(item => item.jenisPtk === "STAF")
+  }, [scopedData])
+
+  const currentTabList = useMemo(() => {
+    return activeTab === "GURU" ? guruList : stafList
+  }, [activeTab, guruList, stafList])
+
+  // Dynamic Executive KPI Metrics per active tab
+  const executiveMetrics = useMemo(() => {
+    if (activeTab === "GURU") {
+      const totalGuru = guruList.length
+      const totalAktif = guruList.filter(g => g.isActive).length
+      const totalWali = guruList.filter(g => g.rombelWali && g.rombelWali.length > 0).length
+      const totalS1Plus = guruList.filter(g => g.pendidikan && (g.pendidikan.includes("S1") || g.pendidikan.includes("S2") || g.pendidikan.includes("S3"))).length
+      const pctS1Plus = totalGuru > 0 ? Math.round((totalS1Plus / totalGuru) * 100) : 0
+
+      return {
+        card1Title: "Total Tenaga Pendidik",
+        card1Value: totalGuru,
+        card1Sub: `(${totalAktif} Aktif)`,
+        card1Icon: Users,
+        card1Color: "bg-primary/10 text-primary",
+        card2Title: "Penugasan Wali",
+        card2Value: totalWali,
+        card2Sub: "Wali Kelas",
+        card2Icon: GraduationCap,
+        card2Color: "bg-violet-50 text-violet-600",
+        card3Title: "Kualifikasi S1/S2",
+        card3Value: `${pctS1Plus}%`,
+        card3Sub: `(${totalS1Plus} Sarjana)`,
+        card3Icon: Award,
+        card3Color: "bg-amber-50 text-amber-600"
+      }
+    } else {
+      const totalStaf = stafList.length
+      const totalAktif = stafList.filter(s => s.isActive).length
+      const totalTetap = stafList.filter(s => isStatusTetap(s.statusKepegawaian)).length
+      const totalHonorer = stafList.filter(s => isStatusHonorer(s.statusKepegawaian)).length
+      const pctTetap = totalStaf > 0 ? Math.round((totalTetap / totalStaf) * 100) : 0
+
+      return {
+        card1Title: "Total Tenaga Kependidikan",
+        card1Value: totalStaf,
+        card1Sub: `(${totalAktif} Aktif)`,
+        card1Icon: Users,
+        card1Color: "bg-primary/10 text-primary",
+        card2Title: "Staf Tetap Yayasan",
+        card2Value: totalTetap,
+        card2Sub: `(${pctTetap}% dari total)`,
+        card2Icon: Award,
+        card2Color: "bg-emerald-50 text-emerald-600",
+        card3Title: "Kontrak & Honorer",
+        card3Value: totalHonorer,
+        card3Sub: "Orang Staf",
+        card3Icon: Briefcase,
+        card3Color: "bg-blue-50 text-blue-600"
+      }
+    }
+  }, [activeTab, guruList, stafList])
 
   const handleOpenAdd = () => {
     setFormData({
       ...defaultForm,
+      jenisPtk: activeTab,
       unitSekolahId: (activeUnitId && activeUnitId !== "all") ? activeUnitId : (schoolUnits[0]?.id || "")
     })
     setIsAdding(true)
@@ -199,6 +241,8 @@ export default function GuruClient({
       phone: item.phone || "",
       email: item.email || "",
       statusKepegawaian: item.statusKepegawaian && item.statusKepegawaian !== "-" ? item.statusKepegawaian : "",
+      jenisPtk: item.jenisPtk || "GURU",
+      jabatan: item.jabatan || "",
       pendidikan: item.pendidikan || "S1",
       bidangStudiId: item.bidangStudiId || "",
       bankName: item.bankName || "",
@@ -216,7 +260,7 @@ export default function GuruClient({
     try {
       await hapusGuru(deleteId)
       setData(data.filter(d => d.id !== deleteId))
-      toast.success("Data guru berhasil dihapus")
+      toast.success(activeTab === "STAF" ? "Data staf berhasil dihapus" : "Data guru berhasil dihapus")
       setDeleteId(null)
     } catch (err: any) {
       toast.error("Gagal menghapus data: " + err.message)
@@ -231,7 +275,7 @@ export default function GuruClient({
     try {
       await hapusGuruMassal(selectedGurus)
       setData(data.filter(d => !selectedGurus.includes(d.id)))
-      toast.success(`Berhasil menghapus ${selectedGurus.length} data guru`)
+      toast.success(`Berhasil menghapus ${selectedGurus.length} data ${activeTab === "STAF" ? "staf" : "guru"}`)
       setSelectedGurus([])
       setShowBulkDeleteModal(false)
     } catch (err: any) {
@@ -242,12 +286,17 @@ export default function GuruClient({
   }
 
   const handleSaveModal = async (modalData: any) => {
+    const isStaf = modalData.jenisPtk === "STAF"
     if (!modalData.name?.trim()) {
-      toast.error("Nama lengkap guru wajib diisi")
+      toast.error(isStaf ? "Nama lengkap staf wajib diisi" : "Nama lengkap guru wajib diisi")
       throw new Error("Validation error")
     }
     if (!modalData.unitSekolahId) {
-      toast.error("Unit sekolah wajib dipilih")
+      toast.error("Unit penugasan wajib dipilih")
+      throw new Error("Validation error")
+    }
+    if (isStaf && !modalData.jabatan?.trim()) {
+      toast.error("Jabatan staf wajib dipilih atau diisi")
       throw new Error("Validation error")
     }
 
@@ -257,12 +306,12 @@ export default function GuruClient({
         const res = await editGuru(modalData.id, modalData)
         const updatedUnit = schoolUnits.find(u => u.id === modalData.unitSekolahId)
         setData(data.map(d => d.id === modalData.id ? { ...res, unitSekolah: updatedUnit } as unknown as Guru : d))
-        toast.success("Data guru berhasil diperbarui")
+        toast.success(isStaf ? "Data staf berhasil diperbarui" : "Data guru berhasil diperbarui")
       } else {
         const res = await tambahGuru(modalData)
         const updatedUnit = schoolUnits.find(u => u.id === modalData.unitSekolahId)
         setData([...data, { ...res, unitSekolah: updatedUnit } as unknown as Guru])
-        toast.success("Guru baru berhasil ditambahkan")
+        toast.success(isStaf ? "Staf baru berhasil ditambahkan" : "Guru baru berhasil ditambahkan")
       }
       setIsAdding(false)
       setFormData(defaultForm)
@@ -274,10 +323,9 @@ export default function GuruClient({
     }
   }
 
+  // Filter within the current tab
   const filteredData = useMemo(() => {
-    return data.filter(item => {
-      if (activeUnitId && activeUnitId !== "all" && item.unitSekolahId !== activeUnitId) return false
-      if ((!activeUnitId || activeUnitId === "all") && unitFilter && item.unitSekolahId !== unitFilter) return false
+    return currentTabList.filter(item => {
       if (statusFilter) {
         if (statusFilter === "UNASSIGNED") {
           if (isValidMonitoringStatus(item.statusKepegawaian)) return false
@@ -289,12 +337,14 @@ export default function GuruClient({
         const q = searchTerm.toLowerCase()
         const matchName = item.name.toLowerCase().includes(q)
         const matchNip = (item.nip || "").toLowerCase().includes(q)
+        const matchPhone = (item.phone || "").toLowerCase().includes(q)
         const matchBidang = (item.bidangStudi?.name || "").toLowerCase().includes(q)
-        if (!matchName && !matchNip && !matchBidang) return false
+        const matchJabatan = (item.jabatan || "").toLowerCase().includes(q)
+        if (!matchName && !matchNip && !matchPhone && !matchBidang && !matchJabatan) return false
       }
       return true
     })
-  }, [data, activeUnitId, statusFilter, searchTerm, unitFilter])
+  }, [currentTabList, statusFilter, searchTerm])
 
   const { items: sortedData, requestSort, sortConfig } = useSortableData(filteredData)
 
@@ -305,9 +355,9 @@ export default function GuruClient({
   const availableStatuses = useMemo(() => {
     const statuses = new Set<string>()
     let hasUnassigned = false
-    data.forEach(item => {
+    currentTabList.forEach(item => {
       const norm = normalizeStatusKepegawaian(item.statusKepegawaian)
-      if (norm) {
+      if (norm && norm !== "UNASSIGNED" && norm !== "Belum Ditentukan") {
         statuses.add(norm)
       } else {
         hasUnassigned = true
@@ -323,42 +373,58 @@ export default function GuruClient({
       options.push({ value: "UNASSIGNED", label: "Belum Ditentukan" })
     }
 
-    return options
-  }, [data])
+    const seen = new Set<string>()
+    return options.filter(opt => {
+      if (seen.has(opt.value)) return false
+      seen.add(opt.value)
+      return true
+    })
+  }, [currentTabList])
 
   const computedTotalPages = Math.ceil(filteredData.length / pageSize)
 
   const handleExportExcel = async () => {
     if (filteredData.length === 0) {
-      toast.error("Tidak ada data guru untuk diekspor")
+      toast.error(`Tidak ada data ${activeTab === "STAF" ? "staf" : "guru"} untuk diekspor`)
       return
     }
     setIsExportingExcel(true)
     try {
       const { exportToExcel } = await import("@/lib/excel")
-      const mappedData = filteredData.map((g, idx) => ({
-        "No": idx + 1,
-        "NIP / NUPTK / NIK": g.nip || "-",
-        "Nama Lengkap": g.name,
-        "Gender": g.gender,
-        "Unit Sekolah": g.unitSekolah?.name || "-",
-        "Status": g.statusKepegawaian,
-        "Pendidikan": g.pendidikan || "-",
-        "Bidang Studi / Tugas": g.bidangStudi?.name || "-",
-        "No. WhatsApp": g.phone || "-",
-        "Email": g.email || "-",
-        "Nama Bank": g.bankName || "-",
-        "No. Rekening": g.bankAccount || "-",
-        "Atas Nama": g.bankAccountName || "-"
-      }))
+      const isStaf = activeTab === "STAF"
+      const mappedData = filteredData.map((g, idx) => {
+        const row: any = {
+          "No": idx + 1,
+          "NIP / NUPTK / NIK": g.nip || "-",
+          "Nama Lengkap": g.name,
+          "Gender": g.gender,
+          "Unit": g.unitSekolah?.name || "-",
+          "Status Kepegawaian": g.statusKepegawaian || "-",
+          "Pendidikan": g.pendidikan || "-"
+        }
+        if (isStaf) {
+          row["Jabatan / Posisi"] = g.jabatan || "-"
+        } else {
+          row["Bidang Studi / Mapel"] = g.bidangStudi?.name || "-"
+        }
+        row["No. WhatsApp"] = g.phone || "-"
+        row["Email"] = g.email || "-"
+        row["Nama Bank"] = g.bankName || "-"
+        row["No. Rekening"] = g.bankAccount || "-"
+        row["Atas Nama"] = g.bankAccountName || "-"
+        return row
+      })
       const unitObj = activeUnitId ? schoolUnits.find(u => u.id === activeUnitId) : undefined
       const unitName = unitObj?.name || "Semua_Unit"
       const dateStr = new Date().toISOString().split('T')[0]
-      exportToExcel(mappedData, `Data_Guru_${unitName}_${dateStr}`.replace(/\s+/g, '_'), {
-        title: "Daftar Data Guru",
+      const title = isStaf ? "Daftar Staf & Karyawan (Tendik)" : "Daftar Guru (Tenaga Pendidik)"
+      const filename = `${isStaf ? "Data_Staf" : "Data_Guru"}_${unitName}_${dateStr}`.replace(/\s+/g, '_')
+
+      exportToExcel(mappedData, filename, {
+        title,
         unitInfo: unitObj || { name: pengaturan?.namaYayasan || "Yayasan Siraya" }
       })
-      toast.success("Berhasil mengunduh Excel Data Guru")
+      toast.success(`Berhasil mengunduh Excel ${isStaf ? "Data Staf" : "Data Guru"}`)
     } catch (err: any) {
       toast.error("Gagal ekspor Excel: " + err.message)
     } finally {
@@ -368,7 +434,7 @@ export default function GuruClient({
 
   const handleExportPDF = async () => {
     if (filteredData.length === 0) {
-      toast.error("Tidak ada data guru untuk diekspor")
+      toast.error(`Tidak ada data ${activeTab === "STAF" ? "staf" : "guru"} untuk diekspor`)
       return
     }
     setIsExportingPDF(true)
@@ -377,25 +443,32 @@ export default function GuruClient({
       const { buildInstitutionInfo, getSignatoryKiri } = await import("@/lib/pdf-helpers")
       const unitObj = schoolUnits.find((u: any) => u.id === activeUnitId)
       const dateStr = new Date().toISOString().split('T')[0]
+      const isStaf = activeTab === "STAF"
 
-      const headers = ["No", "NIP / NIK", "Nama Lengkap & Gelar", "Unit", "Status", "Pendidikan", "No. WA"]
+      const headers = isStaf
+        ? ["No", "NIP / NIK", "Nama Lengkap", "Unit", "Jabatan", "Status", "No. WA"]
+        : ["No", "NIP / NIK", "Nama Lengkap & Gelar", "Unit", "Bidang Studi", "Status", "No. WA"]
+
       const pdfRows = filteredData.map((g, idx) => [
         idx + 1,
         g.nip || "-",
         g.name,
         g.unitSekolah?.name || "-",
-        g.statusKepegawaian,
-        g.pendidikan || "-",
+        isStaf ? (g.jabatan || "-") : (g.bidangStudi?.name || "-"),
+        g.statusKepegawaian || "-",
         g.phone || "-"
       ])
 
+      const title = isStaf ? "Daftar Staf & Karyawan (Tendik)" : "Daftar Guru (Tenaga Pendidik)"
+      const filename = `${isStaf ? "Daftar_Staf" : "Daftar_Guru"}_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_')
+
       exportTablePdf({
         institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
-        title: "Daftar Guru & Staf Kepegawaian",
+        title,
         subtitle: `Unit: ${unitObj?.name || "Semua Unit"} • Total: ${filteredData.length} Orang`,
         headers,
         data: pdfRows,
-        filename: `Daftar_Guru_${unitObj?.name || "Semua"}_${dateStr}`.replace(/\s+/g, '_'),
+        filename,
         config: { orientation: 'landscape' },
         penandatanganKiri: getSignatoryKiri(pengaturan, unitObj),
         penandatanganKanan: {
@@ -403,7 +476,7 @@ export default function GuruClient({
           nama: userName || "____________________"
         }
       })
-      toast.success("Berhasil mengunduh PDF Daftar Guru")
+      toast.success(`Berhasil mengunduh PDF ${isStaf ? "Daftar Staf" : "Daftar Guru"}`)
     } catch (err: any) {
       toast.error("Gagal ekspor PDF: " + err.message)
     } finally {
@@ -418,55 +491,106 @@ export default function GuruClient({
     return `https://wa.me/${clean}`
   }
 
+  const IconCard1 = executiveMetrics.card1Icon
+  const IconCard2 = executiveMetrics.card2Icon
+  const IconCard3 = executiveMetrics.card3Icon
+
   return (
     <div className="space-y-6">
-      {/* 3 Card KPI Guru & Staf (Active for ALL Roles) */}
+      {/* 3 Card KPI Dinamis (Sesuai Tab Guru vs Tab Staf) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <Users size={20} />
+          <div className={`w-10 h-10 rounded-xl ${executiveMetrics.card1Color} flex items-center justify-center shrink-0`}>
+            <IconCard1 size={20} />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Total Guru & Staf</p>
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">
+              {executiveMetrics.card1Title}
+            </p>
             <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.totalGuru}</span>
-              <span className="text-[11px] font-medium text-emerald-600">({executiveMetrics.totalAktif} Aktif)</span>
+              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.card1Value}</span>
+              <span className="text-[11px] font-medium text-emerald-600">{executiveMetrics.card1Sub}</span>
             </div>
           </div>
         </div>
 
         <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
-            <GraduationCap size={20} />
+          <div className={`w-10 h-10 rounded-xl ${executiveMetrics.card2Color} flex items-center justify-center shrink-0`}>
+            <IconCard2 size={20} />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Penugasan Wali</p>
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">
+              {executiveMetrics.card2Title}
+            </p>
             <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.totalWali}</span>
-              <span className="text-[11px] font-medium text-text-muted">Wali Kelas</span>
+              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.card2Value}</span>
+              <span className="text-[11px] font-medium text-text-muted">{executiveMetrics.card2Sub}</span>
             </div>
           </div>
         </div>
 
         <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-            <Award size={20} />
+          <div className={`w-10 h-10 rounded-xl ${executiveMetrics.card3Color} flex items-center justify-center shrink-0`}>
+            <IconCard3 size={20} />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Kualifikasi S1/S2</p>
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">
+              {executiveMetrics.card3Title}
+            </p>
             <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.pctS1Plus}%</span>
-              <span className="text-[11px] font-medium text-emerald-600">({executiveMetrics.totalS1Plus} Sarjana)</span>
+              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.card3Value}</span>
+              <span className="text-[11px] font-medium text-emerald-600">{executiveMetrics.card3Sub}</span>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Main Unified Card */}
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
-        {/* Tab Header Wajib Siraya */}
-        <div className="flex gap-2 mb-6 border-b border-border">
-          <button className="px-6 py-3 font-semibold text-sm border-b-2 border-primary text-primary transition-colors">
-            Daftar Guru & Staf
+        {/* Tab Header Wajib Siraya: Clean Antislop UI & Mobile 44px Touch Targets */}
+        <div className="flex gap-2 mb-6 border-b border-border overflow-x-auto hide-scrollbar -mx-2 px-2 sm:mx-0 sm:px-0">
+          <button 
+            type="button"
+            onClick={() => {
+              setActiveTab("GURU")
+              setSelectedGurus([])
+              setStatusFilter("")
+              setSearchTerm("")
+            }}
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap min-h-[44px] shrink-0 ${
+              activeTab === "GURU"
+                ? "border-primary text-primary"
+                : "border-transparent text-text-muted hover:text-text-main hover:border-border"
+            }`}
+          >
+            <span>Guru (Tenaga Pendidik)</span>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+              activeTab === "GURU" ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-600"
+            }`}>
+              {guruList.length}
+            </span>
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => {
+              setActiveTab("STAF")
+              setSelectedGurus([])
+              setStatusFilter("")
+              setSearchTerm("")
+            }}
+            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap min-h-[44px] shrink-0 ${
+              activeTab === "STAF"
+                ? "border-primary text-primary"
+                : "border-transparent text-text-muted hover:text-text-main hover:border-border"
+            }`}
+          >
+            <span>Staf & Karyawan (Tendik)</span>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+              activeTab === "STAF" ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-600"
+            }`}>
+              {stafList.length}
+            </span>
           </button>
         </div>
 
@@ -475,7 +599,7 @@ export default function GuruClient({
           <ToolbarSearch 
             value={searchTerm}
             onChange={(e: any) => setSearchTerm(e.target.value)}
-            placeholder="Cari nama, NIP, tugas..."
+            placeholder={activeTab === "GURU" ? "Cari guru, NIP, mapel..." : "Cari staf, NIP, jabatan..."}
           />
 
           <ToolbarFilter 
@@ -518,15 +642,15 @@ export default function GuruClient({
               <>
                 <ToolbarDivider />
                 <ToolbarAddButton onClick={handleOpenAdd}>
-                  Tambah Guru
+                  {activeTab === "GURU" ? "Tambah Guru" : "Tambah Staf"}
                 </ToolbarAddButton>
               </>
             )}
           </ToolbarActions>
         </Toolbar>
 
-      {/* Data Table */}
-      <div className="overflow-x-auto">
+        {/* Data Table */}
+        <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
               <tr>
@@ -544,23 +668,94 @@ export default function GuruClient({
                   </th>
                 )}
                 <th className="p-4 font-semibold text-center w-12">NO</th>
-                <SortableHeader label="PROFIL GURU" sortKey="name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left" />
-                <SortableHeader label="GENDER" sortKey="gender" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-center hidden sm:table-cell w-20" />
-                <SortableHeader label="UNIT SEKOLAH" sortKey="unitSekolah.name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left hidden md:table-cell" />
-                <SortableHeader label="STATUS PEGAWAI" sortKey="statusKepegawaian" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-center hidden lg:table-cell" />
-                <SortableHeader label="NO. WHATSAPP" sortKey="phone" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left hidden xl:table-cell" />
-                <SortableHeader label="STATUS" sortKey="isActive" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-center hidden xl:table-cell w-28" />
+                <SortableHeader 
+                  label={activeTab === "GURU" ? "PROFIL GURU" : "PROFIL PEGAWAI"} 
+                  sortKey="name" 
+                  currentSortKey={sortConfig?.key as string} 
+                  currentDirection={sortConfig?.direction} 
+                  onSort={requestSort as any} 
+                  className="text-left" 
+                />
+                <SortableHeader 
+                  label="GENDER" 
+                  sortKey="gender" 
+                  currentSortKey={sortConfig?.key as string} 
+                  currentDirection={sortConfig?.direction} 
+                  onSort={requestSort as any} 
+                  className="text-center hidden sm:table-cell w-20" 
+                />
+                <SortableHeader 
+                  label={activeTab === "GURU" ? "UNIT SEKOLAH" : "UNIT / KANTOR"} 
+                  sortKey="unitSekolah.name" 
+                  currentSortKey={sortConfig?.key as string} 
+                  currentDirection={sortConfig?.direction} 
+                  onSort={requestSort as any} 
+                  className="text-left hidden md:table-cell" 
+                />
+                {activeTab === "GURU" ? (
+                  <SortableHeader 
+                    label="BIDANG STUDI" 
+                    sortKey="bidangStudi.name" 
+                    currentSortKey={sortConfig?.key as string} 
+                    currentDirection={sortConfig?.direction} 
+                    onSort={requestSort as any} 
+                    className="text-left hidden lg:table-cell" 
+                  />
+                ) : (
+                  <SortableHeader 
+                    label="JABATAN / POSISI" 
+                    sortKey="jabatan" 
+                    currentSortKey={sortConfig?.key as string} 
+                    currentDirection={sortConfig?.direction} 
+                    onSort={requestSort as any} 
+                    className="text-left hidden lg:table-cell" 
+                  />
+                )}
+                <SortableHeader 
+                  label="STATUS PEGAWAI" 
+                  sortKey="statusKepegawaian" 
+                  currentSortKey={sortConfig?.key as string} 
+                  currentDirection={sortConfig?.direction} 
+                  onSort={requestSort as any} 
+                  className="text-center hidden lg:table-cell" 
+                />
+                <SortableHeader 
+                  label="NO. WHATSAPP" 
+                  sortKey="phone" 
+                  currentSortKey={sortConfig?.key as string} 
+                  currentDirection={sortConfig?.direction} 
+                  onSort={requestSort as any} 
+                  className="text-left hidden xl:table-cell" 
+                />
+                <SortableHeader 
+                  label="STATUS" 
+                  sortKey="isActive" 
+                  currentSortKey={sortConfig?.key as string} 
+                  currentDirection={sortConfig?.direction} 
+                  onSort={requestSort as any} 
+                  className="text-center hidden xl:table-cell w-28" 
+                />
                 <th className="p-4 font-semibold text-right">{isReadOnly ? "PROFIL" : "AKSI"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-sm">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={isReadOnly ? 7 : 9} className="py-12 text-center">
+                  <td colSpan={isReadOnly ? 8 : 10} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center text-text-muted">
-                      <GraduationCap className="w-12 h-12 stroke-[1.2] text-text-muted/40 mb-3" />
-                      <p className="font-medium text-text-main">Belum Ada Data Guru</p>
-                      <p className="text-xs mt-1">Gunakan tombol + Tambah Guru untuk memasukkan data kepegawaian baru.</p>
+                      {activeTab === "GURU" ? (
+                        <GraduationCap className="w-12 h-12 stroke-[1.2] text-text-muted/40 mb-3" />
+                      ) : (
+                        <Briefcase className="w-12 h-12 stroke-[1.2] text-text-muted/40 mb-3" />
+                      )}
+                      <p className="font-medium text-text-main">
+                        {activeTab === "GURU" ? "Belum Ada Data Guru" : "Belum Ada Data Staf & Karyawan"}
+                      </p>
+                      <p className="text-xs mt-1">
+                        {activeTab === "GURU" 
+                          ? "Gunakan tombol + Tambah Guru untuk memasukkan data tenaga pendidik baru."
+                          : "Gunakan tombol + Tambah Staf untuk memasukkan data tenaga kependidikan baru."}
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -593,12 +788,29 @@ export default function GuruClient({
                           }`}>
                             <User size={18} />
                           </div>
-                          <div>
-                            <div className="font-bold text-text-main">
+                          <div className="min-w-0">
+                            <div className="font-bold text-text-main truncate">
                               {item.name}
                             </div>
-                            <div className="font-mono text-xs text-text-muted mt-0.5">
+                            <div className="font-mono text-xs text-text-muted mt-0.5 truncate">
                               {item.nip || "NIP Belum Diatur"}
+                            </div>
+                            {/* Responsive mobile badge (antislop-layoutmobile) */}
+                            <div className="flex items-center gap-1.5 mt-1 md:hidden flex-wrap">
+                              <span className="text-[11px] text-text-muted font-medium">{item.unitSekolah?.name || "-"}</span>
+                              {activeTab === "STAF" ? (
+                                item.jabatan && (
+                                  <span className="text-[10px] bg-gray-100 text-text-main px-1.5 py-0.5 rounded font-semibold border border-border">
+                                    {item.jabatan}
+                                  </span>
+                                )
+                              ) : (
+                                item.bidangStudi?.name && (
+                                  <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-semibold">
+                                    {item.bidangStudi.name}
+                                  </span>
+                                )
+                              )}
                             </div>
                           </div>
                         </div>
@@ -609,6 +821,27 @@ export default function GuruClient({
                       <td className="p-4 hidden md:table-cell">
                         <div className="font-medium text-text-main">{item.unitSekolah?.name || "-"}</div>
                       </td>
+                      {activeTab === "GURU" ? (
+                        <td className="p-4 hidden lg:table-cell">
+                          {item.bidangStudi?.name ? (
+                            <span className="font-medium text-text-main">
+                              {item.bidangStudi.name}
+                            </span>
+                          ) : (
+                            <span className="text-text-muted/60 text-xs italic">Belum Diatur</span>
+                          )}
+                        </td>
+                      ) : (
+                        <td className="p-4 hidden lg:table-cell">
+                          {item.jabatan ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-text-main border border-border">
+                              {item.jabatan}
+                            </span>
+                          ) : (
+                            <span className="text-text-muted/60 text-xs italic">Staf Umum</span>
+                          )}
+                        </td>
+                      )}
                       <td className="p-4 text-center hidden lg:table-cell">
                         {isValidMonitoringStatus(item.statusKepegawaian) ? (
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getStatusBadgeStyle(item.statusKepegawaian)}`}>
@@ -732,8 +965,6 @@ export default function GuruClient({
         )}
       </div>
 
-
-
       {/* Modular 4-Tab Guru Form Modal */}
       <GuruFormModal
         isOpen={isAdding}
@@ -741,7 +972,6 @@ export default function GuruClient({
         onSave={handleSaveModal}
         initialData={formData}
         schoolUnits={schoolUnits}
-        availableStatuses={availableStatuses}
       />
 
       <ImportGuruModal
@@ -749,7 +979,6 @@ export default function GuruClient({
         onClose={() => setShowModalImportGuru(false)}
         onSuccess={() => {
           setShowModalImportGuru(false)
-          // Data is refreshed via router.refresh() inside the modal
         }}
         schoolUnits={schoolUnits}
         activeUnitId={activeUnitId}
@@ -760,7 +989,7 @@ export default function GuruClient({
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-border px-4 py-3 flex items-center justify-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-300 z-50 w-max max-w-[98vw] overflow-x-auto hide-scrollbar text-sm">
           <div className="flex items-center gap-2 font-semibold shrink-0">
             <span className="flex items-center justify-center bg-primary/10 text-primary w-5 h-5 rounded-full text-[10px]">{selectedGurus.length}</span>
-            <span className="hidden sm:inline">Guru</span> Dipilih
+            <span className="hidden sm:inline">{activeTab === "STAF" ? "Staf" : "Guru"}</span> Dipilih
           </div>
           <div className="h-6 w-px bg-border shrink-0"></div>
           <div className="flex items-center gap-2 shrink-0">
@@ -779,8 +1008,8 @@ export default function GuruClient({
         isOpen={showBulkDeleteModal}
         onCancel={() => setShowBulkDeleteModal(false)}
         onConfirm={handleBulkDeleteConfirm}
-        title="Hapus Massal Guru"
-        message={`Apakah Anda yakin ingin menghapus ${selectedGurus.length} guru terpilih secara permanen? Guru yang dihapus tidak akan muncul pada pilihan Wali Kelas.`}
+        title={`Hapus Massal ${activeTab === "STAF" ? "Staf" : "Guru"}`}
+        message={`Apakah Anda yakin ingin menghapus ${selectedGurus.length} ${activeTab === "STAF" ? "staf" : "guru"} terpilih secara permanen?`}
         confirmText="Ya, Hapus Semua"
         cancelText="Batal"
         isLoading={isDeletingBulk}
@@ -791,8 +1020,8 @@ export default function GuruClient({
         isOpen={!!deleteId}
         onCancel={() => setDeleteId(null)}
         onConfirm={handleDeleteConfirm}
-        title="Hapus Data Guru"
-        message="Apakah Anda yakin ingin menghapus data guru ini? Guru yang dihapus tidak akan muncul pada pilihan Wali Kelas."
+        title={activeTab === "STAF" ? "Hapus Data Staf" : "Hapus Data Guru"}
+        message={`Apakah Anda yakin ingin menghapus data ${activeTab === "STAF" ? "staf" : "guru"} ini?`}
         confirmText="Ya, Hapus"
         cancelText="Batal"
         isLoading={isDeleting}

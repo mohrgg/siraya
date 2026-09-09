@@ -161,6 +161,8 @@ model Guru {
   phone             String?  @db.VarChar(50)
   email             String?  @db.VarChar(100)
   statusKepegawaian String   @default("-") @db.VarChar(50)
+  jenisPtk          String   @default("GURU") @db.VarChar(20) // "GURU" (Pendidik) atau "STAF" (Tenaga Kependidikan)
+  jabatan           String?  @db.VarChar(100) // Jabatan staf (misal: "Staf Tata Usaha", "Satpam", dll)
   pendidikan        String?  @db.VarChar(50)
   bidangStudiId     String?
   bankName          String?  @db.VarChar(50)
@@ -178,6 +180,21 @@ model Guru {
 
   @@index([unitSekolahId])
   @@index([bidangStudiId])
+  @@index([jenisPtk])
+}
+
+model StatusKepegawaian {
+  id        String   @id @default(cuid())
+  name      String   @unique @db.VarChar(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model JabatanStaf {
+  id        String   @id @default(cuid())
+  name      String   @unique @db.VarChar(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Murid {
