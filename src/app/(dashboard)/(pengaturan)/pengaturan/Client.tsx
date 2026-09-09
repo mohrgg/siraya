@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Building2, Landmark, Database, Save, Plus, Trash2, Download, Info } from "lucide-react"
+import { Building2, Landmark, Database, Save, Plus, Trash2, Download, Info, FileSpreadsheet, FileJson } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import toast from "react-hot-toast"
 import { upsertPengaturan } from "@/actions/pengaturan"
@@ -31,6 +31,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
   // State untuk Backup
   const [backupUnitId, setBackupUnitId] = useState<string>("GLOBAL")
   const [selectedModules, setSelectedModules] = useState<string[]>([])
+  const [backupFormat, setBackupFormat] = useState<"excel" | "json">("excel")
   const [isBackingUp, setIsBackingUp] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -121,15 +122,28 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
         throw new Error(result.error)
       }
 
-      toast.loading("Membuat file Excel & mengatur lebar kolom...", { id: toastId })
-      const { exportMultiSheetExcel } = await import("@/lib/excel")
-      
       const dateStr = new Date().toISOString().replace(/[:.]/g, '-').split('T').join('_').substring(0, 15)
-      const unitStr = backupUnitId === "GLOBAL" ? "YAYASAN" : units.find(u => u.id === backupUnitId)?.name?.replace(/\\s+/g, '_') || "UNIT"
-      
-      exportMultiSheetExcel(result.data, `Backup_Siraya_${unitStr}_${dateStr}`)
+      const unitStr = backupUnitId === "GLOBAL" ? "YAYASAN" : units.find(u => u.id === backupUnitId)?.name?.replace(/\s+/g, '_') || "UNIT"
 
-      toast.success("File Excel berhasil diunduh!", { id: toastId })
+      if (backupFormat === "excel") {
+        toast.loading("Membuat file Excel & mengatur lebar kolom...", { id: toastId })
+        const { exportMultiSheetExcel } = await import("@/lib/excel")
+        exportMultiSheetExcel(result.data, `Backup_Siraya_${unitStr}_${dateStr}`)
+        toast.success("File Excel berhasil diunduh!", { id: toastId })
+      } else {
+        toast.loading("Menyiapkan snapshot JSON mentah...", { id: toastId })
+        const jsonString = JSON.stringify(result.rawData, null, 2)
+        const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" })
+        const downloadUrl = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.href = downloadUrl
+        link.download = `Backup_Siraya_Snapshot_${unitStr}_${dateStr}.json`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(downloadUrl)
+        toast.success("File JSON Snapshot berhasil diunduh!", { id: toastId })
+      }
     } catch (error: any) {
       toast.error(error.message || "Gagal melakukan pencadangan data.", { id: toastId })
     } finally {
@@ -499,16 +513,18 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
               <div>
-                <h2 className="text-xl font-bold text-text-main mb-1">Pencadangan Database Server</h2>
-                <p className="text-text-muted text-sm">Unduh data krusial sistem ke format Excel (Multi-Sheet).</p>
+                <h2 className="text-xl font-bold text-text-main mb-1">Pencadangan Basis Data Server (20 Model)</h2>
+                <p className="text-text-muted text-sm">
+                  Unduh data krusial sistem ke format Multi-Sheet Excel (.xlsx) atau Snapshot JSON (.json).
+                </p>
               </div>
               <Button onClick={handleBackup} disabled={isBackingUp || selectedModules.length === 0} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all">
-                {isBackingUp ? <span className="animate-pulse">Memproses...</span> : <><Download size={18} className="mr-2" /> Unduh Backup</>}
+                {isBackingUp ? <span className="animate-pulse">Memproses...</span> : <><Download size={18} className="mr-2" /> Unduh Backup ({backupFormat === "excel" ? "Excel" : "JSON"})</>}
               </Button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* KOLOM KIRI: SETTINGS */}
+              {/* KOLOM KIRI: SETTINGS & FORMAT */}
               <div className="lg:col-span-1 space-y-6">
                 <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
                   <div className="flex items-center gap-2 text-blue-800 font-bold mb-3">
@@ -529,13 +545,75 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                   </select>
                 </div>
                 
+                {/* PILIHAN FORMAT EKSPOR */}
+                <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 text-text-main font-bold mb-3">
+                    <Database size={18} className="text-primary" /> Format File Unduhan
+                  </div>
+                  <div className="space-y-2.5">
+                    <label 
+                      onClick={() => setBackupFormat("excel")}
+                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                        backupFormat === "excel" 
+                          ? "border-emerald-500 bg-emerald-50/60 text-emerald-900 shadow-sm" 
+                          : "border-border hover:bg-bg text-text-muted"
+                      }`}
+                    >
+                      <input 
+                        type="radio" 
+                        name="backupFormat" 
+                        value="excel" 
+                        checked={backupFormat === "excel"} 
+                        onChange={() => setBackupFormat("excel")}
+                        className="mt-0.5 text-emerald-600 focus:ring-emerald-500" 
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5 font-bold text-sm text-text-main">
+                          <FileSpreadsheet size={16} className="text-emerald-600" />
+                          <span>Multi-Sheet Excel (.xlsx)</span>
+                        </div>
+                        <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
+                          Tabel siap baca dengan pemisahan sheet per modul. Ideal untuk audit operasional & pelaporan yayasan.
+                        </p>
+                      </div>
+                    </label>
+
+                    <label 
+                      onClick={() => setBackupFormat("json")}
+                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                        backupFormat === "json" 
+                          ? "border-blue-500 bg-blue-50/60 text-blue-900 shadow-sm" 
+                          : "border-border hover:bg-bg text-text-muted"
+                      }`}
+                    >
+                      <input 
+                        type="radio" 
+                        name="backupFormat" 
+                        value="json" 
+                        checked={backupFormat === "json"} 
+                        onChange={() => setBackupFormat("json")}
+                        className="mt-0.5 text-blue-600 focus:ring-blue-500" 
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5 font-bold text-sm text-text-main">
+                          <FileJson size={16} className="text-blue-600" />
+                          <span>JSON Snapshot (.json)</span>
+                        </div>
+                        <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
+                          Data mentah lengkap beserta ID relasi (Foreign Key). Ideal untuk cadangan teknis & disaster recovery.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
                 <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
                   <h3 className="font-bold text-text-main mb-2 flex items-center gap-2">
-                    <Info size={16} className="text-primary" /> Informasi Privasi
+                    <Info size={16} className="text-primary" /> Informasi Privasi & Keamanan
                   </h3>
                   <p className="text-xs text-text-muted leading-relaxed">
-                    Data kredensial pengguna seperti <b>Password</b> tidak akan pernah disertakan dalam hasil unduhan demi alasan keamanan.<br/><br/>
-                    Gunakan file backup ini secara bijak dan simpan di tempat yang aman (hindari komputer publik).
+                    Data kredensial pengguna seperti <b>Password</b> selalu disensor secara otomatis dalam file hasil unduhan demi keamanan sistem.<br/><br/>
+                    Simpan berkas cadangan ini di media penyimpanan yang aman dan terenkripsi.
                   </p>
                 </div>
               </div>
@@ -543,7 +621,10 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
               {/* KOLOM KANAN: MODULES */}
               <div className="lg:col-span-2">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-text-main">Pilih Modul Data yang Ingin Di-backup</h3>
+                  <div>
+                    <h3 className="font-bold text-text-main">Pilih Modul Data yang Ingin Di-backup</h3>
+                    <p className="text-xs text-text-muted mt-0.5">Mencakup 20 model data terstruktur dalam 5 domain.</p>
+                  </div>
                   <button 
                     onClick={toggleAllModules} 
                     className="text-sm font-semibold text-primary hover:text-primary-hover transition-colors"
@@ -562,8 +643,8 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                       {selectedModules.includes("akademik") && <span className="text-xs">✓</span>}
                     </div>
                     <div>
-                      <h4 className={`font-bold text-sm ${selectedModules.includes("akademik") ? "text-emerald-800" : "text-text-main"}`}>Data Master Akademik</h4>
-                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Siswa, Guru, Daftar Kelas (Rombel), Jurusan, dan Tingkat.</p>
+                      <h4 className={`font-bold text-sm ${selectedModules.includes("akademik") ? "text-emerald-800" : "text-text-main"}`}>Data Master Akademik (8 Model)</h4>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Siswa (Biodata Lengkap ~35 field), Guru & Mapel, Rombel, Tahun Ajaran, Tingkat, Jurusan, Bidang Studi, dan Riwayat Kelas.</p>
                     </div>
                   </div>
 
@@ -576,8 +657,8 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                       {selectedModules.includes("keuangan") && <span className="text-xs">✓</span>}
                     </div>
                     <div>
-                      <h4 className={`font-bold text-sm ${selectedModules.includes("keuangan") ? "text-emerald-800" : "text-text-main"}`}>Data Master Keuangan</h4>
-                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Klasifikasi Akun, Sub-Klasifikasi, dan Bagan Akun Standar (COA).</p>
+                      <h4 className={`font-bold text-sm ${selectedModules.includes("keuangan") ? "text-emerald-800" : "text-text-main"}`}>Data Master Keuangan (3 Model)</h4>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Bagan Akun Standar (COA), Klasifikasi Akun (Harta, Kewajiban, Modal, dll), dan Sub-Klasifikasi Akun.</p>
                     </div>
                   </div>
 
@@ -590,8 +671,8 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                       {selectedModules.includes("arus_kas") && <span className="text-xs">✓</span>}
                     </div>
                     <div>
-                      <h4 className={`font-bold text-sm ${selectedModules.includes("arus_kas") ? "text-emerald-800" : "text-text-main"}`}>Transaksi & Arus Kas</h4>
-                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Buku Jurnal, Kas Masuk, Kas Keluar, dan Detail Transaksi.</p>
+                      <h4 className={`font-bold text-sm ${selectedModules.includes("arus_kas") ? "text-emerald-800" : "text-text-main"}`}>Transaksi & Arus Kas (2 Model)</h4>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Buku Jurnal Umum, Kas Masuk, Kas Keluar, Detail Debit/Kredit Akun, dan Jejak Audit Revisi.</p>
                     </div>
                   </div>
 
@@ -604,8 +685,8 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                       {selectedModules.includes("tagihan") && <span className="text-xs">✓</span>}
                     </div>
                     <div>
-                      <h4 className={`font-bold text-sm ${selectedModules.includes("tagihan") ? "text-emerald-800" : "text-text-main"}`}>Tagihan & Pembayaran</h4>
-                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Daftar Tagihan (SPP, DSP) dan Histori Pembayaran Siswa.</p>
+                      <h4 className={`font-bold text-sm ${selectedModules.includes("tagihan") ? "text-emerald-800" : "text-text-main"}`}>Tagihan & Pembayaran (2 Model)</h4>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Daftar Tagihan Siswa (SPP, Gedung, dll), Status Pelunasan, dan Histori Pembayaran serta Potongan/Diskon.</p>
                     </div>
                   </div>
 
@@ -618,8 +699,8 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                       {selectedModules.includes("sistem") && <span className="text-xs">✓</span>}
                     </div>
                     <div>
-                      <h4 className={`font-bold text-sm ${selectedModules.includes("sistem") ? "text-emerald-800" : "text-text-main"}`}>Sistem & Akses (Global)</h4>
-                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Manajemen User (Operator), Role, Divisi, dan Unit Sekolah.</p>
+                      <h4 className={`font-bold text-sm ${selectedModules.includes("sistem") ? "text-emerald-800" : "text-text-main"}`}>Sistem & Akses (5 Model)</h4>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">Pengguna Sistem (Aktivitas & Keamanan), Unit Sekolah, Divisi Staf, Pengaturan Yayasan, dan Audit Log Aktivitas.</p>
                     </div>
                   </div>
 
