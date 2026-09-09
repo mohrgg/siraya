@@ -5,11 +5,13 @@ const prismaClientSingleton = () => {
 }
 
 declare const globalThis: {
-  prismaGlobal: ReturnType<typeof prismaClientSingleton>;
+  prismaGlobal: ReturnType<typeof prismaClientSingleton> | undefined;
 } & typeof global;
 
-const prisma = globalThis.prismaGlobal ?? prismaClientSingleton()
+// Selalu buat instance baru saat file ini direload agar field baru di schema terdeteksi
+const prisma = prismaClientSingleton()
 
 export default prisma
 
 if (process.env.NODE_ENV !== "production") globalThis.prismaGlobal = prisma
+
