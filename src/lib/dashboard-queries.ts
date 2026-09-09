@@ -552,16 +552,21 @@ export const getAdminUnitData = getUnitDashboardData;
 export const getTuUnitData = getUnitDashboardData;
 
 // ==================== SUPERADMIN OPERASIONAL ====================
+import { getAuditCockpitSummary } from "@/actions/audit-log"
+
 export async function getAdminOperasionalData() {
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29)
   thirtyDaysAgo.setHours(0, 0, 0, 0)
 
-  const rawLogs = await prisma.logAktivitas.findMany({
-    where: { createdAt: { gte: thirtyDaysAgo } },
-    select: { createdAt: true, modul: true, pengguna: { select: { role: true, name: true, id: true } } },
-    orderBy: { createdAt: 'asc' }
-  })
+  const [cockpitSummary, rawLogs] = await Promise.all([
+    getAuditCockpitSummary(),
+    prisma.logAktivitas.findMany({
+      where: { createdAt: { gte: thirtyDaysAgo } },
+      select: { createdAt: true, modul: true, pengguna: { select: { role: true, name: true, id: true } } },
+      orderBy: { createdAt: 'asc' }
+    })
+  ])
 
   // Area Chart: Tren 30 hari
   const activityMap = new Map<string, number>()
@@ -669,6 +674,7 @@ export async function getAdminOperasionalData() {
   const avgDailyLogs = Math.round(total30DaysLogs / 30)
 
   return { 
+    cockpitSummary,
     trendData, modulData, roleData, heatmapData, leaderboard, recentLogs, 
     dauCount, monthlyLogsCount, totalMasterRecords, avgDailyLogs, pengaturan 
   }
