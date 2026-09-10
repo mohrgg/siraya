@@ -284,8 +284,74 @@ export default function KelasClient({
   }
 
 
+  const targetGrade = deleteData?.type === "tingkat" ? data.grades?.find((g: any) => g.id === deleteData.id) : null
+  const targetClassroom = deleteData?.type === "subkelas" ? data.classrooms?.find((c: any) => c.id === deleteData.id) : null
+  const targetStudent = deleteData?.type === "murid" ? data.students?.find((s: any) => s.id === deleteData.id) : null
+
+  // Tingkat terkunci jika masih memiliki rombel aktif
+  const isGradeLocked = Boolean(deleteData?.type === "tingkat" && targetGrade?._count?.subKelas && targetGrade._count.subKelas > 0)
+  
+  // Rombel terkunci jika masih memiliki siswa aktif
+  const isClassroomLocked = Boolean(deleteData?.type === "subkelas" && targetClassroom?._count?.riwayatKelas && targetClassroom._count.riwayatKelas > 0)
+
+  const isDeleteBlocked = isGradeLocked || isClassroomLocked
+
+  const getDeleteModalInfo = () => {
+    if (isGradeLocked) {
+      return {
+        title: "Tingkatan Masih Digunakan",
+        message: `Peringatan: Tingkatan "${targetGrade?.name}" masih terhubung dengan ${targetGrade?._count?.subKelas} rombel/kelas aktif. Anda harus memindahkan atau menghapus rombel tersebut terlebih dahulu.`,
+        confirmText: "Tutup",
+        confirmVariant: "secondary" as const,
+        cancelText: "Batal"
+      }
+    }
+    if (isClassroomLocked) {
+      const rombelLabel = `${targetClassroom?.tingkat?.name || ""} ${targetClassroom?.name || ""}`.trim()
+      return {
+        title: "Rombel Masih Memiliki Siswa",
+        message: `Peringatan: Rombel "${rombelLabel}" masih memiliki ${targetClassroom?._count?.riwayatKelas} siswa aktif di dalamnya. Pindahkan siswa ke rombel lain terlebih dahulu sebelum menghapus rombel ini.`,
+        confirmText: "Tutup",
+        confirmVariant: "secondary" as const,
+        cancelText: "Batal"
+      }
+    }
+    if (deleteData?.type === "murid") {
+      return {
+        title: "Hapus Siswa",
+        message: `Apakah Anda yakin ingin menghapus data siswa "${targetStudent?.name || ''}"? Data ini tidak dapat dikembalikan.`,
+        confirmText: "Hapus Siswa",
+        confirmVariant: "danger" as const,
+        cancelText: "Batal"
+      }
+    }
+    if (deleteData?.type === "subkelas") {
+      const rombelLabel = `${targetClassroom?.tingkat?.name || ""} ${targetClassroom?.name || ""}`.trim()
+      return {
+        title: "Hapus Rombel Kelas",
+        message: `Apakah Anda yakin ingin menghapus rombel "${rombelLabel}"? Pastikan rombel sudah kosong.`,
+        confirmText: "Hapus Rombel",
+        confirmVariant: "danger" as const,
+        cancelText: "Batal"
+      }
+    }
+    return {
+      title: "Hapus Tingkatan Kelas",
+      message: `Apakah Anda yakin ingin menghapus tingkatan "${targetGrade?.name || ''}"?`,
+      confirmText: "Hapus Tingkatan",
+      confirmVariant: "danger" as const,
+      cancelText: "Batal"
+    }
+  }
+
+  const deleteModalInfo = getDeleteModalInfo()
+
   const handleDeleteConfirm = async () => {
     if (!deleteData) return
+    if (isDeleteBlocked) {
+      setDeleteData(null)
+      return
+    }
     setIsDeleting(true)
     try {
       if (deleteData.type === "tingkat") {
@@ -385,10 +451,13 @@ export default function KelasClient({
     <div>
       <ConfirmModal
         isOpen={!!deleteData}
-        title="Konfirmasi Hapus Data"
-        message="Apakah Anda yakin ingin menghapus data ini? Pastikan data ini tidak terkait dengan data transaksi keuangan lainnya."
+        title={deleteModalInfo.title}
+        message={deleteModalInfo.message}
+        confirmText={deleteModalInfo.confirmText}
+        confirmVariant={deleteModalInfo.confirmVariant}
+        cancelText={deleteModalInfo.cancelText}
         onCancel={() => setDeleteData(null)}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={isDeleteBlocked ? () => setDeleteData(null) : handleDeleteConfirm}
         isLoading={isDeleting}
       />
 
@@ -571,18 +640,18 @@ export default function KelasClient({
         )}
       </div>
 
-      {/* Floating Action Bar (Bulk Promote & Grad) */}
-      {data.selectedStudents.length > 0 && data.activeTab === "murid" && !isReadOnly && (
+      {/* Floating Action Bar (Bulk Promote, Grad & Alumni Actions) */}
+      {data.selectedStudents.length > 0 && (data.activeTab === "murid" || data.activeTab === "alumni") && !isReadOnly && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-border px-4 py-3 flex items-center justify-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-300 z-50 w-max max-w-[98vw] overflow-x-auto hide-scrollbar text-sm">
           {/* Info Section */}
           <div className="flex items-center gap-2 font-semibold shrink-0">
             <span className="flex items-center justify-center bg-primary/10 text-primary w-5 h-5 rounded-full text-[10px]">{data.selectedStudents.length}</span>
-            <span className="hidden sm:inline">Siswa</span> Dipilih
+            <span className="hidden sm:inline">{data.activeTab === "alumni" ? "Alumni" : "Siswa"}</span> Dipilih
           </div>
 
           <div className="h-6 w-px bg-border shrink-0"></div>
 
-          {/* Action Group 1: Promote/Move */}
+          {/* Action Group 1: Promote / Move / Reactivate to Classroom */}
           <div className="flex items-center gap-2 shrink-0">
             <select
               className="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-xs font-medium w-28 sm:w-32 shrink-0"
@@ -606,8 +675,8 @@ export default function KelasClient({
               ))}
             </select>
 
-            <Button size="sm" className="shrink-0 text-xs py-1.5 px-3" onClick={data.handleBulkPromote} disabled={!data.targetSubKelasId || !data.targetTahunAkademikId || data.isPromoting} isLoading={data.isPromoting}>
-              Naik Kelas / Mutasi
+            <Button size="sm" className="shrink-0 text-xs py-1.5 px-3 font-semibold" onClick={data.handleBulkPromote} disabled={!data.targetSubKelasId || !data.targetTahunAkademikId || data.isPromoting} isLoading={data.isPromoting}>
+              {data.activeTab === "alumni" ? "Aktifkan ke Rombel" : "Naik Kelas / Mutasi"}
             </Button>
           </div>
 
@@ -615,19 +684,23 @@ export default function KelasClient({
 
           {/* Action Group 2: Danger Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <Button size="sm" variant="danger" className="text-xs py-1.5 px-3" onClick={() => setBulkActionConfirm({ type: 'lulus' })} disabled={data.isPromoting} isLoading={data.isPromoting}>
-              Luluskan
-            </Button>
+            {data.activeTab === "murid" && (
+              <>
+                <Button size="sm" variant="danger" className="text-xs py-1.5 px-3" onClick={() => setBulkActionConfirm({ type: 'lulus' })} disabled={data.isPromoting} isLoading={data.isPromoting}>
+                  Luluskan
+                </Button>
 
-            <Button size="sm" variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50 text-xs py-1.5 px-3 shrink-0" onClick={() => setBulkActionConfirm({ type: 'pindah' })} disabled={data.isPromoting} isLoading={data.isPromoting}>
-              Pindah
-            </Button>
+                <Button size="sm" variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50 text-xs py-1.5 px-3 shrink-0" onClick={() => setBulkActionConfirm({ type: 'pindah' })} disabled={data.isPromoting} isLoading={data.isPromoting}>
+                  Pindah
+                </Button>
+              </>
+            )}
 
             <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 text-xs py-1.5 px-3 shrink-0" onClick={() => setBulkActionConfirm({ type: 'hapus' })} disabled={data.isPromoting} isLoading={data.isPromoting}>
               Hapus
             </Button>
 
-            <button onClick={() => data.setSelectedStudents([])} className="text-gray-400 hover:text-gray-600 p-1.5 ml-1 bg-gray-100 rounded-full shrink-0">
+            <button onClick={() => data.setSelectedStudents([])} className="text-gray-400 hover:text-gray-600 p-1.5 ml-1 bg-gray-100 rounded-full shrink-0" title="Batal Pilihan">
               <X size={14} />
             </button>
           </div>

@@ -442,6 +442,24 @@ export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: strin
       await tx.riwayatKelas.createMany({
         data: recordsToCreate.map(r => ({ ...r, isCurrent: true }))
       })
+
+      // Pastikan status siswa yang dipindahkan/dipromosikan menjadi AKTIF
+      await tx.murid.updateMany({
+        where: { id: { in: muridIds } },
+        data: {
+          status: "AKTIF",
+          isActive: true
+        }
+      })
+    })
+  } else {
+    // Jika siswa sudah ada di target subkelas tapi mungkin berstatus non-aktif/alumni, aktifkan kembali
+    await prisma.murid.updateMany({
+      where: { id: { in: muridIds } },
+      data: {
+        status: "AKTIF",
+        isActive: true
+      }
     })
   }
 

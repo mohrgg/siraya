@@ -121,9 +121,10 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
     return () => { isMounted = false }
   }, [activeTab, activeUnitId, activeYearId, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, debouncedSearchTerm, currentPage, pageSize, muridSort, filterAlumniStatus, schoolUnits, refreshTrigger])
 
-  // Reset pagination when filter changes
+  // Reset pagination & selection when filter or tab changes
   useEffect(() => {
     setCurrentPage(1)
+    setSelectedStudents([])
   }, [debouncedSearchTerm, filterMuridTingkat, filterMuridJurusan, filterMuridSubKelas, filterAlumniStatus, activeTab])
 
   const [targetTahunAkademikId, setTargetTahunAkademikId] = useState("")
@@ -138,39 +139,33 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
     }
 
     let isMounted = true
-    const fetchTargetClasses = async () => {
+    const fetchClassrooms = async () => {
       try {
-        const classes = await getKelas(activeUnitId, targetTahunAkademikId)
+        const cls = await getKelas(activeUnitId, targetTahunAkademikId)
         if (isMounted) {
-          setTargetClassrooms(classes)
-          // Jika kelas tujuan yang dipilih sebelumnya tidak ada di tahun yang baru, reset pilihan
-          if (!classes.find((c: any) => c.id === targetSubKelasId)) {
-            setTargetSubKelasId("")
-          }
+          setTargetClassrooms(cls)
+          setTargetSubKelasId(cls[0]?.id || "")
         }
-      } catch (e) {
-        console.error("Gagal mengambil data kelas tujuan", e)
+      } catch (e: any) {
+        if (isMounted) toast.error("Gagal mengambil rombel tujuan: " + e.message)
       }
     }
 
-    fetchTargetClasses()
+    fetchClassrooms()
     return () => { isMounted = false }
   }, [targetTahunAkademikId, activeUnitId])
 
   // Bulk Promote Handler
   const handleBulkPromote = async () => {
-    if (selectedStudents.length === 0 || !targetSubKelasId || !targetTahunAkademikId) {
-      toast.error("Pilih murid, tahun ajaran, dan kelas tujuan terlebih dahulu")
-      return
-    }
+    if (selectedStudents.length === 0 || !targetSubKelasId) return
     setIsPromoting(true)
     try {
       const res = await promoteSiswaBatch(selectedStudents, targetSubKelasId, targetTahunAkademikId)
-      toast.success(`Berhasil memindahkan ${res.success} murid ke kelas baru`)
+      toast.success(`Berhasil memindahkan ${res.success} murid ke rombel tujuan`)
       setSelectedStudents([])
       setTargetSubKelasId("")
       setTargetTahunAkademikId("")
-      setFilterMuridSubKelas(targetSubKelasId)
+      setRefreshTrigger(prev => prev + 1)
     } catch (e: any) {
       toast.error("Gagal memindahkan murid: " + e.message)
     } finally {
@@ -187,6 +182,7 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
       const res = await luluskanSiswaBatch(selectedStudents)
       toast.success(`Berhasil meluluskan ${res.success} murid`)
       setSelectedStudents([])
+      setRefreshTrigger(prev => prev + 1)
     } catch (e: any) {
       toast.error("Gagal meluluskan murid: " + e.message)
     } finally {
@@ -203,6 +199,7 @@ export function useKelasData({ activeUnitId, activeYearId, initialGrades, initia
       const res = await pindahkanSiswaBatch(selectedStudents)
       toast.success(`Berhasil memindahkan ${res.success} murid keluar dari aktif`)
       setSelectedStudents([])
+      setRefreshTrigger(prev => prev + 1)
     } catch (e: any) {
       toast.error("Gagal memindahkan murid: " + e.message)
     } finally {

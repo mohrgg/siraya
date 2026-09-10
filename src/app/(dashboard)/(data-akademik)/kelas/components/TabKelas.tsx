@@ -30,14 +30,27 @@ export default function TabKelas({
           <tr key={g.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
             <td className="p-4">{(currentPage - 1) * pageSize + i + 1}</td>
             <td className="p-4 text-text-main font-medium">{g.unitSekolah?.name}</td>
-            <td className="p-4 font-bold text-text-main">{g.name}</td>
+            <td className="p-4 font-bold text-text-main">
+              <div className="flex items-center gap-2">
+                <span>{g.name}</span>
+                {(g._count?.subKelas || 0) > 0 && (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
+                    {g._count.subKelas} Rombel
+                  </span>
+                )}
+              </div>
+            </td>
             {!isReadOnly && (
               <td className="p-4">
                 <div className="flex items-center justify-end gap-2">
                   <button onClick={() => onEditTingkat && onEditTingkat(g)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg border border-green-200 hover:border-green-600 transition-colors" title="Edit Tingkat">
                     <Edit2 size={16} />
                   </button>
-                  <button onClick={() => setDeleteData({ id: g.id, type: "tingkat" })} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" title="Hapus Tingkat">
+                  <button 
+                    onClick={() => setDeleteData({ id: g.id, type: "tingkat" })} 
+                    className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" 
+                    title={(g._count?.subKelas || 0) > 0 ? `Tingkatan masih memiliki ${g._count.subKelas} rombel aktif` : "Hapus Tingkat"}
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>

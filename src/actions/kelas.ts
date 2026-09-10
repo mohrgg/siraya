@@ -15,7 +15,14 @@ export async function getTingkatan(unitSekolahId?: string) {
       isDeleted: false,
       ...(session.user.role !== "ADMIN" && session.user.unitSekolahId ? { unitSekolahId: session.user.unitSekolahId } : (unitSekolahId && unitSekolahId !== "all" ? { unitSekolahId } : {}))
     },
-    include: { unitSekolah: true },
+    include: { 
+      unitSekolah: true,
+      _count: {
+        select: {
+          subKelas: { where: { isDeleted: false } }
+        }
+      }
+    },
     orderBy: { order: "asc" }
   })
 }
@@ -205,6 +212,30 @@ export async function tambahKelas(data: {
 export async function hapusTingkatan(id: string) {
   const session = await auth()
   if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+  
+  const existing = await prisma.tingkat.findUnique({ where: { id } })
+  if (!existing) throw new Error("Tingkatan tidak ditemukan.")
+
+  // Cek rombel aktif di tingkatan ini
+  const activeSubKelasCount = await prisma.subKelas.count({
+    where: { tingkatId: id, isDeleted: false }
+  })
+
+  // Cek murid aktif di tingkatan ini
+  const activeMuridCount = await prisma.riwayatKelas.count({
+    where: {
+      subKelas: { tingkatId: id, isDeleted: false },
+      isCurrent: true,
+      murid: { isDeleted: false, isActive: true }
+    }
+  })
+
+  if (activeSubKelasCount > 0 || activeMuridCount > 0) {
+    throw new Error(
+      `Tidak dapat menghapus tingkatan '${existing.name}' karena masih memiliki ${activeSubKelasCount} rombel dan ${activeMuridCount} siswa aktif. Pindahkan atau hapus rombel/siswa terkait terlebih dahulu.`
+    )
+  }
+
   const result = await prisma.tingkat.update({ where: { id }, data: { isDeleted: true } })
 
   await logAktivitas("HAPUS_TINGKATAN", "AKADEMIK_KELAS", `Menghapus tingkatan: ${result.name} (ID: ${id})`)
@@ -261,6 +292,28 @@ export async function hapusJurusan(id: string) {
   const session = await auth()
   if (!session || !["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"].includes(session.user.role)) throw new Error("Akses ditolak.")
   const existing = await prisma.jurusan.findUnique({ where: { id } })
+  if (!existing) throw new Error("Program/Jurusan tidak ditemukan.")
+
+  // Cek rombel aktif yang menggunakan jurusan ini
+  const activeSubKelasCount = await prisma.subKelas.count({
+    where: { jurusanId: id, isDeleted: false }
+  })
+
+  // Cek murid aktif yang berada di rombel jurusan ini
+  const activeMuridCount = await prisma.riwayatKelas.count({
+    where: {
+      subKelas: { jurusanId: id, isDeleted: false },
+      isCurrent: true,
+      murid: { isDeleted: false, isActive: true }
+    }
+  })
+
+  if (activeSubKelasCount > 0 || activeMuridCount > 0) {
+    throw new Error(
+      `Tidak dapat menghapus jurusan '${existing.name}' karena masih digunakan oleh ${activeSubKelasCount} rombel dan ${activeMuridCount} siswa aktif. Pindahkan atau hapus rombel/siswa terkait terlebih dahulu.`
+    )
+  }
+
   const result = await prisma.jurusan.update({ 
     where: { id }, 
     data: { 
@@ -318,6 +371,29 @@ export async function editKelas(id: string, data: {
 export async function hapusKelas(id: string) {
   const session = await auth()
   if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
+  
+  const existing = await prisma.subKelas.findUnique({ 
+    where: { id },
+    include: { tingkat: true }
+  })
+  if (!existing) throw new Error("Rombel tidak ditemukan.")
+
+  // Cek murid aktif yang terdaftar di rombel ini
+  const activeMuridCount = await prisma.riwayatKelas.count({
+    where: {
+      subKelasId: id,
+      isCurrent: true,
+      murid: { isDeleted: false, isActive: true }
+    }
+  })
+
+  if (activeMuridCount > 0) {
+    const rombelName = `${existing.tingkat?.name || ""} ${existing.name}`.trim()
+    throw new Error(
+      `Tidak dapat menghapus rombel '${rombelName}' karena masih terdapat ${activeMuridCount} siswa aktif di dalamnya. Pindahkan siswa ke rombel lain terlebih dahulu.`
+    )
+  }
+
   const result = await prisma.subKelas.update({ where: { id }, data: { isDeleted: true } })
 
   await logAktivitas("HAPUS_KELAS", "AKADEMIK_KELAS", `Menghapus rombel kelas: ${result.name} (ID: ${id})`)

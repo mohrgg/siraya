@@ -167,8 +167,16 @@ export default function JurusanClient({
     }
   }
 
+  const majorToDelete = data.find(d => d.id === deleteId)
+  const isMajorInUse = Boolean(majorToDelete?._count?.subKelas && majorToDelete._count.subKelas > 0)
+
   const handleDeleteConfirm = async () => {
     if (!deleteId) return
+    if (isMajorInUse) {
+      toast.error(`Tidak dapat menghapus jurusan "${majorToDelete?.name}" karena masih digunakan oleh ${majorToDelete?._count?.subKelas} kelas aktif.`)
+      setDeleteId(null)
+      return
+    }
     setIsDeleting(true)
     try {
       await hapusJurusan(deleteId)
@@ -230,10 +238,17 @@ export default function JurusanClient({
       {/* Delete Confirmation Modal */}
       <ConfirmModal 
         isOpen={!!deleteId}
-        title="Hapus Program / Jurusan"
-        message="Apakah Anda yakin ingin menghapus program keahlian ini? Pastikan tidak ada data kelas atau siswa yang saat ini terhubung ke jurusan ini."
+        title={isMajorInUse ? "Jurusan Masih Digunakan" : "Hapus Program / Jurusan"}
+        message={
+          isMajorInUse
+            ? `Peringatan: Program / Jurusan "${majorToDelete?.name}" (${majorToDelete?.code}) saat ini masih terhubung ke ${majorToDelete?._count?.subKelas} rombel/kelas aktif. Anda harus memindahkan atau menghapus rombel tersebut terlebih dahulu sebelum dapat menghapus jurusan ini.`
+            : `Apakah Anda yakin ingin menghapus program / jurusan "${majorToDelete?.name || ''}" (${majorToDelete?.code || ''})? Tindakan ini tidak dapat dibatalkan.`
+        }
+        confirmText={isMajorInUse ? "Tutup" : "Hapus Jurusan"}
+        confirmVariant={isMajorInUse ? "secondary" : "danger"}
+        cancelText={isMajorInUse ? "Batal" : "Batal"}
         onCancel={() => setDeleteId(null)}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={isMajorInUse ? () => setDeleteId(null) : handleDeleteConfirm}
         isLoading={isDeleting}
       />
 
