@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(process.cwd(), '..'),
   },
-  serverExternalPackages: ['playwright-core', '@sparticuz/chromium'],
+  serverExternalPackages: ['puppeteer-core', '@sparticuz/chromium'],
 };
 
 export default nextConfig;

@@ -1,4 +1,4 @@
-import type { Browser } from "playwright-core";
+import type { Browser } from "puppeteer-core";
 import fs from "fs";
 import path from "path";
 
@@ -11,23 +11,21 @@ export interface PdfRenderOptions {
 
 /**
  * Mendapatkan instance browser Chromium yang sesuai dengan runtime saat ini:
- * - Vercel Serverless / AWS Lambda: menggunakan @sparticuz/chromium (biner serverless terkompresi)
+ * - Vercel Serverless / AWS Lambda: menggunakan @sparticuz/chromium + puppeteer-core (native serverless pairing tanpa dependensi browsers.json)
  * - VPS Linux: mendeteksi binary chromium-browser / google-chrome sistem
- * - Local macOS / Windows: menggunakan channel Google Chrome lokal atau Playwright fallback
+ * - Local macOS / Windows: menggunakan Google Chrome lokal atau channel 'chrome'
  */
 export async function getBrowser(): Promise<Browser> {
   const isServerless = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
   if (isServerless) {
     const chromium = (await import("@sparticuz/chromium")).default;
-    const { chromium: playwright } = await import("playwright-core");
+    const puppeteer = (await import("puppeteer-core")).default;
 
-    if (typeof (chromium as any).setGraphicsMode === "function") {
-      (chromium as any).setGraphicsMode(false);
-    }
+    chromium.setGraphicsMode = false;
 
     const executablePath = await chromium.executablePath();
-    return await playwright.launch({
+    return await puppeteer.launch({
       args: chromium.args,
       executablePath,
       headless: true,
@@ -35,12 +33,12 @@ export async function getBrowser(): Promise<Browser> {
   }
 
   // Lingkungan Non-Serverless (VPS Linux, Docker, macOS, Windows)
-  const { chromium: playwright } = await import("playwright-core");
+  const puppeteer = (await import("puppeteer-core")).default;
 
   // 1. Cek environment variable custom (umum pada container Docker / VPS)
   const customExecutable = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROMIUM_PATH;
   if (customExecutable && fs.existsSync(customExecutable)) {
-    return await playwright.launch({
+    return await puppeteer.launch({
       executablePath: customExecutable,
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
@@ -59,7 +57,7 @@ export async function getBrowser(): Promise<Browser> {
 
     for (const p of standardLinuxPaths) {
       if (fs.existsSync(p)) {
-        return await playwright.launch({
+        return await puppeteer.launch({
           executablePath: p,
           headless: true,
           args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
@@ -68,11 +66,24 @@ export async function getBrowser(): Promise<Browser> {
     }
   }
 
-  // 3. Local macOS / Windows development: coba channel 'chrome', jika tidak ada fallback ke default
+  // 3. Local macOS: utamakan aplikasi Google Chrome lokal
+  const macChromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+  if (fs.existsSync(macChromePath)) {
+    try {
+      return await puppeteer.launch({
+        executablePath: macChromePath,
+        headless: true,
+      });
+    } catch {
+      // fallback ke channel chrome
+    }
+  }
+
+  // 4. Fallback channel 'chrome' atau default
   try {
-    return await playwright.launch({ channel: "chrome", headless: true });
+    return await puppeteer.launch({ channel: "chrome", headless: true });
   } catch {
-    return await playwright.launch({ headless: true });
+    return await puppeteer.launch({ headless: true });
   }
 }
 
@@ -178,7 +189,7 @@ export function wrapHtmlWithPrintStyles(htmlBody: string, options?: PdfRenderOpt
  * Mengonversi string HTML lengkap menjadi Buffer file PDF menggunakan Chromium.
  * Mengikuti best practice serverless:
  * 1. Single browser instance per request
- * 2. Menunggu networkidle dan document.fonts.ready sebelum capture
+ * 2. Menunggu domcontentloaded, networkidle, dan document.fonts.ready sebelum capture
  * 3. printBackground: true
  * 4. Browser SELALU ditutup dalam blok finally
  */
@@ -189,10 +200,13 @@ export async function renderHtmlToPdf(fullHtml: string, options?: PdfRenderOptio
     browser = await getBrowser();
     const page = await browser.newPage();
 
-    // 1. Set konten HTML dan tunggu jaringan selesai (termasuk download Tailwind script CDN)
-    await page.setContent(fullHtml, { waitUntil: "networkidle" });
+    // 1. Set konten HTML
+    await page.setContent(fullHtml, { waitUntil: "domcontentloaded" });
 
-    // 2. Tunggu seluruh font web/sistem selesai di-render secara deterministik
+    // 2. Tunggu Tailwind CDN selesai di-download jika ada
+    await page.waitForNetworkIdle({ idleTime: 150, timeout: 4000 }).catch(() => {});
+
+    // 3. Tunggu seluruh font web/sistem selesai di-render secara deterministik
     await page.evaluate(async () => {
       if (document.fonts && document.fonts.ready) {
         await document.fonts.ready;
@@ -202,8 +216,8 @@ export async function renderHtmlToPdf(fullHtml: string, options?: PdfRenderOptio
     const isA5 = options?.format === "A5";
     const marginSize = options?.margin || (isA5 ? "8mm" : options?.orientation === "landscape" ? "10mm" : "15mm");
 
-    // 3. Render ke PDF dengan printBackground true
-    const pdfBuffer = await page.pdf({
+    // 4. Render ke PDF dengan printBackground true
+    const uint8Array = await page.pdf({
       format: (options?.format as any) || "A4",
       landscape: options?.orientation === "landscape",
       printBackground: true,
@@ -215,9 +229,9 @@ export async function renderHtmlToPdf(fullHtml: string, options?: PdfRenderOptio
       },
     });
 
-    return pdfBuffer;
+    return Buffer.from(uint8Array);
   } finally {
-    // 4. Selalu pastikan browser ditutup untuk mencegah kebocoran proses/memori
+    // 5. Selalu pastikan browser ditutup untuk mencegah kebocoran proses/memori
     if (browser) {
       await browser.close().catch((err) => {
         console.warn("Gagal menutup browser Chromium:", err);
