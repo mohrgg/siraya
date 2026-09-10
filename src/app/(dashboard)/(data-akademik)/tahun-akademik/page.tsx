@@ -7,6 +7,8 @@ import { auth } from "@/lib/auth"
 import { getTenantContext } from "@/lib/tenant"
 import { redirect } from "next/navigation"
 
+import { PageHeader } from "@/components/ui/PageHeader"
+
 export default async function TahunAkademikPage() {
   const session = await auth()
   const tenant = await getTenantContext()
@@ -19,10 +21,10 @@ export default async function TahunAkademikPage() {
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Tahun Akademik</h1>
-        <p className="text-text-muted">Kelola tahun ajaran akademik Yayasan</p>
-      </div>
+      <PageHeader 
+        title="Tahun Akademik"
+        subtitle="Kelola tahun ajaran akademik Yayasan Al Basyariah"
+      />
       <TahunAkademikClient initialData={data} userRole={session?.user?.role} />
     </div>
   )

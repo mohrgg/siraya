@@ -4,6 +4,8 @@ import AkunKeuanganClient from "./AkunKeuanganClient"
 import { auth } from "@/lib/auth"
 import { getTenantContext } from "@/lib/tenant"
 
+import { PageHeader } from "@/components/ui/PageHeader"
+
 export default async function AkunKeuanganPage({
   searchParams
 }: {
@@ -33,10 +35,10 @@ export default async function AkunKeuanganPage({
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Bagan Akun Keuangan</h1>
-        <p className="text-text-muted">Kelola struktur klasifikasi dan daftar akun transaksi Yayasan</p>
-      </div>
+      <PageHeader 
+        title="Bagan Akun Keuangan"
+        subtitle="Kelola struktur klasifikasi dan daftar akun transaksi Yayasan"
+      />
       <AkunKeuanganClient 
         initialKlasifikasi={klasifikasi} 
         initialSubKlasifikasi={subKlasifikasi} 

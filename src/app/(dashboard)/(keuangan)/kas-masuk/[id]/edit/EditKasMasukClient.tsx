@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { ArrowLeft, Plus, Trash2, Save, Receipt, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/Button"
-import BackButton from "@/components/ui/BackButton"
+import { PageHeader } from "@/components/ui/PageHeader"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { updateKasMasuk } from "@/actions/kas-masuk"
@@ -92,17 +92,14 @@ export default function EditKasMasukClient({ transaksi, kasBankAccounts, pendapa
 
   return (
     <div className="w-full pb-36 md:pb-24">
-      
-      {/* Top Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
-        <div>
-          <BackButton href={`/kas-masuk/${transaksi.id}`} label="Kembali ke Detail Kas Masuk" shortLabel="Kembali" className="mb-2" />
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight mb-1">
-            Ubah Kas Masuk
-          </h1>
-          <p className="text-text-muted font-medium text-sm">Edit transaksi penerimaan uang.</p>
-        </div>
-      </div>
+      <PageHeader 
+        title="Ubah Kas Masuk"
+        subtitle="Edit transaksi penerimaan uang"
+        backHref={`/kas-masuk/${transaksi.id}`}
+        backLabel="Kembali ke Detail Kas Masuk"
+        backShortLabel="Kembali"
+        backPosition="left"
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         

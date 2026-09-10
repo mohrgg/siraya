@@ -19,6 +19,7 @@ import {
   ToolbarExportPDF
 } from "@/components/ui/DataTableToolbar"
 import { AdaptiveValue } from "@/components/ui/AdaptiveValue"
+import { PageHeader } from "@/components/ui/PageHeader"
 
 interface Akun {
   id: string
@@ -339,16 +340,12 @@ export default function RekapitulasiTunggakanClient({
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
-          Rekapitulasi Tagihan & Tunggakan
-        </h1>
-        <p className="text-text-muted">
-          {isGlobal 
-            ? `Audit realisasi penerimaan pembayaran, kolektibilitas SPP, dan piutang siswa lintas unit (${activeTahunAkademikName})`
-            : `Audit realisasi penerimaan pembayaran, kolektibilitas SPP, dan piutang siswa per kelas (${activeTahunAkademikName})`}
-        </p>
-      </div>
+      <PageHeader 
+        title="Rekapitulasi Tagihan & Tunggakan"
+        subtitle={isGlobal 
+          ? `Audit realisasi penerimaan pembayaran, kolektibilitas SPP, dan piutang siswa lintas unit (${activeTahunAkademikName})`
+          : `Audit realisasi penerimaan pembayaran, kolektibilitas SPP, dan piutang siswa per kelas (${activeTahunAkademikName})`}
+      />
 
       {/* 4 Card KPI Rekapitulasi Tagihan & Tunggakan (Active for ALL Roles) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">

@@ -4,6 +4,8 @@ import JurusanClient from "./JurusanClient"
 import { auth } from "@/lib/auth"
 import { getTenantContext } from "@/lib/tenant"
 
+import { PageHeader } from "@/components/ui/PageHeader"
+
 export default async function JurusanPage() {
   const session = await auth()
   const tenant = await getTenantContext()
@@ -17,10 +19,10 @@ export default async function JurusanPage() {
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Program / Jurusan</h1>
-        <p className="text-text-muted">Kelola program keahlian atau jurusan untuk unit sekolah (khusus SMK / setara)</p>
-      </div>
+      <PageHeader 
+        title="Program / Jurusan"
+        subtitle="Kelola program keahlian atau jurusan untuk unit sekolah (khusus SMK / setara)"
+      />
       <JurusanClient 
         initialData={data} 
         userRole={session?.user?.role} 

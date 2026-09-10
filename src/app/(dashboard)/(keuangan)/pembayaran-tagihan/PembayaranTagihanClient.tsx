@@ -26,6 +26,7 @@ import {
   ToolbarFilter,
   ToolbarActions
 } from "@/components/ui/DataTableToolbar"
+import { PageHeader } from "@/components/ui/PageHeader"
 
 type TagihanData = {
   id: string
@@ -407,12 +408,10 @@ export default function PembayaranTagihanClient({
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Pembayaran Tagihan Siswa</h1>
-        <p className="text-text-muted">
-          Proses pembayaran tagihan komponen biaya secara matriks per siswa • Tahun Ajaran {activeTahunAkademikName}
-        </p>
-      </div>
+      <PageHeader 
+        title="Pembayaran Tagihan Siswa"
+        subtitle={`Proses pembayaran tagihan komponen biaya secara matriks per siswa • Tahun Ajaran ${activeTahunAkademikName}`}
+      />
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6 mb-6">
         <TabNavigation

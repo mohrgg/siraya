@@ -11,6 +11,8 @@ import {
   Wallet
 } from "lucide-react"
 
+import { PageHeader } from "@/components/ui/PageHeader"
+
 export default function LaporanMenuClient({ userRole }: { userRole?: string }) {
   const isKepsek = userRole === "KEPALA_SEKOLAH"
   const isYayasan = userRole === "YAYASAN"
@@ -18,22 +20,18 @@ export default function LaporanMenuClient({ userRole }: { userRole?: string }) {
 
   return (
     <div className="w-full animate-in fade-in duration-500">
-      <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
-          {isYayasan
-            ? "Pusat Laporan Eksekutif Yayasan"
-            : isKepsek
-            ? "Pusat Pengesahan & Laporan Resmi Unit"
-            : "Pusat Laporan"}
-        </h1>
-        <p className="text-text-muted text-base max-w-2xl">
-          {isYayasan
-            ? "Akses komprehensif ke dokumen pertanggungjawaban keuangan konsolidasi dan rekapitulasi audit seluruh unit sekolah Al-Basyariah."
-            : isKepsek
-            ? "Verifikasi, audit, dan cetak dokumen pertanggungjawaban keuangan resmi yang telah dilengkapi format tanda tangan Mengetahui Kepala Sekolah."
-            : "Pantau dan analisis kesehatan finansial serta kepatuhan administrasi sekolah melalui berbagai modul laporan terpadu."}
-        </p>
-      </div>
+      <PageHeader 
+        title={isYayasan
+          ? "Pusat Laporan Eksekutif Yayasan"
+          : isKepsek
+          ? "Pusat Pengesahan & Laporan Resmi Unit"
+          : "Pusat Laporan"}
+        subtitle={isYayasan
+          ? "Akses komprehensif ke dokumen pertanggungjawaban keuangan konsolidasi dan rekapitulasi audit seluruh unit sekolah Al-Basyariah."
+          : isKepsek
+          ? "Verifikasi, audit, dan cetak dokumen pertanggungjawaban keuangan resmi yang telah dilengkapi format tanda tangan Mengetahui Kepala Sekolah."
+          : "Pantau dan analisis kesehatan finansial serta kepatuhan administrasi sekolah melalui berbagai modul laporan terpadu."}
+      />
 
       {isSupervisory && (
         <div className="mb-8 p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs">

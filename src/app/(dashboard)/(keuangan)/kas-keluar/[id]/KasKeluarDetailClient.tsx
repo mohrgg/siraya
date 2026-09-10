@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { ArrowLeft, Printer, FileDown, Receipt, BookOpen, Edit, Link2, FileText } from "lucide-react"
 import { Button } from "@/components/ui/Button"
-import BackButton from "@/components/ui/BackButton"
+import { PageHeader } from "@/components/ui/PageHeader"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { format } from "date-fns"
@@ -116,36 +116,33 @@ export default function KasKeluarDetailClient({ transaksi, pengaturan }: { trans
 
   return (
     <div className="w-full pb-24">
-      {/* Top Action Bar & Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex flex-col gap-2">
-          <BackButton href="/kas-keluar" label="Kembali ke Daftar Kas Keluar" shortLabel="Kembali" />
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight mt-1 mb-1">
-              Detail Kas Keluar
-            </h1>
-            <p className="text-text-muted text-sm">No. Ref: {transaksi.noReferensi}</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={activeTab === 'resi' ? handleExportResiPDF : handleExportJurnalPDF}
-            disabled={isExportingPDF}
-            className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 min-h-[38px] sm:min-h-[36px]"
-          >
-            <FileText size={16} className="mr-1.5" /> 
-            <span className="truncate">{isExportingPDF ? "Mengekspor..." : `Cetak ${activeTab === 'resi' ? 'Resi' : 'Jurnal'}`}</span>
-          </Button>
-          <Link href={`/kas-keluar/${transaksi.id}/edit`} className="flex-1 sm:flex-initial">
-            <Button variant="outline" size="sm" className="w-full justify-center bg-white border-border hover:bg-bg shadow-sm text-blue-600 min-h-[38px] sm:min-h-[36px]">
-              <Edit size={16} className="mr-1.5" /> Ubah
+      <PageHeader 
+        title="Detail Kas Keluar"
+        subtitle={`No. Ref: ${transaksi.noReferensi}`}
+        backHref="/kas-keluar"
+        backLabel="Kembali ke Daftar Kas Keluar"
+        backShortLabel="Kembali"
+        backPosition="left"
+        action={
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={activeTab === 'resi' ? handleExportResiPDF : handleExportJurnalPDF}
+              disabled={isExportingPDF}
+              className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 min-h-[38px] sm:min-h-[36px]"
+            >
+              <FileText size={16} className="mr-1.5" /> 
+              <span className="truncate">{isExportingPDF ? "Mengekspor..." : `Cetak ${activeTab === 'resi' ? 'Resi' : 'Jurnal'}`}</span>
             </Button>
-          </Link>
-        </div>
-      </div>
+            <Link href={`/kas-keluar/${transaksi.id}/edit`} className="flex-1 sm:flex-initial">
+              <Button variant="outline" size="sm" className="w-full justify-center bg-white border-border hover:bg-bg shadow-sm text-blue-600 min-h-[38px] sm:min-h-[36px]">
+                <Edit size={16} className="mr-1.5" /> Ubah
+              </Button>
+            </Link>
+          </div>
+        }
+      />
 
       <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
         

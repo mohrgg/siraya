@@ -10,6 +10,8 @@ import DivisiList from "./components/DivisiList"
 import UserModal from "./components/UserModal"
 import DivisiModal from "./components/DivisiModal"
 
+import { PageHeader } from "@/components/ui/PageHeader"
+
 export default function UserClient({
   initialUsers, initialDivisi, units
 }: {
@@ -42,12 +44,10 @@ export default function UserClient({
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Manajemen User & Divisi</h1>
-          <p className="text-text-muted">Kelola akses sistem, role, divisi, dan unit kerja untuk staf Anda.</p>
-        </div>
-      </div>
+      <PageHeader 
+        title="Manajemen User & Divisi"
+        subtitle="Kelola akses sistem, role, divisi, dan unit kerja untuk staf Anda"
+      />
 
       <ConfirmModal isOpen={!!resetUserId} title="Reset Password" message="Yakin ingin mereset password pengguna ini menjadi 'albas123'? Pengguna akan diwajibkan mengganti kata sandi saat login berikutnya." onCancel={() => setResetUserId(null)} onConfirm={handleResetPass} isLoading={isSubmitting} confirmText="Reset Password" confirmVariant="primary" />
       <ConfirmModal isOpen={!!unlockUserId} title="Buka Kunci Akun" message="Yakin ingin membuka kunci akun ini sekarang? Percobaan login gagal akan direset menjadi 0 sehingga pengguna dapat langsung login kembali." onCancel={() => setUnlockUserId(null)} onConfirm={handleUnlockUser} isLoading={isSubmitting} confirmText="Buka Kunci Akun" confirmVariant="primary" />

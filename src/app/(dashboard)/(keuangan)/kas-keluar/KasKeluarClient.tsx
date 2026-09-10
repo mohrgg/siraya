@@ -23,6 +23,7 @@ import {
   ToolbarAddButton, 
   ToolbarDivider 
 } from "@/components/ui/DataTableToolbar"
+import { PageHeader } from "@/components/ui/PageHeader"
 
 type TransaksiWithRelations = any // Type will be inferred properly in real project
 
@@ -173,16 +174,12 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">
-          {isReadOnly ? "Audit Pengeluaran & Belanja Unit" : "Kas Keluar (Pengeluaran)"}
-        </h1>
-        <p className="text-text-muted">
-          {isReadOnly
-            ? "Pengawasan belanja operasional, verifikasi bukti nota kas keluar, dan audit anggaran unit"
-            : "Kelola data pengeluaran kas dan pembiayaan Yayasan"}
-        </p>
-      </div>
+      <PageHeader 
+        title={isReadOnly ? "Audit Pengeluaran & Belanja Unit" : "Kas Keluar (Pengeluaran)"}
+        subtitle={isReadOnly
+          ? "Pengawasan belanja operasional, verifikasi bukti nota kas keluar, dan audit anggaran unit"
+          : "Kelola data pengeluaran kas dan pembiayaan Yayasan"}
+      />
 
       {/* Executive Expense Watch for KEPALA_SEKOLAH / YAYASAN */}
       {isReadOnly && (

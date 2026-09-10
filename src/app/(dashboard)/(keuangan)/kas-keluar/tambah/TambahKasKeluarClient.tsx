@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { ArrowLeft, Plus, Trash2, Save, Receipt, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/Button"
-import BackButton from "@/components/ui/BackButton"
+import { PageHeader } from "@/components/ui/PageHeader"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { generateNoReferensi, createKasKeluar } from "@/actions/kas-keluar"
@@ -115,17 +115,14 @@ export default function TambahKasKeluarClient({ kasBankAccounts, pengeluaranAcco
 
   return (
     <div className="w-full pb-36 md:pb-24">
-      
-      {/* Top Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
-        <div>
-          <BackButton href="/kas-keluar" label="Kembali ke Daftar Kas Keluar" shortLabel="Kembali" className="mb-2" />
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight mb-1">
-            Tambah Kas Keluar
-          </h1>
-          <p className="text-text-muted text-sm">Catat pengeluaran dana / beban umum ke dalam sistem</p>
-        </div>
-      </div>
+      <PageHeader 
+        title="Tambah Kas Keluar"
+        subtitle="Catat pengeluaran dana / beban umum ke dalam sistem"
+        backHref="/kas-keluar"
+        backLabel="Kembali ke Daftar Kas Keluar"
+        backShortLabel="Kembali"
+        backPosition="left"
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         

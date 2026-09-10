@@ -30,6 +30,7 @@ import {
   ToolbarActions,
   ToolbarAddButton
 } from "@/components/ui/DataTableToolbar"
+import { PageHeader } from "@/components/ui/PageHeader"
 
 type GridRow = {
   id: string
@@ -496,12 +497,10 @@ export default function PembuatanTagihanClient({
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-text-main tracking-tight mb-2">Pembuatan Tagihan Siswa</h1>
-        <p className="text-text-muted">
-          Kelola dan atur nominal tagihan komponen biaya secara matriks per siswa • Tahun Ajaran {activeTahunAkademikName}
-        </p>
-      </div>
+      <PageHeader 
+        title="Pembuatan Tagihan Siswa"
+        subtitle={`Kelola dan atur nominal tagihan komponen biaya secara matriks per siswa • Tahun Ajaran ${activeTahunAkademikName}`}
+      />
 
       {/* Main Content Card */}
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6 mb-6">
