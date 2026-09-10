@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
     root: path.join(process.cwd(), '..'),
   },
   serverExternalPackages: ['puppeteer-core', '@sparticuz/chromium'],
+  outputFileTracingIncludes: {
+    '/api/pdf': [
+      './node_modules/@sparticuz/chromium/bin/**/*',
+      '../node_modules/@sparticuz/chromium/bin/**/*',
+    ],
+  },
 };
 
 export default nextConfig;

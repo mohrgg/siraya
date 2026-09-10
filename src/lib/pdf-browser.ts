@@ -1,6 +1,7 @@
 import type { Browser } from "puppeteer-core";
 import fs from "fs";
 import path from "path";
+import os from "os";
 
 export interface PdfRenderOptions {
   format?: "A4" | "A5" | "Letter" | "Legal";
@@ -24,7 +25,33 @@ export async function getBrowser(): Promise<Browser> {
 
     chromium.setGraphicsMode = false;
 
-    const executablePath = await chromium.executablePath();
+    // 1. Cek jika biner sudah ter-ekstrak di /tmp/chromium
+    const tmpChromium = path.join(os.tmpdir(), "chromium");
+    let executablePath: string;
+
+    if (fs.existsSync(tmpChromium)) {
+      executablePath = tmpChromium;
+    } else {
+      // 2. Cek apakah folder bin lokal tersedia di disk Lambda
+      const candidatePaths = [
+        path.join(process.cwd(), "node_modules/@sparticuz/chromium/bin"),
+        path.join(process.cwd(), "../node_modules/@sparticuz/chromium/bin"),
+        "/var/task/node_modules/@sparticuz/chromium/bin",
+        "/var/task/siraya/node_modules/@sparticuz/chromium/bin",
+      ];
+      const localBin = candidatePaths.find((p) => fs.existsSync(p));
+
+      if (localBin) {
+        executablePath = await chromium.executablePath(localBin);
+      } else {
+        // 3. Fallback resmi remote pack URL Sparticuz jika bin tidak ikut ter-bundle oleh Vercel NFT
+        const arch = process.arch === "arm64" ? "arm64" : "x64";
+        const remotePackUrl = `https://github.com/Sparticuz/chromium/releases/download/v147.0.0/chromium-v147.0.0-pack.${arch}.tar`;
+        console.log(`[pdf-browser] Bin lokal tidak ditemukan, mengunduh biner Chromium dari remote pack: ${remotePackUrl}`);
+        executablePath = await chromium.executablePath(remotePackUrl);
+      }
+    }
+
     return await puppeteer.launch({
       args: chromium.args,
       executablePath,
