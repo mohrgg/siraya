@@ -37,7 +37,7 @@ export function BackButton({
     <button
       type="button"
       onClick={handleClick}
-      className={`group inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-surface hover:bg-bg text-text-main font-semibold text-xs sm:text-sm transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] cursor-pointer min-h-[38px] shrink-0 ${className}`}
+      className={`group inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-surface hover:bg-bg text-text-main font-semibold text-xs sm:text-sm transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] cursor-pointer min-h-[38px] sm:min-h-[36px] shrink-0 ${className}`}
     >
       <ArrowLeft size={16} className="shrink-0 text-text-muted group-hover:text-text-main transition-colors" />
       <span className={iconOnlyOnMobile ? "hidden sm:inline truncate" : "truncate"}>

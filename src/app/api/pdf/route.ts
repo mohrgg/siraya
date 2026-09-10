@@ -63,7 +63,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unsupported template type" }, { status: 400 });
     }
 
-    const marginSize = data.config?.format === 'A5' ? '8mm' : '15mm';
+    const isA5 = data.config?.format === 'A5';
+    const marginSize = data.config?.margin || (isA5 ? '8mm' : (data.config?.orientation === 'landscape' ? '10mm' : '15mm'));
 
     // Build the full HTML document with Tailwind CSS injected
     const fullHtml = `
@@ -75,15 +76,31 @@ export async function POST(req: NextRequest) {
           <title>Export PDF</title>
           <script src="https://cdn.tailwindcss.com"></script>
           <style>
+            *, *::before, *::after {
+              box-sizing: border-box;
+            }
+            html, body {
+              margin: 0;
+              padding: 0;
+              width: 100%;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
             @media print {
               @page {
                 size: ${data.config?.format || 'A4'} ${data.config?.orientation || 'portrait'};
                 margin: ${marginSize};
               }
-              body {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
+            }
+            tr, .avoid-break, .break-inside-avoid {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+            }
+            thead {
+              display: table-header-group !important;
+            }
+            tfoot {
+              display: table-footer-group !important;
             }
           </style>
         </head>

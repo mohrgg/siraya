@@ -11,6 +11,7 @@ interface PageHeaderProps {
   onBack?: () => void
   backLabel?: string
   backShortLabel?: string
+  backPosition?: "left" | "action-left" | "action-right"
 }
 
 export function PageHeader({
@@ -22,14 +23,24 @@ export function PageHeader({
   backHref,
   onBack,
   backLabel,
-  backShortLabel
+  backShortLabel,
+  backPosition = "action-left"
 }: PageHeaderProps) {
   const hasBack = Boolean(backHref || onBack)
+
+  const backButtonElement = hasBack ? (
+    <BackButton
+      href={backHref}
+      onClick={onBack}
+      label={backLabel}
+      shortLabel={backShortLabel}
+    />
+  ) : null
 
   return (
     <div className={`mb-6 bg-surface/80 backdrop-blur-xs rounded-2xl border border-border p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${className}`}>
       <div className="flex items-start gap-3.5 min-w-0 flex-1">
-        {hasBack ? (
+        {hasBack && backPosition === "left" ? (
           <BackButton
             href={backHref}
             onClick={onBack}
@@ -58,9 +69,11 @@ export function PageHeader({
           )}
         </div>
       </div>
-      {action && (
-        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto w-full sm:w-auto">
+      {(action || (hasBack && backPosition !== "left")) && (
+        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto w-full sm:w-auto flex-wrap">
+          {hasBack && backPosition === "action-left" && backButtonElement}
           {action}
+          {hasBack && backPosition === "action-right" && backButtonElement}
         </div>
       )}
     </div>
