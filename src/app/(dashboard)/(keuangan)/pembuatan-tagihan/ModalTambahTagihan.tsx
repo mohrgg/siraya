@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, Users, CheckSquare, Square } from "lucide-react"
+import { createPortal } from "react-dom"
+import { X, Users, CheckSquare, Square, Receipt } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 
 export default function ModalTambahTagihan({ 
@@ -38,6 +39,7 @@ export default function ModalTambahTagihan({
   activeSubKelasId: string
   isSubmitting: boolean
 }) {
+  const [mounted, setMounted] = useState(false)
   const [akunId, setAkunId] = useState("")
   const [namaTagihan, setNamaTagihan] = useState("")
   const [jumlah, setJumlah] = useState<string>("")
@@ -51,6 +53,33 @@ export default function ModalTambahTagihan({
 
   const selectedAkun = akunPendapatanList.find(a => a.id === akunId)
   const isSPP = selectedAkun?.isSPP || false
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = "unset"
+    }
+    return () => {
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen])
+
+  // Handle ESC key to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen && !isSubmitting) {
+        onClose()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isOpen, isSubmitting, onClose])
 
   // Reset to default active ids when modal opens
   useEffect(() => {
@@ -67,7 +96,7 @@ export default function ModalTambahTagihan({
     }
   }, [isOpen, activeKelasId, activeSubKelasId])
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -134,25 +163,36 @@ export default function ModalTambahTagihan({
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
-          <div>
-            <h2 className="text-xl font-bold text-text-main">Tambah Tagihan Siswa</h2>
-            <p className="text-sm text-text-muted mt-1">Buat tagihan secara massal atau spesifik</p>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div 
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[calc(100dvh-32px)] animate-in fade-in zoom-in-95 duration-200 z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
+
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border bg-bg/50 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-xs">
+              <Receipt size={20} />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-extrabold text-albas-green m-0 leading-tight truncate">Tambah Tagihan Siswa</h2>
+              <p className="text-[11px] sm:text-xs text-text-muted mt-0.5 leading-relaxed truncate sm:whitespace-normal">Buat tagihan secara massal atau spesifik</p>
+            </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 text-text-muted hover:bg-bg rounded-lg transition-colors"
+            className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer"
+            type="button"
+            aria-label="Tutup"
           >
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1">
-          <div className="space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6">
 
             <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-center gap-4">
               <label className="text-sm font-semibold text-text-main">Pilih Kode Akun</label>
@@ -188,7 +228,7 @@ export default function ModalTambahTagihan({
                       </select>
                     <span className="text-xs text-text-muted">Pilih satu atau beberapa bulan di tahun ini:</span>
                   </div>
-                  <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                     {["Juli", "Agustus", "September", "Oktober", "November", "Desember", "Januari", "Februari", "Maret", "April", "Mei", "Juni"].map(bulan => (
                       <label key={bulan} className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition-colors ${selectedMonths.includes(bulan) ? 'bg-primary/5 border-primary/30' : 'border-border hover:bg-bg'}`}>
                         <input 
@@ -234,24 +274,24 @@ export default function ModalTambahTagihan({
             <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-start gap-4 pt-4 border-t border-border">
               <label className="text-sm font-semibold text-text-main mt-2">Target Penagihan</label>
               <div className="space-y-4">
-                <div className="flex bg-bg p-1 rounded-xl w-fit">
+                <div className="grid grid-cols-1 sm:flex bg-bg p-1 rounded-xl w-full sm:w-fit gap-1">
                   <button 
                     type="button"
-                    className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${targetType === "tingkat" ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-main"}`}
+                    className={`px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors min-h-[38px] ${targetType === "tingkat" ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-main"}`}
                     onClick={() => setTargetType("tingkat")}
                   >
                     1 Tingkatan
                   </button>
                   <button 
                     type="button"
-                    className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${targetType === "kelas" ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-main"}`}
+                    className={`px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors min-h-[38px] ${targetType === "kelas" ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-main"}`}
                     onClick={() => setTargetType("kelas")}
                   >
                     1 Rombel (Kelas)
                   </button>
                   <button 
                     type="button"
-                    className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${targetType === "murid" ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-main"}`}
+                    className={`px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors min-h-[38px] ${targetType === "murid" ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-main"}`}
                     onClick={() => setTargetType("murid")}
                   >
                     Per Murid Spesifik
@@ -354,21 +394,20 @@ export default function ModalTambahTagihan({
                 />
               </div>
             </div>
-
           </div>
 
-          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-border flex-shrink-0">
+          <div className="shrink-0 p-4 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3">
             <Button 
               type="button" 
               variant="outline" 
               onClick={onClose}
-              className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
+              className="w-full sm:w-auto min-h-[44px] font-semibold"
             >
-              Tutup
+              Batal
             </Button>
             <Button 
               type="submit" 
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-white font-bold w-full sm:w-auto min-h-[44px] shadow-sm shadow-primary/20"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Menyimpan..." : "Buat Tagihan"}
@@ -376,6 +415,7 @@ export default function ModalTambahTagihan({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

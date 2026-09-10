@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { X, Edit2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 
@@ -25,6 +26,7 @@ export default function ModalEditTagihanKolom({
   isSubmitting: boolean
   hasPayments: boolean
 }) {
+  const [mounted, setMounted] = useState(false)
   const [akunId, setAkunId] = useState("")
   const [namaTagihan, setNamaTagihan] = useState("")
   const [jumlah, setJumlah] = useState<string>("")
@@ -33,6 +35,33 @@ export default function ModalEditTagihanKolom({
   const [sppYear, setSppYear] = useState(`${new Date().getFullYear()}/${new Date().getFullYear() + 1}`)
   
   const selectedAkunIsSPP = akunPendapatanList.find(a => a.id === akunId)?.isSPP || false
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = "unset"
+    }
+    return () => {
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen])
+
+  // ESC key listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen && !isSubmitting) {
+        onClose()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isOpen, isSubmitting, onClose])
   
   // Format currency
   const formatRupiah = (val: string) => {
@@ -78,7 +107,7 @@ export default function ModalEditTagihanKolom({
     }
   }, [isOpen, editingCol, akunPendapatanList])
 
-  if (!isOpen || !editingCol) return null
+  if (!isOpen || !mounted || !editingCol) return null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -98,40 +127,48 @@ export default function ModalEditTagihanKolom({
     setJumlah(formatRupiah(rawVal))
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div 
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[calc(100dvh-32px)] z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
+
         {/* Header */}
-        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-bg/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+        <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-bg/50 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-xs">
               <Edit2 size={20} />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-text-main">Edit Tagihan Massal</h2>
-              <p className="text-xs text-text-muted">Ubah properti kolom tagihan untuk subkelas ini</p>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-extrabold text-albas-green m-0 leading-tight truncate">Edit Tagihan Massal</h2>
+              <p className="text-[11px] sm:text-xs text-text-muted mt-0.5 leading-relaxed truncate sm:whitespace-normal">Ubah properti kolom tagihan untuk subkelas ini</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-text-muted hover:bg-bg rounded-lg transition-colors">
+          <button 
+            onClick={onClose} 
+            className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer"
+            type="button"
+            aria-label="Tutup"
+          >
             <X size={20} />
           </button>
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[80vh]">
-          {hasPayments && (
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg text-sm flex gap-3 mb-6">
-              <AlertCircle className="shrink-0 mt-0.5" size={16} />
-              <div>
-                <strong>Perhatian:</strong> Terdapat siswa yang sudah mencicil/melunasi tagihan ini. 
-                Sesuai standar akuntansi, Bapak tidak dapat mengubah <strong>Akun Keuangan</strong> agar data kas/jurnal tetap sinkron. 
-                Bapak tetap dapat mengubah <strong>Nama Tagihan</strong> dan <strong>Nominal Tagihan</strong>.
+        <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+            {hasPayments && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg text-sm flex gap-3 mb-6">
+                <AlertCircle className="shrink-0 mt-0.5" size={16} />
+                <div>
+                  <strong>Perhatian:</strong> Terdapat siswa yang sudah mencicil/melunasi tagihan ini. 
+                  Sesuai standar akuntansi, Bapak tidak dapat mengubah <strong>Akun Keuangan</strong> agar data kas/jurnal tetap sinkron. 
+                  Bapak tetap dapat mengubah <strong>Nama Tagihan</strong> dan <strong>Nominal Tagihan</strong>.
+                </div>
               </div>
-            </div>
-          )}
-          
-          <div className="space-y-6">
+            )}
             <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-center gap-4">
               <label className="text-sm font-semibold text-text-main">Akun Keuangan (Pendapatan)</label>
               <select 
@@ -231,16 +268,17 @@ export default function ModalEditTagihanKolom({
             </div>
           </div>
 
-          <div className="pt-6 mt-6 border-t border-border flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+          <div className="shrink-0 p-4 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} className="w-full sm:w-auto min-h-[44px] font-semibold">
               Batal
             </Button>
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-white" disabled={isSubmitting} isLoading={isSubmitting}>
+            <Button type="submit" className="bg-primary hover:bg-primary/90 text-white font-bold w-full sm:w-auto min-h-[44px] shadow-sm shadow-primary/20" disabled={isSubmitting} isLoading={isSubmitting}>
               Simpan Perubahan
             </Button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -68,7 +68,7 @@ export default function Sidebar({
       {/* 2. DESKTOP PERMANENT SIDEBAR (>=md) */}
       {/* ======================================================== */}
       <aside className={`
-        hidden md:flex bg-[#065f32] text-white h-full border-r border-[#0a753d] flex-col transition-all duration-300 z-30 relative shrink-0
+        hidden md:flex short:hidden hide-on-mobile-landscape bg-[#065f32] text-white h-full border-r border-[#0a753d] flex-col transition-all duration-300 z-30 relative shrink-0
         ${isCollapsed ? "w-20" : "w-[265px]"}
       `}>
         {/* Floating Toggle Button (Right Edge) - Desktop Only */}

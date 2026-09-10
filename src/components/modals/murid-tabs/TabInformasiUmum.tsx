@@ -2,8 +2,8 @@ import { Input } from "@/components/ui/Input"
 
 export default function TabInformasiUmum({ formData, handleChange, schoolUnits, classrooms, activeUnitId }: any) {
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-6 w-full min-w-0 max-w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-w-0">
         <div className="col-span-1 md:col-span-2 flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main">Nama Lengkap (Sesuai Akta) <span className="text-red-500">*</span></label>
           <Input placeholder="Nama Lengkap" value={formData.name || ""} onChange={e => handleChange("name", e.target.value)} required />

@@ -8,6 +8,12 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        'xs': '475px',
+        'mobile-landscape': { 'raw': '(orientation: landscape) and (max-height: 500px)' },
+        'short': { 'raw': '(max-height: 500px)' },
+        'tall': { 'raw': '(min-height: 501px)' },
+      },
       colors: {
         'albas-green': 'var(--albas-green)',
         'albas-green-light': 'var(--albas-green-light)',

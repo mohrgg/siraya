@@ -79,7 +79,7 @@ export default async function DashboardLayout({
             activeYearId={activeYearId}
           />
           <UserActivityTracker />
-          <main className="flex-1 p-4 md:p-6 lg:p-8 pb-24 md:pb-8 overflow-y-auto overflow-x-hidden relative">
+          <main className="flex-1 p-3 sm:p-4 short:p-3 md:p-6 lg:p-8 pb-20 short:pb-14 md:pb-8 overflow-y-auto overflow-x-hidden relative">
             {children}
           </main>
         </div>

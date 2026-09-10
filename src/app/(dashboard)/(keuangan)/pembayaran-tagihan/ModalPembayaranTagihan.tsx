@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
-import { X, Calendar as CalendarIcon, FileText } from "lucide-react"
+import { createPortal } from "react-dom"
+import { X, Calendar as CalendarIcon, FileText, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
@@ -35,6 +36,7 @@ export default function ModalPembayaranTagihan({
   items,
   akunKasBankList
 }: ModalPembayaranTagihanProps) {
+  const [mounted, setMounted] = useState(false)
   const [akunKasId, setAkunKasId] = useState("")
   const [tanggal, setTanggal] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [deskripsi, setDeskripsi] = useState("")
@@ -42,6 +44,33 @@ export default function ModalPembayaranTagihan({
   const [localItems, setLocalItems] = useState<TagihanItem[]>([])
   
   const [isCustomKategoriMap, setIsCustomKategoriMap] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = "unset"
+    }
+    return () => {
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen])
+
+  // ESC key listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen && !isSubmitting) {
+        onClose()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isOpen, isSubmitting, onClose])
 
   // Constants
   const PREDEFINED_POTONGAN = ["-", "Beasiswa Yayasan", "Anak Karyawan", "Anak Yatim", "Jalur Prestasi"]
@@ -72,7 +101,7 @@ export default function ModalPembayaranTagihan({
     }
   }, [isOpen, akunKasBankList, muridName, items])
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
   const handleItemBayarChange = (id: string, val: string) => {
     const num = parseInt(val.replace(/\D/g, '')) || 0
@@ -147,24 +176,37 @@ export default function ModalPembayaranTagihan({
     }))
   }
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-        
-        {/* Header (Green theme as per screenshot) */}
-        <div className="bg-emerald-500 flex items-center justify-between p-4 px-6 text-white shrink-0">
-          <h2 className="text-lg font-bold">Konfirmasi Pembayaran</h2>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div 
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[calc(100dvh-32px)] z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
+
+        {/* Header */}
+        <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-bg/50 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-xs">
+              <CreditCard size={20} />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-extrabold text-albas-green m-0 leading-tight truncate">Konfirmasi Pembayaran</h2>
+              <p className="text-[11px] sm:text-xs text-text-muted mt-0.5 leading-relaxed truncate sm:whitespace-normal">Proses penerimaan kas pembayaran tagihan siswa</p>
+            </div>
+          </div>
           <button 
             onClick={onClose} 
-            className="p-1.5 hover:bg-emerald-600 rounded-lg transition-colors text-white"
+            className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer"
+            type="button"
+            aria-label="Tutup"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           <form id="payment-form" onSubmit={handleSubmit} className="space-y-6">
             
             {/* Form Fields Row */}
@@ -360,12 +402,12 @@ export default function ModalPembayaranTagihan({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border bg-gray-50 flex justify-end gap-3 shrink-0">
+        <div className="shrink-0 p-4 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3">
           <Button 
             type="button" 
             variant="outline" 
             onClick={onClose}
-            className="font-semibold"
+            className="w-full sm:w-auto min-h-[44px] font-semibold"
           >
             Batal
           </Button>
@@ -373,13 +415,14 @@ export default function ModalPembayaranTagihan({
             type="submit" 
             form="payment-form"
             disabled={isSubmitting || items.length === 0}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 shadow-sm shadow-emerald-200"
+            className="bg-primary hover:bg-primary/90 text-white font-bold w-full sm:w-auto min-h-[44px] shadow-sm shadow-primary/20"
           >
             {isSubmitting ? "Memproses..." : "Proses Bayar Tagihan"}
           </Button>
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

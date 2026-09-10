@@ -2,8 +2,8 @@ import { Input } from "@/components/ui/Input"
 
 export default function TabFisikMedis({ formData, handleChange }: any) {
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-4 w-full min-w-0 max-w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-w-0">
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text-main">Tinggi Badan (cm)</label>
           <Input type="number" placeholder="Contoh: 150" value={formData.height || ""} onChange={e => handleChange("height", parseFloat(e.target.value) || null)} />

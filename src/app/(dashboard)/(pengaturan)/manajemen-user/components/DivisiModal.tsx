@@ -16,22 +16,25 @@ export default function DivisiModal({
       subtitle="Pengelompokan divisi kerja atau bidang tugas staf"
       icon={Briefcase}
       widthClassName="max-w-md"
-      headerAction={
-        <Button 
-          type="submit" 
-          form="form-divisi" 
-          size="sm" 
-          isLoading={isSubmitting}
-          className="sm:hidden text-xs font-bold px-3 py-1.5 shadow-sm"
-        >
-          Simpan
-        </Button>
-      }
       footer={
-        <div className="flex items-center gap-2.5 w-full sm:w-auto">
-          <Button type="button" variant="outline" className="flex-1 sm:flex-initial" onClick={() => setShowDivModal(false)}>Batal</Button>
-          <Button type="submit" form="form-divisi" className="flex-1 sm:flex-initial" isLoading={isSubmitting}>Simpan</Button>
-        </div>
+        <>
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="w-full sm:w-auto min-h-[44px] font-semibold" 
+            onClick={() => setShowDivModal(false)}
+          >
+            Batal
+          </Button>
+          <Button 
+            type="submit" 
+            form="form-divisi" 
+            className="w-full sm:w-auto min-h-[44px] font-bold shadow-sm shadow-primary/20" 
+            isLoading={isSubmitting}
+          >
+            {formDiv.id ? "Simpan Perubahan" : "Simpan Divisi"}
+          </Button>
+        </>
       }
     >
       <form id="form-divisi" onSubmit={handleSubmitDivisi} className="flex flex-col gap-4">

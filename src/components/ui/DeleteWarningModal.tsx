@@ -89,7 +89,7 @@ export function DeleteWarningModal({
       }}
     >
       <div 
-        className="w-full max-w-md bg-surface p-6 rounded-2xl shadow-2xl border border-border animate-in zoom-in-95 duration-150"
+        className="w-full max-w-md bg-surface p-5 sm:p-6 rounded-2xl shadow-2xl border border-border animate-in zoom-in-95 duration-150 max-h-[calc(100dvh-32px)] overflow-y-auto"
         role="dialog"
         aria-modal="true"
       >
@@ -240,13 +240,13 @@ export function DeleteWarningModal({
             </div>
 
             {/* Action Buttons: Cancel vs Danger Confirm */}
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 sm:gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
                 disabled={isLoading}
-                className="rounded-xl px-4 py-2 font-semibold"
+                className="w-full sm:w-auto min-h-[44px] font-semibold"
               >
                 Batal
               </Button>
@@ -255,7 +255,7 @@ export function DeleteWarningModal({
                 variant="danger"
                 onClick={onConfirm}
                 isLoading={isLoading}
-                className="rounded-xl px-4 py-2 font-bold flex items-center gap-1.5 shadow-sm"
+                className="w-full sm:w-auto min-h-[44px] font-bold flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <Trash2 size={15} />
                 <span>{confirmButtonText || `Hapus ${entityType}`}</span>

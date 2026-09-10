@@ -70,6 +70,57 @@
   .pb-safe {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
+  /* Mobile Safe Area Utilities for Floating Browser Bars (iOS Safari Bottom Bar & Android Gestures) */
+  .pb-safe-modal {
+    padding-bottom: max(4.5rem, calc(env(safe-area-inset-bottom) + 3rem));
+  }
+  .mb-safe-modal {
+    margin-bottom: max(4.5rem, calc(env(safe-area-inset-bottom) + 3rem));
+  }
+
+  /* Mobile Landscape (Ponsel Miring / max-height: 500px) */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .hide-on-mobile-landscape {
+      display: none !important;
+    }
+    .show-on-mobile-landscape {
+      display: flex !important;
+    }
+    .show-block-on-mobile-landscape {
+      display: block !important;
+    }
+  }
+
+  /* Universal Normalization for Native Date & Time Inputs (WebKit / iOS Safari) */
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"] {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    text-align: left !important;
+  }
+
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="datetime-local"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value {
+    text-align: left !important;
+    min-height: 1.25rem !important;
+    line-height: 1.25rem !important;
+    display: block !important;
+    width: 100% !important;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+  }
 }
 
 /* ========== PRINT STYLES ========== */

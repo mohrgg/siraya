@@ -57,15 +57,15 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
   }
 
   const footer = (
-    <div className="flex justify-between items-center w-full">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
       <span className="text-xs text-text-muted hidden sm:inline">
         Pastikan data wajib telah terisi dengan benar.
       </span>
-      <div className="flex gap-2.5 ml-auto">
-        <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+      <div className="flex flex-col-reverse sm:flex-row items-center gap-2.5 w-full sm:w-auto ml-auto">
+        <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} className="w-full sm:w-auto min-h-[44px] font-semibold">
           Batal
         </Button>
-        <Button type="submit" form="muridForm" isLoading={isSubmitting} className="flex items-center gap-2">
+        <Button type="submit" form="muridForm" isLoading={isSubmitting} className="w-full sm:w-auto min-h-[44px] font-bold shadow-sm shadow-primary/20 flex items-center justify-center gap-2">
           <Save size={16} /> {formData.id ? "Simpan Perubahan" : "Simpan Data"}
         </Button>
       </div>
@@ -82,9 +82,9 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
       widthClassName="max-w-3xl"
       footer={footer}
     >
-      <div className="flex flex-col space-y-6">
+      <div className="flex flex-col space-y-6 w-full min-w-0 max-w-full">
         {/* Horizontal Tabs */}
-        <div className="flex overflow-x-auto custom-scrollbar border-b border-border pb-2 shrink-0 gap-2">
+        <div className="flex overflow-x-auto custom-scrollbar border-b border-border pb-2 shrink-0 gap-2 w-full max-w-full">
           {TABS.map((tab) => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
@@ -106,8 +106,8 @@ export default function MuridFormModal({ isOpen, onClose, onSave, initialData, s
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1">
-          <form id="muridForm" onSubmit={handleSubmit} className="space-y-6 pb-6">
+        <div className="flex-1 w-full min-w-0 max-w-full overflow-x-hidden">
+          <form id="muridForm" onSubmit={handleSubmit} className="space-y-6 pb-6 w-full min-w-0 max-w-full">
             {activeTab === "utama" && <TabInformasiUmum formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} classrooms={classrooms} activeUnitId={activeUnitId} />}
             {activeTab === "pribadi" && <TabIdentitasPribadi formData={formData} handleChange={handleChange} />}
             {activeTab === "medis" && <TabFisikMedis formData={formData} handleChange={handleChange} />}

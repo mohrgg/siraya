@@ -75,40 +75,40 @@ export function SideDrawer({
       />
 
       {/* Drawer Panel */}
-      <div className="fixed inset-y-0 right-0 pl-10 max-w-full flex">
-        <div className={`w-screen ${widthClassName} bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 ease-out border-l border-gray-100`}>
+      <div className="fixed inset-y-0 right-0 max-w-full flex h-dvh max-h-dvh">
+        <div className={`w-full ${widthClassName} bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 ease-out border-l border-gray-100 h-full overflow-hidden`}>
           
           {/* Header */}
-          <div className="p-6 bg-gradient-to-r from-blue-50/80 via-white to-gray-50/80 border-b border-gray-100 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-3.5 min-w-0 flex-1 pr-4">
+          <div className="p-4 sm:p-6 short:py-2.5 short:px-4 bg-gradient-to-r from-blue-50/80 via-white to-gray-50/80 border-b border-gray-100 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1 pr-2 sm:pr-4">
               {icon && (
-                <div className="w-12 h-12 rounded-xl bg-white text-primary border border-primary/20 shadow-xs flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 short:w-8 short:h-8 sm:w-12 sm:h-12 rounded-xl bg-white text-primary border border-primary/20 shadow-xs flex items-center justify-center shrink-0">
                   {icon}
                 </div>
               )}
               <div className="min-w-0 flex-1">
                 {subtitle && (
-                  <div className="text-xs font-semibold text-gray-500 mb-0.5 truncate">
+                  <div className="text-[11px] sm:text-xs font-semibold text-gray-500 mb-0.5 truncate">
                     {subtitle}
                   </div>
                 )}
-                <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight truncate">
+                <h2 className="text-lg sm:text-2xl short:text-base font-black text-gray-900 tracking-tight truncate">
                   {title}
                 </h2>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               {headerExtra}
 
               {(onPrev || onNext) && (
-                <div className="flex items-center bg-gray-100/80 p-1 rounded-xl border border-gray-200/60 mr-2">
+                <div className="flex items-center bg-gray-100/80 p-0.5 sm:p-1 rounded-xl border border-gray-200/60 mr-1 sm:mr-2">
                   {onPrev && (
                     <button
                       onClick={onPrev}
                       disabled={prevDisabled}
                       title="Sebelumnya (Prev)"
-                      className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-none hover:shadow-xs"
+                      className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-none hover:shadow-xs min-h-[36px] min-w-[36px] flex items-center justify-center"
                     >
                       <ChevronLeft size={18} />
                     </button>
@@ -118,7 +118,7 @@ export function SideDrawer({
                       onClick={onNext}
                       disabled={nextDisabled}
                       title="Berikutnya (Next)"
-                      className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-none hover:shadow-xs"
+                      className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-none hover:shadow-xs min-h-[36px] min-w-[36px] flex items-center justify-center"
                     >
                       <ChevronRight size={18} />
                     </button>
@@ -129,21 +129,21 @@ export function SideDrawer({
               <button
                 onClick={onClose}
                 title="Tutup Panel (ESC)"
-                className="p-2.5 text-gray-400 hover:text-gray-700 rounded-xl hover:bg-gray-100 transition-colors"
+                className="p-2 sm:p-2.5 text-gray-400 hover:text-gray-700 rounded-xl hover:bg-gray-100 transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
               >
-                <X size={20} />
+                <X size={20} className="short:w-4 short:h-4" />
               </button>
             </div>
           </div>
 
           {/* Body Content */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className={`flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 short:p-3.5 space-y-4 sm:space-y-6 short:space-y-3 ${footer ? '' : 'pb-safe-modal sm:pb-6 short:pb-3'}`}>
             {children}
           </div>
 
           {/* Footer */}
           {footer && (
-            <div className="p-4 bg-gray-50 border-t border-gray-100 shrink-0">
+            <div className="p-3.5 sm:p-4 short:py-2 short:px-4 pb-safe-modal sm:pb-4 short:pb-2 bg-gray-50 border-t border-gray-100 shrink-0">
               {footer}
             </div>
           )}

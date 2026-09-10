@@ -11,7 +11,7 @@ const INCOME_RANGES = [
 
 export default function TabKeluarga({ formData, handleChange }: any) {
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+    <div className="space-y-6 w-full min-w-0 max-w-full">
       
       {/* Alamat & Kontak */}
       <div className="bg-gray-50/50 p-4 rounded-xl border border-border space-y-4">

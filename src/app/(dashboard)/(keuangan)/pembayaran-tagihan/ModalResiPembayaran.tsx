@@ -49,6 +49,18 @@ export default function ModalResiPembayaran({
     setMounted(true)
   }, [])
 
+  // Lock body scroll when receipt modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = "unset"
+    }
+    return () => {
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen])
+
   if (!isOpen || !data || !mounted) return null
 
   const formatRupiah = (val: number) => {
@@ -103,7 +115,10 @@ export default function ModalResiPembayaran({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm print:hidden" onClick={onClose} />
       
       {/* Container */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 print:shadow-none print:w-full print:max-w-none print:rounded-none flex flex-col max-h-[90vh]">
+      <div 
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 print:shadow-none print:w-full print:max-w-none print:rounded-none flex flex-col max-h-[calc(100dvh-32px)] z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Print-only CSS injection */}
         <style dangerouslySetInnerHTML={{__html: `
@@ -117,18 +132,28 @@ export default function ModalResiPembayaran({
         `}} />
 
         {/* Header - Non Print */}
-        <div className="bg-slate-50 border-b border-slate-200 flex items-center justify-between p-4 text-slate-800 no-print shrink-0">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={20} className="text-emerald-600" />
-            <h2 className="text-lg font-bold text-slate-800">Pratinjau Kwitansi</h2>
+        <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-bg/50 no-print shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-xs">
+              <CheckCircle2 size={20} />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-extrabold text-albas-green m-0 leading-tight truncate">Pratinjau Kwitansi</h2>
+              <p className="text-[11px] sm:text-xs text-text-muted mt-0.5 leading-relaxed truncate sm:whitespace-normal">Kwitansi resmi pembayaran tagihan santri/siswa</p>
+            </div>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-slate-200 text-slate-500 rounded-lg transition-colors">
+          <button 
+            onClick={onClose} 
+            className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer"
+            type="button"
+            aria-label="Tutup"
+          >
             <X size={20} />
           </button>
         </div>
 
         {/* Receipt Body (Scrollable if too tall) */}
-        <div className="print-receipt w-full bg-white text-slate-900 overflow-y-auto p-8 sm:p-10 shrink">
+        <div className="print-receipt w-full bg-white text-slate-900 overflow-y-auto p-4 sm:p-10 shrink">
           
           {/* Kop Kwitansi */}
           <PrintHeader 
@@ -154,8 +179,8 @@ export default function ModalResiPembayaran({
           </div>
 
           {/* Tabel Rincian */}
-          <div className="mb-8">
-            <table className="w-full text-sm border-collapse">
+          <div className="mb-8 overflow-x-auto">
+            <table className="w-full text-sm border-collapse min-w-[500px] sm:min-w-full">
               <thead>
                 <tr className="bg-slate-100 border-y border-slate-300">
                   <th className="py-2 px-4 text-center font-bold text-slate-700 w-12 border-x border-slate-300">No</th>
@@ -220,11 +245,14 @@ export default function ModalResiPembayaran({
         </div>
 
         {/* Action Buttons - Non Print */}
-        <div className="bg-slate-50 border-t border-slate-200 p-4 flex gap-3 no-print shrink-0 rounded-b-2xl">
-          <Button onClick={handleShareWA} variant="outline" className="flex-1 bg-white hover:bg-slate-100 text-slate-700">
+        <div className="shrink-0 p-4 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex flex-col sm:flex-row items-center justify-end gap-2.5 sm:gap-3 no-print">
+          <Button onClick={onClose} variant="outline" className="w-full sm:w-auto min-h-[44px] font-semibold">
+            Tutup
+          </Button>
+          <Button onClick={handleShareWA} variant="outline" className="w-full sm:w-auto min-h-[44px] font-semibold border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100">
             <Share2 size={16} className="mr-2" /> Bagikan WA
           </Button>
-          <Button onClick={handlePrint} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+          <Button onClick={handlePrint} className="w-full sm:w-auto min-h-[44px] font-bold bg-primary hover:bg-primary/90 text-white shadow-sm shadow-primary/20">
             <Printer size={16} className="mr-2" /> Unduh PDF Formal
           </Button>
         </div>

@@ -26,6 +26,29 @@ export default function ModalPilihRiwayatTransaksi({
     setMounted(true)
   }, [])
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = "unset"
+    }
+    return () => {
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen])
+
+  // ESC key listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isOpen, onClose])
+
   if (!isOpen || !mounted) return null
 
   const formatRupiah = (val: number) => {
@@ -35,25 +58,35 @@ export default function ModalPilihRiwayatTransaksi({
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
-        
+      <div 
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[calc(100dvh-32px)] z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
+
         {/* Header */}
-        <div className="bg-emerald-500 flex items-center justify-between p-4 px-6 text-white shrink-0">
-          <div className="flex items-center gap-2">
-            <Receipt size={20} className="text-white" />
-            <h2 className="text-lg font-bold">Riwayat Pembayaran</h2>
+        <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-bg/50 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-xs">
+              <Receipt size={20} />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-extrabold text-albas-green m-0 leading-tight truncate">Riwayat Pembayaran</h2>
+              <p className="text-[11px] sm:text-xs text-text-muted mt-0.5 leading-relaxed truncate sm:whitespace-normal">Pilih transaksi untuk mencetak resi / kwitansi</p>
+            </div>
           </div>
           <button 
             onClick={onClose} 
-            className="p-1.5 hover:bg-emerald-600 rounded-lg transition-colors text-white"
+            className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer"
+            type="button"
+            aria-label="Tutup"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto">
-          <p className="text-sm text-text-muted mb-4">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+          <p className="text-xs sm:text-sm text-text-muted mb-4">
             Tagihan ini memiliki lebih dari 1 riwayat pembayaran (dicicil/digabung). Silakan pilih resi mana yang ingin dicetak:
           </p>
           
@@ -66,7 +99,7 @@ export default function ModalPilihRiwayatTransaksi({
               return (
                 <div 
                   key={tx.transaksiId} 
-                  className="border border-border rounded-xl p-4 hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer bg-white group flex items-center justify-between"
+                  className="border border-border rounded-xl p-3.5 sm:p-4 hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer bg-white group flex items-center justify-between"
                   onClick={() => onSelect(tx)}
                 >
                   <div className="space-y-1">
@@ -115,9 +148,9 @@ export default function ModalPilihRiwayatTransaksi({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-slate-50 border-t border-border flex justify-end shrink-0">
-          <Button type="button" variant="outline" onClick={onClose} className="px-6 rounded-xl font-bold">
-            Batal
+        <div className="shrink-0 p-4 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3">
+          <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto min-h-[44px] font-semibold">
+            Tutup
           </Button>
         </div>
       </div>

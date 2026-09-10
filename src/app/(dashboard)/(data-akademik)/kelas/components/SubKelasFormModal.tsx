@@ -61,28 +61,28 @@ export default function SubKelasFormModal({
       title={formData.id ? "Edit Sub Kelas (Rombel)" : "Tambah Sub Kelas (Rombel)"}
       subtitle="Alokasi kelas dan penunjukan Wali Kelas untuk tahun ajaran aktif"
       icon={Users}
-        widthClassName="max-w-xl"
-        headerAction={
+      widthClassName="max-w-xl"
+      footer={
+        <>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose} 
+            className="w-full sm:w-auto min-h-[44px] font-semibold"
+          >
+            Batal
+          </Button>
           <Button 
             type="submit" 
             form="form-subkelas" 
-            size="sm" 
-            isLoading={isSubmitting}
-            className="sm:hidden text-xs font-bold px-3 py-1.5 shadow-sm"
+            isLoading={isSubmitting} 
+            className="w-full sm:w-auto min-h-[44px] font-bold shadow-sm shadow-primary/20"
           >
-            Simpan
+            {formData.id ? "Simpan Perubahan" : "Simpan Sub Kelas"}
           </Button>
-        }
-        footer={
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1 sm:flex-initial justify-center min-h-[40px] font-semibold">Batal</Button>
-            <Button type="submit" form="form-subkelas" isLoading={isSubmitting} className="flex-2 sm:flex-initial justify-center min-h-[40px] font-bold shadow-sm">
-              <span className="sm:hidden">Simpan</span>
-              <span className="hidden sm:inline">Simpan Data</span>
-            </Button>
-          </div>
-        }
-      >
+        </>
+      }
+    >
         <form id="form-subkelas" onSubmit={onSave} className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-semibold text-text-main mb-1.5">Unit Sekolah</label>

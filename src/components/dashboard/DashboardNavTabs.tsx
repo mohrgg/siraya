@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState, useEffect, useTransition } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Building2, Layers, Activity, School, LayoutDashboard, ChevronDown, Check, X, ShieldCheck } from 'lucide-react'
@@ -16,8 +17,25 @@ interface DashboardNavTabsProps {
 export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }: DashboardNavTabsProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [showUnitPicker, setShowUnitPicker] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Lock body scroll when unit picker is open
+  useEffect(() => {
+    if (showUnitPicker) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [showUnitPicker])
 
   const currentTab = searchParams.get('tab')
   const currentUnitId = searchParams.get('unitId')
@@ -126,18 +144,18 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
   const isAuditActive = currentTab === 'operasional'
 
   return (
-    <div className="mb-6 w-full" data-testid="dashboard-nav-tabs">
+    <div className="mb-3 sm:mb-6 w-full" data-testid="dashboard-nav-tabs">
       {/* ======================================================== */}
-      {/* 1. MOBILE 3-SEGMENTED SWITCHER (<md) - 0% HORIZONTAL SCROLL */}
+      {/* 1. MOBILE 3-SEGMENTED SWITCHER (<md atau ponsel landscape) */}
       {/* ======================================================== */}
       {(role === 'ADMIN' || role === 'YAYASAN') && (
-        <div className="md:hidden w-full">
+        <div className="md:hidden short:block show-block-on-mobile-landscape w-full">
           <div className="bg-surface p-1 rounded-2xl border border-border shadow-xs grid grid-cols-3 gap-1">
             {/* Segmen 1: Yayasan */}
             <button
               type="button"
               onClick={(e) => handleTabClick(e, { tabType: 'yayasan' })}
-              className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all min-h-[44px] cursor-pointer touch-manipulation ${
+              className={`flex items-center justify-center gap-1.5 py-2.5 short:py-1.5 px-2 rounded-xl text-xs font-bold transition-all min-h-[44px] short:min-h-[36px] cursor-pointer touch-manipulation ${
                 isYayasanActive
                   ? 'bg-primary text-white shadow-2xs'
                   : 'text-text-muted hover:text-text-main hover:bg-slate-50'
@@ -151,7 +169,7 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
             <button
               type="button"
               onClick={() => setShowUnitPicker(true)}
-              className={`flex items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all min-h-[44px] cursor-pointer touch-manipulation ${
+              className={`flex items-center justify-center gap-1 py-2.5 short:py-1.5 px-2 rounded-xl text-xs font-bold transition-all min-h-[44px] short:min-h-[36px] cursor-pointer touch-manipulation ${
                 isUnitActive
                   ? 'bg-primary text-white shadow-2xs'
                   : 'text-text-muted hover:text-text-main hover:bg-slate-50'
@@ -167,7 +185,7 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
             {/* Segmen 3: Audit Sistem */}
             <Link
               href="/?tab=operasional"
-              className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all min-h-[44px] touch-manipulation ${
+              className={`flex items-center justify-center gap-1.5 py-2.5 short:py-1.5 px-2 rounded-xl text-xs font-bold transition-all min-h-[44px] short:min-h-[36px] touch-manipulation ${
                 isAuditActive
                   ? 'bg-primary text-white shadow-2xs'
                   : 'text-text-muted hover:text-text-main hover:bg-slate-50'
@@ -179,15 +197,16 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
           </div>
 
           {/* Unit Picker Bottom Sheet Modal */}
-          {showUnitPicker && (
-            <div className="fixed inset-0 z-50 flex items-end justify-center">
+          {showUnitPicker && mounted && createPortal(
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 short:p-2">
               <div 
-                className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+                className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
                 onClick={() => setShowUnitPicker(false)}
               />
-              <div className="relative w-full max-w-lg bg-surface rounded-t-3xl border-t border-border p-5 pb-safe z-10 shadow-2xl flex flex-col gap-3 max-h-[85dvh] animate-in slide-in-from-bottom duration-200">
-                {/* Drag Handle Indicator */}
-                <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto -mt-1 mb-1 shrink-0" />
+              <div 
+                className="relative w-full max-w-lg short:max-w-xl bg-surface rounded-2xl border border-border p-5 short:p-3 z-10 shadow-2xl flex flex-col gap-3 short:gap-2 max-h-[calc(100dvh-32px)] short:max-h-[calc(100dvh-12px)] animate-in fade-in zoom-in-95 duration-200"
+                onClick={(e) => e.stopPropagation()}
+              >
 
                 <div className="flex items-center justify-between pb-2 border-b border-border">
                   <div className="flex items-center gap-2">
@@ -207,7 +226,7 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-2 overflow-y-auto py-1 pb-28">
+                <div className="grid grid-cols-1 short:grid-cols-2 gap-2 overflow-y-auto py-1 pb-4 short:pb-2">
                   {sortedUnits.map((u) => {
                     const isSelected = effectiveUnitId === u.id && isUnitActive
                     const levelBadge = u.name.match(/\b(SD|SMP|SMA|SMK|MI|MTS|MA)\b/i)?.[0]?.toUpperCase() || 'UNIT'
@@ -215,7 +234,7 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
                       <button
                         key={u.id}
                         onClick={() => handleMobileUnitSelect(u.id)}
-                        className={`flex items-center justify-between p-3.5 rounded-2xl border text-xs font-bold transition-all min-h-[52px] text-left cursor-pointer ${
+                        className={`flex items-center justify-between p-3.5 short:p-2.5 rounded-2xl border text-xs font-bold transition-all min-h-[52px] short:min-h-[44px] text-left cursor-pointer ${
                           isSelected
                             ? 'bg-primary/10 border-primary text-primary font-extrabold shadow-2xs ring-1 ring-primary/30'
                             : 'bg-surface border-border text-text-main hover:bg-slate-50'
@@ -238,15 +257,16 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
                   })}
                 </div>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       )}
 
       {/* ======================================================== */}
-      {/* 2. DESKTOP TABS (>=md) - PRESERVED EXACTLY AS EXISTING */}
+      {/* 2. DESKTOP TABS (>=md dan bukan ponsel landscape)        */}
       {/* ======================================================== */}
-      <div className="hidden md:block overflow-x-auto hide-scrollbar py-1">
+      <div className="hidden md:block short:hidden hide-on-mobile-landscape overflow-x-auto hide-scrollbar py-1">
         <div className="bg-surface p-1.5 rounded-2xl border border-border shadow-xs inline-flex items-center gap-1.5 min-w-max">
           {tabs.map((tab) => {
             const Icon = tab.icon

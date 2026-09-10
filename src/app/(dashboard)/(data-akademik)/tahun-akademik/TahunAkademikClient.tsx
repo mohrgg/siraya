@@ -222,27 +222,25 @@ export default function TahunAkademikClient({
         subtitle="Konfigurasi tahun ajaran dan penentuan tahun operasional sistem"
         icon={Calendar}
         widthClassName="max-w-lg"
-        headerAction={
-          <Button 
-            type="submit" 
-            form="form-tahun-akademik" 
-            size="sm" 
-            isLoading={isSubmitting}
-            className="sm:hidden text-xs font-bold px-3 py-1.5 shadow-sm"
-          >
-            Simpan
-          </Button>
-        }
         footer={
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="flex-1 sm:flex-initial justify-center min-h-[40px] font-semibold">
+          <>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsModalOpen(false)} 
+              className="w-full sm:w-auto min-h-[44px] font-semibold"
+            >
               Batal
             </Button>
-            <Button type="submit" form="form-tahun-akademik" isLoading={isSubmitting} className="flex-2 sm:flex-initial justify-center min-h-[40px] font-bold shadow-sm">
-              <span className="sm:hidden">{formData.id ? "Simpan" : "Simpan Tahun"}</span>
-              <span className="hidden sm:inline">{formData.id ? "Simpan Perubahan" : "Simpan Tahun Ajaran"}</span>
+            <Button 
+              type="submit" 
+              form="form-tahun-akademik" 
+              isLoading={isSubmitting} 
+              className="w-full sm:w-auto min-h-[44px] font-bold shadow-sm shadow-primary/20"
+            >
+              {formData.id ? "Simpan Perubahan" : "Simpan Tahun Ajaran"}
             </Button>
-          </div>
+          </>
         }
       >
         <div className="mb-5 p-3.5 bg-amber-50/80 border border-amber-100 rounded-xl text-xs text-amber-800 flex gap-2.5 items-center">

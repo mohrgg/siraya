@@ -112,32 +112,32 @@ export default function ChangePasswordModal({
         className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" 
         onClick={handleClose}
       ></div>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative animate-in fade-in zoom-in duration-200 overflow-hidden border border-gray-100">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative animate-in fade-in zoom-in duration-200 overflow-hidden border border-gray-100 flex flex-col max-h-[calc(100dvh-32px)]">
         
         {/* Header Modal */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 bg-gray-50/50 shrink-0">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isMandatory ? "bg-amber-100 text-amber-700" : "bg-primary/10 text-primary"}`}>
               <KeyRound size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-base sm:text-lg font-extrabold text-albas-green m-0 leading-tight truncate">
                 {isMandatory ? "Wajib Perbarui Kata Sandi" : "Ganti Kata Sandi"}
               </h2>
-              <p className="text-xs text-gray-500">
+              <p className="text-[11px] sm:text-xs text-text-muted mt-0.5 leading-relaxed truncate sm:whitespace-normal">
                 {isMandatory ? "Untuk keamanan sistem, perbarui kata sandi default Anda sebelum melanjutkan." : "Perbarui kata sandi secara berkala untuk menjaga keamanan akun."}
               </p>
             </div>
           </div>
           {!isMandatory && (
-            <button onClick={handleClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+            <button onClick={handleClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center">
               <X size={18} />
             </button>
           )}
         </div>
 
         {isMandatory && (
-          <div className="mx-6 mt-4 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2.5 leading-relaxed">
+          <div className="mx-4 sm:mx-6 mt-4 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2.5 leading-relaxed shrink-0">
             <AlertCircle size={16} className="text-amber-600 shrink-0 mt-0.5" />
             <div>
               <strong>Perhatian Keamanan:</strong> Akun Anda terdeteksi menggunakan kata sandi awal atau telah direset oleh Administrator. Anda wajib membuat kata sandi baru yang unik dan kuat untuk mengakses dasbor.
@@ -145,7 +145,8 @@ export default function ChangePasswordModal({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Kata Sandi Saat Ini</label>
             <div className="relative">
@@ -243,15 +244,19 @@ export default function ChangePasswordModal({
             </div>
           )}
 
-          <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-3">
+          </div>
+
+          <div className="shrink-0 p-4 sm:p-5 border-t border-border flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3 bg-surface/95 backdrop-blur-md">
             {!isMandatory && (
-              <Button type="button" variant="outline" onClick={handleClose}>Batal</Button>
+              <Button type="button" variant="outline" onClick={handleClose} className="w-full sm:w-auto min-h-[44px] font-semibold">
+                Batal
+              </Button>
             )}
             <Button 
               type="submit" 
               isLoading={isSubmitting} 
               disabled={!isFormValid || isSubmitting}
-              className={isMandatory ? "w-full sm:w-auto" : ""}
+              className={`w-full sm:w-auto min-h-[44px] font-bold shadow-sm shadow-primary/20 ${isMandatory ? "w-full" : ""}`}
             >
               Simpan Kata Sandi Baru
             </Button>
