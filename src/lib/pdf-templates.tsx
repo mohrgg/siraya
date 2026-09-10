@@ -92,7 +92,7 @@ export function PrintSignatureHtml({
         <p className="text-xs text-slate-700 min-h-[1.25rem] leading-relaxed mb-0.5">
           {showDate ? `${kotaPenandatangan}, ${dateStr}` : "\u00A0"}
         </p>
-        <p className="text-xs font-semibold text-slate-800 leading-tight mb-10">
+        <p className="text-xs font-semibold text-slate-800 leading-tight mb-7">
           {signer.jabatan}
         </p>
         <p className="text-sm font-bold underline underline-offset-4 text-slate-900 leading-tight">
@@ -103,20 +103,20 @@ export function PrintSignatureHtml({
   }
 
   return (
-    <div className="w-full break-inside-avoid" style={{ pageBreakInside: 'avoid' }}>
+    <div className="w-full break-inside-avoid" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
       <div className="flex justify-between items-start w-full px-8">
         {renderSigner(penandatanganKiri, false)}
         {renderSigner(penandatanganKanan, true)}
       </div>
 
       {catatanKwitansi && (
-        <div className="mt-2.5 px-8 text-center text-xs text-slate-600 italic">
+        <div className="mt-2 px-8 text-center text-[11px] text-slate-600 italic leading-tight">
           <p>{catatanKwitansi}</p>
         </div>
       )}
       
       {/* Footer / Notes */}
-      <div className="mt-2.5 pt-1.5 border-t border-slate-300 text-center text-[10px] text-slate-500 italic">
+      <div className="mt-2 pt-1 border-t border-slate-300 text-center text-[10px] text-slate-500 italic leading-tight">
         <p>Dicetak melalui Sistem Informasi Siraya pada {new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} WIB</p>
       </div>
     </div>
@@ -148,7 +148,7 @@ export function TableReportHtml({
   penandatanganKanan
 }: TableReportData) {
   return (
-    <div className="font-sans text-slate-900 bg-white flex flex-col">
+    <div className="font-sans text-slate-900 bg-white block">
       <PrintHeaderHtml institutionInfo={institutionInfo} />
       
       <div className="text-center mb-6">
@@ -190,7 +190,7 @@ export function TableReportHtml({
         </tfoot>
       </table>
 
-      <div className="mt-4 mb-2" style={{ pageBreakInside: 'avoid' }}>
+      <div className="mt-6 mb-2 break-inside-avoid" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
         <PrintSignatureHtml 
           kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
           tanggalCetak={tanggalCetak}
@@ -247,92 +247,90 @@ export function ResiHtml({
   const formatRp = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val)
 
   return (
-    <div className="font-sans text-slate-900 bg-white flex flex-col justify-between min-h-[122mm] max-h-[126mm]" style={{ boxSizing: 'border-box' }}>
-      <div>
-        <PrintHeaderHtml institutionInfo={institutionInfo} />
+    <div className="font-sans text-slate-900 bg-white block">
+      <PrintHeaderHtml institutionInfo={institutionInfo} />
 
-        {/* Header Info: Judul dan Referensi */}
-        <div className="flex justify-between items-start mb-2">
-          <div className="flex-1"></div>
-          <div className="text-center flex-1">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 border-b border-slate-400 inline-block pb-0.5">
-              {title || "BUKTI PEMBAYARAN / KWITANSI"}
-            </h3>
-          </div>
-          <div className="flex-1 text-right text-[10px] text-slate-600 leading-tight">
-            <p>Tanggal: {dateStr}</p>
-            <p>No. Ref: <span className="font-semibold">{noReferensi}</span></p>
-          </div>
+      {/* Header Info: Judul dan Referensi */}
+      <div className="flex justify-between items-start mb-2">
+        <div className="flex-1"></div>
+        <div className="text-center flex-1">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 border-b border-slate-400 inline-block pb-0.5">
+            {title || "BUKTI PEMBAYARAN / KWITANSI"}
+          </h3>
         </div>
-
-        {/* Identitas */}
-        <div className="mb-2 text-[10px]">
-          <table className="w-auto">
-            <tbody>
-              <tr>
-                <td className="py-0.5 pr-4 text-slate-600">Telah terima dari</td>
-                <td className="py-0.5 pr-2">:</td>
-                <td className="py-0.5 font-bold text-slate-800">{penerimaDari}</td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="flex-1 text-right text-[10px] text-slate-600 leading-tight">
+          <p>Tanggal: {dateStr}</p>
+          <p>No. Ref: <span className="font-semibold">{noReferensi}</span></p>
         </div>
+      </div>
 
-        {/* Tabel Item */}
-        <table className="w-full text-[10px] border-collapse mb-1">
-          <thead className="bg-slate-800 text-white">
+      {/* Identitas */}
+      <div className="mb-2 text-[10px]">
+        <table className="w-auto">
+          <tbody>
             <tr>
-              <th className="py-1 px-1.5 border border-slate-700 text-center font-bold w-10">No</th>
-              <th className="py-1 px-1.5 border border-slate-700 text-left font-bold">Keterangan Pembayaran</th>
-              <th className="py-1 px-1.5 border border-slate-700 text-right font-bold w-32">Nominal</th>
+              <td className="py-0.5 pr-4 text-slate-600">Telah terima dari</td>
+              <td className="py-0.5 pr-2">:</td>
+              <td className="py-0.5 font-bold text-slate-800">{penerimaDari}</td>
             </tr>
-          </thead>
-          <tbody style={{ display: 'table-row-group' }}>
-            {items.map((item, i) => (
-              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"} style={{ pageBreakInside: 'avoid' }}>
-                <td className="py-1.5 px-2 border border-slate-200 text-center text-slate-700 align-top">{i + 1}</td>
-                <td className="py-1.5 px-2 border border-slate-200 text-slate-700 align-top">
-                  <div className="font-medium text-slate-800">{item.keterangan}</div>
-                  
-                  {Boolean(((item.potongan && item.potongan > 0) || (item.sisaTagihan && item.sisaTagihan > 0)) && item.sisaTagihanAwal && item.sisaTagihanAwal > 0) && (
-                    <div className="text-[9px] text-slate-500 mt-0.5 italic leading-tight">
-                      Tagihan Awal: {formatRp(item.sisaTagihanAwal || 0)}
-                    </div>
-                  )}
-                  
-                  {Boolean(item.potongan && item.potongan > 0) && (
-                    <div className="text-[9px] text-slate-500 mt-0.5 italic leading-tight">
-                      Diskon ({item.kategoriPotongan || 'Lainnya'}): -{formatRp(item.potongan || 0)}
-                    </div>
-                  )}
-                  
-                  {Boolean(item.sisaTagihan && item.sisaTagihan > 0) && (
-                    <div className="text-[9px] text-slate-500 mt-0.5 italic leading-tight">
-                      * Pembayaran Sebagian. Sisa Tagihan Akhir: {formatRp(item.sisaTagihan || 0)}
-                    </div>
-                  )}
-                </td>
-                <td className="py-1.5 px-2 border border-slate-200 text-right text-slate-700 font-medium align-top">
-                  {formatRp(item.nominal)}
-                </td>
-              </tr>
-            ))}
           </tbody>
-          <tfoot style={{ display: 'table-row-group' }}>
-            {/* Baris Total */}
-            <tr className="bg-slate-100" style={{ pageBreakInside: 'avoid' }}>
-              <td colSpan={2} className="py-1.5 px-1.5 border border-slate-300 text-right font-bold text-slate-800 uppercase">
-                Total Pembayaran
-              </td>
-              <td className="py-1.5 px-1.5 border border-slate-300 text-right font-bold text-slate-900 text-xs">
-                {formatRp(total)}
-              </td>
-            </tr>
-          </tfoot>
         </table>
       </div>
 
-      <div className="mt-auto mb-0 pt-1" style={{ pageBreakInside: 'avoid' }}>
+      {/* Tabel Item */}
+      <table className="w-full text-[10px] border-collapse mb-1">
+        <thead className="bg-slate-800 text-white">
+          <tr>
+            <th className="py-1 px-1.5 border border-slate-700 text-center font-bold w-10">No</th>
+            <th className="py-1 px-1.5 border border-slate-700 text-left font-bold">Keterangan Pembayaran</th>
+            <th className="py-1 px-1.5 border border-slate-700 text-right font-bold w-32">Nominal</th>
+          </tr>
+        </thead>
+        <tbody style={{ display: 'table-row-group' }}>
+          {items.map((item, i) => (
+            <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"} style={{ pageBreakInside: 'avoid' }}>
+              <td className="py-1 px-2 border border-slate-200 text-center text-slate-700 align-top">{i + 1}</td>
+              <td className="py-1 px-2 border border-slate-200 text-slate-700 align-top">
+                <div className="font-medium text-slate-800">{item.keterangan}</div>
+                
+                {Boolean(((item.potongan && item.potongan > 0) || (item.sisaTagihan && item.sisaTagihan > 0)) && item.sisaTagihanAwal && item.sisaTagihanAwal > 0) && (
+                  <div className="text-[9px] text-slate-500 mt-0.5 italic leading-tight">
+                    Tagihan Awal: {formatRp(item.sisaTagihanAwal || 0)}
+                  </div>
+                )}
+                
+                {Boolean(item.potongan && item.potongan > 0) && (
+                  <div className="text-[9px] text-slate-500 mt-0.5 italic leading-tight">
+                    Diskon ({item.kategoriPotongan || 'Lainnya'}): -{formatRp(item.potongan || 0)}
+                  </div>
+                )}
+                
+                {Boolean(item.sisaTagihan && item.sisaTagihan > 0) && (
+                  <div className="text-[9px] text-slate-500 mt-0.5 italic leading-tight">
+                    * Pembayaran Sebagian. Sisa Tagihan Akhir: {formatRp(item.sisaTagihan || 0)}
+                  </div>
+                )}
+              </td>
+              <td className="py-1 px-2 border border-slate-200 text-right text-slate-700 font-medium align-top">
+                {formatRp(item.nominal)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot style={{ display: 'table-row-group' }}>
+          {/* Baris Total */}
+          <tr className="bg-slate-100" style={{ pageBreakInside: 'avoid' }}>
+            <td colSpan={2} className="py-1.5 px-1.5 border border-slate-300 text-right font-bold text-slate-800 uppercase">
+              Total Pembayaran
+            </td>
+            <td className="py-1.5 px-1.5 border border-slate-300 text-right font-bold text-slate-900 text-xs">
+              {formatRp(total)}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div className="mt-3 break-inside-avoid" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
         <PrintSignatureHtml 
           kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
           tanggalCetak={tanggal}
