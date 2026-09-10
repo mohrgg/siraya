@@ -16,6 +16,8 @@ interface GuruFormModalProps {
   initialData: any
   schoolUnits: any[]
   availableStatuses?: any[]
+  activeUnitId?: string
+  userRole?: string
 }
 
 const TABS = [
@@ -25,7 +27,16 @@ const TABS = [
   { id: "honorarium", label: "Rekening Bank", icon: CreditCard },
 ]
 
-export default function GuruFormModal({ isOpen, onClose, onSave, initialData, schoolUnits, availableStatuses }: GuruFormModalProps) {
+export default function GuruFormModal({
+  isOpen,
+  onClose,
+  onSave,
+  initialData,
+  schoolUnits,
+  availableStatuses,
+  activeUnitId,
+  userRole,
+}: GuruFormModalProps) {
   const [activeTab, setActiveTab] = useState("pribadi")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<any>({})
@@ -119,7 +130,15 @@ export default function GuruFormModal({ isOpen, onClose, onSave, initialData, sc
         <div className="flex-1">
           <form id="guruForm" onSubmit={handleSubmit} className="space-y-6 pb-6">
             {activeTab === "pribadi" && <TabPribadi formData={formData} handleChange={handleChange} />}
-            {activeTab === "kepegawaian" && <TabKepegawaian formData={formData} handleChange={handleChange} schoolUnits={schoolUnits} />}
+            {activeTab === "kepegawaian" && (
+              <TabKepegawaian
+                formData={formData}
+                handleChange={handleChange}
+                schoolUnits={schoolUnits}
+                activeUnitId={activeUnitId}
+                userRole={userRole}
+              />
+            )}
             {activeTab === "pendidikan" && <TabPendidikan formData={formData} handleChange={handleChange} />}
             {activeTab === "honorarium" && <TabHonorarium formData={formData} handleChange={handleChange} />}
           </form>

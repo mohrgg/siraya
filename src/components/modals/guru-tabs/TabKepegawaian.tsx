@@ -8,12 +8,34 @@ import { getJabatanStafList, createJabatanStaf, deleteJabatanStaf } from "@/acti
 import { normalizeStatusKepegawaian } from "@/lib/constants/kepegawaian"
 import toast from "react-hot-toast"
 
-export default function TabKepegawaian({ formData, handleChange, schoolUnits }: any) {
+export default function TabKepegawaian({
+  formData,
+  handleChange,
+  schoolUnits,
+  activeUnitId,
+  userRole,
+}: {
+  formData: any
+  handleChange: (field: string, value: any) => void
+  schoolUnits: any[]
+  activeUnitId?: string
+  userRole?: string
+}) {
   const [opsiBidangStudi, setOpsiBidangStudi] = useState<any[]>([])
   const [opsiStatusKepegawaian, setOpsiStatusKepegawaian] = useState<any[]>([])
   const [opsiJabatanStaf, setOpsiJabatanStaf] = useState<any[]>([])
 
   const currentJenisPtk = formData.jenisPtk || "GURU"
+
+  const isUnitLocked = Boolean(activeUnitId && activeUnitId !== "all") || (userRole !== "ADMIN" && Boolean(formData.unitSekolahId || activeUnitId))
+  const lockedUnitId = (activeUnitId && activeUnitId !== "all") ? activeUnitId : formData.unitSekolahId
+  const selectedUnit = schoolUnits?.find((u: any) => u.id === (formData.unitSekolahId || lockedUnitId))
+
+  useEffect(() => {
+    if (isUnitLocked && lockedUnitId && formData.unitSekolahId !== lockedUnitId) {
+      handleChange("unitSekolahId", lockedUnitId)
+    }
+  }, [isUnitLocked, lockedUnitId, formData.unitSekolahId])
 
   useEffect(() => {
     loadStatusKepegawaian()
@@ -186,17 +208,24 @@ export default function TabKepegawaian({ formData, handleChange, schoolUnits }: 
             <Building size={15} className="text-primary" />
             {currentJenisPtk === "GURU" ? "Unit Sekolah Penugasan" : "Unit / Kantor Penugasan"} <span className="text-red-500">*</span>
           </label>
-          <select 
-            className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium text-sm transition-all" 
-            value={formData.unitSekolahId || ""} 
-            onChange={e => handleChange("unitSekolahId", e.target.value)} 
-            required
-          >
-            <option value="" disabled>-- Pilih Unit Penugasan --</option>
-            {schoolUnits.map((u: any) => (
-              <option key={u.id} value={u.id}>{u.name}</option>
-            ))}
-          </select>
+          {isUnitLocked ? (
+            <div className="px-3.5 py-2.5 bg-bg/80 border border-border rounded-xl text-sm font-bold text-text-main flex items-center justify-between">
+              <span>{selectedUnit?.name || "Unit Terpilih"}</span>
+              <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">Terkunci</span>
+            </div>
+          ) : (
+            <select 
+              className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium text-sm transition-all" 
+              value={formData.unitSekolahId || ""} 
+              onChange={e => handleChange("unitSekolahId", e.target.value)} 
+              required
+            >
+              <option value="" disabled>-- Pilih Unit Penugasan --</option>
+              {schoolUnits?.map((u: any) => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">

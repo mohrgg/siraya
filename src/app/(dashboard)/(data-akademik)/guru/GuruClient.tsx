@@ -227,10 +227,14 @@ export default function GuruClient({
   }, [activeTab, guruList, stafList])
 
   const handleOpenAdd = () => {
+    const targetUnit = (activeUnitId && activeUnitId !== "all") 
+      ? activeUnitId 
+      : (unitFilter && unitFilter !== "all" ? unitFilter : (schoolUnits[0]?.id || ""))
+
     setFormData({
       ...defaultForm,
       jenisPtk: activeTab,
-      unitSekolahId: (activeUnitId && activeUnitId !== "all") ? activeUnitId : (schoolUnits[0]?.id || "")
+      unitSekolahId: targetUnit
     })
     setIsAdding(true)
   }
@@ -946,6 +950,8 @@ export default function GuruClient({
         onSave={handleSaveModal}
         initialData={formData}
         schoolUnits={schoolUnits}
+        activeUnitId={activeUnitId}
+        userRole={userRole}
       />
 
       <ImportGuruModal

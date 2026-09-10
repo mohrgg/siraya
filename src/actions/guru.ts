@@ -112,6 +112,9 @@ export async function tambahGuru(data: {
   }
 
   const { id, unitSekolah, rombelWali, createdAt, updatedAt, ...guruData } = data as any;
+  if (session.user.role !== "ADMIN" && session.user.unitSekolahId) {
+    guruData.unitSekolahId = session.user.unitSekolahId
+  }
   const jenisPtk = guruData.jenisPtk === "STAF" ? "STAF" : "GURU"
   const result = await prisma.guru.create({
     data: {
@@ -163,7 +166,17 @@ export async function editGuru(id: string, data: {
     throw new Error("Akses ditolak.")
   }
 
+  if (session.user.role !== "ADMIN" && session.user.unitSekolahId) {
+    const existing = await prisma.guru.findUnique({ where: { id }, select: { unitSekolahId: true } })
+    if (existing && existing.unitSekolahId !== session.user.unitSekolahId) {
+      throw new Error("Akses ditolak. Anda tidak memiliki izin mengubah data unit lain.")
+    }
+  }
+
   const { id: _, unitSekolah, rombelWali, createdAt, updatedAt, bidangStudi, ...guruData } = data as any;
+  if (session.user.role !== "ADMIN" && session.user.unitSekolahId) {
+    guruData.unitSekolahId = session.user.unitSekolahId
+  }
   const isStaf = guruData.jenisPtk === "STAF"
   const result = await prisma.guru.update({
     where: { id },

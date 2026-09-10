@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation"
 import { 
   Plus, Edit2, Trash2, BookOpen, Search, 
   School, Layers, CheckCircle2, ChevronRight,
-  Filter, Sparkles
+  Filter, Sparkles, Users
 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import { DeleteWarningModal } from "@/components/ui/DeleteWarningModal"
 import { Modal } from "@/components/ui/Modal"
 import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
@@ -168,12 +169,14 @@ export default function JurusanClient({
   }
 
   const majorToDelete = data.find(d => d.id === deleteId)
-  const isMajorInUse = Boolean(majorToDelete?._count?.subKelas && majorToDelete._count.subKelas > 0)
+  const majorSubKelasCount = majorToDelete?._count?.subKelas || (majorToDelete as any)?.subKelas?.length || 0
+  const majorMuridCount = (majorToDelete as any)?.subKelas?.reduce((acc: number, sk: any) => acc + (sk._count?.riwayatKelas || 0), 0) || 0
+  const isMajorBlocked = majorSubKelasCount > 0 || majorMuridCount > 0
 
   const handleDeleteConfirm = async () => {
     if (!deleteId) return
-    if (isMajorInUse) {
-      toast.error(`Tidak dapat menghapus jurusan "${majorToDelete?.name}" karena masih digunakan oleh ${majorToDelete?._count?.subKelas} kelas aktif.`)
+    if (isMajorBlocked) {
+      toast.error(`Tidak dapat menghapus jurusan "${majorToDelete?.name}" karena masih memiliki ${majorSubKelasCount} rombel dan ${majorMuridCount} siswa aktif.`)
       setDeleteId(null)
       return
     }
@@ -235,21 +238,36 @@ export default function JurusanClient({
 
   return (
     <div className="space-y-6">
-      {/* Delete Confirmation Modal */}
-      <ConfirmModal 
+      {/* Standardized Delete Warning / Confirmation Modal */}
+      <DeleteWarningModal 
         isOpen={!!deleteId}
-        title={isMajorInUse ? "Jurusan Masih Digunakan" : "Hapus Program / Jurusan"}
-        message={
-          isMajorInUse
-            ? `Peringatan: Program / Jurusan "${majorToDelete?.name}" (${majorToDelete?.code}) saat ini masih terhubung ke ${majorToDelete?._count?.subKelas} rombel/kelas aktif. Anda harus memindahkan atau menghapus rombel tersebut terlebih dahulu sebelum dapat menghapus jurusan ini.`
-            : `Apakah Anda yakin ingin menghapus program / jurusan "${majorToDelete?.name || ''}" (${majorToDelete?.code || ''})? Tindakan ini tidak dapat dibatalkan.`
-        }
-        confirmText={isMajorInUse ? "Tutup" : "Hapus Jurusan"}
-        confirmVariant={isMajorInUse ? "secondary" : "danger"}
-        cancelText={isMajorInUse ? "Batal" : "Batal"}
-        onCancel={() => setDeleteId(null)}
-        onConfirm={isMajorInUse ? () => setDeleteId(null) : handleDeleteConfirm}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDeleteConfirm}
         isLoading={isDeleting}
+        entityType="Program / Jurusan"
+        entityName={`${majorToDelete?.name || ""} (${majorToDelete?.code || ""})`}
+        unitName={units.find(u => u.id === majorToDelete?.unitSekolahId)?.name || (majorToDelete as any)?.unitSekolah?.name}
+        isBlocked={isMajorBlocked}
+        dependencies={[
+          ...(majorSubKelasCount > 0 ? [{
+            label: "Rombel / Kelas Terkait",
+            count: majorSubKelasCount,
+            icon: <Layers size={14} className="text-primary" />,
+            variant: "warning" as const
+          }] : []),
+          ...(majorMuridCount > 0 ? [{
+            label: "Siswa Aktif Terdaftar",
+            count: majorMuridCount,
+            icon: <Users size={14} className="text-rose-600" />,
+            variant: "danger" as const
+          }] : [])
+        ]}
+        blockedTitle="Jurusan Tidak Dapat Dihapus"
+        blockedMessage={`Program/Jurusan "${majorToDelete?.name || ''}" saat ini masih terhubung dengan rombel atau siswa aktif.`}
+        blockedSolution="Pindahkan atau mutasikan seluruh siswa dan rombel yang terhubung dengan jurusan ini terlebih dahulu sebelum menghapusnya."
+        confirmTitle="Hapus Program / Jurusan?"
+        confirmMessage={`Apakah Anda yakin ingin menghapus program / jurusan "${majorToDelete?.name || ''}" (${majorToDelete?.code || ''})? Data jurusan yang kosong akan dihapus permanen.`}
+        confirmButtonText="Hapus Jurusan"
       />
 
       {/* Add / Edit Major Modal */}

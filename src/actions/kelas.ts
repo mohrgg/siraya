@@ -70,6 +70,19 @@ export async function getJurusan(unitSekolahId?: string) {
     },
     include: { 
       unitSekolah: true,
+      subKelas: {
+        where: { isDeleted: false },
+        select: {
+          id: true,
+          _count: {
+            select: {
+              riwayatKelas: {
+                where: { isCurrent: true, murid: { status: "AKTIF" } }
+              }
+            }
+          }
+        }
+      },
       _count: {
         select: {
           subKelas: { where: { isDeleted: false } }
@@ -104,6 +117,19 @@ export async function tambahJurusan(data: { name: string, code: string, unitSeko
         },
         include: {
           unitSekolah: true,
+          subKelas: {
+            where: { isDeleted: false },
+            select: {
+              id: true,
+              _count: {
+                select: {
+                  riwayatKelas: {
+                    where: { isCurrent: true, murid: { status: "AKTIF" } }
+                  }
+                }
+              }
+            }
+          },
           _count: {
             select: { subKelas: { where: { isDeleted: false } } }
           }
@@ -121,6 +147,19 @@ export async function tambahJurusan(data: { name: string, code: string, unitSeko
     data,
     include: {
       unitSekolah: true,
+      subKelas: {
+        where: { isDeleted: false },
+        select: {
+          id: true,
+          _count: {
+            select: {
+              riwayatKelas: {
+                where: { isCurrent: true, murid: { status: "AKTIF" } }
+              }
+            }
+          }
+        }
+      },
       _count: {
         select: { subKelas: { where: { isDeleted: false } } }
       }
@@ -275,6 +314,19 @@ export async function editJurusan(id: string, data: { name: string, code: string
     data,
     include: {
       unitSekolah: true,
+      subKelas: {
+        where: { isDeleted: false },
+        select: {
+          id: true,
+          _count: {
+            select: {
+              riwayatKelas: {
+                where: { isCurrent: true, murid: { status: "AKTIF" } }
+              }
+            }
+          }
+        }
+      },
       _count: {
         select: { subKelas: { where: { isDeleted: false } } }
       }

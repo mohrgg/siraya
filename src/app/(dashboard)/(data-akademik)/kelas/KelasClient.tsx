@@ -9,6 +9,7 @@ import TabKelas from "./components/TabKelas"
 import TabSubKelas from "./components/TabSubKelas"
 import TabMurid from "./components/TabMurid"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import { DeleteWarningModal } from "@/components/ui/DeleteWarningModal"
 import { Button } from "@/components/ui/Button"
 import { X, Users, Layers, BarChart3, GraduationCap } from "lucide-react"
 import { TabNavigation } from "@/components/ui/TabNavigation"
@@ -292,59 +293,10 @@ export default function KelasClient({
   const isGradeLocked = Boolean(deleteData?.type === "tingkat" && targetGrade?._count?.subKelas && targetGrade._count.subKelas > 0)
   
   // Rombel terkunci jika masih memiliki siswa aktif
-  const isClassroomLocked = Boolean(deleteData?.type === "subkelas" && targetClassroom?._count?.riwayatKelas && targetClassroom._count.riwayatKelas > 0)
+  const classroomStudentCount = targetClassroom?._count?.riwayatKelas || (targetClassroom as any)?._count?.murid || 0
+  const isClassroomLocked = Boolean(deleteData?.type === "subkelas" && classroomStudentCount > 0)
 
   const isDeleteBlocked = isGradeLocked || isClassroomLocked
-
-  const getDeleteModalInfo = () => {
-    if (isGradeLocked) {
-      return {
-        title: "Tingkatan Masih Digunakan",
-        message: `Peringatan: Tingkatan "${targetGrade?.name}" masih terhubung dengan ${targetGrade?._count?.subKelas} rombel/kelas aktif. Anda harus memindahkan atau menghapus rombel tersebut terlebih dahulu.`,
-        confirmText: "Tutup",
-        confirmVariant: "secondary" as const,
-        cancelText: "Batal"
-      }
-    }
-    if (isClassroomLocked) {
-      const rombelLabel = `${targetClassroom?.tingkat?.name || ""} ${targetClassroom?.name || ""}`.trim()
-      return {
-        title: "Rombel Masih Memiliki Siswa",
-        message: `Peringatan: Rombel "${rombelLabel}" masih memiliki ${targetClassroom?._count?.riwayatKelas} siswa aktif di dalamnya. Pindahkan siswa ke rombel lain terlebih dahulu sebelum menghapus rombel ini.`,
-        confirmText: "Tutup",
-        confirmVariant: "secondary" as const,
-        cancelText: "Batal"
-      }
-    }
-    if (deleteData?.type === "murid") {
-      return {
-        title: "Hapus Siswa",
-        message: `Apakah Anda yakin ingin menghapus data siswa "${targetStudent?.name || ''}"? Data ini tidak dapat dikembalikan.`,
-        confirmText: "Hapus Siswa",
-        confirmVariant: "danger" as const,
-        cancelText: "Batal"
-      }
-    }
-    if (deleteData?.type === "subkelas") {
-      const rombelLabel = `${targetClassroom?.tingkat?.name || ""} ${targetClassroom?.name || ""}`.trim()
-      return {
-        title: "Hapus Rombel Kelas",
-        message: `Apakah Anda yakin ingin menghapus rombel "${rombelLabel}"? Pastikan rombel sudah kosong.`,
-        confirmText: "Hapus Rombel",
-        confirmVariant: "danger" as const,
-        cancelText: "Batal"
-      }
-    }
-    return {
-      title: "Hapus Tingkatan Kelas",
-      message: `Apakah Anda yakin ingin menghapus tingkatan "${targetGrade?.name || ''}"?`,
-      confirmText: "Hapus Tingkatan",
-      confirmVariant: "danger" as const,
-      cancelText: "Batal"
-    }
-  }
-
-  const deleteModalInfo = getDeleteModalInfo()
 
   const handleDeleteConfirm = async () => {
     if (!deleteData) return
@@ -449,16 +401,84 @@ export default function KelasClient({
 
   return (
     <div>
-      <ConfirmModal
+      {/* Standardized Delete Warning / Confirmation Modal */}
+      <DeleteWarningModal
         isOpen={!!deleteData}
-        title={deleteModalInfo.title}
-        message={deleteModalInfo.message}
-        confirmText={deleteModalInfo.confirmText}
-        confirmVariant={deleteModalInfo.confirmVariant}
-        cancelText={deleteModalInfo.cancelText}
-        onCancel={() => setDeleteData(null)}
+        onClose={() => setDeleteData(null)}
         onConfirm={isDeleteBlocked ? () => setDeleteData(null) : handleDeleteConfirm}
         isLoading={isDeleting}
+        entityType={
+          deleteData?.type === "subkelas" 
+            ? "Rombel Kelas" 
+            : deleteData?.type === "tingkat" 
+            ? "Tingkatan Kelas" 
+            : "Data Siswa"
+        }
+        entityName={
+          deleteData?.type === "subkelas"
+            ? `${targetClassroom?.tingkat?.name || ""} ${targetClassroom?.name || ""}`.trim()
+            : deleteData?.type === "tingkat"
+            ? targetGrade?.name || ""
+            : `${targetStudent?.name || ""} (NISN: ${targetStudent?.nisn || "-"})`
+        }
+        unitName={
+          deleteData?.type === "subkelas"
+            ? targetClassroom?.unitSekolah?.name
+            : deleteData?.type === "tingkat"
+            ? targetGrade?.unitSekolah?.name
+            : targetStudent?.unitSekolah?.name
+        }
+        isBlocked={isDeleteBlocked}
+        dependencies={[
+          ...(isClassroomLocked ? [{
+            label: "Siswa Aktif Terdaftar",
+            count: classroomStudentCount,
+            icon: <Users size={14} className="text-rose-600" />,
+            variant: "danger" as const
+          }] : []),
+          ...(isGradeLocked ? [{
+            label: "Rombel Terhubung",
+            count: targetGrade?._count?.subKelas || 0,
+            icon: <Layers size={14} className="text-primary" />,
+            variant: "warning" as const
+          }] : [])
+        ]}
+        blockedTitle={
+          isClassroomLocked 
+            ? "Rombel Tidak Dapat Dihapus" 
+            : "Tingkatan Tidak Dapat Dihapus"
+        }
+        blockedMessage={
+          isClassroomLocked
+            ? `Rombel "${targetClassroom?.name}" saat ini masih memiliki ${classroomStudentCount} siswa aktif di dalamnya.`
+            : `Tingkatan "${targetGrade?.name}" masih terhubung dengan ${targetGrade?._count?.subKelas || 0} rombel aktif.`
+        }
+        blockedSolution={
+          isClassroomLocked
+            ? "Pindahkan seluruh siswa di rombel ini ke rombel kelas lain terlebih dahulu sebelum menghapus rombel."
+            : "Pindahkan atau hapus seluruh rombel yang terdaftar di bawah tingkatan ini terlebih dahulu."
+        }
+        confirmTitle={
+          deleteData?.type === "subkelas"
+            ? "Hapus Rombel Kelas?"
+            : deleteData?.type === "tingkat"
+            ? "Hapus Tingkatan Kelas?"
+            : "Hapus Data Siswa?"
+        }
+        confirmMessage={
+          deleteData?.type === "subkelas"
+            ? `Apakah Anda yakin ingin menghapus rombel "${targetClassroom?.name}"? Rombel ini sudah kosong (0 siswa) dan aman dihapus permanen.`
+            : deleteData?.type === "tingkat"
+            ? `Apakah Anda yakin ingin menghapus tingkatan "${targetGrade?.name}"? Data tingkatan yang kosong akan dihapus.`
+            : `Apakah Anda yakin ingin menghapus data siswa "${targetStudent?.name}"? Data ini tidak dapat dikembalikan.`
+        }
+        confirmButtonText={
+          deleteData?.type === "subkelas"
+            ? "Hapus Rombel"
+            : deleteData?.type === "tingkat"
+            ? "Hapus Tingkatan"
+            : "Hapus Siswa"
+        }
       />
 
       <ConfirmModal
