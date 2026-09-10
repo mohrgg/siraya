@@ -3,9 +3,10 @@
 import { useState, useMemo } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/Button"
-import { Plus, Edit2, Trash2, Layers, Book, BookOpen, Wallet, Receipt, Search, X } from "lucide-react"
+import { Plus, Edit2, Trash2, Layers, Book, BookOpen, Wallet, Receipt, Search, X, PowerOff } from "lucide-react"
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import { DeleteWarningModal } from "@/components/ui/DeleteWarningModal"
 import { SideDrawer } from "@/components/ui/SideDrawer"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 import { useSortableData } from "@/hooks/useSortableData"
@@ -16,7 +17,22 @@ import { TableScrollHint } from "@/components/ui/TableScrollHint"
 
 type Klasifikasi = { id: string, kode: string, nama: string }
 type SubKlasifikasi = { id: string, kode: string, nama: string, klasifikasiAkunId: string, klasifikasi?: Klasifikasi, _count?: { akunDetail: number } }
-type AkunDetail = { id: string, kode: string, nama: string, subKlasifikasiAkunId: string, unitSekolahId: string | null, isKasBank: boolean, isSPP: boolean, isActive: boolean, subKlasifikasi?: SubKlasifikasi, unitSekolah?: { id: string, name: string } | null }
+type AkunDetail = { 
+  id: string
+  kode: string
+  nama: string
+  subKlasifikasiAkunId: string
+  unitSekolahId: string | null
+  isKasBank: boolean
+  isSPP: boolean
+  isActive: boolean
+  subKlasifikasi?: SubKlasifikasi
+  unitSekolah?: { id: string, name: string } | null
+  _count?: {
+    tagihan: number
+    transaksiDetail: number
+  }
+}
 
 export default function AkunKeuanganClient({ 
   initialKlasifikasi, 
@@ -158,21 +174,6 @@ export default function AkunKeuanganClient({
     }
   }
 
-  const handleDeleteSubKlas = async () => {
-    if (!deleteSubKlasId) return
-    setIsDeleting(true)
-    try {
-      await hapusSubKlasifikasi(deleteSubKlasId)
-      setSubKlasifikasi(prev => prev.filter(s => s.id !== deleteSubKlasId))
-      toast.success("Subklasifikasi berhasil dihapus")
-    } catch (err: any) {
-      toast.error(err.message)
-    } finally {
-      setIsDeleting(false)
-      setDeleteSubKlasId(null)
-    }
-  }
-
   // ===================== HANDLERS UNTUK AKUN DETAIL =====================
   const handleEditAkun = (item: AkunDetail) => {
     setAkunForm({ 
@@ -219,18 +220,67 @@ export default function AkunKeuanganClient({
     }
   }
 
+  const targetAkun = akunDetail.find(a => a.id === deleteAkunId)
+  const akunTagihanCount = targetAkun?._count?.tagihan || 0
+  const akunTransaksiCount = targetAkun?._count?.transaksiDetail || 0
+  const isAkunBlocked = akunTagihanCount > 0 || akunTransaksiCount > 0
+
+  const targetSubKlas = subKlasifikasi.find(s => s.id === deleteSubKlasId)
+  const subKlasAkunCount = targetSubKlas?._count?.akunDetail || 0
+  const isSubKlasBlocked = subKlasAkunCount > 0
+
+  const handleDeactivateAkun = async () => {
+    if (!deleteAkunId || !targetAkun) return
+    setIsDeleting(true)
+    try {
+      await editAkunDetail(deleteAkunId, { isActive: false })
+      setAkunDetail(prev => prev.map(a => a.id === deleteAkunId ? { ...a, isActive: false } : a))
+      toast.success(`Akun "${targetAkun.kode} - ${targetAkun.nama}" berhasil dinonaktifkan.`)
+      setDeleteAkunId(null)
+    } catch (err: any) {
+      toast.error(err.message || "Gagal menonaktifkan akun.")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   const handleDeleteAkun = async () => {
     if (!deleteAkunId) return
+    if (isAkunBlocked) {
+      toast.error(`Akun tidak dapat dihapus karena masih digunakan oleh tagihan atau transaksi keuangan.`)
+      setDeleteAkunId(null)
+      return
+    }
     setIsDeleting(true)
     try {
       await hapusAkunDetail(deleteAkunId)
       setAkunDetail(prev => prev.filter(a => a.id !== deleteAkunId))
       toast.success("Akun berhasil dihapus")
+      setDeleteAkunId(null)
     } catch (err: any) {
       toast.error(err.message)
     } finally {
       setIsDeleting(false)
-      setDeleteAkunId(null)
+    }
+  }
+
+  const handleDeleteSubKlas = async () => {
+    if (!deleteSubKlasId) return
+    if (isSubKlasBlocked) {
+      toast.error(`Subklasifikasi tidak dapat dihapus karena masih memiliki ${subKlasAkunCount} akun detail.`)
+      setDeleteSubKlasId(null)
+      return
+    }
+    setIsDeleting(true)
+    try {
+      await hapusSubKlasifikasi(deleteSubKlasId)
+      setSubKlasifikasi(prev => prev.filter(s => s.id !== deleteSubKlasId))
+      toast.success("Subklasifikasi berhasil dihapus")
+      setDeleteSubKlasId(null)
+    } catch (err: any) {
+      toast.error(err.message)
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -248,9 +298,65 @@ export default function AkunKeuanganClient({
 
   return (
     <div>
-      {/* Delete Modals */}
-      <ConfirmModal isOpen={!!deleteSubKlasId} title="Hapus Subklasifikasi" message="Yakin ingin menghapus subklasifikasi ini? Tindakan ini tidak dapat dibatalkan." onCancel={() => setDeleteSubKlasId(null)} onConfirm={handleDeleteSubKlas} isLoading={isDeleting} />
-      <ConfirmModal isOpen={!!deleteAkunId} title="Hapus Akun" message="Yakin ingin menghapus akun keuangan ini?" onCancel={() => setDeleteAkunId(null)} onConfirm={handleDeleteAkun} isLoading={isDeleting} />
+      {/* Standardized Delete Modals for Financial Entities */}
+      <DeleteWarningModal
+        isOpen={!!deleteSubKlasId}
+        onClose={() => setDeleteSubKlasId(null)}
+        onConfirm={handleDeleteSubKlas}
+        isLoading={isDeleting}
+        entityType="Subklasifikasi Akun"
+        entityName={`${targetSubKlas?.kode || ""} - ${targetSubKlas?.nama || ""}`}
+        isBlocked={isSubKlasBlocked}
+        dependencies={subKlasAkunCount > 0 ? [{
+          label: "Akun Detail Terkait",
+          count: subKlasAkunCount,
+          icon: <BookOpen size={14} className="text-primary" />,
+          variant: "warning"
+        }] : []}
+        blockedTitle="Subklasifikasi Tidak Dapat Dihapus"
+        blockedMessage={`Subklasifikasi "${targetSubKlas?.nama || ''}" masih menaungi ${subKlasAkunCount} akun detail.`}
+        blockedSolution="Pindahkan atau hapus akun-akun detail di bawah subklasifikasi ini terlebih dahulu sebelum menghapusnya."
+        confirmTitle="Hapus Subklasifikasi Akun?"
+        confirmMessage={`Apakah Anda yakin ingin menghapus subklasifikasi "${targetSubKlas?.kode} - ${targetSubKlas?.nama}"? Tindakan ini tidak dapat dibatalkan.`}
+        confirmButtonText="Hapus Subklasifikasi"
+      />
+
+      <DeleteWarningModal
+        isOpen={!!deleteAkunId}
+        onClose={() => setDeleteAkunId(null)}
+        onConfirm={handleDeleteAkun}
+        isLoading={isDeleting}
+        entityType="Akun Keuangan"
+        entityName={`${targetAkun?.kode || ""} - ${targetAkun?.nama || ""}`}
+        unitName={targetAkun?.unitSekolah?.name || (targetAkun?.unitSekolahId ? "Unit Terpilih" : "Global")}
+        isBlocked={isAkunBlocked}
+        dependencies={[
+          ...(akunTagihanCount > 0 ? [{
+            label: "Tagihan Terkait",
+            count: akunTagihanCount,
+            icon: <Receipt size={14} className="text-rose-600" />,
+            variant: "danger" as const
+          }] : []),
+          ...(akunTransaksiCount > 0 ? [{
+            label: "Transaksi Kas Terkait",
+            count: akunTransaksiCount,
+            icon: <Wallet size={14} className="text-amber-600" />,
+            variant: "warning" as const
+          }] : [])
+        ]}
+        secondaryAction={isAkunBlocked && targetAkun?.isActive ? {
+          label: "Nonaktifkan Akun",
+          onClick: handleDeactivateAkun,
+          isLoading: isDeleting,
+          icon: <PowerOff size={15} />
+        } : undefined}
+        blockedTitle="Akun Keuangan Tidak Dapat Dihapus"
+        blockedMessage={`Akun "${targetAkun?.kode} - ${targetAkun?.nama}" memiliki riwayat transaksi/tagihan dalam pembukuan.`}
+        blockedSolution="Sesuai prinsip akuntansi, akun dengan riwayat transaksi tidak boleh dihapus agar integritas laporan keuangan tetap terjaga. Anda dapat menonaktifkan akun ini agar tidak muncul lagi dalam opsi transaksi atau tagihan baru."
+        confirmTitle="Hapus Akun Keuangan?"
+        confirmMessage={`Apakah Anda yakin ingin menghapus akun "${targetAkun?.kode} - ${targetAkun?.nama}"? Akun yang belum memiliki riwayat transaksi ini akan dihapus permanen.`}
+        confirmButtonText="Hapus Akun"
+      />
 
       {/* Drawer SubKlasifikasi */}
       <SideDrawer

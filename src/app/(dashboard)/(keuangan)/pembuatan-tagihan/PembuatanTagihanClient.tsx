@@ -22,6 +22,7 @@ import toast from "react-hot-toast"
 import ModalTambahTagihan from "./ModalTambahTagihan"
 import ModalEditTagihanKolom from "./ModalEditTagihanKolom"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
+import { DeleteWarningModal } from "@/components/ui/DeleteWarningModal"
 import { 
   Toolbar, 
   ToolbarSearch, 
@@ -408,8 +409,19 @@ export default function PembuatanTagihanClient({
     }
   }
 
+  const deletingColPaidCount = deletingCol ? gridData.filter(row => {
+    const compId = `${deletingCol.akunId}::${deletingCol.namaTagihan}`
+    return row.lockedMap[compId] // true if paid or partially paid
+  }).length : 0
+  const isDeletingColBlocked = deletingColPaidCount > 0
+
   const handleHapusMassal = async () => {
     if (!deletingCol || !subKelasId || !activeTahunAkademikId) return
+    if (isDeletingColBlocked) {
+      toast.error(`Tagihan "${deletingCol.nama}" tidak dapat dihapus karena sudah memiliki riwayat pembayaran siswa.`)
+      setIsDeleteModalOpen(false)
+      return
+    }
     setIsDeletingMassal(true)
     try {
       await hapusTagihanMassal(subKelasId, activeTahunAkademikId, deletingCol.akunId, deletingCol.namaTagihan)
@@ -1001,15 +1013,26 @@ export default function PembuatanTagihanClient({
         }) : false}
       />
       {/* Modal Hapus Massal */}
-      <ConfirmModal
+      <DeleteWarningModal
         isOpen={isDeleteModalOpen}
-        onCancel={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleHapusMassal}
-        title="Hapus Kolom Tagihan"
-        message={`Apakah Anda yakin ingin menghapus tagihan ${deletingCol?.nama} dari seluruh siswa di subkelas ini? Aksi ini akan menghapus semua riwayat tagihan tersebut yang belum dibayar.`}
-        confirmText="Hapus Tagihan"
-        cancelText="Batal"
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={isDeletingColBlocked ? () => setIsDeleteModalOpen(false) : handleHapusMassal}
         isLoading={isDeletingMassal}
+        entityType="Komponen Tagihan"
+        entityName={deletingCol?.nama || ""}
+        isBlocked={isDeletingColBlocked}
+        dependencies={deletingColPaidCount > 0 ? [{
+          label: "Siswa Sudah Membayar",
+          count: deletingColPaidCount,
+          icon: <Users size={14} className="text-rose-600" />,
+          variant: "danger"
+        }] : []}
+        blockedTitle="Tagihan Tidak Dapat Dihapus"
+        blockedMessage={`Komponen tagihan "${deletingCol?.nama}" sudah memiliki riwayat pembayaran dari ${deletingColPaidCount} siswa.`}
+        blockedSolution="Sesuai prinsip akuntansi, tagihan yang memiliki riwayat pembayaran tidak dapat dihapus untuk menjaga keaslian buku kas. Anda dapat mengubah nama/keterangannya atau melakukan penyesuaian kas."
+        confirmTitle="Hapus Komponen Tagihan?"
+        confirmMessage={`Apakah Anda yakin ingin menghapus tagihan "${deletingCol?.nama}" dari seluruh siswa di subkelas ini? Tagihan yang belum pernah dibayar ini akan dihapus permanen.`}
+        confirmButtonText="Hapus Tagihan"
       />
 
       <ModalTambahTagihan

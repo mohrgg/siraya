@@ -145,14 +145,25 @@ export async function hapusSubKlasifikasi(id: string) {
   const tenant = await getTenantContext()
   if (tenant.role === "KEPALA_SEKOLAH" || tenant.role === "YAYASAN") throw new Error("Akses ditolak (Read-Only).")
 
-  const current = await prisma.subKlasifikasiAkun.findUnique({ where: { id } })
+  const current = await prisma.subKlasifikasiAkun.findUnique({ 
+    where: { id },
+    include: {
+      _count: {
+        select: { akunDetail: true }
+      }
+    }
+  })
   if (!current) throw new Error("Subklasifikasi tidak ditemukan.")
 
   if (tenant.role === "TATA_USAHA" && current.unitSekolahId !== tenant.unitId) {
     throw new Error("Anda hanya dapat menghapus data unit Anda sendiri.")
   }
 
-  // Prisma akan throw error jika ada relasi (karena onDelete: Restrict)
+  const akunCount = current._count?.akunDetail || 0
+  if (akunCount > 0) {
+    throw new Error(`Tidak dapat menghapus subklasifikasi '${current.kode} - ${current.nama}' karena masih memiliki ${akunCount} akun detail di bawahnya. Pindahkan atau hapus akun detail terkait terlebih dahulu.`)
+  }
+
   try {
     const result = await prisma.subKlasifikasiAkun.delete({
       where: { id }
@@ -170,7 +181,7 @@ export async function hapusSubKlasifikasi(id: string) {
     revalidatePath("/akun-keuangan")
     return result
   } catch (error: any) {
-    if (error.code === 'P2003') throw new Error("Tidak dapat menghapus subklasifikasi karena masih memiliki akun detail.")
+    if (error.code === 'P2003') throw new Error("Tidak dapat menghapus subklasifikasi karena masih memiliki data terkait.")
     throw error
   }
 }
@@ -191,7 +202,13 @@ export async function getAkunDetail(unitId?: string) {
           klasifikasi: true
         }
       },
-      unitSekolah: true
+      unitSekolah: true,
+      _count: {
+        select: {
+          tagihan: true,
+          transaksiDetail: true
+        }
+      }
     },
     orderBy: { kode: "asc" }
   })
@@ -288,26 +305,55 @@ export async function hapusAkunDetail(id: string) {
   const tenant = await getTenantContext()
   if (tenant.role === "KEPALA_SEKOLAH" || tenant.role === "YAYASAN") throw new Error("Akses ditolak (Read-Only).")
 
-  const current = await prisma.akunDetail.findUnique({ where: { id } })
+  const current = await prisma.akunDetail.findUnique({ 
+    where: { id },
+    include: {
+      _count: {
+        select: {
+          tagihan: true,
+          transaksiDetail: true
+        }
+      }
+    }
+  })
   if (!current) throw new Error("Akun tidak ditemukan")
 
   if (tenant.role === "TATA_USAHA" && current.unitSekolahId !== tenant.unitId) {
     throw new Error("Anda hanya dapat menghapus akun milik unit Anda sendiri.")
   }
 
-  const result = await prisma.akunDetail.delete({
-    where: { id }
-  })
+  const countTagihan = current._count?.tagihan || 0
+  const countTransaksi = current._count?.transaksiDetail || 0
 
-  await prisma.logAktivitas.create({
-    data: {
-      penggunaId: tenant.user.id,
-      aksi: "DELETE",
-      modul: "AKUN_KEUANGAN",
-      keterangan: `Menghapus Akun Detail: ${result.kode} - ${result.nama}`
+  if (countTagihan > 0 || countTransaksi > 0) {
+    const detailList = []
+    if (countTagihan > 0) detailList.push(`${countTagihan} tagihan`)
+    if (countTransaksi > 0) detailList.push(`${countTransaksi} transaksi keuangan`)
+    throw new Error(
+      `Akun '${current.kode} - ${current.nama}' tidak dapat dihapus karena masih digunakan oleh ${detailList.join(" dan ")}. Sebagai alternatif, silakan nonaktifkan akun ini.`
+    )
+  }
+
+  try {
+    const result = await prisma.akunDetail.delete({
+      where: { id }
+    })
+
+    await prisma.logAktivitas.create({
+      data: {
+        penggunaId: tenant.user.id,
+        aksi: "DELETE",
+        modul: "AKUN_KEUANGAN",
+        keterangan: `Menghapus Akun Detail: ${result.kode} - ${result.nama}`
+      }
+    })
+
+    revalidatePath("/akun-keuangan")
+    return result
+  } catch (error: any) {
+    if (error.code === 'P2003') {
+      throw new Error(`Tidak dapat menghapus akun '${current.kode} - ${current.nama}' karena masih memiliki data tagihan atau transaksi terkait.`)
     }
-  })
-
-  revalidatePath("/akun-keuangan")
-  return result
+    throw error
+  }
 }

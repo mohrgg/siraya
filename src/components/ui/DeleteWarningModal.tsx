@@ -19,14 +19,22 @@ export interface DeleteWarningModalProps {
   isLoading?: boolean
   
   // Entity Info
-  entityType: string // e.g. "Program / Jurusan", "Rombel Kelas", "Tingkatan Kelas"
-  entityName: string // e.g. "Teknik Komputer & Jaringan", "X TKJ 1"
+  entityType: string // e.g. "Program / Jurusan", "Rombel Kelas", "Tingkatan Kelas", "Akun Keuangan"
+  entityName: string // e.g. "Teknik Komputer & Jaringan", "X TKJ 1", "4101 - SPP Bulanan"
   unitName?: string // e.g. "SMK Siraya"
   
   // Dependency / Blocking Status
-  isBlocked: boolean // True jika ada murid/rombel aktif sehingga TIDAK boleh dihapus
-  dependencies?: DeleteDependencyItem[] // e.g. [{ label: "Siswa Aktif", count: 32 }]
+  isBlocked: boolean // True jika ada murid/rombel/tagihan/transaksi aktif sehingga TIDAK boleh dihapus
+  dependencies?: DeleteDependencyItem[] // e.g. [{ label: "Tagihan Aktif", count: 32 }]
   
+  // Optional Direct Alternative Action on Blocked (e.g. Nonaktifkan Akun)
+  secondaryAction?: {
+    label: string
+    onClick: () => void
+    isLoading?: boolean
+    icon?: React.ReactNode
+  }
+
   // Custom texts (optional overrides)
   blockedTitle?: string
   blockedMessage?: string
@@ -47,6 +55,7 @@ export function DeleteWarningModal({
   unitName,
   isBlocked,
   dependencies = [],
+  secondaryAction,
   blockedTitle,
   blockedMessage,
   blockedSolution,
@@ -164,16 +173,28 @@ export function DeleteWarningModal({
               </div>
             </div>
 
-            {/* Single Close Button (No Yes/No Confusion) */}
-            <div className="flex justify-end">
+            {/* Action Buttons for Blocked State */}
+            <div className={`flex gap-3 ${secondaryAction ? "flex-col-reverse sm:flex-row justify-end" : "justify-end"}`}>
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="w-full py-2.5 rounded-xl font-bold border-border hover:bg-gray-100 text-text-main shadow-xs"
+                className={`py-2.5 rounded-xl font-bold border-border hover:bg-gray-100 text-text-main shadow-xs ${secondaryAction ? "flex-1" : "w-full"}`}
               >
                 Saya Mengerti &amp; Tutup
               </Button>
+              {secondaryAction && (
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={secondaryAction.onClick}
+                  isLoading={secondaryAction.isLoading}
+                  className="flex-1 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  {secondaryAction.icon}
+                  <span>{secondaryAction.label}</span>
+                </Button>
+              )}
             </div>
           </div>
         ) : (
@@ -214,7 +235,7 @@ export function DeleteWarningModal({
 
               <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg font-semibold mt-2">
                 <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-                <span>Bebas Keterikatan: 0 Siswa Aktif Terdaftar</span>
+                <span>Bebas Keterikatan: 0 Riwayat Terkait (Aman Dihapus)</span>
               </div>
             </div>
 

@@ -516,6 +516,24 @@ export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: st
   const muridIds = riwayatKelas.map(rk => rk.muridId)
 
   if (muridIds.length > 0) {
+    const paidCount = await prisma.tagihan.count({
+      where: {
+        tahunAkademikId,
+        akunId,
+        namaTagihan,
+        muridId: { in: muridIds },
+        OR: [
+          { status: "LUNAS" },
+          { status: "SEBAGIAN" },
+          { pembayaran: { some: {} } }
+        ]
+      }
+    })
+
+    if (paidCount > 0) {
+      throw new Error(`Tidak dapat menghapus tagihan '${namaTagihan}' karena terdapat ${paidCount} siswa yang sudah melakukan pembayaran. Tagihan dengan riwayat pembayaran tidak boleh dihapus.`)
+    }
+
     await prisma.tagihan.deleteMany({
       where: {
         tahunAkademikId,
