@@ -1,17 +1,20 @@
 import React from "react"
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "danger" | "outline"
+  variant?: "primary" | "secondary" | "danger" | "danger-soft" | "outline" | "ghost" | "neutral"
   size?: "sm" | "md" | "lg"
   isLoading?: boolean
   leftIcon?: React.ReactNode
 }
 
 const variants = {
-  primary: "bg-primary text-white hover:bg-primary-hover border border-transparent",
-  secondary: "bg-surface text-text-main hover:bg-surface-hover border border-border shadow-sm",
-  danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-transparent",
+  primary: "bg-primary text-white hover:bg-primary-hover border border-transparent shadow-xs",
+  secondary: "bg-surface text-text-main hover:bg-surface-hover border border-border shadow-xs",
+  danger: "bg-rose-600 text-white hover:bg-rose-700 border border-rose-600 shadow-sm shadow-rose-200/50",
+  "danger-soft": "bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200",
   outline: "bg-transparent text-primary hover:bg-primary/5 border border-primary",
+  ghost: "bg-transparent text-text-main hover:bg-gray-100 border border-transparent",
+  neutral: "bg-surface text-text-main hover:bg-surface-hover border border-border shadow-xs",
 }
 
 const sizes = {

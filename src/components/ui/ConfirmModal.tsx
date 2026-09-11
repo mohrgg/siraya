@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/Button'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Trash2, X } from 'lucide-react'
 
 interface ConfirmModalProps {
   isOpen: boolean
@@ -51,27 +51,79 @@ export function ConfirmModal({
 
   if (!isOpen || !mounted) return null
 
-  return createPortal(
-    <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
-      <div 
-        className="w-full max-w-sm bg-surface p-5 sm:p-6 rounded-2xl shadow-2xl border border-border animate-in zoom-in-95 duration-150 max-h-[calc(100dvh-32px)] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+  const isDanger = confirmVariant === "danger"
+  const isPrimary = confirmVariant === "primary"
 
-        <div className="flex items-center gap-3.5 sm:gap-4 mb-4">
-          <div className={`p-2.5 sm:p-3 rounded-xl sm:rounded-full shrink-0 ${confirmVariant === 'danger' ? 'bg-red-50 text-red-600' : 'bg-primary/10 text-primary'}`}>
-            <AlertTriangle size={22} />
+  return createPortal(
+    <div 
+      className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !isLoading) onCancel()
+      }}
+    >
+      <div 
+        className="w-full max-w-md bg-surface rounded-2xl shadow-2xl border border-border animate-in zoom-in-95 duration-150 overflow-hidden flex flex-col max-h-[calc(100dvh-32px)]"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        {/* Header: Konsisten dengan Standar Modal Siraya */}
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border bg-bg/50 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+              isDanger 
+                ? 'bg-rose-50 text-rose-600 border border-rose-100' 
+                : isPrimary
+                ? 'bg-primary/10 text-primary border border-primary/20'
+                : 'bg-amber-50 text-amber-600 border border-amber-200'
+            }`}>
+              {isDanger ? <Trash2 size={20} /> : <AlertTriangle size={20} />}
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-extrabold text-text-main m-0 leading-tight truncate">
+                {title}
+              </h3>
+              <p className="text-[11px] sm:text-xs text-text-muted mt-0.5 truncate">
+                Konfirmasi tindakan
+              </p>
+            </div>
           </div>
-          <h3 className="m-0 text-lg sm:text-xl font-bold text-text-main leading-tight">{title}</h3>
+          <button 
+            onClick={onCancel} 
+            disabled={isLoading}
+            className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+            type="button"
+            aria-label="Tutup"
+          >
+            <X size={20} />
+          </button>
         </div>
         
-        <p className="text-text-muted text-xs sm:text-sm mb-6 leading-relaxed">
-          {message}
-        </p>
+        {/* Body */}
+        <div className="p-4 sm:p-5 overflow-y-auto">
+          <p className="text-xs sm:text-sm text-text-muted leading-relaxed m-0 whitespace-pre-line">
+            {message}
+          </p>
+        </div>
 
-        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 sm:gap-3">
-          <Button variant="outline" onClick={onCancel} disabled={isLoading} className="w-full sm:w-auto min-h-[44px]">{cancelText}</Button>
-          <Button variant={confirmVariant as any} onClick={onConfirm} isLoading={isLoading} className="w-full sm:w-auto min-h-[44px]">{confirmText}</Button>
+        {/* Footer: Tombol Batal Netral vs Konfirmasi Solid */}
+        <div className="p-4 sm:p-5 border-t border-border bg-surface flex flex-col-reverse sm:flex-row justify-end gap-2.5">
+          <Button 
+            variant="secondary" 
+            onClick={onCancel} 
+            disabled={isLoading} 
+            className="w-full sm:w-auto font-semibold min-h-[42px]"
+          >
+            {cancelText}
+          </Button>
+          <Button 
+            variant={confirmVariant as any} 
+            onClick={onConfirm} 
+            isLoading={isLoading} 
+            className="w-full sm:w-auto font-bold min-h-[42px]"
+          >
+            {confirmText}
+          </Button>
         </div>
       </div>
     </div>,
