@@ -139,8 +139,8 @@ export async function POST(req: Request) {
       }
 
       if (finalNis) {
-        const existing = await prisma.murid.findUnique({
-          where: { nis: finalNis }
+        const existing = await prisma.murid.findFirst({
+          where: { nis: finalNis, isDeleted: false }
         })
 
         if (existing) {
@@ -152,6 +152,14 @@ export async function POST(req: Request) {
 
       try {
         await prisma.$transaction(async (tx) => {
+          // Release NIS from any legacy soft-deleted student to prevent unique constraint conflict
+          if (finalNis) {
+            await tx.murid.updateMany({
+              where: { nis: finalNis, isDeleted: true },
+              data: { nis: null }
+            })
+          }
+
           // Generate Custom Student ID
           const currentYear = new Date().getFullYear().toString();
           let dobStr = "000000";

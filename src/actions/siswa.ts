@@ -161,10 +161,17 @@ export async function tambahSiswa(data: any) {
     }
 
     if (finalNis) {
-      const existingMurid = await tx.murid.findUnique({ where: { nis: finalNis } })
+      const existingMurid = await tx.murid.findFirst({
+        where: { nis: finalNis, isDeleted: false }
+      })
       if (existingMurid) {
         throw new Error(`Siswa dengan NIS / NISN (${finalNis}) sudah terdaftar di sistem.`)
       }
+      // Release NIS from any legacy soft-deleted student to prevent unique constraint conflict
+      await tx.murid.updateMany({
+        where: { nis: finalNis, isDeleted: true },
+        data: { nis: null }
+      })
     }
 
     const { subKelasId, studentStatus, birthDate, riwayatKelas, unitSekolah, subKelas, createdAt, updatedAt, id, parentName, nis, ...muridData } = data as any;
@@ -251,10 +258,17 @@ export async function editSiswa(id: string, data: {
       
       // Check NIS uniqueness if it's being updated and not null
       if (finalNis) {
-        const existingMurid = await tx.murid.findUnique({ where: { nis: finalNis } })
+        const existingMurid = await tx.murid.findFirst({
+          where: { nis: finalNis, isDeleted: false }
+        })
         if (existingMurid && existingMurid.id !== id) {
           throw new Error(`Siswa dengan NIS / NISN (${finalNis}) sudah terdaftar di sistem.`)
         }
+        // Release NIS from any legacy soft-deleted student to prevent unique constraint conflict
+        await tx.murid.updateMany({
+          where: { nis: finalNis, isDeleted: true, id: { not: id } },
+          data: { nis: null }
+        })
       }
       muridData.nis = finalNis
     }
@@ -342,19 +356,46 @@ export async function importSiswaBulk(studentsData: any[]) {
 export async function hapusSiswa(id: string) {
   const session = await auth()
   if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
-  const result = await prisma.murid.update({
+
+  const student = await prisma.murid.findUnique({
     where: { id },
-    data: { 
-      isDeleted: true,
-      isActive: false,
-      status: "TERHAPUS"
+    include: {
+      tagihan: {
+        include: {
+          pembayaran: true
+        }
+      }
     }
   })
+
+  if (!student) throw new Error("Data siswa tidak ditemukan.")
+
+  const hasPayments = student.tagihan.some(t => t.pembayaran.length > 0)
+  let result: any
+
+  if (!hasPayments) {
+    // Siswa tanpa transaksi pembayaran (misal salah rombel/baru diimpor)
+    // Hapus permanen sehingga riwayatKelas dan draf tagihan bersih tuntas
+    result = await prisma.murid.delete({
+      where: { id }
+    })
+  } else {
+    // Siswa memiliki riwayat transaksi keuangan, pertahankan audit trail namun lepaskan NIS
+    result = await prisma.murid.update({
+      where: { id },
+      data: { 
+        isDeleted: true,
+        isActive: false,
+        status: "TERHAPUS",
+        nis: null
+      }
+    })
+  }
 
   await logAktivitas(
     "HAPUS_SISWA",
     "AKADEMIK_SISWA",
-    `Menghapus siswa: ${result.name} (NISN: ${result.nisn || "-"}, ID: ${id})`
+    `Menghapus siswa: ${result.name} (NIS: ${student.nis || "-"}, NISN: ${result.nisn || "-"}, ID: ${id})`
   )
 
   revalidatePath("/data-master")
@@ -365,23 +406,59 @@ export async function hapusSiswaBatch(ids: string[]) {
   const session = await auth()
   if (!session || !["ADMIN", "TATA_USAHA"].includes(session.user.role)) throw new Error("Akses ditolak.")
   
-  const result = await prisma.murid.updateMany({
+  const students = await prisma.murid.findMany({
     where: { id: { in: ids } },
-    data: { 
-      isDeleted: true,
-      isActive: false,
-      status: "TERHAPUS"
+    include: {
+      tagihan: {
+        include: {
+          pembayaran: true
+        }
+      }
     }
   })
+
+  const idsToHardDelete: string[] = []
+  const idsToSoftDelete: string[] = []
+
+  for (const s of students) {
+    const hasPayments = s.tagihan.some(t => t.pembayaran.length > 0)
+    if (hasPayments) {
+      idsToSoftDelete.push(s.id)
+    } else {
+      idsToHardDelete.push(s.id)
+    }
+  }
+
+  let totalDeleted = 0
+
+  if (idsToHardDelete.length > 0) {
+    const resHard = await prisma.murid.deleteMany({
+      where: { id: { in: idsToHardDelete } }
+    })
+    totalDeleted += resHard.count
+  }
+
+  if (idsToSoftDelete.length > 0) {
+    const resSoft = await prisma.murid.updateMany({
+      where: { id: { in: idsToSoftDelete } },
+      data: { 
+        isDeleted: true,
+        isActive: false,
+        status: "TERHAPUS",
+        nis: null
+      }
+    })
+    totalDeleted += resSoft.count
+  }
   
   await logAktivitas(
     "HAPUS_SISWA_MASSAL",
     "AKADEMIK_SISWA",
-    `Menghapus ${result.count} siswa secara massal`
+    `Menghapus ${totalDeleted} siswa secara massal (${idsToHardDelete.length} permanen, ${idsToSoftDelete.length} arsip)`
   )
 
   revalidatePath("/data-master")
-  return { success: result.count }
+  return { success: totalDeleted }
 }
 
 export async function promoteSiswaBatch(muridIds: string[], newSubKelasId: string, targetTahunAkademikId?: string) {
