@@ -534,7 +534,7 @@ export default function AkunKeuanganClient({
           </div>
         </div>
 
-        <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6">
           
           {/* Tabs Navigation */}
           <TabNavigation
@@ -547,23 +547,23 @@ export default function AkunKeuanganClient({
           />
 
           {/* Top Filter & Toolbar */}
-          <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
-            <div className="flex flex-wrap gap-3 items-center flex-1">
-              <div className="relative w-full md:w-44 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-6">
+            <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center flex-1">
+              <div className="relative w-full sm:w-64">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input 
                   type="text" 
                   placeholder="Cari kode atau nama..." 
-                  className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
+                  className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 min-h-[44px]"
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                 />
               </div>
               
               {isGlobal && (
-                <div className="flex-shrink-0">
+                <div className="w-full sm:w-auto">
                   <select
-                    className="px-3 py-2 bg-bg border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="w-full sm:w-auto px-3 py-2 bg-bg border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[44px]"
                     value={activeUnitId || ""}
                     onChange={(e) => {
                       const newUnit = e.target.value;
@@ -580,13 +580,13 @@ export default function AkunKeuanganClient({
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="w-full sm:w-auto">
               {!isReadOnly && activeTab === 'AKUN' && (
                 <Button onClick={() => {
                   const defaultSubId = subKlasifikasi[0]?.id || ""
                   setAkunForm({ id: "", kode: generateAkunKode(defaultSubId, akunDetail), nama: "", subKlasifikasiAkunId: defaultSubId, unitSekolahId: activeUnitId || "", isKasBank: false, isSPP: false, isActive: true })
                   setIsAkunDrawerOpen(true)
-                }} className="shrink-0">
+                }} className="w-full sm:w-auto min-h-[44px] justify-center">
                   <Plus size={16} className="mr-1.5"/> Tambah Akun
                 </Button>
               )}
@@ -595,7 +595,7 @@ export default function AkunKeuanganClient({
                   const defaultKlasId = klasifikasi[0]?.id || ""
                   setSubKlasForm({ id: "", kode: generateSubKlasKode(defaultKlasId, subKlasifikasi), nama: "", klasifikasiAkunId: defaultKlasId })
                   setIsSubKlasDrawerOpen(true)
-                }} className="shrink-0">
+                }} className="w-full sm:w-auto min-h-[44px] justify-center">
                   <Plus size={16} className="mr-1.5"/> Tambah Subklasifikasi
                 </Button>
               )}

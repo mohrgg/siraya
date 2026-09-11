@@ -204,14 +204,12 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
           href="/guru"
           label={isStaf ? "Kembali ke Daftar Staf" : "Kembali ke Daftar Guru"}
           shortLabel="Kembali"
-        />
-
-        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+        />        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
           <Button 
             variant="outline" 
             size="sm"
             onClick={handleCopyLink}
-            className="gap-2 text-xs font-semibold bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 justify-center"
+            className="gap-2 text-xs font-semibold bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 justify-center min-h-[44px] sm:min-h-[36px] touch-manipulation"
           >
             <Share2 size={15} /> <span className="truncate">Salin Tautan</span>
           </Button>
@@ -227,15 +225,15 @@ export default function GuruDetailClient({ initialData, isReadOnly = false, peng
             variant="outline" 
             size="sm"
             onClick={handlePrint}
-            className="gap-2 text-xs font-semibold bg-white hover:bg-gray-100 justify-center"
+            className="gap-2 text-xs font-semibold bg-white hover:bg-gray-100 justify-center min-h-[44px] sm:min-h-[36px] touch-manipulation"
           >
             <Printer size={15} /> <span className="truncate">Cetak Profil</span>
           </Button>
           {!isReadOnly && (
             <Button 
-              variant="primary"
+              variant="primary" 
               size="sm"
-              className="gap-2 text-xs font-bold shadow-sm col-span-2 sm:col-span-1 justify-center min-h-[38px]"
+              className="gap-2 text-xs font-bold shadow-sm col-span-2 sm:col-span-1 justify-center min-h-[44px] sm:min-h-[38px] touch-manipulation"
               onClick={() => setIsEditing(true)}
             >
               <Edit2 size={15} /> <span className="truncate">Edit Data {isStaf ? "Staf" : "Guru"}</span>

@@ -137,7 +137,7 @@ export default function UnitAuditSideDrawer({
   const avgSiswaPerRombel = activeUnit.rombel > 0 ? Math.round(activeUnit.total / activeUnit.rombel) : 0
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] overflow-hidden animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9990] overflow-hidden animate-in fade-in duration-200 touch-manipulation">
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
@@ -145,8 +145,11 @@ export default function UnitAuditSideDrawer({
         aria-hidden="true"
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex h-dvh max-h-dvh">
-        <div className="w-full sm:max-w-2xl bg-white shadow-2xl border-l border-slate-200 flex flex-col justify-between transform transition-all duration-300 ease-in-out h-full overflow-hidden">
+      <div className="fixed inset-y-0 right-0 max-w-full flex h-[100dvh] max-h-[100dvh]">
+        <div 
+          className="w-full sm:max-w-2xl bg-white shadow-2xl border-l border-slate-200 flex flex-col justify-between transform transition-all duration-300 ease-in-out h-full overflow-hidden pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
           
           {/* Header Panel */}
           <div className="p-4 sm:p-6 short:py-2.5 short:px-4 border-b border-slate-200/80 bg-slate-50/50 flex flex-col gap-3 sm:gap-4 short:gap-1.5">

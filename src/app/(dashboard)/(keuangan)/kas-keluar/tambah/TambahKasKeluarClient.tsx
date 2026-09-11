@@ -387,11 +387,11 @@ export default function TambahKasKeluarClient({ kasBankAccounts, pengeluaranAcco
         </div>
 
         {/* Action Bar (Sticky Bottom) */}
-        <div className="fixed bottom-14 md:bottom-0 left-0 right-0 md:left-[265px] bg-white/95 backdrop-blur-md border-t border-border p-3 sm:p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex justify-end gap-3 z-30">
+        <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-[265px] bg-white/95 backdrop-blur-md border-t border-border p-3 sm:p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex justify-end gap-3 z-30 md:pb-4">
           <Link href="/kas-keluar" className="flex-1 sm:flex-initial">
-            <Button type="button" variant="outline" className="w-full min-w-[100px] min-h-[38px]">Batal</Button>
+            <Button type="button" variant="outline" className="w-full min-w-[100px] min-h-[44px]">Batal</Button>
           </Link>
-          <Button type="submit" isLoading={isSubmitting} className="flex-1 sm:flex-initial min-w-[150px] min-h-[38px] shadow-md shadow-primary/20">
+          <Button type="submit" isLoading={isSubmitting} className="flex-1 sm:flex-initial min-w-[150px] min-h-[44px] shadow-md shadow-primary/20">
             <Save size={16} className="mr-1.5" /> Simpan Transaksi
           </Button>
         </div>

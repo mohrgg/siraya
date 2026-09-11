@@ -196,7 +196,8 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
               variant="outline"
               size="sm" 
               onClick={handleExportExcel}
-              className="flex-1 sm:flex-initial justify-center opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm cursor-pointer min-h-[38px] sm:min-h-[36px]"
+              className="flex-1 sm:flex-initial justify-center opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm cursor-pointer min-h-[44px] sm:min-h-[36px]"
+              disabled={matrixRows.length === 0}
             >
               <FileSpreadsheet size={16} className="mr-1.5" /> Excel
             </Button>
@@ -204,7 +205,8 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
               variant="outline"
               size="sm" 
               onClick={handleExportPdf}
-              className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm cursor-pointer min-h-[38px] sm:min-h-[36px]"
+              className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm cursor-pointer min-h-[44px] sm:min-h-[36px]"
+              disabled={matrixRows.length === 0}
             >
               <FileText size={16} className="mr-1.5" /> PDF
             </Button>
@@ -212,7 +214,8 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
               variant="outline" 
               size="sm"
               onClick={handlePrint}
-              className="flex-1 sm:flex-initial justify-center font-semibold bg-surface hover:bg-surface-hover shadow-sm border-gray-200 text-gray-700 cursor-pointer min-h-[38px] sm:min-h-[36px]"
+              className="flex-1 sm:flex-initial justify-center font-semibold bg-surface hover:bg-surface-hover shadow-sm border-gray-200 text-gray-700 cursor-pointer min-h-[44px] sm:min-h-[36px]"
+              disabled={matrixRows.length === 0}
             >
               <Printer size={16} className="mr-1.5" /> Cetak
             </Button>
@@ -221,16 +224,13 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
       />
 
       {/* Filter Card */}
-      <div className="bg-surface p-5 rounded-2xl shadow-sm border border-border mb-6">
+      <div className="bg-surface p-4 sm:p-5 rounded-2xl shadow-sm border border-border mb-6">
         <div className="text-sm font-semibold text-gray-600 mb-2">Filter Laporan</div>
-        <div className="flex flex-col md:flex-row items-center gap-4">
-          
-
-
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 sm:gap-4">
           <select 
             value={filterTingkatId}
             onChange={(e) => { setFilterTingkatId(e.target.value); setFilterSubKelasId("") }}
-            className="border border-border rounded-lg px-3 py-2 text-sm w-full md:w-auto bg-gray-50 focus:ring-emerald-500 focus:border-emerald-500"
+            className="border border-border rounded-xl px-3 py-2 text-sm w-full md:w-auto bg-gray-50 focus:ring-emerald-500 focus:border-emerald-500 min-h-[44px]"
           >
             <option value="">Semua Tingkat</option>
             {grades.filter((g: any) => !filterUnitId || g.unitSekolahId === filterUnitId).map((g: any) => (
@@ -241,7 +241,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
           <select 
             value={filterSubKelasId}
             onChange={(e) => setFilterSubKelasId(e.target.value)}
-            className="border border-border rounded-lg px-3 py-2 text-sm w-full md:w-auto bg-gray-50 focus:ring-emerald-500 focus:border-emerald-500"
+            className="border border-border rounded-xl px-3 py-2 text-sm w-full md:w-auto bg-gray-50 focus:ring-emerald-500 focus:border-emerald-500 min-h-[44px]"
           >
             <option value="">Semua Rombel</option>
             {classrooms.filter((c: any) => 
@@ -252,7 +252,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
             ))}
           </select>
 
-          <Button onClick={fetchData} disabled={isLoading} className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 shadow-sm gap-2 whitespace-nowrap">
+          <Button onClick={fetchData} disabled={isLoading} className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 shadow-sm gap-2 whitespace-nowrap min-h-[44px]">
             {isLoading ? <RefreshCw className="animate-spin" size={16} /> : <Search size={16} />}
             Terapkan Filter
           </Button>

@@ -524,137 +524,156 @@ export default function PembuatanTagihanClient({
 
         {/* Tab 1: Filters and Actions Row for Class */}
         {activeTab === "class" && (
-          <Toolbar>
-            <ToolbarFilter
-              icon={<Filter size={14} />}
-              value={kelasId}
-              onChange={(val) => {
-                setKelasId(val as string)
-                setSubKelasId("")
-              }}
-              options={[
-                { label: "Pilih Kelas...", value: "" },
-                ...kelasList.map(kelas => ({ label: kelas.name, value: kelas.id }))
-              ]}
-            />
+          <Toolbar className="flex-col gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+              <div className="grid grid-cols-2 sm:flex gap-2.5 w-full sm:w-auto">
+                <ToolbarFilter
+                  icon={<Filter size={14} />}
+                  value={kelasId}
+                  onChange={(val) => {
+                    setKelasId(val as string)
+                    setSubKelasId("")
+                  }}
+                  options={[
+                    { label: "Pilih Kelas...", value: "" },
+                    ...kelasList.map(kelas => ({ label: kelas.name, value: kelas.id }))
+                  ]}
+                />
 
-            {jurusanList.length > 0 && (
-              <ToolbarFilter
-                value={jurusanId}
-                onChange={(val) => {
-                  setJurusanId(val as string)
-                  setSubKelasId("")
-                }}
-                options={[
-                  { label: "Semua Jurusan", value: "" },
-                  ...jurusanList.map(jurusan => ({ label: jurusan.name, value: jurusan.id }))
-                ]}
-              />
-            )}
+                {jurusanList.length > 0 && (
+                  <ToolbarFilter
+                    value={jurusanId}
+                    onChange={(val) => {
+                      setJurusanId(val as string)
+                      setSubKelasId("")
+                    }}
+                    options={[
+                      { label: "Semua Jurusan", value: "" },
+                      ...jurusanList.map(jurusan => ({ label: jurusan.name, value: jurusan.id }))
+                    ]}
+                  />
+                )}
 
-            <ToolbarFilter
-              value={subKelasId}
-              onChange={(val) => setSubKelasId(val as string)}
-              disabled={!kelasId}
-              options={[
-                { label: kelasId ? "Pilih Subkelas..." : "Pilih Kelas Dulu", value: "" },
-                ...subKelasList.map(sk => ({ label: sk.name, value: sk.id }))
-              ]}
-            />
+                <ToolbarFilter
+                  value={subKelasId}
+                  onChange={(val) => setSubKelasId(val as string)}
+                  disabled={!kelasId}
+                  className={jurusanList.length > 0 ? "col-span-2 sm:col-span-1" : ""}
+                  options={[
+                    { label: kelasId ? "Pilih Subkelas..." : "Pilih Kelas Dulu", value: "" },
+                    ...subKelasList.map(sk => ({ label: sk.name, value: sk.id }))
+                  ]}
+                />
+              </div>
 
-            <Button 
-              size="sm"
-              variant="primary"
-              onClick={handleTampilkanKelas} 
-              disabled={!subKelasId || isLoading}
-            >
-              {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
-            </Button>
+              <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+                <Button 
+                  size="sm"
+                  variant="primary"
+                  onClick={handleTampilkanKelas} 
+                  disabled={!subKelasId || isLoading}
+                  className="min-h-[44px] justify-center"
+                >
+                  {isLoading ? <Loader2 size={16} className="animate-spin" /> : "Tampilkan"}
+                </Button>
 
-            {gridData.length > 0 && (
-              <ToolbarSearch 
-                value={filterQuery}
-                onChange={(e: any) => setFilterQuery(e.target.value)}
-                onClear={() => setFilterQuery("")}
-                placeholder="Filter nama siswa di rombel ini..." 
-              />
-            )}
+                {(kelasId || subKelasId || gridData.length > 0) && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleResetFilter}
+                    disabled={isLoading}
+                    title="Reset filter dan data"
+                    className="min-h-[44px] justify-center"
+                  >
+                    <RotateCcw size={14} className="mr-1.5" />
+                    Reset
+                  </Button>
+                )}
+              </div>
+            </div>
 
-            {(kelasId || subKelasId || gridData.length > 0) && (
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={handleResetFilter}
-                disabled={isLoading}
-                title="Reset filter dan data"
-              >
-                <RotateCcw size={14} className="mr-1.5" />
-                Reset
-              </Button>
-            )}
-
-            <ToolbarActions>
-              {!isReadOnly && gridData.length > 0 && (
-                <ToolbarAddButton onClick={() => setIsModalOpen(true)}>
-                  Tambah Tagihan
-                </ToolbarAddButton>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+              {gridData.length > 0 && (
+                <div className="w-full sm:max-w-md">
+                  <ToolbarSearch 
+                    value={filterQuery}
+                    onChange={(e: any) => setFilterQuery(e.target.value)}
+                    onClear={() => setFilterQuery("")}
+                    placeholder="Filter nama siswa di rombel ini..." 
+                  />
+                </div>
               )}
-            </ToolbarActions>
+
+              {!isReadOnly && gridData.length > 0 && (
+                <ToolbarActions className="w-full sm:w-auto sm:ml-auto">
+                  <ToolbarAddButton onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto min-h-[44px] justify-center">
+                    Tambah Tagihan
+                  </ToolbarAddButton>
+                </ToolbarActions>
+              )}
+            </div>
           </Toolbar>
         )}
 
         {/* Tab 2: Direct Search for Individual Student */}
         {activeTab === "search" && (
           <div className="mb-6">
-            <Toolbar>
-              <ToolbarSearch
-                value={searchQuery}
-                onChange={(e: any) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault()
-                    handleCariSiswa()
-                  }
-                }}
-                onClear={() => {
-                  setSearchQuery("")
-                  setLastSearchedQuery("")
-                  setGridData([])
-                }}
-                placeholder="Ketik Nama Siswa, NISN, atau No Formulir lalu tekan Enter..."
-                containerClassName="flex-1 max-w-md"
-              />
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => handleCariSiswa()}
-                disabled={!searchQuery.trim() || isLoading}
-              >
-                {isLoading ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Search size={16} className="mr-1.5" />}
-                Cari Siswa
-              </Button>
-              {(gridData.length > 0 || lastSearchedQuery) && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
+            <Toolbar className="flex-col sm:flex-row gap-2.5">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full">
+                <ToolbarSearch
+                  value={searchQuery}
+                  onChange={(e: any) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      handleCariSiswa()
+                    }
+                  }}
+                  onClear={() => {
                     setSearchQuery("")
                     setLastSearchedQuery("")
                     setGridData([])
                   }}
-                  disabled={isLoading}
-                >
-                  <RotateCcw size={14} className="mr-1.5" />
-                  Reset
-                </Button>
-              )}
-              <ToolbarActions>
-                {!isReadOnly && gridData.length > 0 && (
-                  <ToolbarAddButton onClick={() => setIsModalOpen(true)}>
+                  placeholder="Ketik Nama Siswa, NISN, atau No Formulir lalu tekan Enter..."
+                  containerClassName="w-full sm:max-w-md"
+                />
+                <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => handleCariSiswa()}
+                    disabled={!searchQuery.trim() || isLoading}
+                    className="min-h-[44px] justify-center"
+                  >
+                    {isLoading ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Search size={16} className="mr-1.5" />}
+                    Cari Siswa
+                  </Button>
+                  {(gridData.length > 0 || lastSearchedQuery) && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        setSearchQuery("")
+                        setLastSearchedQuery("")
+                        setGridData([])
+                      }}
+                      disabled={isLoading}
+                      className="min-h-[44px] justify-center"
+                    >
+                      <RotateCcw size={14} className="mr-1.5" />
+                      Reset
+                    </Button>
+                  )}
+                </div>
+              </div>
+              {!isReadOnly && gridData.length > 0 && (
+                <ToolbarActions className="w-full sm:w-auto sm:ml-auto">
+                  <ToolbarAddButton onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto min-h-[44px] justify-center">
                     Tambah Tagihan
                   </ToolbarAddButton>
-                )}
-              </ToolbarActions>
+                </ToolbarActions>
+              )}
             </Toolbar>
 
             {lastSearchedQuery && (

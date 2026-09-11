@@ -226,9 +226,9 @@ export default function TahunAkademikClient({
           <>
             <Button 
               type="button" 
-              variant="outline" 
+              variant="secondary" 
               onClick={() => setIsModalOpen(false)} 
-              className="w-full sm:w-auto min-h-[44px] font-semibold"
+              className="w-full sm:w-auto min-h-[44px] touch-manipulation font-semibold"
             >
               Batal
             </Button>
@@ -236,7 +236,7 @@ export default function TahunAkademikClient({
               type="submit" 
               form="form-tahun-akademik" 
               isLoading={isSubmitting} 
-              className="w-full sm:w-auto min-h-[44px] font-bold shadow-sm shadow-primary/20"
+              className="w-full sm:w-auto min-h-[44px] touch-manipulation font-bold shadow-sm shadow-primary/20"
             >
               {formData.id ? "Simpan Perubahan" : "Simpan Tahun Ajaran"}
             </Button>
@@ -342,29 +342,27 @@ export default function TahunAkademikClient({
       )}
 
       {/* Main Unified Card */}
-      <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-3.5 sm:p-6">
         <TabNavigation
           tabs={[{ id: "tahun", label: "Daftar Tahun Akademik", icon: Calendar, badge: initialData.length }]}
         />
 
         {/* Toolbar: Search & Add Button */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="flex flex-wrap gap-3 items-center flex-1 w-full sm:w-auto">
-            <div className="relative w-full sm:w-64">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-              <input
-                type="text"
-                placeholder="Cari tahun ajaran..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
-              />
-            </div>
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2.5 sm:gap-4 mb-4 sm:mb-6">
+          <div className="relative w-full sm:w-64">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Cari tahun ajaran..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-10 py-2.5 sm:py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 min-h-[44px] sm:min-h-[38px] touch-manipulation"
+            />
           </div>
 
           {!isReadOnly && (
             <div className="shrink-0 w-full sm:w-auto">
-              <Button onClick={handleOpenAddModal} className="w-full sm:w-auto flex items-center justify-center bg-primary text-white hover:bg-primary/90 shadow-sm">
+              <Button onClick={handleOpenAddModal} className="w-full sm:w-auto flex items-center justify-center bg-primary text-white hover:bg-primary/90 shadow-sm min-h-[44px] sm:min-h-[38px] font-bold touch-manipulation">
                 <Plus size={16} className="mr-1.5" />
                 <span>Tambah Tahun Akademik</span>
               </Button>

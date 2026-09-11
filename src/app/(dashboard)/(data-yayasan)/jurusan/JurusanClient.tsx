@@ -373,7 +373,7 @@ export default function JurusanClient({
       </Modal>
 
       {/* Main Unified Card */}
-      <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6">
         <TabNavigation
           tabs={[{ id: "jurusan", label: "Daftar Program / Jurusan", icon: BookOpen, badge: data.length }]}
         />
@@ -389,7 +389,7 @@ export default function JurusanClient({
               <button
                 type="button"
                 onClick={() => setSelectedPillUnitId("all")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer min-h-[38px] ${
                   selectedPillUnitId === "all"
                     ? "bg-primary text-white shadow-xs"
                     : "bg-bg text-text-muted hover:text-text-main hover:bg-gray-100 border border-border"
@@ -409,7 +409,7 @@ export default function JurusanClient({
                     key={u.id}
                     type="button"
                     onClick={() => setSelectedPillUnitId(u.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer min-h-[38px] ${
                       isSelected
                         ? "bg-primary text-white shadow-xs"
                         : "bg-bg text-text-muted hover:text-text-main hover:bg-gray-100 border border-border"
@@ -427,7 +427,7 @@ export default function JurusanClient({
         )}
 
         {/* Toolbar: Search & Add Button */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-6">
           <div className="flex flex-wrap gap-3 items-center flex-1 w-full sm:w-auto">
             <div className="relative w-full sm:w-72">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -436,7 +436,7 @@ export default function JurusanClient({
                 placeholder="Cari kode atau nama jurusan..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
+                className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 min-h-[44px]"
               />
             </div>
           </div>
@@ -445,7 +445,7 @@ export default function JurusanClient({
             <div className="shrink-0 w-full sm:w-auto">
               <Button 
                 onClick={() => handleOpenAddModal()} 
-                className="w-full sm:w-auto flex items-center justify-center bg-primary text-white hover:bg-primary/90 shadow-sm"
+                className="w-full sm:w-auto flex items-center justify-center bg-primary text-white hover:bg-primary/90 shadow-sm min-h-[44px]"
               >
                 <Plus size={16} className="mr-1.5" />
                 <span>Tambah Program/Jurusan</span>

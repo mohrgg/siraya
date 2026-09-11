@@ -178,7 +178,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
         subtitle="Kelola identitas yayasan, format penomoran, rekening, dan pencadangan data."
         action={
           activeTab !== "backup" ? (
-            <Button onClick={handleSave} disabled={isSubmitting} className="w-full sm:w-auto">
+            <Button onClick={handleSave} disabled={isSubmitting} className="w-full sm:w-auto min-h-[44px]">
               <Save size={16} className="mr-2" />
               {isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
             </Button>
@@ -534,7 +534,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                   Unduh data krusial sistem ke format Multi-Sheet Excel (.xlsx) atau Snapshot JSON (.json).
                 </p>
               </div>
-              <Button onClick={handleBackup} disabled={isBackingUp || selectedModules.length === 0} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all">
+              <Button onClick={handleBackup} disabled={isBackingUp || selectedModules.length === 0} className="w-full sm:w-auto min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all">
                 {isBackingUp ? <span className="animate-pulse">Memproses...</span> : <><Download size={18} className="mr-2" /> Unduh Backup ({backupFormat === "excel" ? "Excel" : "JSON"})</>}
               </Button>
             </div>
@@ -552,7 +552,7 @@ export default function PengaturanClient({ initialSettings, units = [] }: { init
                   <select 
                     value={backupUnitId}
                     onChange={(e) => setBackupUnitId(e.target.value)}
-                    className="w-full bg-white border border-blue-200 text-blue-900 rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full bg-white border border-blue-200 text-blue-900 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
                   >
                     <option value="GLOBAL">Seluruh Yayasan (Semua Unit)</option>
                     {sortedUnits.map((u: any) => (

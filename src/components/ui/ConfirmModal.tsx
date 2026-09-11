@@ -1,4 +1,5 @@
 "use client"
+
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/Button'
@@ -56,19 +57,20 @@ export function ConfirmModal({
 
   return createPortal(
     <div 
-      className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 bg-black/60 z-[10000] flex items-center justify-center p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xs animate-in fade-in duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isLoading) onCancel()
       }}
+      aria-hidden="true"
     >
       <div 
-        className="w-full max-w-md bg-surface rounded-2xl shadow-2xl border border-border animate-in zoom-in-95 duration-150 overflow-hidden flex flex-col max-h-[calc(100dvh-32px)]"
+        className="w-full max-w-md bg-surface rounded-2xl shadow-2xl border border-border animate-in zoom-in-95 duration-150 overflow-hidden flex flex-col max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.5rem)] relative z-10 pointer-events-auto"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
       >
         {/* Header: Konsisten dengan Standar Modal Siraya */}
-        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border bg-bg/50 shrink-0">
+        <div className="flex items-center justify-between p-3.5 sm:p-5 border-b border-border bg-bg/50 shrink-0 gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
               isDanger 
@@ -91,7 +93,7 @@ export function ConfirmModal({
           <button 
             onClick={onCancel} 
             disabled={isLoading}
-            className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+            className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
             type="button"
             aria-label="Tutup"
           >
@@ -100,19 +102,19 @@ export function ConfirmModal({
         </div>
         
         {/* Body */}
-        <div className="p-4 sm:p-5 overflow-y-auto">
+        <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain">
           <p className="text-xs sm:text-sm text-text-muted leading-relaxed m-0 whitespace-pre-line">
             {message}
           </p>
         </div>
 
         {/* Footer: Tombol Batal Netral vs Konfirmasi Solid */}
-        <div className="p-4 sm:p-5 border-t border-border bg-surface flex flex-col-reverse sm:flex-row justify-end gap-2.5">
+        <div className="p-3.5 sm:p-5 border-t border-border bg-surface flex flex-col-reverse sm:flex-row justify-end gap-2.5">
           <Button 
             variant="secondary" 
             onClick={onCancel} 
             disabled={isLoading} 
-            className="w-full sm:w-auto font-semibold min-h-[42px]"
+            className="w-full sm:w-auto font-semibold min-h-[44px] touch-manipulation"
           >
             {cancelText}
           </Button>
@@ -120,7 +122,7 @@ export function ConfirmModal({
             variant={confirmVariant as any} 
             onClick={onConfirm} 
             isLoading={isLoading} 
-            className="w-full sm:w-auto font-bold min-h-[42px]"
+            className="w-full sm:w-auto font-bold min-h-[44px] touch-manipulation"
           >
             {confirmText}
           </Button>

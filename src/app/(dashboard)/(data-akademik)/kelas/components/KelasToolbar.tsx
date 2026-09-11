@@ -62,7 +62,7 @@ export default function KelasToolbar({
       )}
         
       {(activeTab === "murid" || activeTab === "alumni") && (
-        <>
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
           <ToolbarFilter
             value={filterMuridTingkat}
             onChange={(val) => { setFilterMuridTingkat(val); setFilterMuridSubKelas("") }}
@@ -108,17 +108,22 @@ export default function KelasToolbar({
           )}
 
           {(searchTerm || filterMuridTingkat || filterMuridJurusan || filterMuridSubKelas || (activeTab === 'alumni' && filterAlumniStatus !== "NON_AKTIF")) && (
-            <Button variant="outline" size="sm" onClick={() => {
-              setSearchTerm("")
-              setFilterMuridTingkat("")
-              setFilterMuridJurusan("")
-              setFilterMuridSubKelas("")
-              if (activeTab === 'alumni') setFilterAlumniStatus("NON_AKTIF")
-            }}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="col-span-2 sm:col-span-1 min-h-[44px] sm:min-h-[36px] w-full sm:w-auto touch-manipulation font-semibold justify-center"
+              onClick={() => {
+                setSearchTerm("")
+                setFilterMuridTingkat("")
+                setFilterMuridJurusan("")
+                setFilterMuridSubKelas("")
+                if (activeTab === 'alumni') setFilterAlumniStatus("NON_AKTIF")
+              }}
+            >
               Reset Filter
             </Button>
           )}
-        </>
+        </div>
       )}
 
       <ToolbarActions>

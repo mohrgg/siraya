@@ -227,7 +227,7 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
         </div>
       )}
 
-      <div className="bg-surface rounded-2xl shadow-sm border border-border p-6">
+      <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6">
         
         {/* Tabs Navigation */}
         <TabNavigation
@@ -235,45 +235,50 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
         />
 
         {/* Filters and Actions */}
-        <Toolbar>
-          <ToolbarSearch 
-            value={searchTerm}
-            onChange={(e: any) => setSearchTerm(e.target.value)}
-            placeholder="Cari No Ref atau Nama..." 
-          />
+        <Toolbar className="flex-col gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full">
+            <ToolbarSearch 
+              value={searchTerm}
+              onChange={(e: any) => setSearchTerm(e.target.value)}
+              placeholder="Cari No Ref atau Nama..." 
+              containerClassName="w-full sm:max-w-xs"
+            />
 
-          <ToolbarFilter
-            icon={<Filter size={14} />}
-            value={filterBy}
-            onChange={(val) => setFilterBy(val as any)}
-            options={[
-              { label: "Tgl Transaksi", value: "tanggal_transaksi" },
-              { label: "Tgl Pembuatan", value: "tanggal_pembuatan" }
-            ]}
-          />
+            <div className="grid grid-cols-2 sm:flex gap-2.5 w-full sm:w-auto">
+              <ToolbarFilter
+                icon={<Filter size={14} />}
+                value={filterBy}
+                onChange={(val) => setFilterBy(val as any)}
+                options={[
+                  { label: "Tgl Transaksi", value: "tanggal_transaksi" },
+                  { label: "Tgl Pembuatan", value: "tanggal_pembuatan" }
+                ]}
+              />
 
-          <ToolbarFilter
-            icon={<CalendarIcon size={14} />}
-            value={timeRange}
-            onChange={(val) => setTimeRange(val as any)}
-            options={[
-              { label: "Hari Ini", value: "hari" },
-              { label: "Minggu Ini", value: "minggu" },
-              { label: "Bulan Ini", value: "bulan" },
-              { label: "Custom Tanggal", value: "custom" }
-            ]}
-          />
+              <ToolbarFilter
+                icon={<CalendarIcon size={14} />}
+                value={timeRange}
+                onChange={(val) => setTimeRange(val as any)}
+                options={[
+                  { label: "Hari Ini", value: "hari" },
+                  { label: "Minggu Ini", value: "minggu" },
+                  { label: "Bulan Ini", value: "bulan" },
+                  { label: "Custom Tanggal", value: "custom" }
+                ]}
+              />
+            </div>
+          </div>
 
           {timeRange === 'custom' && (
-            <div className="flex items-center gap-2">
-              <input type="date" className="bg-bg border border-border rounded-xl px-3 py-1.5 text-sm" value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <input type="date" className="bg-bg border border-border rounded-xl px-3 py-2 text-sm w-full sm:w-auto min-h-[44px]" value={startDate} onChange={e => setStartDate(e.target.value)} />
               <span className="text-text-muted">-</span>
-              <input type="date" className="bg-bg border border-border rounded-xl px-3 py-1.5 text-sm" value={endDate} onChange={e => setEndDate(e.target.value)} />
+              <input type="date" className="bg-bg border border-border rounded-xl px-3 py-2 text-sm w-full sm:w-auto min-h-[44px]" value={endDate} onChange={e => setEndDate(e.target.value)} />
             </div>
           )}
 
-          <ToolbarActions>
-            <Button variant="outline" size="sm" onClick={handleRefresh} title="Refresh Data">
+          <ToolbarActions className="w-full sm:w-auto sm:ml-auto">
+            <Button variant="outline" size="sm" onClick={handleRefresh} title="Refresh Data" className="min-h-[44px]">
               <RefreshCw size={16} />
             </Button>
             <ToolbarExportExcel 
@@ -290,8 +295,8 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
             {isReadOnly ? null : (
               <>
                 <ToolbarDivider />
-                <Link href="/kas-keluar/tambah">
-                  <ToolbarAddButton onClick={() => {}}>
+                <Link href="/kas-keluar/tambah" className="col-span-2 sm:col-span-1 w-full">
+                  <ToolbarAddButton onClick={() => {}} className="w-full justify-center min-h-[44px]">
                     Tambah Data
                   </ToolbarAddButton>
                 </Link>

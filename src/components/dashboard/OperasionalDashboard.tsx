@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useEffect, useCallback } from "react"
+import { createPortal } from "react-dom"
 import { 
   ShieldCheck, ShieldAlert, Server, Clock, RefreshCw, Search, Filter, 
   X, ChevronLeft, ChevronRight, Copy, Calendar, User, Tag, FileText, 
@@ -1157,13 +1158,16 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
           </div>
 
           {/* Mobile Filter Bottom Sheet Modal */}
-          {showMobileFilterSheet && (
-            <div className="fixed inset-0 z-50 flex items-end justify-center">
+          {showMobileFilterSheet && typeof document !== "undefined" && createPortal(
+            <div className="fixed inset-0 z-[9990] flex items-end justify-center touch-manipulation">
               <div 
-                className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+                className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
                 onClick={() => setShowMobileFilterSheet(false)}
               />
-              <div className="relative w-full max-w-lg bg-surface rounded-t-3xl border-t border-border p-5 z-10 shadow-2xl flex flex-col gap-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-200">
+              <div 
+                className="relative w-full max-w-lg bg-surface rounded-t-3xl border-t border-border p-5 z-10 shadow-2xl flex flex-col gap-4 max-h-[calc(100dvh-env(safe-area-inset-top,0px)-2rem)] overflow-y-auto animate-in slide-in-from-bottom duration-200 pb-[max(1.25rem,calc(env(safe-area-inset-bottom,0px)+1rem))] pointer-events-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
                 {/* Sheet Header */}
                 <div className="flex items-center justify-between pb-3 border-b border-border">
                   <div className="flex items-center gap-2">
@@ -1272,7 +1276,8 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                   Terapkan Filter
                 </button>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
 
           {/* ======================================================== */}
@@ -1501,16 +1506,19 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
       {/* ======================================================== */}
       {/* 6. SIDE DRAWER INSPECTOR (DETAIL JEJAK AUDIT 360°) */}
       {/* ======================================================== */}
-      {selectedLogIndex !== null && serverLogs[selectedLogIndex] && (
-        <div className="fixed inset-0 z-50 flex justify-end">
+      {selectedLogIndex !== null && serverLogs[selectedLogIndex] && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9990] flex items-end sm:items-stretch justify-end touch-manipulation">
           {/* Backdrop Blur */}
           <div 
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
             onClick={() => setSelectedLogIndex(null)}
           />
           
-          {/* Panel Lateral Slide-Over */}
-          <div className="relative w-full sm:max-w-xl bg-surface h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-200 border-l border-border z-10">
+          {/* Panel Lateral Slide-Over / Mobile Bottom-Sheet Full-Height */}
+          <div 
+            className="relative w-full sm:max-w-xl bg-surface h-[92dvh] sm:h-full rounded-t-3xl sm:rounded-t-none shadow-2xl flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-right duration-200 border-l border-border z-10 pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header Drawer with Linear Navigation */}
             <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border bg-bg/60 shrink-0">
               <div>
@@ -1636,7 +1644,8 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

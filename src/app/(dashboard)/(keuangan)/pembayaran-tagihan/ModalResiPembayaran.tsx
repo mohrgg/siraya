@@ -111,12 +111,12 @@ export default function ModalResiPembayaran({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 print:p-0">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 print:p-0 touch-manipulation">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm print:hidden" onClick={onClose} />
       
       {/* Container */}
       <div 
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 print:shadow-none print:w-full print:max-w-none print:rounded-none flex flex-col max-h-[calc(100dvh-32px)] z-10"
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 print:shadow-none print:w-full print:max-w-none print:rounded-none flex flex-col max-h-[calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-1rem)] z-10 pointer-events-auto"
         onClick={(e) => e.stopPropagation()}
       >
         
@@ -245,7 +245,7 @@ export default function ModalResiPembayaran({
         </div>
 
         {/* Action Buttons - Non Print */}
-        <div className="shrink-0 p-4 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex flex-col sm:flex-row items-center justify-end gap-2.5 sm:gap-3 no-print">
+        <div className="shrink-0 p-4 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex flex-col sm:flex-row items-center justify-end gap-2.5 sm:gap-3 no-print pb-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.75rem))]">
           <Button onClick={onClose} variant="outline" className="w-full sm:w-auto min-h-[44px] font-semibold">
             Tutup
           </Button>

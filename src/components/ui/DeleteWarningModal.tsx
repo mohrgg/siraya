@@ -95,13 +95,14 @@ export function DeleteWarningModal({
 
   return createPortal(
     <div 
-      className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 bg-black/60 z-[10000] flex items-center justify-center p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xs animate-in fade-in duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isLoading) onClose()
       }}
+      aria-hidden="true"
     >
       <div 
-        className="w-full max-w-md bg-surface rounded-2xl shadow-2xl border border-border animate-in zoom-in-95 duration-150 overflow-hidden flex flex-col max-h-[calc(100dvh-32px)]"
+        className="w-full max-w-md bg-surface rounded-2xl shadow-2xl border border-border animate-in zoom-in-95 duration-150 overflow-hidden flex flex-col max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.5rem)] relative z-10 pointer-events-auto"
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
@@ -127,7 +128,7 @@ export function DeleteWarningModal({
               <button 
                 onClick={onClose} 
                 disabled={isLoading}
-                className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
                 type="button"
                 aria-label="Tutup"
               >
@@ -207,7 +208,7 @@ export function DeleteWarningModal({
                 type="button"
                 variant="secondary"
                 onClick={onClose}
-                className="w-full sm:w-auto font-semibold min-h-[42px]"
+                className="w-full sm:w-auto font-semibold min-h-[44px] touch-manipulation"
               >
                 Saya Mengerti &amp; Tutup
               </Button>
@@ -217,7 +218,7 @@ export function DeleteWarningModal({
                   variant="primary"
                   onClick={secondaryAction.onClick}
                   isLoading={secondaryAction.isLoading}
-                  className="w-full sm:w-auto font-bold flex items-center justify-center gap-1.5 min-h-[42px]"
+                  className="w-full sm:w-auto font-bold flex items-center justify-center gap-1.5 min-h-[44px] touch-manipulation"
                 >
                   {secondaryAction.icon}
                   <span>{secondaryAction.label}</span>
@@ -246,7 +247,7 @@ export function DeleteWarningModal({
               <button 
                 onClick={onClose} 
                 disabled={isLoading}
-                className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                className="p-2 rounded-xl hover:bg-gray-100 text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
                 type="button"
                 aria-label="Tutup"
               >
@@ -285,7 +286,7 @@ export function DeleteWarningModal({
                 variant="secondary"
                 onClick={onClose}
                 disabled={isLoading}
-                className="w-full sm:w-auto font-semibold min-h-[42px]"
+                className="w-full sm:w-auto font-semibold min-h-[44px] touch-manipulation"
               >
                 Batal
               </Button>
@@ -294,7 +295,7 @@ export function DeleteWarningModal({
                 variant="danger"
                 onClick={onConfirm}
                 isLoading={isLoading}
-                className="w-full sm:w-auto font-bold flex items-center justify-center gap-1.5 shadow-sm min-h-[42px]"
+                className="w-full sm:w-auto font-bold flex items-center justify-center gap-1.5 shadow-sm min-h-[44px] touch-manipulation"
               >
                 <Trash2 size={16} />
                 <span>{confirmButtonText || `Hapus ${entityType}`}</span>

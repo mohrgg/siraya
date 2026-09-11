@@ -662,7 +662,7 @@ export default function KelasClient({
 
       {/* Floating Action Bar (Bulk Promote, Grad & Alumni Actions) */}
       {data.selectedStudents.length > 0 && (data.activeTab === "murid" || data.activeTab === "alumni") && !isReadOnly && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-border px-4 py-3 flex items-center justify-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-300 z-50 w-max max-w-[98vw] overflow-x-auto hide-scrollbar text-sm">
+        <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:bottom-6 left-1/2 -translate-x-1/2 bg-white/98 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.16)] border border-border px-3.5 py-2.5 sm:px-4 sm:py-3 flex items-center justify-center gap-2 sm:gap-3 animate-in slide-in-from-bottom-6 fade-in duration-200 z-50 w-max max-w-[96vw] overflow-x-auto hide-scrollbar text-xs sm:text-sm">
           {/* Info Section */}
           <div className="flex items-center gap-2 font-semibold shrink-0">
             <span className="flex items-center justify-center bg-primary/10 text-primary w-5 h-5 rounded-full text-[10px]">{data.selectedStudents.length}</span>

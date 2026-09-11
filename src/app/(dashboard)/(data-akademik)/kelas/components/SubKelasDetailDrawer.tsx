@@ -173,11 +173,11 @@ export default function SubKelasDetailDrawer({
   )
 
   const footer = (
-    <div className="flex items-center justify-between w-full">
-      <div className="text-xs text-gray-500">
-        Mode: <span className="font-bold text-gray-700">{isReadOnly ? "Read-Only (Kepala Sekolah)" : "Administrator / TU"}</span>
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+      <div className="text-xs text-gray-500 hidden sm:block">
+        Tahun Ajaran: <span className="font-semibold text-gray-800">{subKelas.academicYear?.name || "-"}</span>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
         {onManageClass && (
           <Button
             variant="outline"
@@ -185,7 +185,7 @@ export default function SubKelasDetailDrawer({
               onClose()
               onManageClass(subKelas)
             }}
-            className="gap-2 font-semibold bg-primary/5 text-primary border-primary/20 hover:bg-primary hover:text-white"
+            className="gap-2 font-semibold bg-primary/5 text-primary border-primary/20 hover:bg-primary hover:text-white min-h-[44px] touch-manipulation col-span-2 sm:col-span-1 justify-center"
           >
             <Users size={16} /> Kelola Murid Rombel
           </Button>
@@ -197,12 +197,16 @@ export default function SubKelasDetailDrawer({
               onClose()
               onEdit(subKelas)
             }}
-            className="gap-2 font-semibold"
+            className="gap-2 font-semibold min-h-[44px] touch-manipulation justify-center"
           >
             <Edit2 size={16} /> Edit Rombel Ini
           </Button>
         )}
-        <Button variant="primary" onClick={onClose} className="px-6 font-bold">
+        <Button 
+          variant="primary" 
+          onClick={onClose} 
+          className={`px-6 font-bold min-h-[44px] touch-manipulation justify-center ${!isReadOnly && onEdit ? '' : 'col-span-2 sm:col-span-1 w-full sm:w-auto'}`}
+        >
           Tutup
         </Button>
       </div>
@@ -356,7 +360,7 @@ export default function SubKelasDetailDrawer({
             </p>
           </div>
         ) : (
-          <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xs">
+          <div className="border border-gray-200 rounded-xl overflow-x-auto custom-scrollbar bg-white shadow-xs">
             <table className="w-full text-left border-collapse text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 text-xs font-extrabold text-gray-500 uppercase tracking-wider">

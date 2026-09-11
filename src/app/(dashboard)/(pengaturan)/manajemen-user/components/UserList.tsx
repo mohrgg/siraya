@@ -31,42 +31,47 @@ export default function UserList({
 
   return (
     <div className="flex flex-col">
-      <div className="p-6 bg-white">
-        <Toolbar>
-          <ToolbarSearch 
-            value={searchQuery} 
-            onChange={e => setSearchQuery(e.target.value)} 
-            placeholder="Cari nama atau email..." 
-          />
-          <ToolbarFilter
-            icon={<Filter size={14} />}
-            value={filterRole}
-            onChange={(val) => setFilterRole(val as string)}
-            options={[
-              { label: "Semua Role", value: "" },
-              { label: "ADMIN", value: "ADMIN" },
-              { label: "TATA_USAHA", value: "TATA_USAHA" },
-              { label: "KEPALA_SEKOLAH", value: "KEPALA_SEKOLAH" },
-              { label: "YAYASAN", value: "YAYASAN" }
-            ]}
-          />
-          <ToolbarFilter
-            icon={<Filter size={14} />}
-            value={filterUnit}
-            onChange={(val) => setFilterUnit(val as string)}
-            options={[
-              { label: "Semua Unit", value: "" },
-              { label: "Global (Semua)", value: "GLOBAL" },
-              ...units.map((u: any) => ({ label: u.name, value: u.id }))
-            ]}
-          />
-          <ToolbarActions>
-            {!isInactiveTab && (
-              <ToolbarAddButton onClick={openAddUser}>
+      <div className="p-4 sm:p-6 bg-white">
+        <Toolbar className="flex-col gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full">
+            <ToolbarSearch 
+              value={searchQuery} 
+              onChange={e => setSearchQuery(e.target.value)} 
+              placeholder="Cari nama atau email..." 
+              containerClassName="w-full sm:max-w-xs"
+            />
+            <div className="grid grid-cols-2 sm:flex gap-2.5 w-full sm:w-auto">
+              <ToolbarFilter
+                icon={<Filter size={14} />}
+                value={filterRole}
+                onChange={(val) => setFilterRole(val as string)}
+                options={[
+                  { label: "Semua Role", value: "" },
+                  { label: "ADMIN", value: "ADMIN" },
+                  { label: "TATA_USAHA", value: "TATA_USAHA" },
+                  { label: "KEPALA_SEKOLAH", value: "KEPALA_SEKOLAH" },
+                  { label: "YAYASAN", value: "YAYASAN" }
+                ]}
+              />
+              <ToolbarFilter
+                icon={<Filter size={14} />}
+                value={filterUnit}
+                onChange={(val) => setFilterUnit(val as string)}
+                options={[
+                  { label: "Semua Unit", value: "" },
+                  { label: "Global (Semua)", value: "GLOBAL" },
+                  ...units.map((u: any) => ({ label: u.name, value: u.id }))
+                ]}
+              />
+            </div>
+          </div>
+          {!isInactiveTab && (
+            <ToolbarActions className="w-full sm:w-auto sm:ml-auto">
+              <ToolbarAddButton onClick={openAddUser} className="w-full justify-center min-h-[44px]">
                 Tambah Pengguna
               </ToolbarAddButton>
-            )}
-          </ToolbarActions>
+            </ToolbarActions>
+          )}
         </Toolbar>
       </div>
       

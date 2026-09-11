@@ -1,8 +1,8 @@
 import React from "react"
-import { Search, Filter, FileSpreadsheet, FileText, UploadCloud, Plus, X, Loader2 } from "lucide-react"
+import { Search, Filter, FileSpreadsheet, FileText, UploadCloud, Plus, X, Loader2, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 
-export function Toolbar({ children }: { children: React.ReactNode }) {
+export function Toolbar({ children, className = "" }: { children: React.ReactNode, className?: string }) {
   const leftChildren = React.Children.map(children, child => {
     if (React.isValidElement(child) && (child.type === ToolbarActions || (child.type as any).isToolbarActions)) {
       return null
@@ -18,7 +18,7 @@ export function Toolbar({ children }: { children: React.ReactNode }) {
   })
 
   return (
-    <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-3 sm:gap-4 short:gap-2 mb-4 sm:mb-6 short:mb-3 w-full">
+    <div className={`flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-3 sm:gap-4 short:gap-2 mb-4 sm:mb-6 short:mb-3 w-full ${className}`}>
       <div className="flex flex-col sm:flex-row sm:items-center flex-wrap gap-2.5 sm:gap-3 short:gap-1.5 flex-1 min-w-0 w-full">
         {leftChildren}
       </div>
@@ -36,14 +36,15 @@ interface ToolbarSearchProps extends React.InputHTMLAttributes<HTMLInputElement>
   containerClassName?: string
   isLoading?: boolean
 }
+
 export function ToolbarSearch({ className, containerClassName, onClear, isLoading, value, ...props }: ToolbarSearchProps) {
   return (
     <div className={`relative w-full sm:w-56 flex-shrink-0 ${containerClassName || ''}`}>
-      <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+      <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
       <input
         type="text"
         value={value}
-        className={`w-full pl-10 ${isLoading || (onClear && value) ? 'pr-9' : 'pr-4'} py-2.5 sm:py-2 short:py-1.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 min-h-[42px] sm:min-h-[38px] short:min-h-[34px] ${className || ''}`}
+        className={`w-full pl-10 ${isLoading || (onClear && value) ? 'pr-9' : 'pr-4'} py-2.5 sm:py-2 short:py-1.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 min-h-[44px] sm:min-h-[38px] short:min-h-[34px] touch-manipulation ${className || ''}`}
         {...props}
       />
       {isLoading ? (
@@ -54,7 +55,7 @@ export function ToolbarSearch({ className, containerClassName, onClear, isLoadin
         <button
           type="button"
           onClick={onClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main p-1 rounded-full hover:bg-gray-100 transition-colors"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main p-1.5 rounded-full hover:bg-gray-100 transition-colors cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center touch-manipulation"
           title="Hapus pencarian"
         >
           <X size={14} />
@@ -68,6 +69,7 @@ interface FilterOption {
   label: string
   value: string
 }
+
 interface ToolbarFilterProps {
   icon?: React.ReactNode
   value: string
@@ -76,27 +78,29 @@ interface ToolbarFilterProps {
   disabled?: boolean
   className?: string
 }
+
 export function ToolbarFilter({ icon = <Filter size={14} />, value, onChange, options, disabled, className }: ToolbarFilterProps) {
   return (
-    <div className={`flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-2 sm:py-1.5 short:py-1 focus-within:ring-2 focus-within:ring-primary/50 w-full sm:w-auto min-h-[42px] sm:min-h-[38px] short:min-h-[34px] ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className || ''}`}>
-      {icon && <div className="text-text-muted shrink-0">{icon}</div>}
+    <div className={`relative flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-2 sm:py-1.5 short:py-1 focus-within:ring-2 focus-within:ring-primary/50 w-full sm:w-auto min-h-[44px] sm:min-h-[38px] short:min-h-[34px] ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className || ''}`}>
+      {icon && <div className="text-text-muted shrink-0 pointer-events-none">{icon}</div>}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-0.5 outline-none cursor-pointer disabled:cursor-not-allowed truncate w-full"
+        className="bg-transparent border-none focus:ring-0 text-sm font-medium text-text-main py-0.5 pr-6 outline-none cursor-pointer disabled:cursor-not-allowed truncate w-full appearance-none touch-manipulation"
       >
         {options.map(opt => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
+      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none shrink-0" />
     </div>
   )
 }
 
 export function ToolbarActions({ children, className = "" }: { children: React.ReactNode, className?: string }) {
   return (
-    <div className={`flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end ${className}`}>
+    <div className={`grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end ${className}`}>
       {children}
     </div>
   )
@@ -126,7 +130,7 @@ export function ToolbarExportExcel({
       size="sm"
       onClick={onClick}
       disabled={disabled || isExporting}
-      className={`flex-1 sm:flex-initial min-w-[75px] justify-center border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 focus:ring-green-500/50 min-h-[40px] sm:min-h-[34px] short:min-h-[32px] ${className}`}
+      className={`w-full sm:w-auto flex-1 sm:flex-initial min-w-[75px] justify-center border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 focus:ring-green-500/50 min-h-[44px] sm:min-h-[36px] short:min-h-[32px] touch-manipulation cursor-pointer ${className}`}
     >
       <FileSpreadsheet size={16} className="mr-1.5 shrink-0" />
       <span className="truncate">{isExporting ? 'Mengekspor...' : label}</span>
@@ -153,7 +157,7 @@ export function ToolbarExportPDF({
       size="sm"
       onClick={onClick}
       disabled={disabled || isExporting}
-      className={`flex-1 sm:flex-initial min-w-[75px] justify-center border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 focus:ring-rose-500/50 min-h-[40px] sm:min-h-[34px] short:min-h-[32px] ${className}`}
+      className={`w-full sm:w-auto flex-1 sm:flex-initial min-w-[75px] justify-center border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 focus:ring-rose-500/50 min-h-[44px] sm:min-h-[36px] short:min-h-[32px] touch-manipulation cursor-pointer ${className}`}
     >
       <FileText size={16} className="mr-1.5 shrink-0" />
       <span className="truncate">{isExporting ? 'Mengekspor...' : label}</span>
@@ -178,7 +182,7 @@ export function ToolbarImportExcel({
       size="sm"
       onClick={onClick}
       disabled={disabled}
-      className={`flex-1 sm:flex-initial min-w-[90px] justify-center border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 focus:ring-emerald-500/50 min-h-[40px] sm:min-h-[34px] short:min-h-[32px] ${className}`}
+      className={`w-full sm:w-auto flex-1 sm:flex-initial min-w-[90px] justify-center border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 focus:ring-emerald-500/50 min-h-[44px] sm:min-h-[36px] short:min-h-[32px] touch-manipulation cursor-pointer ${className}`}
     >
       <UploadCloud size={16} className="mr-1.5 shrink-0" />
       <span className="truncate">{label}</span>
@@ -205,7 +209,7 @@ export function ToolbarAddButton({
       size="sm"
       onClick={onClick}
       disabled={disabled}
-      className={`w-full sm:w-auto justify-center shadow-sm min-h-[44px] sm:min-h-[38px] short:min-h-[34px] font-bold ${className}`}
+      className={`w-full sm:w-auto col-span-2 sm:col-span-1 justify-center shadow-sm min-h-[44px] sm:min-h-[38px] short:min-h-[34px] font-bold touch-manipulation cursor-pointer ${className}`}
     >
       {icon}
       <span className="truncate">{children}</span>

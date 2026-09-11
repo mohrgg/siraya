@@ -56,10 +56,10 @@ export default function ModalPilihRiwayatTransaksi({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 touch-manipulation">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div 
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[calc(100dvh-32px)] z-10"
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-1rem)] z-10 pointer-events-auto"
         onClick={(e) => e.stopPropagation()}
       >
 
@@ -148,7 +148,7 @@ export default function ModalPilihRiwayatTransaksi({
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 p-4 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3">
+        <div className="shrink-0 p-4 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3 pb-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.75rem))]">
           <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto min-h-[44px] font-semibold">
             Tutup
           </Button>

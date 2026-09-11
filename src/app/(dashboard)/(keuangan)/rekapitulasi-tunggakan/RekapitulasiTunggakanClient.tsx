@@ -476,20 +476,22 @@ export default function RekapitulasiTunggakanClient({
                   </div>
                 </div>
 
-                <Toolbar>
+                <Toolbar className="flex-col sm:flex-row gap-2.5">
                   <ToolbarSearch 
                     value={searchTerm1}
                     onChange={(e: any) => setSearchTerm1(e.target.value)}
                     placeholder="Cari kelas..." 
                     disabled={rekapData.length === 0}
+                    containerClassName="w-full sm:max-w-xs"
                   />
                   
-                  <ToolbarActions>
+                  <ToolbarActions className="w-full sm:w-auto sm:ml-auto">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={loadData}
                       title="Refresh Data"
+                      className="min-h-[44px]"
                     >
                       <RefreshCw size={16} />
                     </Button>
@@ -580,32 +582,35 @@ export default function RekapitulasiTunggakanClient({
                   </div>
                 </div>
 
-                <Toolbar>
-                  <ToolbarFilter
-                    value={selectedSubKelasId}
-                    onChange={(val) => {
-                      setSelectedSubKelasId(val as string)
-                      setDetailCurrentPage(1)
-                    }}
-                    options={rekapData.map(r => ({ label: `Kelas ${r.subKelasName.toUpperCase()}`, value: r.subKelasId }))}
-                  />
+                <Toolbar className="flex-col sm:flex-row gap-2.5">
+                  <div className="grid grid-cols-1 sm:flex gap-2.5 w-full sm:w-auto flex-1">
+                    <ToolbarFilter
+                      value={selectedSubKelasId}
+                      onChange={(val) => {
+                        setSelectedSubKelasId(val as string)
+                        setDetailCurrentPage(1)
+                      }}
+                      className="w-full sm:w-auto"
+                      options={rekapData.map(r => ({ label: `Kelas ${r.subKelasName.toUpperCase()}`, value: r.subKelasId }))}
+                    />
 
-                  <ToolbarSearch 
-                    value={studentSearch}
-                    onChange={(e: any) => {
-                      setStudentSearch(e.target.value)
-                      setDetailCurrentPage(1)
-                    }}
-                    onClear={() => {
-                      setStudentSearch("")
-                      setDetailCurrentPage(1)
-                    }}
-                    placeholder="Cari nama atau NISN..." 
-                    containerClassName="sm:w-72"
-                    disabled={!selectedKelasData?.studentsList || selectedKelasData.studentsList.length === 0}
-                  />
+                    <ToolbarSearch 
+                      value={studentSearch}
+                      onChange={(e: any) => {
+                        setStudentSearch(e.target.value)
+                        setDetailCurrentPage(1)
+                      }}
+                      onClear={() => {
+                        setStudentSearch("")
+                        setDetailCurrentPage(1)
+                      }}
+                      placeholder="Cari nama atau NISN..." 
+                      containerClassName="w-full sm:w-72"
+                      disabled={!selectedKelasData?.studentsList || selectedKelasData.studentsList.length === 0}
+                    />
+                  </div>
                   
-                  <ToolbarActions>
+                  <ToolbarActions className="w-full sm:w-auto sm:ml-auto">
                     <ToolbarExportExcel 
                       onClick={handleExportExcelKelas}
                       disabled={filteredStudents.length === 0}

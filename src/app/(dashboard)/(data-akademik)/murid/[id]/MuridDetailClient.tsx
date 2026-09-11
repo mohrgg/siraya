@@ -277,7 +277,7 @@ export default function MuridDetailClient({
             variant="outline" 
             size="sm"
             onClick={handleCopyLink}
-            className="gap-2 text-xs font-semibold bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 justify-center"
+            className="gap-2 text-xs font-semibold bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 justify-center min-h-[44px] sm:min-h-[36px] touch-manipulation"
           >
             <Share2 size={15} /> <span className="truncate">Salin Tautan</span>
           </Button>
@@ -293,7 +293,7 @@ export default function MuridDetailClient({
             variant="outline" 
             size="sm"
             onClick={handlePrint}
-            className="gap-2 text-xs font-semibold bg-white hover:bg-gray-100 justify-center"
+            className="gap-2 text-xs font-semibold bg-white hover:bg-gray-100 justify-center min-h-[44px] sm:min-h-[36px] touch-manipulation"
           >
             <Printer size={15} /> <span className="truncate">Cetak Profil</span>
           </Button>
@@ -302,7 +302,7 @@ export default function MuridDetailClient({
               variant="primary" 
               size="sm"
               onClick={() => setShowEditModal(true)}
-              className="gap-2 text-xs font-bold shadow-sm col-span-2 sm:col-span-1 justify-center min-h-[38px]"
+              className="gap-2 text-xs font-bold shadow-sm col-span-2 sm:col-span-1 justify-center min-h-[44px] sm:min-h-[38px] touch-manipulation"
             >
               <Edit2 size={15} /> <span className="truncate">Edit Data Siswa</span>
             </Button>
@@ -772,7 +772,7 @@ export default function MuridDetailClient({
               </p>
             </div>
           ) : (
-            <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-2xs">
+            <div className="border border-gray-200 rounded-2xl overflow-x-auto custom-scrollbar shadow-2xs">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="bg-gray-50/80 border-b border-gray-200 text-xs font-extrabold text-gray-500 uppercase tracking-wider">
@@ -886,7 +886,7 @@ export default function MuridDetailClient({
                 </p>
               </div>
             ) : (
-              <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-2xs">
+              <div className="border border-gray-200 rounded-2xl overflow-x-auto custom-scrollbar shadow-2xs">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="bg-gray-50/80 border-b border-gray-200 text-xs font-extrabold text-gray-500 uppercase tracking-wider">

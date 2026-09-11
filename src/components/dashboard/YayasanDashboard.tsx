@@ -382,7 +382,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                       setSelectedDrawerIndex(idx)
                       setIsDrawerOpen(true)
                     }}
-                    className="inline-flex items-center justify-center gap-1.5 py-2 px-2.5 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200 text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all h-9 sm:h-10 shadow-2xs group whitespace-nowrap min-w-0"
+                    className="inline-flex items-center justify-center gap-1.5 py-2.5 px-2.5 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200 text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group whitespace-nowrap min-w-0"
                     title={`Audit sebaran rombel & siswa ${item.unit}`}
                   >
                     <Layers size={14} className="text-[#065f32] shrink-0 group-hover:scale-110 transition-transform" />
@@ -393,7 +393,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                   <button
                     type="button"
                     onClick={() => handleDrilldownUnitDashboard(item.id || item.raw?.id)}
-                    className="inline-flex items-center justify-center gap-1.5 py-2 px-2.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-emerald-300 text-slate-700 hover:text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all h-9 sm:h-10 shadow-2xs group whitespace-nowrap min-w-0"
+                    className="inline-flex items-center justify-center gap-1.5 py-2.5 px-2.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-emerald-300 text-slate-700 hover:text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group whitespace-nowrap min-w-0"
                     title={`Buka dashboard ${item.unit}`}
                   >
                     <LayoutDashboard size={14} className="text-slate-400 group-hover:text-[#065f32] shrink-0 transition-colors" />
@@ -584,7 +584,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                       if (foundIdx !== -1) setSelectedDrawerIndex(foundIdx)
                       setIsDrawerOpen(true)
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#065f32] hover:bg-[#054d28] text-white text-xs font-bold rounded-xl transition-all shadow-xs min-h-[36px]"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#065f32] hover:bg-[#054d28] text-white text-xs font-bold rounded-xl transition-all shadow-xs min-h-[44px] sm:min-h-[36px]"
                   >
                     <Layers size={13} />
                     Buka Panel Rombel
@@ -592,7 +592,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                 )}
                 <Link
                   href="/kelas"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all shadow-xs min-h-[36px]"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all shadow-xs min-h-[44px] sm:min-h-[36px]"
                 >
                   Modul Kelas <ArrowRight size={13} />
                 </Link>

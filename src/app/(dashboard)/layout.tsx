@@ -54,7 +54,7 @@ export default async function DashboardLayout({
 
   return (
     <MobileMenuProvider>
-      <div className="flex h-screen w-full bg-bg overflow-hidden relative">
+      <div className="flex h-[100dvh] w-full bg-bg overflow-hidden relative">
         <Sidebar 
           user={{
             name: tenant.user.name,
@@ -79,7 +79,7 @@ export default async function DashboardLayout({
             activeYearId={activeYearId}
           />
           <UserActivityTracker />
-          <main className="flex-1 p-3 sm:p-4 short:p-3 md:p-6 lg:p-8 pb-20 short:pb-14 md:pb-8 overflow-y-auto overflow-x-hidden relative">
+          <main className="flex-1 p-3 sm:p-4 short:p-3 md:p-6 lg:p-8 pb-[calc(4.5rem+env(safe-area-inset-bottom))] short:pb-14 md:pb-8 overflow-y-auto overflow-x-hidden relative">
             {children}
           </main>
         </div>

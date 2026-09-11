@@ -4,6 +4,7 @@ import { X, Calendar as CalendarIcon, FileText, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
+import toast from "react-hot-toast"
 
 export type TagihanItem = {
   tagihanId: string
@@ -155,7 +156,7 @@ export default function ModalPembayaranTagihan({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (totalBayar + totalPotongan > totalSisaTagihan) {
-      alert("Total pembayaran dan potongan tidak boleh melebihi sisa tagihan")
+      toast.error("Total pembayaran dan potongan tidak boleh melebihi sisa tagihan")
       return
     }
     onSubmit({
@@ -177,10 +178,10 @@ export default function ModalPembayaranTagihan({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 touch-manipulation">
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
       <div 
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[calc(100dvh-32px)] z-10"
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-1rem)] z-10 pointer-events-auto"
         onClick={(e) => e.stopPropagation()}
       >
 
@@ -402,7 +403,7 @@ export default function ModalPembayaranTagihan({
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 p-4 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3">
+        <div className="shrink-0 p-4 sm:p-5 border-t border-border bg-surface/95 backdrop-blur-md flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3 pb-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.75rem))]">
           <Button 
             type="button" 
             variant="outline" 

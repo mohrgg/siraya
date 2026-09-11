@@ -173,7 +173,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
               variant="outline"
               size="sm" 
               onClick={handleExportExcel}
-              className="flex-1 sm:flex-initial justify-center opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm cursor-pointer min-h-[38px] sm:min-h-[36px]"
+              className="flex-1 sm:flex-initial justify-center opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm cursor-pointer min-h-[44px] sm:min-h-[36px]"
             >
               <FileSpreadsheet size={16} className="mr-1.5" /> Excel
             </Button>
@@ -181,7 +181,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
               variant="outline"
               size="sm" 
               onClick={handleExportPdf}
-              className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm cursor-pointer min-h-[38px] sm:min-h-[36px]"
+              className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm cursor-pointer min-h-[44px] sm:min-h-[36px]"
             >
               <FileText size={16} className="mr-1.5" /> PDF
             </Button>
@@ -189,7 +189,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
               variant="outline" 
               size="sm" 
               onClick={handlePrint} 
-              className="flex-1 sm:flex-initial justify-center font-semibold bg-surface shadow-sm border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer min-h-[38px] sm:min-h-[36px]"
+              className="flex-1 sm:flex-initial justify-center font-semibold bg-surface shadow-sm border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer min-h-[44px] sm:min-h-[36px]"
             >
               <Printer size={16} className="mr-1.5" /> Cetak
             </Button>
@@ -198,20 +198,18 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
       />
 
       {/* Filter Card */}
-      <div className="bg-surface p-5 rounded-2xl shadow-sm border border-border mb-6">
+      <div className="bg-surface p-4 sm:p-5 rounded-2xl shadow-sm border border-border mb-6">
         <div className="text-sm font-semibold text-gray-600 mb-2">Filter Laporan</div>
-        <div className="flex flex-col md:flex-row items-center gap-4">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 sm:gap-4">
           
-
-
-          <div className="flex items-center w-full md:w-auto border border-border rounded-lg overflow-hidden bg-gray-50 flex-1 max-w-md">
+          <div className="flex items-center w-full md:w-auto border border-border rounded-xl overflow-hidden bg-gray-50 flex-1 max-w-md min-h-[44px]">
             <div className="px-3 text-emerald-500 shrink-0 border-r border-border bg-emerald-50 h-full flex items-center justify-center">
               <CalendarIcon size={16} />
             </div>
             <select 
               value={dateRange} 
               onChange={(e) => setDateRange(e.target.value)}
-              className="w-full bg-transparent border-none py-2.5 px-3 text-sm font-medium focus:ring-0 cursor-pointer"
+              className="w-full bg-transparent border-none py-2.5 px-3 text-sm font-medium focus:ring-0 cursor-pointer min-h-[44px]"
             >
               <option value="Minggu Ini">Minggu ini</option>
               <option value="Bulan Ini">Bulan ini</option>
@@ -226,19 +224,19 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
                 type="date" 
                 value={customStart} 
                 onChange={(e) => setCustomStart(e.target.value)}
-                className="border border-border rounded-lg px-3 py-2 text-sm w-full md:w-auto"
+                className="border border-border rounded-xl px-3 py-2 text-sm w-full md:w-auto min-h-[44px]"
               />
               <span className="text-gray-400">-</span>
               <input 
                 type="date" 
                 value={customEnd} 
                 onChange={(e) => setCustomEnd(e.target.value)}
-                className="border border-border rounded-lg px-3 py-2 text-sm w-full md:w-auto"
+                className="border border-border rounded-xl px-3 py-2 text-sm w-full md:w-auto min-h-[44px]"
               />
             </div>
           )}
 
-          <Button onClick={fetchData} disabled={isLoading} className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 shadow-sm gap-2 whitespace-nowrap">
+          <Button onClick={fetchData} disabled={isLoading} className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 shadow-sm gap-2 whitespace-nowrap min-h-[44px]">
             {isLoading ? <RefreshCw className="animate-spin" size={16} /> : <Search size={16} />}
             Filter
           </Button>
