@@ -564,29 +564,45 @@ export default function UnitSekolahClient({
 
                       {/* Card Body: 4 Live Metric Indicators */}
                       <div className="p-5 bg-bg/30">
-                        <div className="grid grid-cols-4 gap-2 text-center">
-                          <div className="p-2.5 bg-surface rounded-xl border border-border/80 shadow-2xs">
-                            <Users size={16} className="mx-auto text-blue-600 mb-1" />
-                            <p className="text-base font-extrabold text-text-main">{unit._count?.murid || 0}</p>
-                            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mt-0.5">Siswa</p>
+                        <div className="grid grid-cols-2 gap-2.5">
+                          <div className="p-2.5 bg-surface rounded-xl border border-border/80 shadow-2xs flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                              <Users size={15} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-extrabold text-text-main leading-tight">{unit._count?.murid || 0}</p>
+                              <p className="text-[11px] font-medium text-text-muted truncate">Siswa</p>
+                            </div>
                           </div>
 
-                          <div className="p-2.5 bg-surface rounded-xl border border-border/80 shadow-2xs">
-                            <Layers size={16} className="mx-auto text-violet-600 mb-1" />
-                            <p className="text-base font-extrabold text-text-main">{unit._count?.subKelas || 0}</p>
-                            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mt-0.5">Rombel</p>
+                          <div className="p-2.5 bg-surface rounded-xl border border-border/80 shadow-2xs flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
+                              <Layers size={15} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-extrabold text-text-main leading-tight">{unit._count?.subKelas || 0}</p>
+                              <p className="text-[11px] font-medium text-text-muted truncate">Rombel</p>
+                            </div>
                           </div>
 
-                          <div className="p-2.5 bg-surface rounded-xl border border-border/80 shadow-2xs">
-                            <GraduationCap size={16} className="mx-auto text-amber-600 mb-1" />
-                            <p className="text-base font-extrabold text-text-main">{unit._count?.guru || 0}</p>
-                            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mt-0.5">Guru</p>
+                          <div className="p-2.5 bg-surface rounded-xl border border-border/80 shadow-2xs flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                              <GraduationCap size={15} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-extrabold text-text-main leading-tight">{unit._count?.guru || 0}</p>
+                              <p className="text-[11px] font-medium text-text-muted truncate">Guru</p>
+                            </div>
                           </div>
 
-                          <div className="p-2.5 bg-surface rounded-xl border border-border/80 shadow-2xs">
-                            <BookOpen size={16} className="mx-auto text-emerald-600 mb-1" />
-                            <p className="text-base font-extrabold text-text-main">{unit._count?.jurusan || 0}</p>
-                            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mt-0.5">Jurusan</p>
+                          <div className="p-2.5 bg-surface rounded-xl border border-border/80 shadow-2xs flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                              <BookOpen size={15} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-extrabold text-text-main leading-tight">{unit._count?.jurusan || 0}</p>
+                              <p className="text-[11px] font-medium text-text-muted truncate">Jurusan</p>
+                            </div>
                           </div>
                         </div>
 
