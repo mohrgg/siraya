@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { 
   LayoutDashboard, CreditCard, GraduationCap, PieChart, 
-  LayoutGrid, X, Key, LogOut, Search, ChevronRight
+  LayoutGrid, X, Key, LogOut, Search
 } from 'lucide-react'
 import { getFilteredMenuGroups } from '@/lib/constants/navigation'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
@@ -285,21 +285,20 @@ export default function MobileBottomNav({ user, logoUrl }: MobileBottomNavProps)
                             key={item.href}
                             href={item.href}
                             onClick={() => setIsModalOpen(false)}
-                            className={`p-2.5 short:p-2 rounded-xl border flex items-center justify-between gap-2 transition-all min-h-[46px] short:min-h-[36px] ${
+                            className={`p-2.5 short:p-2 rounded-xl border flex items-center gap-2.5 transition-all min-h-[50px] short:min-h-[38px] ${
                               isActive
                                 ? 'bg-primary text-white border-primary shadow-xs'
                                 : 'bg-surface hover:bg-slate-50 border-border text-text-main'
                             }`}
                           >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className={`w-7 h-7 short:w-6 short:h-6 rounded-lg flex items-center justify-center shrink-0 ${
-                                isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
-                              }`}>
-                                <Icon size={15} className="short:w-3.5 short:h-3.5" />
-                              </div>
-                              <span className="text-xs short:text-[11px] font-bold truncate">{item.label}</span>
+                            <div className={`w-7 h-7 short:w-6 short:h-6 rounded-lg flex items-center justify-center shrink-0 ${
+                              isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+                            }`}>
+                              <Icon size={15} className="short:w-3.5 short:h-3.5" />
                             </div>
-                            <ChevronRight size={13} className={isActive ? "text-white/80" : "text-text-muted"} />
+                            <span className="text-xs short:text-[11px] font-bold leading-snug line-clamp-2 break-words flex-1">
+                              {item.label}
+                            </span>
                           </Link>
                         )
                       })}

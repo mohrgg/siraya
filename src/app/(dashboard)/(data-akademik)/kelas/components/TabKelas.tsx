@@ -30,15 +30,13 @@ export default function TabKelas({
           <tr key={g.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
             <td className="p-4">{(currentPage - 1) * pageSize + i + 1}</td>
             <td className="p-4 text-text-main font-medium">{g.unitSekolah?.name}</td>
-            <td className="p-4 font-bold text-text-main">
-              <div className="flex items-center gap-2">
-                <span>{g.name}</span>
-                {(g._count?.subKelas || 0) > 0 && (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
-                    {g._count.subKelas} Rombel
-                  </span>
-                )}
-              </div>
+            <td className="p-4">
+              <span className="font-bold text-text-main whitespace-nowrap block">{g.name}</span>
+              {(g._count?.subKelas || 0) > 0 && (
+                <span className="text-xs font-normal text-text-muted block mt-0.5">
+                  {g._count.subKelas} Rombel
+                </span>
+              )}
             </td>
             {!isReadOnly && (
               <td className="p-4">

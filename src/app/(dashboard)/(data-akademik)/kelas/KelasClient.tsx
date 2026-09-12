@@ -501,57 +501,59 @@ export default function KelasClient({
 
       {/* 4 Card KPI Kelas & Murid (Active for ALL Roles) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+        <div className="bg-surface rounded-2xl p-3 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4 min-h-[76px] sm:min-h-[84px]">
           <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <Users size={20} />
           </div>
-          <div className="min-w-0">
-            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Total Siswa</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Total Siswa</p>
             <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-xl sm:text-2xl font-black text-text-main">{new Intl.NumberFormat('id-ID').format(executiveMetrics.totalMuridInRombel)}</span>
-              <span className="text-[11px] font-medium text-text-muted">(Rerata {executiveMetrics.avgPerRombel}/Kls)</span>
+              <span className="text-xl sm:text-2xl font-black text-text-main leading-none">{new Intl.NumberFormat('id-ID').format(executiveMetrics.totalMuridInRombel)}</span>
             </div>
+            <p className="text-[10px] font-medium text-text-muted mt-0.5 truncate">Rerata {executiveMetrics.avgPerRombel}/Kls</p>
           </div>
         </div>
 
-        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+        <div className="bg-surface rounded-2xl p-3 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4 min-h-[76px] sm:min-h-[84px]">
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
             <Layers size={20} />
           </div>
-          <div className="min-w-0">
-            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Total Rombel</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Total Rombel</p>
             <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.totalRombel}</span>
-              <span className="text-[11px] font-medium text-text-muted">Kelas / Rombel</span>
+              <span className="text-xl sm:text-2xl font-black text-text-main leading-none">{executiveMetrics.totalRombel}</span>
             </div>
+            <p className="text-[10px] font-medium text-text-muted mt-0.5 truncate">Kelas & Rombel</p>
           </div>
         </div>
 
-        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+        <div className="bg-surface rounded-2xl p-3 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4 min-h-[76px] sm:min-h-[84px]">
           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
             <BarChart3 size={20} />
           </div>
-          <div className="min-w-0">
-            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Kepadatan Rombel</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Kepadatan Rombel</p>
             <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.rombelIdeal}</span>
-              <span className="text-[11px] font-semibold text-emerald-600">Ideal</span>
-              <span className="text-text-muted/40">/</span>
-              <span className="text-[11px] font-semibold text-amber-600">{executiveMetrics.rombelOvercapacity + executiveMetrics.rombelMinim} Anomali</span>
+              <span className="text-xl sm:text-2xl font-black text-text-main leading-none">{executiveMetrics.rombelIdeal}</span>
+              <span className="text-[11px] font-bold text-emerald-600">Ideal</span>
             </div>
+            <p className="text-[10px] font-semibold text-amber-600 mt-0.5 truncate">
+              {executiveMetrics.rombelOvercapacity + executiveMetrics.rombelMinim} Anomali
+            </p>
           </div>
         </div>
 
-        <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
+        <div className="bg-surface rounded-2xl p-3 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4 min-h-[76px] sm:min-h-[84px]">
           <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
             <GraduationCap size={20} />
           </div>
-          <div className="min-w-0">
-            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Penugasan Wali</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">Penugasan Wali</p>
             <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-xl sm:text-2xl font-black text-text-main">{executiveMetrics.rombelWithWali}</span>
-              <span className="text-[11px] font-medium text-emerald-600">/ {executiveMetrics.totalRombel} Terisi</span>
+              <span className="text-xl sm:text-2xl font-black text-text-main leading-none">{executiveMetrics.rombelWithWali}</span>
+              <span className="text-[11px] font-medium text-emerald-600">Terisi</span>
             </div>
+            <p className="text-[10px] font-medium text-text-muted mt-0.5 truncate">dari {executiveMetrics.totalRombel} Rombel</p>
           </div>
         </div>
       </div>
@@ -596,27 +598,54 @@ export default function KelasClient({
           isReadOnly={isReadOnly}
         />
 
-        {/* Data Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
-            {data.activeTab === "kelas" && <TabKelas {...data} setDeleteData={setDeleteData} onEditTingkat={(g: any) => {
-              setFormKelas({ id: g.id, name: g.name, order: g.order, unitSekolahId: g.unitSekolahId })
-              setShowModalKelas(true)
-            }} isReadOnly={isReadOnly} />}
-            {data.activeTab === "sub-kelas" && <TabSubKelas {...data} setDeleteData={setDeleteData} setViewDetailSubKelas={setViewDetailSubKelas} setFormSubKelas={setFormSubKelas} setShowModalSubKelas={setShowModalSubKelas} isReadOnly={isReadOnly} />}
-            {(data.activeTab === "murid" || data.activeTab === "alumni") && (
-              <TabMurid
-                {...data}
-                setDeleteData={setDeleteData}
-                setFormMurid={setFormMurid}
-                setShowModalMurid={setShowModalMurid}
-                setReactivateMurid={setReactivateMurid}
-                getStatusBadge={getStatusBadge}
-                isReadOnly={isReadOnly}
-              />
-            )}
-          </table>
-        </div>
+        {/* Data Table / Centered Empty State */}
+        {(() => {
+          const isTabEmpty = 
+            (data.activeTab === "kelas" && data.paginatedGrades.length === 0) ||
+            (data.activeTab === "sub-kelas" && data.paginatedClassrooms.length === 0) ||
+            ((data.activeTab === "murid" || data.activeTab === "alumni") && !data.isLoadingStudents && data.students.length === 0);
+
+          if (isTabEmpty) {
+            const emptyLabels: Record<string, { title: string, desc: string }> = {
+              "kelas": { title: "Belum Ada Data Tingkat", desc: "Silakan gunakan tombol + Tambah Tingkat untuk membuat jenjang kelas baru." },
+              "sub-kelas": { title: "Belum Ada Data Rombel", desc: "Silakan gunakan tombol + Tambah Rombel untuk membuat rombongan belajar baru." },
+              "murid": { title: "Belum Ada Data Murid", desc: "Silakan gunakan tombol + Tambah Murid atau Impor Excel untuk memasukkan data siswa." },
+              "alumni": { title: "Belum Ada Data Alumni", desc: "Data siswa yang telah lulus atau mutasi akan tercatat di tab ini." },
+            };
+            const info = emptyLabels[data.activeTab] || { title: "Belum Ada Data", desc: "Data belum tersedia pada kategori ini." };
+
+            return (
+              <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center text-text-muted w-full">
+                <Users size={40} className="text-gray-300 mb-3 stroke-[1.5]" />
+                <p className="font-bold text-text-main text-base mb-1">{info.title}</p>
+                <p className="text-xs text-text-muted max-w-sm">{info.desc}</p>
+              </div>
+            );
+          }
+
+          return (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left">
+                {data.activeTab === "kelas" && <TabKelas {...data} setDeleteData={setDeleteData} onEditTingkat={(g: any) => {
+                  setFormKelas({ id: g.id, name: g.name, order: g.order, unitSekolahId: g.unitSekolahId })
+                  setShowModalKelas(true)
+                }} isReadOnly={isReadOnly} />}
+                {data.activeTab === "sub-kelas" && <TabSubKelas {...data} setDeleteData={setDeleteData} setViewDetailSubKelas={setViewDetailSubKelas} setFormSubKelas={setFormSubKelas} setShowModalSubKelas={setShowModalSubKelas} isReadOnly={isReadOnly} />}
+                {(data.activeTab === "murid" || data.activeTab === "alumni") && (
+                  <TabMurid
+                    {...data}
+                    setDeleteData={setDeleteData}
+                    setFormMurid={setFormMurid}
+                    setShowModalMurid={setShowModalMurid}
+                    setReactivateMurid={setReactivateMurid}
+                    getStatusBadge={getStatusBadge}
+                    isReadOnly={isReadOnly}
+                  />
+                )}
+              </table>
+            </div>
+          );
+        })()}
 
         {/* Pagination Controls */}
         {data.computedTotalPages > 0 && (

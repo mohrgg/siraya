@@ -577,13 +577,13 @@ export default function PembuatanTagihanClient({
                 />
               </div>
 
-              <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+              <div className={`grid ${kelasId || subKelasId || gridData.length > 0 ? 'grid-cols-2' : 'grid-cols-1'} sm:flex items-center gap-2 w-full sm:w-auto`}>
                 <Button 
                   size="sm"
                   variant="primary"
                   onClick={handleTampilkanKelas} 
                   disabled={!subKelasId || isLoading}
-                  className="min-h-[44px] sm:min-h-[38px] short:min-h-[34px] font-bold justify-center"
+                  className="w-full sm:w-auto min-h-[44px] sm:min-h-[38px] short:min-h-[34px] font-bold justify-center"
                 >
                   {isLoading ? <Loader2 size={15} className="animate-spin mr-1" /> : null}
                   Tampilkan
@@ -596,7 +596,7 @@ export default function PembuatanTagihanClient({
                     onClick={handleResetFilter}
                     disabled={isLoading}
                     title="Reset filter dan data"
-                    className="min-h-[44px] sm:min-h-[38px] short:min-h-[34px] font-semibold justify-center border-border text-text-muted hover:text-text-main"
+                    className="w-full sm:w-auto min-h-[44px] sm:min-h-[38px] short:min-h-[34px] font-semibold justify-center border-border text-text-muted hover:text-text-main"
                   >
                     <RotateCcw size={14} className="mr-1.5" />
                     Reset

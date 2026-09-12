@@ -182,7 +182,7 @@ export function ToolbarImportExcel({
       size="sm"
       onClick={onClick}
       disabled={disabled}
-      className={`w-full sm:w-auto flex-1 sm:flex-initial min-w-[90px] justify-center border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 focus:ring-emerald-500/50 min-h-[44px] sm:min-h-[36px] short:min-h-[32px] touch-manipulation cursor-pointer ${className}`}
+      className={`w-full sm:w-auto col-span-2 sm:col-span-1 flex-1 sm:flex-initial min-w-[90px] justify-center border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 focus:ring-emerald-500/50 min-h-[44px] sm:min-h-[36px] short:min-h-[32px] touch-manipulation cursor-pointer ${className}`}
     >
       <UploadCloud size={16} className="mr-1.5 shrink-0" />
       <span className="truncate">{label}</span>
@@ -237,9 +237,12 @@ export function ToolbarRefreshButton({
       onClick={onClick}
       disabled={disabled || isLoading}
       title={title}
-      className={`min-h-[44px] sm:min-h-[36px] short:min-h-[32px] px-2.5 sm:px-3 border-border hover:bg-bg text-text-muted hover:text-text-main focus:ring-primary/50 touch-manipulation cursor-pointer justify-center ${className}`}
+      className={`w-full sm:w-auto col-span-2 sm:col-span-1 min-h-[44px] sm:min-h-[36px] short:min-h-[32px] px-3 border-border hover:bg-bg text-text-muted hover:text-text-main focus:ring-primary/50 touch-manipulation cursor-pointer justify-center ${className}`}
     >
       <RefreshCw size={15} className={`shrink-0 ${isLoading ? 'animate-spin text-primary' : ''}`} />
+      <span className="sm:hidden font-semibold text-xs ml-2 text-text-main">
+        {isLoading ? 'Menyegarkan...' : title}
+      </span>
     </Button>
   )
 }

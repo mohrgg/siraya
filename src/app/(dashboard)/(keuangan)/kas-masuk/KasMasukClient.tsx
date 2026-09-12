@@ -324,125 +324,125 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
           </ToolbarActions>
         </Toolbar>
 
-        {/* Table */}
-        <TableScrollHint totalRows={filteredData.length} />
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
-            <thead>
-              <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
-                <th className="p-4 font-semibold text-center">NO</th>
-                <th className="p-4 font-semibold">TGL TRANSAKSI</th>
-                <th className="p-4 font-semibold">TGL PEMBUATAN</th>
-                <th className="p-4 font-semibold">NO REFERENSI</th>
-                <th className="p-4 font-semibold">NO FORMULIR</th>
-                <th className="p-4 font-semibold">PENYETOR</th>
-                <th className="p-4 font-semibold">DESKRIPSI</th>
-                <th className="p-4 font-semibold text-right">TOTAL NILAI</th>
-                <th className="p-4 font-semibold">PEMBUAT</th>
-                <th className="p-4 font-semibold text-center">STATUS</th>
-                <th className="p-4 font-semibold text-center">REVISI</th>
-                <th className="p-4 font-semibold text-right">{isReadOnly ? "AUDIT NOTA" : "AKSI"}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedData.map((item: any, idx: number) => (
-                <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
-                  <td className="p-4 text-center text-text-muted">{idx + 1}</td>
-                  <td className="p-4 font-medium text-text-main">{format(new Date(item.tanggal), 'dd MMM yyyy', { locale: idLocale })}</td>
-                  <td className="p-4 text-text-muted">{format(new Date(item.createdAt), 'dd MMM yyyy HH:mm', { locale: idLocale })}</td>
-                  <td className="p-4 font-semibold text-primary">{item.noReferensi}</td>
-                  <td className="p-4 text-text-muted">{item.noFormulir || "-"}</td>
-                  <td className="p-4 font-medium">{item.namaPihakKetiga || "-"}</td>
-                  <td className="p-4">
-                    <span className="truncate max-w-[200px] block" title={item.deskripsi}>{item.deskripsi}</span>
-                  </td>
-                  <td className="p-4 text-right font-bold text-albas-green">
-                    Rp {item.totalNilai.toLocaleString('id-ID')}
-                    {isReadOnly && item.totalNilai >= 1000000 && (
-                      <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
-                        &ge; 1 Jt
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-4 text-text-muted">{item.pembuat?.name}</td>
-                  <td className="p-4 text-center">
-                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${item.status === 'POSTED' ? 'bg-albas-green/10 text-albas-green' : 'bg-red-500/10 text-red-500'}`}>
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center text-xs">
-                    {item.isEdited ? (
-                      <span className="px-2 py-1 bg-amber-500/10 text-amber-600 rounded-md font-medium" title={item.editReason}>Ya</span>
-                    ) : (
-                      <span className="text-text-muted/50">-</span>
-                    )}
-                  </td>
-                  <td className="p-4 text-right">
-                    {isReadOnly ? (
-                      <Link
-                        href={`/kas-masuk/${item.id}?tab=resi`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors font-bold text-xs"
-                      >
-                        <Receipt size={14} /> Audit Nota
-                      </Link>
-                    ) : (
-                      <DropdownMenu.Root>
-                        <DropdownMenu.Trigger asChild>
-                          <Button variant="outline" className="h-9 px-3 flex items-center gap-2 bg-white hover:bg-bg/50 shadow-sm">
-                            <span className="text-xs font-semibold text-text-main">Aksi</span>
-                            <ChevronDown size={16} className="text-text-muted" />
-                          </Button>
-                        </DropdownMenu.Trigger>
-                      <DropdownMenu.Portal>
-                        <DropdownMenu.Content 
-                          align="end"
-                          className="w-40 bg-white rounded-lg shadow-lg border border-border py-1 z-[100] animate-in fade-in-80 zoom-in-95 data-[side=bottom]:slide-in-from-top-2"
-                        >
-                          <DropdownMenu.Item 
-                            className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-bg/50 transition-colors flex items-center cursor-pointer outline-none"
-                            onClick={() => router.push(`/kas-masuk/${item.id}?tab=resi`)}
+        {/* Table & Centered Empty State */}
+        {filteredData.length === 0 ? (
+          <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center text-text-muted w-full">
+            <Receipt size={40} className="text-gray-300 mb-3 stroke-[1.5]" />
+            <p className="font-bold text-text-main text-base mb-1">Belum Ada Transaksi Kas Masuk</p>
+            <p className="text-xs text-text-muted max-w-sm">Data transaksi kas masuk akan muncul di sini setelah dibuat.</p>
+          </div>
+        ) : (
+          <>
+            <TableScrollHint totalRows={filteredData.length} />
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
+                <thead>
+                  <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
+                    <th className="p-4 font-semibold text-center">NO</th>
+                    <th className="p-4 font-semibold">TGL TRANSAKSI</th>
+                    <th className="p-4 font-semibold">TGL PEMBUATAN</th>
+                    <th className="p-4 font-semibold">NO REFERENSI</th>
+                    <th className="p-4 font-semibold">NO FORMULIR</th>
+                    <th className="p-4 font-semibold">PENYETOR</th>
+                    <th className="p-4 font-semibold">DESKRIPSI</th>
+                    <th className="p-4 font-semibold text-right">TOTAL NILAI</th>
+                    <th className="p-4 font-semibold">PEMBUAT</th>
+                    <th className="p-4 font-semibold text-center">STATUS</th>
+                    <th className="p-4 font-semibold text-center">REVISI</th>
+                    <th className="p-4 font-semibold text-right">{isReadOnly ? "AUDIT NOTA" : "AKSI"}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedData.map((item: any, idx: number) => (
+                    <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
+                      <td className="p-4 text-center text-text-muted">{idx + 1}</td>
+                      <td className="p-4 font-medium text-text-main">{format(new Date(item.tanggal), 'dd MMM yyyy', { locale: idLocale })}</td>
+                      <td className="p-4 text-text-muted">{format(new Date(item.createdAt), 'dd MMM yyyy HH:mm', { locale: idLocale })}</td>
+                      <td className="p-4 font-semibold text-primary">{item.noReferensi}</td>
+                      <td className="p-4 text-text-muted">{item.noFormulir || "-"}</td>
+                      <td className="p-4 font-medium">{item.namaPihakKetiga || "-"}</td>
+                      <td className="p-4">
+                        <span className="truncate max-w-[200px] block" title={item.deskripsi}>{item.deskripsi}</span>
+                      </td>
+                      <td className="p-4 text-right font-bold text-albas-green">
+                        Rp {item.totalNilai.toLocaleString('id-ID')}
+                        {isReadOnly && item.totalNilai >= 1000000 && (
+                          <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
+                            &ge; 1 Jt
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4 text-text-muted">{item.creator?.name || "-"}</td>
+                      <td className="p-4 text-center">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {item.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-center text-xs">
+                        {item.isEdited ? (
+                          <span className="px-2 py-1 bg-amber-500/10 text-amber-600 rounded-md font-medium" title={item.editReason}>Ya</span>
+                        ) : (
+                          <span className="text-text-muted/50">-</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-right">
+                        {isReadOnly ? (
+                          <Link
+                            href={`/kas-masuk/${item.id}?tab=resi`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-600 transition-colors font-bold text-xs"
                           >
-                            <Receipt size={14} className="mr-2 text-text-muted" /> Detail
-                          </DropdownMenu.Item>
-                          <DropdownMenu.Item 
-                            className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-bg/50 transition-colors flex items-center cursor-pointer outline-none"
-                            onClick={() => router.push(`/kas-masuk/${item.id}?tab=jurnal`)}
-                          >
-                            <Eye size={14} className="mr-2 text-text-muted" /> Jurnal
-                          </DropdownMenu.Item>
-                          <DropdownMenu.Item 
-                            className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-bg/50 transition-colors flex items-center cursor-pointer outline-none"
-                            onClick={() => router.push(`/kas-masuk/${item.id}/edit`)}
-                          >
-                            <Edit size={14} className="mr-2 text-blue-500" /> Ubah
-                          </DropdownMenu.Item>
-                          <DropdownMenu.Separator className="h-px bg-border my-1" />
-                          <DropdownMenu.Item 
-                            className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors flex items-center cursor-pointer outline-none"
-                            onClick={() => setDeleteId(item.id)}
-                          >
-                            <Trash2 size={14} className="mr-2" /> Hapus
-                          </DropdownMenu.Item>
-                        </DropdownMenu.Content>
-                      </DropdownMenu.Portal>
-                    </DropdownMenu.Root>
-                  )}
-                </td>
-                </tr>
-              ))}
-              {filteredData.length === 0 && (
-                <tr>
-                  <td colSpan={12} className="p-8">
-                    <div className="flex flex-col items-center justify-center text-center text-text-muted">
-                      <Receipt size={40} className="text-gray-300 mb-3" />
-                      <p>Belum ada Transaksi Kas Masuk.</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                            <Receipt size={14} /> Audit Nota
+                          </Link>
+                        ) : (
+                          <DropdownMenu.Root>
+                            <DropdownMenu.Trigger asChild>
+                              <Button variant="outline" className="h-9 px-3 flex items-center gap-2 bg-white hover:bg-bg/50 shadow-sm">
+                                <span className="text-xs font-semibold text-text-main">Aksi</span>
+                                <ChevronDown size={16} className="text-text-muted" />
+                              </Button>
+                            </DropdownMenu.Trigger>
+                          <DropdownMenu.Portal>
+                            <DropdownMenu.Content 
+                              align="end"
+                              className="w-40 bg-white rounded-lg shadow-lg border border-border py-1 z-[100] animate-in fade-in-80 zoom-in-95 data-[side=bottom]:slide-in-from-top-2"
+                            >
+                              <DropdownMenu.Item 
+                                className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-bg/50 transition-colors flex items-center cursor-pointer outline-none"
+                                onClick={() => router.push(`/kas-masuk/${item.id}?tab=resi`)}
+                              >
+                                <Receipt size={14} className="mr-2 text-text-muted" /> Detail
+                              </DropdownMenu.Item>
+                              <DropdownMenu.Item 
+                                className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-bg/50 transition-colors flex items-center cursor-pointer outline-none"
+                                onClick={() => router.push(`/kas-masuk/${item.id}?tab=jurnal`)}
+                              >
+                                <Eye size={14} className="mr-2 text-text-muted" /> Jurnal
+                              </DropdownMenu.Item>
+                              <DropdownMenu.Item 
+                                className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-bg/50 transition-colors flex items-center cursor-pointer outline-none"
+                                onClick={() => router.push(`/kas-masuk/${item.id}/edit`)}
+                              >
+                                <Edit size={14} className="mr-2 text-blue-500" /> Ubah
+                              </DropdownMenu.Item>
+                              <DropdownMenu.Separator className="h-px bg-border my-1" />
+                              <DropdownMenu.Item 
+                                className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors flex items-center cursor-pointer outline-none"
+                                onClick={() => setDeleteId(item.id)}
+                              >
+                                <Trash2 size={14} className="mr-2" /> Hapus
+                              </DropdownMenu.Item>
+                            </DropdownMenu.Content>
+                          </DropdownMenu.Portal>
+                        </DropdownMenu.Root>
+                      )}
+                    </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
 
         {filteredData.length > 0 && (
           <div className="p-4 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface text-sm rounded-b-2xl">
