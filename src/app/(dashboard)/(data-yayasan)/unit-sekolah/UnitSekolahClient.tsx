@@ -19,6 +19,7 @@ import UnitAuditSideDrawer, { UnitAuditData } from "@/components/dashboard/UnitA
 import toast from "react-hot-toast"
 import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
+import { Toolbar, ToolbarSearch, ToolbarActions, ToolbarRefreshButton, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
 
 export type UnitSekolah = { 
   id: string
@@ -444,52 +445,49 @@ export default function UnitSekolahClient({
           tabs={[{ id: "unit", label: "Daftar Unit Sekolah", icon: Building2, badge: data.length }]}
         />
 
-        {/* Toolbar & Filter Bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-6">
-          <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center flex-1">
-            <div className="relative w-full sm:w-64">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-              <input
-                type="text"
-                placeholder="Cari unit atau kepsek..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 min-h-[44px]"
-              />
-            </div>
+        {/* Standardized Toolbar & Filter Bar */}
+        <Toolbar>
+          <ToolbarSearch 
+            placeholder="Cari unit atau kepsek..."
+            value={searchTerm}
+            onChange={(e: any) => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm("")}
+          />
 
-            {/* View Mode Toggle */}
-            <div className="flex items-center bg-bg p-1 rounded-xl border border-border self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => setViewMode("grid")}
-                className={`p-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 min-h-[36px] ${viewMode === "grid" ? "bg-surface shadow-xs text-primary font-bold" : "text-text-muted hover:text-text-main"}`}
-                title="Tampilan Grid Card"
-              >
-                <LayoutGrid size={15} />
-                <span className="hidden md:inline">Grid Kartu</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                className={`p-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 min-h-[36px] ${viewMode === "table" ? "bg-surface shadow-xs text-primary font-bold" : "text-text-muted hover:text-text-main"}`}
-                title="Tampilan Tabel"
-              >
-                <TableIcon size={15} />
-                <span className="hidden md:inline">Tabel</span>
-              </button>
-            </div>
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-bg p-1 rounded-xl border border-border self-start sm:self-auto min-h-[44px] sm:min-h-[38px] short:min-h-[34px]">
+            <button
+              type="button"
+              onClick={() => setViewMode("grid")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 min-h-[32px] cursor-pointer touch-manipulation ${viewMode === "grid" ? "bg-surface shadow-xs text-primary font-bold" : "text-text-muted hover:text-text-main"}`}
+              title="Tampilan Grid Card"
+            >
+              <LayoutGrid size={15} />
+              <span className="hidden md:inline">Grid Kartu</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("table")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 min-h-[32px] cursor-pointer touch-manipulation ${viewMode === "table" ? "bg-surface shadow-xs text-primary font-bold" : "text-text-muted hover:text-text-main"}`}
+              title="Tampilan Tabel"
+            >
+              <TableIcon size={15} />
+              <span className="hidden md:inline">Tabel</span>
+            </button>
           </div>
 
-          {!isReadOnly && (
-            <div className="shrink-0 w-full sm:w-auto">
-              <Button onClick={handleOpenCreateModal} className="w-full sm:w-auto flex items-center justify-center bg-primary text-white hover:bg-primary/90 shadow-sm min-h-[44px]">
-                <Plus size={16} className="mr-1.5" />
-                <span>Tambah Unit Sekolah</span>
-              </Button>
-            </div>
-          )}
-        </div>
+          <ToolbarActions>
+            <ToolbarRefreshButton 
+              onClick={() => router.refresh()} 
+              title="Segarkan Data" 
+            />
+            {!isReadOnly && (
+              <ToolbarAddButton onClick={handleOpenCreateModal}>
+                Tambah Unit Sekolah
+              </ToolbarAddButton>
+            )}
+          </ToolbarActions>
+        </Toolbar>
 
         {/* VIEW 1: EXECUTIVE METRIC CARD GRID */}
         {viewMode === "grid" ? (

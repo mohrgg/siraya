@@ -18,6 +18,7 @@ import { SortableHeader } from "@/components/ui/SortableHeader"
 import { useSortableData } from "@/hooks/useSortableData"
 import { tambahJurusan, editJurusan, hapusJurusan } from "@/actions/kelas"
 import toast from "react-hot-toast"
+import { Toolbar, ToolbarSearch, ToolbarActions, ToolbarRefreshButton, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
 
 export type Major = {
   id: string
@@ -426,33 +427,27 @@ export default function JurusanClient({
           </div>
         )}
 
-        {/* Toolbar: Search & Add Button */}
-        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-6">
-          <div className="flex flex-wrap gap-3 items-center flex-1 w-full sm:w-auto">
-            <div className="relative w-full sm:w-72">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-              <input
-                type="text"
-                placeholder="Cari kode atau nama jurusan..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 min-h-[44px]"
-              />
-            </div>
-          </div>
+        {/* Standardized Toolbar: Search & Actions */}
+        <Toolbar>
+          <ToolbarSearch 
+            placeholder="Cari kode atau nama jurusan..."
+            value={searchTerm}
+            onChange={(e: any) => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm("")}
+          />
 
-          {!isReadOnly && (
-            <div className="shrink-0 w-full sm:w-auto">
-              <Button 
-                onClick={() => handleOpenAddModal()} 
-                className="w-full sm:w-auto flex items-center justify-center bg-primary text-white hover:bg-primary/90 shadow-sm min-h-[44px]"
-              >
-                <Plus size={16} className="mr-1.5" />
-                <span>Tambah Program/Jurusan</span>
-              </Button>
-            </div>
-          )}
-        </div>
+          <ToolbarActions>
+            <ToolbarRefreshButton 
+              onClick={() => router.refresh()} 
+              title="Segarkan Data" 
+            />
+            {!isReadOnly && (
+              <ToolbarAddButton onClick={() => handleOpenAddModal()}>
+                Tambah Program/Jurusan
+              </ToolbarAddButton>
+            )}
+          </ToolbarActions>
+        </Toolbar>
 
         {/* GROUPED PER-UNIT SECTIONS */}
         <div className="space-y-6">

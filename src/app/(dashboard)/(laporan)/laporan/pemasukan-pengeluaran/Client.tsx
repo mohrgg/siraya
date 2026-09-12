@@ -13,6 +13,7 @@ import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
 import PrintFooter from "@/components/shared/print/PrintFooter"
 import { PageHeader } from "@/components/ui/PageHeader"
+import { ToolbarFilter, ToolbarRefreshButton, ToolbarExportExcel, ToolbarExportPDF, ToolbarPrintButton } from "@/components/ui/DataTableToolbar"
 
 export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], userRole, userUnitId, userName }: { pengaturan?: any, schoolUnits?: any[], userRole?: string, userUnitId?: string, userName?: string }) {
   const router = useRouter()
@@ -169,54 +170,31 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
         subtitle="Laporan Laba/Rugi sekolah dalam rentang waktu tertentu"
         action={
           <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-            <Button 
-              variant="outline"
-              size="sm" 
-              onClick={handleExportExcel}
-              className="flex-1 sm:flex-initial justify-center opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm cursor-pointer min-h-[44px] sm:min-h-[36px]"
-            >
-              <FileSpreadsheet size={16} className="mr-1.5" /> Excel
-            </Button>
-            <Button 
-              variant="outline"
-              size="sm" 
-              onClick={handleExportPdf}
-              className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm cursor-pointer min-h-[44px] sm:min-h-[36px]"
-            >
-              <FileText size={16} className="mr-1.5" /> PDF
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handlePrint} 
-              className="flex-1 sm:flex-initial justify-center font-semibold bg-surface shadow-sm border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer min-h-[44px] sm:min-h-[36px]"
-            >
-              <Printer size={16} className="mr-1.5" /> Cetak
-            </Button>
+            <ToolbarRefreshButton onClick={fetchData} disabled={isLoading} title="Segarkan Data" />
+            <ToolbarExportExcel onClick={handleExportExcel} />
+            <ToolbarExportPDF onClick={handleExportPdf} />
+            <ToolbarPrintButton onClick={handlePrint} />
           </div>
         }
       />
 
       {/* Filter Card */}
       <div className="bg-surface p-4 sm:p-5 rounded-2xl shadow-sm border border-border mb-6">
-        <div className="text-sm font-semibold text-gray-600 mb-2">Filter Laporan</div>
-        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 sm:gap-4">
+        <div className="text-sm font-semibold text-text-muted mb-2.5">Filter Laporan</div>
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
           
-          <div className="flex items-center w-full md:w-auto border border-border rounded-xl overflow-hidden bg-gray-50 flex-1 max-w-md min-h-[44px]">
-            <div className="px-3 text-emerald-500 shrink-0 border-r border-border bg-emerald-50 h-full flex items-center justify-center">
-              <CalendarIcon size={16} />
-            </div>
-            <select 
-              value={dateRange} 
-              onChange={(e) => setDateRange(e.target.value)}
-              className="w-full bg-transparent border-none py-2.5 px-3 text-sm font-medium focus:ring-0 cursor-pointer min-h-[44px]"
-            >
-              <option value="Minggu Ini">Minggu ini</option>
-              <option value="Bulan Ini">Bulan ini</option>
-              <option value="Tahun Ini">Tahun ini</option>
-              <option value="Kustom">Kustom</option>
-            </select>
-          </div>
+          <ToolbarFilter
+            icon={<CalendarIcon size={14} />}
+            value={dateRange}
+            onChange={(val) => setDateRange(val)}
+            className="w-full md:w-auto sm:max-w-none md:max-w-[200px]"
+            options={[
+              { label: "Minggu ini", value: "Minggu Ini" },
+              { label: "Bulan ini", value: "Bulan Ini" },
+              { label: "Tahun ini", value: "Tahun Ini" },
+              { label: "Kustom", value: "Kustom" }
+            ]}
+          />
 
           {dateRange === "Kustom" && (
             <div className="flex items-center gap-2 w-full md:w-auto">
@@ -224,20 +202,26 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
                 type="date" 
                 value={customStart} 
                 onChange={(e) => setCustomStart(e.target.value)}
-                className="border border-border rounded-xl px-3 py-2 text-sm w-full md:w-auto min-h-[44px]"
+                className="bg-bg border border-border rounded-xl px-3 py-2 text-sm w-full md:w-auto min-h-[44px] sm:min-h-[38px] short:min-h-[34px] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               />
-              <span className="text-gray-400">-</span>
+              <span className="text-text-muted">-</span>
               <input 
                 type="date" 
                 value={customEnd} 
                 onChange={(e) => setCustomEnd(e.target.value)}
-                className="border border-border rounded-xl px-3 py-2 text-sm w-full md:w-auto min-h-[44px]"
+                className="bg-bg border border-border rounded-xl px-3 py-2 text-sm w-full md:w-auto min-h-[44px] sm:min-h-[38px] short:min-h-[34px] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               />
             </div>
           )}
 
-          <Button onClick={fetchData} disabled={isLoading} className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 shadow-sm gap-2 whitespace-nowrap min-h-[44px]">
-            {isLoading ? <RefreshCw className="animate-spin" size={16} /> : <Search size={16} />}
+          <Button 
+            variant="primary"
+            size="sm"
+            onClick={fetchData} 
+            disabled={isLoading} 
+            className="w-full md:w-auto justify-center min-h-[44px] sm:min-h-[38px] short:min-h-[34px] font-bold shadow-sm"
+          >
+            {isLoading ? <RefreshCw className="animate-spin mr-1.5" size={16} /> : <Search className="mr-1.5" size={16} />}
             Filter
           </Button>
         </div>

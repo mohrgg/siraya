@@ -13,6 +13,13 @@ import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
 import PrintFooter from "@/components/shared/print/PrintFooter"
 import { PageHeader } from "@/components/ui/PageHeader"
+import { 
+  ToolbarRefreshButton,
+  ToolbarExportExcel, 
+  ToolbarExportPDF, 
+  ToolbarPrintButton,
+  ToolbarFilter
+} from "@/components/ui/DataTableToolbar"
 
 export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], akunKasBank = [], userRole, userUnitId, userName, isGlobal }: { pengaturan?: any, schoolUnits?: any[], akunKasBank?: any[], userRole?: string, userUnitId?: string, userName?: string, isGlobal?: boolean }) {
   const router = useRouter()
@@ -33,37 +40,37 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
 
   // Default to current month
   const [dateRange, setDateRange] = useState("Bulan Ini")
-  const [customStart, setCustomStart] = useState("")
-  const [customEnd, setCustomEnd] = useState("")
+  const [customStart, setCustomStart] = useState(new Date().toISOString().split('T')[0])
+  const [customEnd, setCustomEnd] = useState(new Date().toISOString().split('T')[0])
 
   const getDates = (range: string) => {
-    const today = new Date()
+    const now = new Date()
     let start = new Date()
     let end = new Date()
 
     if (range === "Minggu Ini") {
-      const day = today.getDay()
-      const diff = today.getDate() - day + (day === 0 ? -6 : 1)
-      start = new Date(today.setDate(diff))
-      end = new Date(today.setDate(start.getDate() + 6))
+      const day = now.getDay()
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1)
+      start = new Date(now.setDate(diff))
+      end = new Date()
     } else if (range === "Bulan Ini") {
-      start = new Date(today.getFullYear(), today.getMonth(), 1)
-      end = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+      start = new Date(now.getFullYear(), now.getMonth(), 1)
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
     } else if (range === "Tahun Ini") {
-      start = new Date(today.getFullYear(), 0, 1)
-      end = new Date(today.getFullYear(), 11, 31)
+      start = new Date(now.getFullYear(), 0, 1)
+      end = new Date(now.getFullYear(), 11, 31)
     } else if (range === "Kustom") {
-      start = customStart ? new Date(customStart) : new Date()
-      end = customEnd ? new Date(customEnd) : new Date()
+      return { startDate: customStart, endDate: customEnd }
     }
 
-    const formatDate = (d: Date) => {
-      const offset = d.getTimezoneOffset()
-      const localDate = new Date(d.getTime() - (offset*60*1000))
-      return localDate.toISOString().split('T')[0]
+    const toYYYYMMDD = (d: Date) => {
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
     }
 
-    return { startDate: formatDate(start), endDate: formatDate(end) }
+    return { startDate: toYYYYMMDD(start), endDate: toYYYYMMDD(end) }
   }
 
   const fetchData = async () => {
@@ -73,8 +80,8 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
       const { startDate, endDate } = getDates(dateRange)
       const res = await getMutasiBank(startDate, endDate, selectedAkunId)
       setData(res)
-    } catch (error: any) {
-      toast.error("Gagal mengambil mutasi bank: " + error.message)
+    } catch (err: any) {
+      toast.error(err.message || "Gagal mengambil data mutasi")
     } finally {
       setIsLoading(false)
     }
@@ -160,73 +167,58 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
         subtitle="Laporan rincian pemasukan dan pengeluaran pada satu akun Kas/Bank"
         action={
           <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-            <Button 
-              variant="outline"
-              size="sm" 
+            <ToolbarRefreshButton 
+              onClick={fetchData} 
+              disabled={isLoading}
+              title="Segarkan Data"
+            />
+            <ToolbarExportExcel 
               onClick={handleExportExcel}
-              className="flex-1 sm:flex-initial justify-center opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm cursor-pointer min-h-[44px] sm:min-h-[36px]"
               disabled={!data || data.mutasi.length === 0}
-            >
-              <FileSpreadsheet size={16} className="mr-1.5" /> Excel
-            </Button>
-            <Button 
-              variant="outline"
-              size="sm" 
+            />
+            <ToolbarExportPDF 
               onClick={handleExportPdf}
-              className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm cursor-pointer min-h-[44px] sm:min-h-[36px]"
               disabled={!data || data.mutasi.length === 0}
-            >
-              <FileText size={16} className="mr-1.5" /> PDF
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            />
+            <ToolbarPrintButton 
               onClick={handlePrint} 
-              className="flex-1 sm:flex-initial justify-center font-semibold bg-surface shadow-sm border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer min-h-[44px] sm:min-h-[36px]"
               disabled={!data || data.mutasi.length === 0}
-            >
-              <Printer size={16} className="mr-1.5" /> Cetak
-            </Button>
+            />
           </div>
         }
       />
 
       {/* Filter Card */}
       <div className="bg-surface p-4 sm:p-5 rounded-2xl shadow-sm border border-border mb-6 print:hidden">
-        <div className="text-sm font-semibold text-gray-600 mb-2">Pilih Rekening & Periode Laporan</div>
+        <div className="text-sm font-semibold text-text-muted mb-2">Pilih Rekening & Periode Laporan</div>
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 sm:gap-4">
           
-          <div className="flex items-center w-full md:w-auto border border-border rounded-xl overflow-hidden bg-gray-50 flex-1 max-w-md min-h-[44px]">
-            <div className="px-3 text-blue-500 shrink-0 border-r border-border bg-blue-50 h-full flex items-center justify-center">
-              <Wallet size={16} />
-            </div>
-            <select 
-              value={selectedAkunId} 
-              onChange={(e) => setSelectedAkunId(e.target.value)}
-              className="w-full bg-transparent border-none py-2.5 px-3 text-sm font-medium focus:ring-0 cursor-pointer text-text-main min-h-[44px]"
-            >
-              {akunKasBank.length === 0 && <option value="">Belum ada akun bank...</option>}
-              {akunKasBank.map((a: any) => (
-                <option key={a.id} value={a.id}>{a.kode} - {a.nama} {a.unitSekolah ? `(${a.unitSekolah.name})` : ''}</option>
-              ))}
-            </select>
-          </div>
+          <ToolbarFilter
+            icon={<Wallet size={14} />}
+            value={selectedAkunId}
+            onChange={(val) => setSelectedAkunId(val)}
+            className="w-full md:w-auto sm:max-w-none md:max-w-xs"
+            options={[
+              ...(akunKasBank.length === 0 ? [{ label: "Belum ada akun bank...", value: "" }] : []),
+              ...akunKasBank.map((a: any) => ({
+                label: `${a.kode} - ${a.nama} ${a.unitSekolah ? `(${a.unitSekolah.name})` : ''}`,
+                value: a.id
+              }))
+            ]}
+          />
 
-          <div className="flex items-center w-full md:w-auto border border-border rounded-xl overflow-hidden bg-gray-50 flex-1 max-w-md min-h-[44px]">
-            <div className="px-3 text-emerald-500 shrink-0 border-r border-border bg-emerald-50 h-full flex items-center justify-center">
-              <CalendarIcon size={16} />
-            </div>
-            <select 
-              value={dateRange} 
-              onChange={(e) => setDateRange(e.target.value)}
-              className="w-full bg-transparent border-none py-2.5 px-3 text-sm font-medium focus:ring-0 cursor-pointer min-h-[44px]"
-            >
-              <option value="Minggu Ini">Minggu ini</option>
-              <option value="Bulan Ini">Bulan ini</option>
-              <option value="Tahun Ini">Tahun ini</option>
-              <option value="Kustom">Kustom</option>
-            </select>
-          </div>
+          <ToolbarFilter
+            icon={<CalendarIcon size={14} />}
+            value={dateRange}
+            onChange={(val) => setDateRange(val)}
+            className="w-full md:w-auto sm:max-w-none md:max-w-[200px]"
+            options={[
+              { label: "Minggu ini", value: "Minggu Ini" },
+              { label: "Bulan ini", value: "Bulan Ini" },
+              { label: "Tahun ini", value: "Tahun Ini" },
+              { label: "Kustom", value: "Kustom" }
+            ]}
+          />
 
           {dateRange === "Kustom" && (
             <div className="flex items-center gap-2 w-full md:w-auto">
@@ -234,19 +226,25 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
                 type="date" 
                 value={customStart} 
                 onChange={(e) => setCustomStart(e.target.value)}
-                className="border border-border rounded-xl px-3 py-2 text-sm w-full md:w-auto min-h-[44px]"
+                className="border border-border bg-bg/50 rounded-xl px-3 py-2 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary w-full md:w-auto min-h-[44px] sm:min-h-[38px] short:min-h-[34px]"
               />
-              <span className="text-gray-400">-</span>
+              <span className="text-text-muted">-</span>
               <input 
                 type="date" 
                 value={customEnd} 
                 onChange={(e) => setCustomEnd(e.target.value)}
-                className="border border-border rounded-xl px-3 py-2 text-sm w-full md:w-auto min-h-[44px]"
+                className="border border-border bg-bg/50 rounded-xl px-3 py-2 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary w-full md:w-auto min-h-[44px] sm:min-h-[38px] short:min-h-[34px]"
               />
             </div>
           )}
 
-          <Button onClick={fetchData} disabled={isLoading} className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 shadow-sm gap-2 whitespace-nowrap min-h-[44px]">
+          <Button 
+            variant="primary"
+            size="sm"
+            onClick={fetchData} 
+            disabled={isLoading} 
+            className="w-full md:w-auto gap-2 whitespace-nowrap min-h-[44px] sm:min-h-[38px] short:min-h-[34px] font-bold"
+          >
             {isLoading ? <RefreshCw className="animate-spin" size={16} /> : <Search size={16} />}
             Filter
           </Button>

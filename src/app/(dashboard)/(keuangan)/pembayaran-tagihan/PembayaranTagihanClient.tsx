@@ -24,7 +24,8 @@ import {
   Toolbar, 
   ToolbarSearch, 
   ToolbarFilter,
-  ToolbarActions
+  ToolbarActions,
+  ToolbarRefreshButton
 } from "@/components/ui/DataTableToolbar"
 import { PageHeader } from "@/components/ui/PageHeader"
 
@@ -416,8 +417,8 @@ export default function PembayaranTagihanClient({
       <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6 mb-6">
         <TabNavigation
           tabs={[
-            { id: "search", label: "Cari Siswa Langsung (Kasir)", icon: Search },
-            { id: "class", label: "Pilih Berdasarkan Kelas", icon: Users }
+            { id: "search", label: "Cari Siswa Langsung (Loket Kasir)", icon: Search },
+            { id: "class", label: "Filter Berdasarkan Rombel / Kelas", icon: Users }
           ]}
           activeTab={activeTab}
           onChange={(id) => {
@@ -456,7 +457,7 @@ export default function PembayaranTagihanClient({
                     setGridData([])
                   }}
                   placeholder="Ketik Nama Siswa, NISN, atau No Formulir lalu tekan Enter..." 
-                  containerClassName="w-full sm:max-w-md"
+                  containerClassName="w-full sm:w-80"
                 />
 
                 <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
@@ -465,15 +466,15 @@ export default function PembayaranTagihanClient({
                     size="sm"
                     onClick={() => handleCariSiswa()}
                     disabled={!searchQuery.trim() || isLoading}
-                    className="min-h-[44px] justify-center"
+                    className="min-h-[44px] sm:min-h-[38px] short:min-h-[34px] font-bold justify-center"
                   >
-                    {isLoading ? <Loader2 size={14} className="animate-spin mr-1.5" /> : <Search size={14} className="mr-1.5" />}
+                    {isLoading ? <Loader2 size={15} className="animate-spin mr-1.5" /> : <Search size={15} className="mr-1.5" />}
                     Cari Siswa
                   </Button>
 
                   {(gridData.length > 0 || lastSearchedQuery) && (
                     <Button
-                      variant="secondary"
+                      variant="outline"
                       size="sm"
                       onClick={() => {
                         setSearchQuery("")
@@ -482,7 +483,7 @@ export default function PembayaranTagihanClient({
                       }}
                       disabled={isLoading}
                       title="Reset filter dan pencarian"
-                      className="min-h-[44px] justify-center"
+                      className="min-h-[44px] sm:min-h-[38px] short:min-h-[34px] font-semibold justify-center border-border text-text-muted hover:text-text-main"
                     >
                       <RotateCcw size={14} className="mr-1.5" />
                       Reset
@@ -490,10 +491,20 @@ export default function PembayaranTagihanClient({
                   )}
                 </div>
               </div>
+
+              <ToolbarActions>
+                {lastSearchedQuery && (
+                  <ToolbarRefreshButton
+                    onClick={() => handleCariSiswa(lastSearchedQuery)}
+                    isLoading={isLoading}
+                    title="Segarkan Hasil Pencarian"
+                  />
+                )}
+              </ToolbarActions>
             </Toolbar>
 
             {lastSearchedQuery && (
-              <div className="flex items-center justify-between bg-emerald-50/70 border border-emerald-200 text-emerald-800 text-xs px-4 py-2.5 rounded-xl">
+              <div className="flex items-center justify-between bg-emerald-50/70 border border-emerald-200 text-emerald-800 text-xs px-4 py-2.5 rounded-xl mt-3">
                 <span>
                   Menampilkan hasil pencarian untuk: <strong className="font-semibold">&quot;{lastSearchedQuery}&quot;</strong> ({gridData.length} siswa ditemukan lintas kelas)
                 </span>
@@ -515,9 +526,18 @@ export default function PembayaranTagihanClient({
 
         {/* Tab 2: Filter by Class */}
         {activeTab === "class" && (
-          <div className="flex flex-col gap-3 mb-6">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
-              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2.5 w-full sm:w-auto">
+          <Toolbar className="mb-6">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center flex-wrap gap-2.5 w-full sm:w-auto">
+              {gridData.length > 0 && (
+                <ToolbarSearch 
+                  value={filterQuery}
+                  onChange={(e: any) => setFilterQuery(e.target.value)}
+                  onClear={() => setFilterQuery("")}
+                  placeholder="Filter nama di rombel..." 
+                />
+              )}
+
+              <div className="grid grid-cols-2 sm:flex gap-2.5 w-full sm:w-auto">
                 <ToolbarFilter
                   icon={<Filter size={14} />}
                   value={kelasId}
@@ -563,20 +583,20 @@ export default function PembayaranTagihanClient({
                   size="sm"
                   onClick={handleTampilkanKelas} 
                   disabled={!subKelasId || isLoading}
-                  className="min-h-[44px] justify-center"
+                  className="min-h-[44px] sm:min-h-[38px] short:min-h-[34px] font-bold justify-center"
                 >
-                  {isLoading ? <Loader2 size={14} className="animate-spin mr-1.5" /> : null}
+                  {isLoading ? <Loader2 size={15} className="animate-spin mr-1.5" /> : null}
                   Tampilkan
                 </Button>
 
                 {(kelasId || subKelasId || gridData.length > 0) && (
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
                     onClick={handleResetFilter}
                     disabled={isLoading}
                     title="Reset filter dan pencarian"
-                    className="min-h-[44px] justify-center"
+                    className="min-h-[44px] sm:min-h-[38px] short:min-h-[34px] font-semibold justify-center border-border text-text-muted hover:text-text-main"
                   >
                     <RotateCcw size={14} className="mr-1.5" />
                     Reset
@@ -585,17 +605,17 @@ export default function PembayaranTagihanClient({
               </div>
             </div>
 
-            {gridData.length > 0 && (
-              <Toolbar className="mb-0">
-                <ToolbarSearch 
-                  value={filterQuery}
-                  onChange={(e: any) => setFilterQuery(e.target.value)}
-                  onClear={() => setFilterQuery("")}
-                  placeholder="Filter nama siswa di rombel ini..." 
+            <ToolbarActions>
+              {subKelasId && (
+                <ToolbarRefreshButton 
+                  onClick={handleTampilkanKelas} 
+                  disabled={isLoading}
+                  isLoading={isLoading}
+                  title="Segarkan Data Rombel" 
                 />
-              </Toolbar>
-            )}
-          </div>
+              )}
+            </ToolbarActions>
+          </Toolbar>
         )}
 
         {/* Table Container */}

@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/Button"
-import { Plus, Edit2, Trash2, Layers, Book, BookOpen, Wallet, Receipt, Search, X, PowerOff } from "lucide-react"
+import { Plus, Edit2, Trash2, Layers, Book, BookOpen, Wallet, Receipt, Search, X, PowerOff, Building2 } from "lucide-react"
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { DeleteWarningModal } from "@/components/ui/DeleteWarningModal"
@@ -14,6 +14,7 @@ import { tambahSubKlasifikasi, editSubKlasifikasi, hapusSubKlasifikasi, tambahAk
 import toast from "react-hot-toast"
 import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
+import { Toolbar, ToolbarSearch, ToolbarFilter, ToolbarActions, ToolbarRefreshButton, ToolbarAddButton, ToolbarDivider } from "@/components/ui/DataTableToolbar"
 
 type Klasifikasi = { id: string, kode: string, nama: string }
 type SubKlasifikasi = { id: string, kode: string, nama: string, klasifikasiAkunId: string, klasifikasi?: Klasifikasi, _count?: { akunDetail: number } }
@@ -547,60 +548,61 @@ export default function AkunKeuanganClient({
           />
 
           {/* Top Filter & Toolbar */}
-          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-6">
-            <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center flex-1">
-              <div className="relative w-full sm:w-64">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-                <input 
-                  type="text" 
-                  placeholder="Cari kode atau nama..." 
-                  className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 min-h-[44px]"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                />
-              </div>
-              
-              {isGlobal && (
-                <div className="w-full sm:w-auto">
-                  <select
-                    className="w-full sm:w-auto px-3 py-2 bg-bg border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[44px]"
-                    value={activeUnitId || ""}
-                    onChange={(e) => {
-                      const newUnit = e.target.value;
-                      const url = new URL(window.location.href);
-                      url.searchParams.set("unitId", newUnit);
-                      router.push(pathname + "?" + url.searchParams.toString());
-                    }}
-                  >
-                    {unitSekolahList.map((u) => (
-                      <option key={u.id} value={u.id}>Unit: {u.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
+          <Toolbar>
+            <ToolbarSearch 
+              placeholder="Cari kode atau nama..." 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              onClear={() => setSearchTerm("")}
+            />
+            
+            {isGlobal && (
+              <ToolbarFilter
+                icon={<Building2 size={14} />}
+                value={activeUnitId || ""}
+                onChange={(newUnit) => {
+                  const url = new URL(window.location.href);
+                  url.searchParams.set("unitId", newUnit);
+                  router.push(pathname + "?" + url.searchParams.toString());
+                }}
+                options={unitSekolahList.map((u) => ({
+                  label: `Unit: ${u.name}`,
+                  value: u.id
+                }))}
+              />
+            )}
 
-            <div className="w-full sm:w-auto">
-              {!isReadOnly && activeTab === 'AKUN' && (
-                <Button onClick={() => {
-                  const defaultSubId = subKlasifikasi[0]?.id || ""
-                  setAkunForm({ id: "", kode: generateAkunKode(defaultSubId, akunDetail), nama: "", subKlasifikasiAkunId: defaultSubId, unitSekolahId: activeUnitId || "", isKasBank: false, isSPP: false, isActive: true })
-                  setIsAkunDrawerOpen(true)
-                }} className="w-full sm:w-auto min-h-[44px] justify-center">
-                  <Plus size={16} className="mr-1.5"/> Tambah Akun
-                </Button>
+            <ToolbarActions>
+              <ToolbarRefreshButton 
+                onClick={() => router.refresh()} 
+                title="Segarkan Data" 
+              />
+              
+              {!isReadOnly && (
+                <>
+                  <ToolbarDivider />
+                  {activeTab === 'AKUN' && (
+                    <ToolbarAddButton onClick={() => {
+                      const defaultSubId = subKlasifikasi[0]?.id || ""
+                      setAkunForm({ id: "", kode: generateAkunKode(defaultSubId, akunDetail), nama: "", subKlasifikasiAkunId: defaultSubId, unitSekolahId: activeUnitId || "", isKasBank: false, isSPP: false, isActive: true })
+                      setIsAkunDrawerOpen(true)
+                    }}>
+                      Tambah Akun
+                    </ToolbarAddButton>
+                  )}
+                  {canEditKategori && activeTab === 'SUBKLASIFIKASI' && (
+                    <ToolbarAddButton onClick={() => {
+                      const defaultKlasId = klasifikasi[0]?.id || ""
+                      setSubKlasForm({ id: "", kode: generateSubKlasKode(defaultKlasId, subKlasifikasi), nama: "", klasifikasiAkunId: defaultKlasId })
+                      setIsSubKlasDrawerOpen(true)
+                    }}>
+                      Tambah Subklasifikasi
+                    </ToolbarAddButton>
+                  )}
+                </>
               )}
-              {canEditKategori && activeTab === 'SUBKLASIFIKASI' && (
-                <Button onClick={() => {
-                  const defaultKlasId = klasifikasi[0]?.id || ""
-                  setSubKlasForm({ id: "", kode: generateSubKlasKode(defaultKlasId, subKlasifikasi), nama: "", klasifikasiAkunId: defaultKlasId })
-                  setIsSubKlasDrawerOpen(true)
-                }} className="w-full sm:w-auto min-h-[44px] justify-center">
-                  <Plus size={16} className="mr-1.5"/> Tambah Subklasifikasi
-                </Button>
-              )}
-            </div>
-          </div>
+            </ToolbarActions>
+          </Toolbar>
 
         {/* Tab Content: AKUN */}
         {activeTab === 'AKUN' && (

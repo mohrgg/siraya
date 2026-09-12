@@ -1,5 +1,5 @@
 import React from "react"
-import { Search, Filter, FileSpreadsheet, FileText, UploadCloud, Plus, X, Loader2, ChevronDown } from "lucide-react"
+import { Search, Filter, FileSpreadsheet, FileText, UploadCloud, Plus, X, Loader2, ChevronDown, RefreshCw, Printer } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 
 export function Toolbar({ children, className = "" }: { children: React.ReactNode, className?: string }) {
@@ -213,6 +213,58 @@ export function ToolbarAddButton({
     >
       {icon}
       <span className="truncate">{children}</span>
+    </Button>
+  )
+}
+
+export function ToolbarRefreshButton({ 
+  onClick, 
+  disabled, 
+  isLoading, 
+  title = "Segarkan Data",
+  className = "" 
+}: { 
+  onClick: () => void, 
+  disabled?: boolean, 
+  isLoading?: boolean, 
+  title?: string,
+  className?: string 
+}) {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={onClick}
+      disabled={disabled || isLoading}
+      title={title}
+      className={`min-h-[44px] sm:min-h-[36px] short:min-h-[32px] px-2.5 sm:px-3 border-border hover:bg-bg text-text-muted hover:text-text-main focus:ring-primary/50 touch-manipulation cursor-pointer justify-center ${className}`}
+    >
+      <RefreshCw size={15} className={`shrink-0 ${isLoading ? 'animate-spin text-primary' : ''}`} />
+    </Button>
+  )
+}
+
+export function ToolbarPrintButton({
+  onClick,
+  disabled,
+  label = "Cetak",
+  className = ""
+}: {
+  onClick: () => void,
+  disabled?: boolean,
+  label?: string,
+  className?: string
+}) {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={onClick}
+      disabled={disabled}
+      className={`w-full sm:w-auto flex-1 sm:flex-initial min-w-[75px] justify-center border-slate-200 text-slate-700 bg-slate-50 hover:bg-slate-100 hover:text-slate-800 focus:ring-slate-500/50 min-h-[44px] sm:min-h-[36px] short:min-h-[32px] touch-manipulation cursor-pointer font-semibold shadow-2xs ${className}`}
+    >
+      <Printer size={16} className="mr-1.5 shrink-0" />
+      <span className="truncate">{label}</span>
     </Button>
   )
 }

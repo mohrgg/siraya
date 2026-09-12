@@ -1,14 +1,17 @@
 import { Edit2, XCircle } from "lucide-react"
-import { Toolbar, ToolbarActions, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
+import { useRouter } from "next/navigation"
+import { Toolbar, ToolbarActions, ToolbarRefreshButton, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
 
 export default function DivisiList({ divisis, setFormDiv, setShowDivModal, setDeleteDivId }: any) {
+  const router = useRouter()
   return (
     <div className="flex flex-col">
-      <div className="p-6 bg-white border-b border-gray-100">
+      <div className="mb-6">
         <Toolbar>
-          <h2 className="font-bold text-gray-900 text-lg">Daftar Divisi</h2>
+          <h2 className="font-bold text-text-main text-base sm:text-lg">Daftar Divisi</h2>
           <ToolbarActions>
+            <ToolbarRefreshButton onClick={() => router.refresh()} title="Segarkan Data" />
             <ToolbarAddButton onClick={() => { setFormDiv({id: "", name: "", description: ""}); setShowDivModal(true) }}>
               Tambah Divisi
             </ToolbarAddButton>

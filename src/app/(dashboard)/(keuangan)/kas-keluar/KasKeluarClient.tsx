@@ -21,7 +21,8 @@ import {
   ToolbarExportExcel, 
   ToolbarExportPDF, 
   ToolbarAddButton, 
-  ToolbarDivider 
+  ToolbarDivider,
+  ToolbarRefreshButton
 } from "@/components/ui/DataTableToolbar"
 import { PageHeader } from "@/components/ui/PageHeader"
 
@@ -275,9 +276,10 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
           )}
 
           <ToolbarActions>
-            <Button variant="outline" size="sm" onClick={handleRefresh} title="Refresh Data" className="min-h-[44px] sm:min-h-[36px] short:min-h-[32px]">
-              <RefreshCw size={16} />
-            </Button>
+            <ToolbarRefreshButton 
+              onClick={handleRefresh} 
+              title="Segarkan Data" 
+            />
             <ToolbarExportExcel 
               onClick={handleExportExcel}
               disabled={isExportingExcel || filteredData.length === 0}

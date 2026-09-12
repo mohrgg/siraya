@@ -39,6 +39,7 @@ import {
   ToolbarExportExcel, 
   ToolbarExportPDF, 
   ToolbarImportExcel, 
+  ToolbarRefreshButton,
   ToolbarAddButton, 
   ToolbarDivider 
 } from "@/components/ui/DataTableToolbar"
@@ -577,7 +578,7 @@ export default function GuruClient({
             placeholder={activeTab === "GURU" ? "Cari guru, NIP, mapel..." : "Cari staf, NIP, jabatan..."}
           />
 
-          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+          <div className="grid grid-cols-2 sm:flex gap-2.5 w-full sm:w-auto">
             <ToolbarFilter 
               icon={<Building2 size={14} />}
               value={activeUnitId && activeUnitId !== "all" ? activeUnitId : unitFilter}
@@ -600,6 +601,10 @@ export default function GuruClient({
           </div>
 
           <ToolbarActions>
+            <ToolbarRefreshButton 
+              onClick={() => router.refresh()} 
+              title="Segarkan Data" 
+            />
             <ToolbarExportExcel 
               onClick={handleExportExcel} 
               disabled={filteredData.length === 0} 

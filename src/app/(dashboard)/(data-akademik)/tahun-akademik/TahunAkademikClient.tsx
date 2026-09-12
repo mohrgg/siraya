@@ -20,6 +20,7 @@ import {
   setActiveTahunAkademik 
 } from "@/actions/tahun-akademik"
 import toast from "react-hot-toast"
+import { Toolbar, ToolbarSearch, ToolbarActions, ToolbarRefreshButton, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
 
 export type AcademicYear = {
   id: string
@@ -347,28 +348,27 @@ export default function TahunAkademikClient({
           tabs={[{ id: "tahun", label: "Daftar Tahun Akademik", icon: Calendar, badge: initialData.length }]}
         />
 
-        {/* Toolbar: Search & Add Button */}
-        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2.5 sm:gap-4 mb-4 sm:mb-6">
-          <div className="relative w-full sm:w-64">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Cari tahun ajaran..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 sm:py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50 min-h-[44px] sm:min-h-[38px] touch-manipulation"
-            />
-          </div>
+        {/* Standardized Toolbar: Search & Actions */}
+        <Toolbar>
+          <ToolbarSearch 
+            placeholder="Cari tahun ajaran..."
+            value={searchTerm}
+            onChange={(e: any) => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm("")}
+          />
 
-          {!isReadOnly && (
-            <div className="shrink-0 w-full sm:w-auto">
-              <Button onClick={handleOpenAddModal} className="w-full sm:w-auto flex items-center justify-center bg-primary text-white hover:bg-primary/90 shadow-sm min-h-[44px] sm:min-h-[38px] font-bold touch-manipulation">
-                <Plus size={16} className="mr-1.5" />
-                <span>Tambah Tahun Akademik</span>
-              </Button>
-            </div>
-          )}
-        </div>
+          <ToolbarActions>
+            <ToolbarRefreshButton 
+              onClick={() => router.refresh()} 
+              title="Segarkan Data" 
+            />
+            {!isReadOnly && (
+              <ToolbarAddButton onClick={handleOpenAddModal}>
+                Tambah Tahun Akademik
+              </ToolbarAddButton>
+            )}
+          </ToolbarActions>
+        </Toolbar>
 
         {/* Detail Table */}
         <TableScrollHint totalRows={sortedData.length} />

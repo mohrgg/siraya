@@ -1,5 +1,6 @@
 import { Users, UserX, Edit2, Key, XCircle, CheckCircle2, Trash2, ShieldCheck, Filter, Lock, Unlock, KeyRound } from "lucide-react"
-import { Toolbar, ToolbarSearch, ToolbarFilter, ToolbarActions, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
+import { useRouter } from "next/navigation"
+import { Toolbar, ToolbarSearch, ToolbarFilter, ToolbarActions, ToolbarRefreshButton, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
 import { useSortableData } from "@/hooks/useSortableData"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
@@ -16,7 +17,7 @@ export default function UserList({
   setActivateUserId,
   setDeleteUserId
 }: any) {
-  
+  const router = useRouter()
   const { items: sortedData, requestSort, sortConfig } = useSortableData(filteredUsers, { key: "role", direction: "asc" })
 
   const roleBadge = (role: string) => {
@@ -31,7 +32,7 @@ export default function UserList({
 
   return (
     <div className="flex flex-col">
-      <div className="p-4 sm:p-6 bg-white">
+      <div className="mb-6">
         <Toolbar>
           <ToolbarSearch 
             value={searchQuery} 
@@ -62,13 +63,14 @@ export default function UserList({
               ]}
             />
           </div>
-          {!isInactiveTab && (
-            <ToolbarActions>
+          <ToolbarActions>
+            <ToolbarRefreshButton onClick={() => router.refresh()} title="Segarkan Data" />
+            {!isInactiveTab && (
               <ToolbarAddButton onClick={openAddUser}>
                 Tambah Pengguna
               </ToolbarAddButton>
-            </ToolbarActions>
-          )}
+            )}
+          </ToolbarActions>
         </Toolbar>
       </div>
       

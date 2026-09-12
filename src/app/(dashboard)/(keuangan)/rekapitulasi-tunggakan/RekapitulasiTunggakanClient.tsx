@@ -16,7 +16,8 @@ import {
   ToolbarFilter, 
   ToolbarActions,
   ToolbarExportExcel,
-  ToolbarExportPDF
+  ToolbarExportPDF,
+  ToolbarRefreshButton
 } from "@/components/ui/DataTableToolbar"
 import { AdaptiveValue } from "@/components/ui/AdaptiveValue"
 import { PageHeader } from "@/components/ui/PageHeader"
@@ -455,7 +456,7 @@ export default function RekapitulasiTunggakanClient({
             {/* TAB HEADERS */}
             <TabNavigation
               tabs={[
-                { id: 'ringkasan', label: 'Ringkasan Tunggakan', icon: PieChart, badge: rekapData.length },
+                { id: 'ringkasan', label: 'Ringkasan Tagihan & Tunggakan', icon: PieChart, badge: rekapData.length },
                 { id: 'detail', label: 'Detail Laporan Per Kelas', icon: Users }
               ]}
               activeTab={activeTab}
@@ -485,15 +486,11 @@ export default function RekapitulasiTunggakanClient({
                   />
                   
                   <ToolbarActions>
-                    <Button
-                      size="sm"
-                      variant="outline"
+                    <ToolbarRefreshButton
                       onClick={loadData}
-                      title="Refresh Data"
-                      className="min-h-[44px]"
-                    >
-                      <RefreshCw size={16} />
-                    </Button>
+                      title="Segarkan Data"
+                      isLoading={isLoading}
+                    />
                     <ToolbarExportExcel 
                       onClick={handleExportExcelRingkasan}
                       disabled={filteredData1.length === 0}
@@ -582,6 +579,20 @@ export default function RekapitulasiTunggakanClient({
                 </div>
 
                 <Toolbar>
+                  <ToolbarSearch 
+                    value={studentSearch}
+                    onChange={(e: any) => {
+                      setStudentSearch(e.target.value)
+                      setDetailCurrentPage(1)
+                    }}
+                    onClear={() => {
+                      setStudentSearch("")
+                      setDetailCurrentPage(1)
+                    }}
+                    placeholder="Cari nama atau NISN..." 
+                    disabled={!selectedKelasData?.studentsList || selectedKelasData.studentsList.length === 0}
+                  />
+
                   <div className="grid grid-cols-1 sm:flex gap-2.5 w-full sm:w-auto">
                     <ToolbarFilter
                       value={selectedSubKelasId}
@@ -589,26 +600,17 @@ export default function RekapitulasiTunggakanClient({
                         setSelectedSubKelasId(val as string)
                         setDetailCurrentPage(1)
                       }}
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto sm:max-w-[200px]"
                       options={rekapData.map(r => ({ label: `Kelas ${r.subKelasName.toUpperCase()}`, value: r.subKelasId }))}
-                    />
-
-                    <ToolbarSearch 
-                      value={studentSearch}
-                      onChange={(e: any) => {
-                        setStudentSearch(e.target.value)
-                        setDetailCurrentPage(1)
-                      }}
-                      onClear={() => {
-                        setStudentSearch("")
-                        setDetailCurrentPage(1)
-                      }}
-                      placeholder="Cari nama atau NISN..." 
-                      disabled={!selectedKelasData?.studentsList || selectedKelasData.studentsList.length === 0}
                     />
                   </div>
                   
                   <ToolbarActions>
+                    <ToolbarRefreshButton
+                      onClick={loadData}
+                      title="Segarkan Data"
+                      isLoading={isLoading}
+                    />
                     <ToolbarExportExcel 
                       onClick={handleExportExcelKelas}
                       disabled={filteredStudents.length === 0}

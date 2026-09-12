@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/Button"
 import { 
   Toolbar, 
@@ -7,6 +8,7 @@ import {
   ToolbarExportExcel, 
   ToolbarExportPDF, 
   ToolbarImportExcel, 
+  ToolbarRefreshButton,
   ToolbarAddButton, 
   ToolbarDivider 
 } from "@/components/ui/DataTableToolbar"
@@ -40,6 +42,7 @@ export default function KelasToolbar({
   setFormMurid,
   isReadOnly
 }: any) {
+  const router = useRouter()
   return (
     <Toolbar>
       <ToolbarSearch 
@@ -62,7 +65,7 @@ export default function KelasToolbar({
       )}
         
       {(activeTab === "murid" || activeTab === "alumni") && (
-        <div className="grid grid-cols-2 sm:flex sm:items-center sm:flex-wrap gap-2 w-full sm:w-auto">
+        <div className="grid grid-cols-2 sm:flex gap-2.5 w-full sm:w-auto">
           <ToolbarFilter
             value={filterMuridTingkat}
             onChange={(val) => { setFilterMuridTingkat(val); setFilterMuridSubKelas("") }}
@@ -111,7 +114,7 @@ export default function KelasToolbar({
             <Button 
               variant="outline" 
               size="sm" 
-              className="col-span-2 sm:col-span-1 min-h-[44px] sm:min-h-[36px] w-full sm:w-auto touch-manipulation font-semibold justify-center"
+              className="col-span-2 sm:col-span-1 min-h-[44px] sm:min-h-[38px] short:min-h-[34px] w-full sm:w-auto touch-manipulation font-semibold justify-center text-xs"
               onClick={() => {
                 setSearchTerm("")
                 setFilterMuridTingkat("")
@@ -127,6 +130,11 @@ export default function KelasToolbar({
       )}
 
       <ToolbarActions>
+        <ToolbarRefreshButton 
+          onClick={() => router.refresh()} 
+          title="Segarkan Data" 
+        />
+
         {activeTab !== 'kelas' && (
           <>
             <ToolbarExportExcel 
@@ -148,7 +156,7 @@ export default function KelasToolbar({
 
         {!isReadOnly && (
           <>
-            {activeTab !== 'kelas' && <ToolbarDivider />}
+            <ToolbarDivider />
             
             {activeTab === "kelas" && (
               <ToolbarAddButton onClick={() => {

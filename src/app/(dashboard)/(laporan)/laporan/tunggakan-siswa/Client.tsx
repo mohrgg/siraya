@@ -14,6 +14,15 @@ import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
 import PrintFooter from "@/components/shared/print/PrintFooter"
 import { PageHeader } from "@/components/ui/PageHeader"
+import { 
+  Toolbar,
+  ToolbarRefreshButton,
+  ToolbarExportExcel, 
+  ToolbarExportPDF, 
+  ToolbarPrintButton,
+  ToolbarFilter,
+  ToolbarSearch
+} from "@/components/ui/DataTableToolbar"
 
 export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], grades = [], classrooms = [], userRole, userUnitId, userName }: { pengaturan?: any, schoolUnits?: any[], grades?: any[], classrooms?: any[], userRole?: string, userUnitId?: string, userName?: string }) {
   const router = useRouter()
@@ -23,21 +32,24 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
 
   const filterUnitId = userUnitId || ""
   const activeUnit = filterUnitId ? schoolUnits?.find(u => u.id === filterUnitId) : undefined
+  const unitName = activeUnit ? activeUnit.name : (userRole === "SUPERADMIN" ? "Semua Unit" : "YAYASAN")
+
   const [filterTingkatId, setFilterTingkatId] = useState("")
   const [filterSubKelasId, setFilterSubKelasId] = useState("")
-  const unitName = activeUnit ? activeUnit.name : "YAYASAN"
-
-  // Pagination
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(15)
   const [currentPage, setCurrentPage] = useState(1)
 
   const fetchData = async () => {
     setIsLoading(true)
     try {
-      const res = await getLaporanTunggakanSiswa(filterUnitId, filterTingkatId, filterSubKelasId)
+      const res = await getLaporanTunggakanSiswa(
+        filterUnitId || undefined,
+        filterTingkatId || undefined,
+        filterSubKelasId || undefined
+      )
       setData(res)
-    } catch (error: any) {
-      toast.error("Gagal memuat laporan tunggakan: " + error.message)
+    } catch (err: any) {
+      toast.error(err.message || "Gagal memuat laporan tunggakan")
     } finally {
       setIsLoading(false)
     }
@@ -47,6 +59,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
     fetchData()
   }, [filterUnitId])
 
+  // Filtered and flattened matrix preparation
   const filteredData = useMemo(() => {
     if (!searchTerm) return data
     const lower = searchTerm.toLowerCase()
@@ -192,67 +205,67 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
         subtitle="Menampilkan daftar rincian sisa tunggakan per murid"
         action={
           <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-            <Button 
-              variant="outline"
-              size="sm" 
+            <ToolbarRefreshButton 
+              onClick={fetchData} 
+              disabled={isLoading}
+              title="Segarkan Data"
+            />
+            <ToolbarExportExcel 
               onClick={handleExportExcel}
-              className="flex-1 sm:flex-initial justify-center opacity-100 border-green-200 text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-800 shadow-sm cursor-pointer min-h-[44px] sm:min-h-[36px]"
               disabled={matrixRows.length === 0}
-            >
-              <FileSpreadsheet size={16} className="mr-1.5" /> Excel
-            </Button>
-            <Button 
-              variant="outline"
-              size="sm" 
+            />
+            <ToolbarExportPDF 
               onClick={handleExportPdf}
-              className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 shadow-sm cursor-pointer min-h-[44px] sm:min-h-[36px]"
               disabled={matrixRows.length === 0}
-            >
-              <FileText size={16} className="mr-1.5" /> PDF
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
+            />
+            <ToolbarPrintButton 
               onClick={handlePrint}
-              className="flex-1 sm:flex-initial justify-center font-semibold bg-surface hover:bg-surface-hover shadow-sm border-gray-200 text-gray-700 cursor-pointer min-h-[44px] sm:min-h-[36px]"
               disabled={matrixRows.length === 0}
-            >
-              <Printer size={16} className="mr-1.5" /> Cetak
-            </Button>
+            />
           </div>
         }
       />
 
       {/* Filter Card */}
       <div className="bg-surface p-4 sm:p-5 rounded-2xl shadow-sm border border-border mb-6">
-        <div className="text-sm font-semibold text-gray-600 mb-2">Filter Laporan</div>
+        <div className="text-sm font-semibold text-text-muted mb-2">Filter Laporan</div>
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 sm:gap-4">
-          <select 
+          <ToolbarFilter
             value={filterTingkatId}
-            onChange={(e) => { setFilterTingkatId(e.target.value); setFilterSubKelasId("") }}
-            className="border border-border rounded-xl px-3 py-2 text-sm w-full md:w-auto bg-gray-50 focus:ring-emerald-500 focus:border-emerald-500 min-h-[44px]"
-          >
-            <option value="">Semua Tingkat</option>
-            {grades.filter((g: any) => !filterUnitId || g.unitSekolahId === filterUnitId).map((g: any) => (
-              <option key={g.id} value={g.id}>{g.name}</option>
-            ))}
-          </select>
+            onChange={(val) => { setFilterTingkatId(val); setFilterSubKelasId("") }}
+            className="w-full md:w-auto sm:max-w-none md:max-w-[180px]"
+            options={[
+              { label: "Semua Tingkat", value: "" },
+              ...grades.filter((g: any) => !filterUnitId || g.unitSekolahId === filterUnitId).map((g: any) => ({
+                label: g.name,
+                value: g.id
+              }))
+            ]}
+          />
 
-          <select 
+          <ToolbarFilter
             value={filterSubKelasId}
-            onChange={(e) => setFilterSubKelasId(e.target.value)}
-            className="border border-border rounded-xl px-3 py-2 text-sm w-full md:w-auto bg-gray-50 focus:ring-emerald-500 focus:border-emerald-500 min-h-[44px]"
-          >
-            <option value="">Semua Rombel</option>
-            {classrooms.filter((c: any) => 
-              (!filterUnitId || c.unitSekolahId === filterUnitId) &&
-              (!filterTingkatId || c.tingkatId === filterTingkatId)
-            ).map((c: any) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+            onChange={(val) => setFilterSubKelasId(val)}
+            className="w-full md:w-auto sm:max-w-none md:max-w-[180px]"
+            options={[
+              { label: "Semua Rombel", value: "" },
+              ...classrooms.filter((c: any) => 
+                (!filterUnitId || c.unitSekolahId === filterUnitId) &&
+                (!filterTingkatId || c.tingkatId === filterTingkatId)
+              ).map((c: any) => ({
+                label: c.name,
+                value: c.id
+              }))
+            ]}
+          />
 
-          <Button onClick={fetchData} disabled={isLoading} className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 shadow-sm gap-2 whitespace-nowrap min-h-[44px]">
+          <Button 
+            variant="primary"
+            size="sm"
+            onClick={fetchData} 
+            disabled={isLoading} 
+            className="w-full md:w-auto gap-2 whitespace-nowrap min-h-[44px] sm:min-h-[38px] short:min-h-[34px] font-bold"
+          >
             {isLoading ? <RefreshCw className="animate-spin" size={16} /> : <Search size={16} />}
             Terapkan Filter
           </Button>
@@ -312,19 +325,14 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
           <div className="text-sm font-medium text-gray-800">Data {unitName}</div>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4 print:hidden">
-          <div className="relative w-full md:w-64">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={16} className="text-gray-400" />
-            </div>
-            <Input 
-              placeholder="Cari nama, NIS, tagihan..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-gray-50"
-            />
-          </div>
-        </div>
+        <Toolbar className="mb-6 print:hidden">
+          <ToolbarSearch 
+            placeholder="Cari nama, NIS, tagihan..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm("")}
+          />
+        </Toolbar>
 
         {isLoading ? (
           <div className="py-20 flex justify-center">
