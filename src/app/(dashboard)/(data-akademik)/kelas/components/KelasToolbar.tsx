@@ -62,7 +62,7 @@ export default function KelasToolbar({
       )}
         
       {(activeTab === "murid" || activeTab === "alumni") && (
-        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+        <div className="grid grid-cols-2 sm:flex sm:items-center sm:flex-wrap gap-2 w-full sm:w-auto">
           <ToolbarFilter
             value={filterMuridTingkat}
             onChange={(val) => { setFilterMuridTingkat(val); setFilterMuridSubKelas("") }}

@@ -18,12 +18,12 @@ export function Toolbar({ children, className = "" }: { children: React.ReactNod
   })
 
   return (
-    <div className={`flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-3 sm:gap-4 short:gap-2 mb-4 sm:mb-6 short:mb-3 w-full ${className}`}>
-      <div className="flex flex-col sm:flex-row sm:items-center flex-wrap gap-2.5 sm:gap-3 short:gap-1.5 flex-1 min-w-0 w-full">
+    <div className={`flex flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 short:gap-2 mb-4 sm:mb-6 short:mb-3 w-full ${className}`}>
+      <div className="flex flex-col sm:flex-row sm:items-center flex-wrap gap-2.5 sm:gap-3 short:gap-1.5 w-full sm:w-auto">
         {leftChildren}
       </div>
       {rightChildren && (
-        <div className="shrink-0 w-full xl:w-auto pt-1 sm:pt-0 short:pt-0">
+        <div className="shrink-0 w-full sm:w-auto sm:ml-auto pt-1 sm:pt-0 short:pt-0">
           {rightChildren}
         </div>
       )}
@@ -39,7 +39,7 @@ interface ToolbarSearchProps extends React.InputHTMLAttributes<HTMLInputElement>
 
 export function ToolbarSearch({ className, containerClassName, onClear, isLoading, value, ...props }: ToolbarSearchProps) {
   return (
-    <div className={`relative w-full sm:w-56 flex-shrink-0 ${containerClassName || ''}`}>
+    <div className={`relative w-full sm:w-48 xl:w-52 flex-shrink-0 ${containerClassName || ''}`}>
       <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
       <input
         type="text"
@@ -81,7 +81,7 @@ interface ToolbarFilterProps {
 
 export function ToolbarFilter({ icon = <Filter size={14} />, value, onChange, options, disabled, className }: ToolbarFilterProps) {
   return (
-    <div className={`relative flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-2 sm:py-1.5 short:py-1 focus-within:ring-2 focus-within:ring-primary/50 w-full sm:w-auto min-h-[44px] sm:min-h-[38px] short:min-h-[34px] ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className || ''}`}>
+    <div className={`relative flex items-center gap-2 bg-bg border border-border rounded-xl px-3 py-2 sm:py-1.5 short:py-1 focus-within:ring-2 focus-within:ring-primary/50 w-full sm:w-auto sm:max-w-[160px] xl:max-w-[180px] min-h-[44px] sm:min-h-[38px] short:min-h-[34px] ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className || ''}`}>
       {icon && <div className="text-text-muted shrink-0 pointer-events-none">{icon}</div>}
       <select
         value={value}

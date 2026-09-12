@@ -524,9 +524,9 @@ export default function PembuatanTagihanClient({
 
         {/* Tab 1: Filters and Actions Row for Class */}
         {activeTab === "class" && (
-          <Toolbar className="flex-col gap-3">
+          <div className="flex flex-col gap-3 mb-6">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
-              <div className="grid grid-cols-2 sm:flex gap-2.5 w-full sm:w-auto">
+              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2.5 w-full sm:w-auto">
                 <ToolbarFilter
                   icon={<Filter size={14} />}
                   value={kelasId}
@@ -566,7 +566,7 @@ export default function PembuatanTagihanClient({
                 />
               </div>
 
-              <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+              <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
                 <Button 
                   size="sm"
                   variant="primary"
@@ -593,34 +593,32 @@ export default function PembuatanTagihanClient({
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
-              {gridData.length > 0 && (
-                <div className="w-full sm:max-w-md">
-                  <ToolbarSearch 
-                    value={filterQuery}
-                    onChange={(e: any) => setFilterQuery(e.target.value)}
-                    onClear={() => setFilterQuery("")}
-                    placeholder="Filter nama siswa di rombel ini..." 
-                  />
-                </div>
-              )}
+            {gridData.length > 0 && (
+              <Toolbar className="mb-0">
+                <ToolbarSearch 
+                  value={filterQuery}
+                  onChange={(e: any) => setFilterQuery(e.target.value)}
+                  onClear={() => setFilterQuery("")}
+                  placeholder="Filter nama siswa di rombel ini..." 
+                />
 
-              {!isReadOnly && gridData.length > 0 && (
-                <ToolbarActions className="w-full sm:w-auto sm:ml-auto">
-                  <ToolbarAddButton onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto min-h-[44px] justify-center">
-                    Tambah Tagihan
-                  </ToolbarAddButton>
-                </ToolbarActions>
-              )}
-            </div>
-          </Toolbar>
+                {!isReadOnly && (
+                  <ToolbarActions>
+                    <ToolbarAddButton onClick={() => setIsModalOpen(true)}>
+                      Tambah Tagihan
+                    </ToolbarAddButton>
+                  </ToolbarActions>
+                )}
+              </Toolbar>
+            )}
+          </div>
         )}
 
         {/* Tab 2: Direct Search for Individual Student */}
         {activeTab === "search" && (
           <div className="mb-6">
-            <Toolbar className="flex-col sm:flex-row gap-2.5">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full">
+            <Toolbar>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
                 <ToolbarSearch
                   value={searchQuery}
                   onChange={(e: any) => setSearchQuery(e.target.value)}
@@ -668,8 +666,8 @@ export default function PembuatanTagihanClient({
                 </div>
               </div>
               {!isReadOnly && gridData.length > 0 && (
-                <ToolbarActions className="w-full sm:w-auto sm:ml-auto">
-                  <ToolbarAddButton onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto min-h-[44px] justify-center">
+                <ToolbarActions>
+                  <ToolbarAddButton onClick={() => setIsModalOpen(true)}>
                     Tambah Tagihan
                   </ToolbarAddButton>
                 </ToolbarActions>

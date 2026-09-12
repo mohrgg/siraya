@@ -476,16 +476,15 @@ export default function RekapitulasiTunggakanClient({
                   </div>
                 </div>
 
-                <Toolbar className="flex-col sm:flex-row gap-2.5">
+                <Toolbar>
                   <ToolbarSearch 
                     value={searchTerm1}
                     onChange={(e: any) => setSearchTerm1(e.target.value)}
                     placeholder="Cari kelas..." 
                     disabled={rekapData.length === 0}
-                    containerClassName="w-full sm:max-w-xs"
                   />
                   
-                  <ToolbarActions className="w-full sm:w-auto sm:ml-auto">
+                  <ToolbarActions>
                     <Button
                       size="sm"
                       variant="outline"
@@ -582,8 +581,8 @@ export default function RekapitulasiTunggakanClient({
                   </div>
                 </div>
 
-                <Toolbar className="flex-col sm:flex-row gap-2.5">
-                  <div className="grid grid-cols-1 sm:flex gap-2.5 w-full sm:w-auto flex-1">
+                <Toolbar>
+                  <div className="grid grid-cols-1 sm:flex gap-2.5 w-full sm:w-auto">
                     <ToolbarFilter
                       value={selectedSubKelasId}
                       onChange={(val) => {
@@ -605,12 +604,11 @@ export default function RekapitulasiTunggakanClient({
                         setDetailCurrentPage(1)
                       }}
                       placeholder="Cari nama atau NISN..." 
-                      containerClassName="w-full sm:w-72"
                       disabled={!selectedKelasData?.studentsList || selectedKelasData.studentsList.length === 0}
                     />
                   </div>
                   
-                  <ToolbarActions className="w-full sm:w-auto sm:ml-auto">
+                  <ToolbarActions>
                     <ToolbarExportExcel 
                       onClick={handleExportExcelKelas}
                       disabled={filteredStudents.length === 0}

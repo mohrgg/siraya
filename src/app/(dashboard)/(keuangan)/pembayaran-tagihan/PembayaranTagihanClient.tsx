@@ -439,8 +439,8 @@ export default function PembayaranTagihanClient({
         {/* Tab 1: Loket Kasir Direct Search */}
         {activeTab === "search" && (
           <div className="mb-6">
-            <Toolbar className="flex-col sm:flex-row gap-2.5">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full">
+            <Toolbar>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
                 <ToolbarSearch 
                   value={searchQuery}
                   onChange={(e: any) => setSearchQuery(e.target.value)}
@@ -515,9 +515,9 @@ export default function PembayaranTagihanClient({
 
         {/* Tab 2: Filter by Class */}
         {activeTab === "class" && (
-          <Toolbar className="flex-col gap-3">
+          <div className="flex flex-col gap-3 mb-6">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
-              <div className="grid grid-cols-2 sm:flex gap-2.5 w-full sm:w-auto">
+              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2.5 w-full sm:w-auto">
                 <ToolbarFilter
                   icon={<Filter size={14} />}
                   value={kelasId}
@@ -557,7 +557,7 @@ export default function PembayaranTagihanClient({
                 />
               </div>
 
-              <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+              <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
                 <Button 
                   variant="primary"
                   size="sm"
@@ -586,16 +586,16 @@ export default function PembayaranTagihanClient({
             </div>
 
             {gridData.length > 0 && (
-              <div className="w-full sm:max-w-md">
+              <Toolbar className="mb-0">
                 <ToolbarSearch 
                   value={filterQuery}
                   onChange={(e: any) => setFilterQuery(e.target.value)}
                   onClear={() => setFilterQuery("")}
                   placeholder="Filter nama siswa di rombel ini..." 
                 />
-              </div>
+              </Toolbar>
             )}
-          </Toolbar>
+          </div>
         )}
 
         {/* Table Container */}
