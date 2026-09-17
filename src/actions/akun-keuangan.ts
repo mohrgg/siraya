@@ -231,6 +231,17 @@ export async function tambahAkunDetail(data: { kode: string, nama: string, subKl
   })
   if (existing) throw new Error("Kode akun sudah digunakan di unit ini.")
 
+  // Validasi Akun Kas/Bank HANYA untuk Klasifikasi Harta/Aset (Kode 1)
+  if (data.isKasBank) {
+    const subKlas = await prisma.subKlasifikasiAkun.findUnique({
+      where: { id: data.subKlasifikasiAkunId },
+      include: { klasifikasi: true }
+    })
+    if (subKlas && subKlas.klasifikasi.kode !== "1") {
+      throw new Error(`Akun Kas/Bank hanya diperbolehkan untuk klasifikasi Harta / Aset (Kode 1), bukan untuk ${subKlas.klasifikasi.nama} (Kode ${subKlas.klasifikasi.kode}).`)
+    }
+  }
+
   const result = await prisma.akunDetail.create({ 
     data: {
       kode: data.kode,
@@ -274,6 +285,20 @@ export async function editAkunDetail(id: string, data: { kode?: string, nama?: s
       where: { kode: data.kode, unitSekolahId: targetUnitId, id: { not: id } } 
     })
     if (existing) throw new Error("Kode akun sudah digunakan di unit ini.")
+  }
+
+  // Validasi Akun Kas/Bank HANYA untuk Klasifikasi Harta/Aset (Kode 1)
+  const targetIsKasBank = data.isKasBank !== undefined ? data.isKasBank : current.isKasBank
+  const targetSubKlasId = data.subKlasifikasiAkunId || current.subKlasifikasiAkunId
+
+  if (targetIsKasBank) {
+    const subKlas = await prisma.subKlasifikasiAkun.findUnique({
+      where: { id: targetSubKlasId },
+      include: { klasifikasi: true }
+    })
+    if (subKlas && subKlas.klasifikasi.kode !== "1") {
+      throw new Error(`Akun Kas/Bank hanya diperbolehkan untuk klasifikasi Harta / Aset (Kode 1), bukan untuk ${subKlas.klasifikasi.nama} (Kode ${subKlas.klasifikasi.kode}).`)
+    }
   }
 
   const result = await prisma.akunDetail.update({

@@ -59,7 +59,7 @@ export async function getKasMasuk(params?: {
   return transaksiList
 }
 
-export async function getKasBankAccounts() {
+export async function getKasBankAccounts(unitSekolahId?: string) {
   const tenant = await getTenantContext()
 
   const whereClause: any = {
@@ -72,8 +72,9 @@ export async function getKasBankAccounts() {
     }
   }
 
-  if (!tenant.isGlobal) {
-    whereClause.unitSekolahId = tenant.unitId
+  const targetUnitId = unitSekolahId !== undefined ? unitSekolahId : (!tenant.isGlobal ? tenant.unitId : undefined)
+  if (targetUnitId) {
+    whereClause.unitSekolahId = targetUnitId
   }
 
   return prisma.akunDetail.findMany({
@@ -87,7 +88,7 @@ export async function getKasBankAccounts() {
   })
 }
 
-export async function getPendapatanAccounts() {
+export async function getPendapatanAccounts(unitSekolahId?: string) {
   // Returns all non-kas accounts (often Revenue / Income)
   const tenant = await getTenantContext()
 
@@ -101,8 +102,9 @@ export async function getPendapatanAccounts() {
     }
   }
 
-  if (!tenant.isGlobal) {
-    whereClause.unitSekolahId = tenant.unitId
+  const targetUnitId = unitSekolahId !== undefined ? unitSekolahId : (!tenant.isGlobal ? tenant.unitId : undefined)
+  if (targetUnitId) {
+    whereClause.unitSekolahId = targetUnitId
   }
 
   return prisma.akunDetail.findMany({

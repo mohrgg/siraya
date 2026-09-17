@@ -33,7 +33,15 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
       transaksi: whereClause
     },
     include: {
-      akun: true,
+      akun: {
+        include: {
+          subKlasifikasi: {
+            include: {
+              klasifikasi: true
+            }
+          }
+        }
+      },
       transaksi: true
     }
   })
@@ -46,21 +54,25 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
   let totalPengeluaran = 0
 
   transaksiDetails.forEach(detail => {
-    // Abaikan akun Kas/Bank (hanya menghitung akun nominal: pendapatan dan beban/pengeluaran)
-    if (detail.akun.isKasBank) return
+    const klasifikasiKode = detail.akun.subKlasifikasi?.klasifikasi?.kode
+
+    // Abaikan akun Kas/Bank atau akun Neraca Riil (Harta 1, Kewajiban 2, Ekuitas 3)
+    // Laporan ini khusus akun Nominal (Pendapatan 4 dan Beban 5)
+    if (klasifikasiKode === "1" || klasifikasiKode === "2" || klasifikasiKode === "3") return
+    if (detail.akun.isKasBank && (!klasifikasiKode || klasifikasiKode === "1")) return
 
     const akunId = detail.akun.id
 
     // Kaidah Akuntansi:
-    // - Posisi KREDIT pada akun nominal = Pendapatan / Pemasukan
-    // - Posisi DEBIT pada akun nominal = Beban / Pengeluaran (termasuk Beban Beasiswa & Potongan Siswa)
-    if (detail.posisi === "KREDIT") {
+    // - Posisi KREDIT pada akun nominal / Kode 4 = Pendapatan / Pemasukan
+    // - Posisi DEBIT pada akun nominal / Kode 5 = Beban / Pengeluaran (termasuk Beban Beasiswa & Potongan Siswa)
+    if (detail.posisi === "KREDIT" || klasifikasiKode === "4") {
       if (!pendapatan[akunId]) {
         pendapatan[akunId] = { kode: detail.akun.kode, nama: detail.akun.nama, total: 0 }
       }
       pendapatan[akunId].total += detail.nilai
       totalPendapatan += detail.nilai
-    } else if (detail.posisi === "DEBIT") {
+    } else if (detail.posisi === "DEBIT" || klasifikasiKode === "5") {
       if (!pengeluaran[akunId]) {
         pengeluaran[akunId] = { kode: detail.akun.kode, nama: detail.akun.nama, total: 0 }
       }

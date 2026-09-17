@@ -22,12 +22,15 @@ export default function EditKasMasukClient({ transaksi, kasBankAccounts, pendapa
   
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Find the Debit line for Akun Penerima
-  const debitLine = transaksi.detail.find((d: any) => d.posisi === "DEBIT")
+  // Find the Debit line for Akun Penerima (Kas/Bank)
+  const kasBankLine = transaksi.detail.find((d: any) => d.posisi === "DEBIT")
   const kreditLines = transaksi.detail.filter((d: any) => d.posisi === "KREDIT")
 
+  const isKasValid = kasBankAccounts.some(a => a.id === kasBankLine?.akunId)
+  const initialAkunPenerimaId = isKasValid ? kasBankLine?.akunId : (kasBankAccounts[0]?.id || "")
+
   const [header, setHeader] = useState({
-    akunPenerimaId: debitLine?.akunId || kasBankAccounts[0]?.id || "",
+    akunPenerimaId: initialAkunPenerimaId,
     tanggal: new Date(transaksi.tanggal).toISOString().split('T')[0],
     noReferensi: transaksi.noReferensi,
     noFormulir: transaksi.noFormulir || "",
@@ -98,7 +101,6 @@ export default function EditKasMasukClient({ transaksi, kasBankAccounts, pendapa
         backHref={`/kas-masuk/${transaksi.id}`}
         backLabel="Kembali ke Detail Kas Masuk"
         backShortLabel="Kembali"
-        backPosition="left"
       />
 
       <form onSubmit={handleSubmit} className="space-y-6">

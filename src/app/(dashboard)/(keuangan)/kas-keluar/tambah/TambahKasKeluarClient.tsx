@@ -121,7 +121,6 @@ export default function TambahKasKeluarClient({ kasBankAccounts, pengeluaranAcco
         backHref="/kas-keluar"
         backLabel="Kembali ke Daftar Kas Keluar"
         backShortLabel="Kembali"
-        backPosition="left"
       />
 
       <form onSubmit={handleSubmit} className="space-y-6">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
-import { X, Calendar as CalendarIcon, FileText, CreditCard } from "lucide-react"
+import { X, Calendar as CalendarIcon, FileText, CreditCard, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
@@ -155,6 +155,10 @@ export default function ModalPembayaranTagihan({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (totalBayar > 0 && (!akunKasId || akunKasBankList.length === 0)) {
+      toast.error("Unit ini belum memiliki akun Kas/Bank yang sah. Tambahkan akun kas terlebih dahulu di Akun Keuangan.")
+      return
+    }
     if (totalBayar + totalPotongan > totalSisaTagihan) {
       toast.error("Total pembayaran dan potongan tidak boleh melebihi sisa tagihan")
       return
@@ -210,6 +214,19 @@ export default function ModalPembayaranTagihan({
         <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           <form id="payment-form" onSubmit={handleSubmit} className="space-y-6">
             
+            {/* Warning jika Akun Kas Kosong */}
+            {akunKasBankList.length === 0 && (
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-sm flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Unit Belum Memiliki Akun Kas / Bank Aktif!</p>
+                  <p className="text-xs text-rose-700 mt-1 leading-relaxed">
+                    Pembayaran tagihan memerlukan akun Kas/Bank (Klasifikasi Harta/Aset kode 1) sebagai penerima dana. Silakan buat akun Kas/Bank terlebih dahulu di menu <strong>Akun Keuangan</strong> sebelum melanjutkan pembayaran.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Form Fields Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -415,8 +432,8 @@ export default function ModalPembayaranTagihan({
           <Button 
             type="submit" 
             form="payment-form"
-            disabled={isSubmitting || items.length === 0}
-            className="bg-primary hover:bg-primary/90 text-white font-bold w-full sm:w-auto min-h-[44px] shadow-sm shadow-primary/20"
+            disabled={isSubmitting || items.length === 0 || (totalBayar > 0 && akunKasBankList.length === 0)}
+            className="bg-primary hover:bg-primary/90 text-white font-bold w-full sm:w-auto min-h-[44px] shadow-sm shadow-primary/20 disabled:opacity-50"
           >
             {isSubmitting ? "Memproses..." : "Proses Bayar Tagihan"}
           </Button>

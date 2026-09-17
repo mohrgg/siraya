@@ -117,7 +117,6 @@ export default function TambahKasMasukClient({ kasBankAccounts, pendapatanAccoun
         backHref="/kas-masuk"
         backLabel="Kembali ke Daftar Kas Masuk"
         backShortLabel="Kembali"
-        backPosition="left"
       />
 
       <form onSubmit={handleSubmit} className="space-y-6">

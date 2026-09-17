@@ -60,7 +60,7 @@ export async function getKasKeluar(params?: {
   return transaksiList
 }
 
-export async function getKasBankAccounts() {
+export async function getKasBankAccounts(unitSekolahId?: string) {
   const tenant = await getTenantContext()
 
   const whereClause: any = {
@@ -73,8 +73,9 @@ export async function getKasBankAccounts() {
     }
   }
 
-  if (!tenant.isGlobal) {
-    whereClause.unitSekolahId = tenant.unitId
+  const targetUnitId = unitSekolahId !== undefined ? unitSekolahId : (!tenant.isGlobal ? tenant.unitId : undefined)
+  if (targetUnitId) {
+    whereClause.unitSekolahId = targetUnitId
   }
 
   return prisma.akunDetail.findMany({
@@ -88,7 +89,7 @@ export async function getKasBankAccounts() {
   })
 }
 
-export async function getPengeluaranAccounts() {
+export async function getPengeluaranAccounts(unitSekolahId?: string) {
   // Returns non-kas accounts (usually Expenses / Biaya)
   const tenant = await getTenantContext()
 
@@ -102,8 +103,9 @@ export async function getPengeluaranAccounts() {
     }
   }
 
-  if (!tenant.isGlobal) {
-    whereClause.unitSekolahId = tenant.unitId
+  const targetUnitId = unitSekolahId !== undefined ? unitSekolahId : (!tenant.isGlobal ? tenant.unitId : undefined)
+  if (targetUnitId) {
+    whereClause.unitSekolahId = targetUnitId
   }
 
   return prisma.akunDetail.findMany({

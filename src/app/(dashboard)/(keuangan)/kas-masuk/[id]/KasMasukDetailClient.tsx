@@ -147,7 +147,6 @@ export default function KasMasukDetailClient({ transaksi, pengaturan }: { transa
         backHref="/kas-masuk"
         backLabel="Kembali ke Daftar Kas Masuk"
         backShortLabel="Kembali"
-        backPosition="left"
         action={
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button 

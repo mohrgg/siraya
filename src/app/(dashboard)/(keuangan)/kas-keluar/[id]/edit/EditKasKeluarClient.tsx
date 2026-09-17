@@ -22,12 +22,15 @@ export default function EditKasKeluarClient({ transaksi, kasBankAccounts, pengel
   
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Find the Debit line for Akun Penerima
-  const debitLine = transaksi.detail.find((d: any) => d.posisi === "DEBIT")
-  const kreditLines = transaksi.detail.filter((d: any) => d.posisi === "KREDIT")
+  // Pada Kas Keluar: KREDIT adalah Kas/Bank (Akun Sumber), DEBIT adalah Beban (Alokasi Biaya)
+  const kasBankLine = transaksi.detail.find((d: any) => d.posisi === "KREDIT")
+  const bebanLines = transaksi.detail.filter((d: any) => d.posisi === "DEBIT")
+
+  const isKasValid = kasBankAccounts.some(a => a.id === kasBankLine?.akunId)
+  const initialAkunSumberId = isKasValid ? kasBankLine?.akunId : (kasBankAccounts[0]?.id || "")
 
   const [header, setHeader] = useState({
-    akunSumberId: debitLine?.akunId || kasBankAccounts[0]?.id || "",
+    akunSumberId: initialAkunSumberId,
     tanggal: new Date(transaksi.tanggal).toISOString().split('T')[0],
     noReferensi: transaksi.noReferensi,
     noFormulir: transaksi.noFormulir || "",
@@ -38,7 +41,7 @@ export default function EditKasKeluarClient({ transaksi, kasBankAccounts, pengel
   })
 
   const [lines, setLines] = useState<KasKeluarLine[]>(
-    kreditLines.map((d: any) => ({
+    bebanLines.map((d: any) => ({
       id: d.id,
       akunId: d.akunId,
       nilai: d.nilai,
@@ -100,7 +103,6 @@ export default function EditKasKeluarClient({ transaksi, kasBankAccounts, pengel
         backHref={`/kas-keluar/${transaksi.id}`}
         backLabel="Kembali ke Detail Kas Keluar"
         backShortLabel="Kembali"
-        backPosition="left"
       />
 
       <form onSubmit={handleSubmit} className="space-y-6">

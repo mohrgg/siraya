@@ -13,6 +13,11 @@ export async function getAkunKasBankList(unitSekolahId?: string) {
       where: {
         isKasBank: true,
         isActive: true,
+        subKlasifikasi: {
+          klasifikasi: {
+            kode: "1" // Wajib Aset / Harta
+          }
+        },
         ...(isGlobal ? {} : { unitSekolahId })
       },
       select: {
@@ -312,6 +317,17 @@ export async function prosesPembayaranTagihan(data: {
 
       // 1. DEBIT Kas/Bank jika ada uang tunai yang diterima
       if (totalBayar > 0) {
+        if (!data.akunKasId) {
+          throw new Error("Akun Kas/Bank wajib dipilih untuk pembayaran tunai/transfer.")
+        }
+        const akunKas = await tx.akunDetail.findUnique({
+          where: { id: data.akunKasId },
+          include: { subKlasifikasi: { include: { klasifikasi: true } } }
+        });
+        if (!akunKas || !akunKas.isKasBank || akunKas.subKlasifikasi?.klasifikasi?.kode !== "1") {
+          throw new Error("Akun Kas/Bank tidak sah atau bukan tergolong aset kas.")
+        }
+
         await tx.transaksiDetail.create({
           data: {
             transaksiId: transaksi.id,

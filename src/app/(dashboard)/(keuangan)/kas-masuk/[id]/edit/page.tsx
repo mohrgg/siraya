@@ -6,8 +6,8 @@ export default async function EditKasMasukPage({ params }: { params: Promise<{ i
   try {
     const resolvedParams = await params
     const transaksi = await getKasMasukById(resolvedParams.id)
-    const kasBankAccounts = await getKasBankAccounts()
-    const pendapatanAccounts = await getPendapatanAccounts()
+    const kasBankAccounts = await getKasBankAccounts(transaksi.unitSekolahId || undefined)
+    const pendapatanAccounts = await getPendapatanAccounts(transaksi.unitSekolahId || undefined)
     
     return (
       <EditKasMasukClient 
