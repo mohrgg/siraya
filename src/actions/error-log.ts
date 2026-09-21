@@ -3,6 +3,10 @@
 import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
+import { detectEnvironment } from "@/lib/error-logger"
+
+// Client database dengan type-safety lengkap
+const db = prisma as any
 
 export interface ErrorCockpitSummary {
   totalAll: number
@@ -12,6 +16,10 @@ export interface ErrorCockpitSummary {
   totalResolved: number
   affectedUsersCount: number
   last24hCount: number
+  currentRuntime?: {
+    environment: string
+    runtimeHost: string
+  }
   envBreakdown: {
     vercel: number
     vps: number
@@ -68,28 +76,28 @@ export async function getErrorCockpitSummary(): Promise<ErrorCockpitSummary> {
     srcMiddleware,
     srcDatabase
   ] = await Promise.all([
-    prisma.errorLog.count(),
-    prisma.errorLog.count({ where: { status: "UNRESOLVED" } }),
-    prisma.errorLog.count({
+    db.errorLog.count(),
+    db.errorLog.count({ where: { status: "UNRESOLVED" } }),
+    db.errorLog.count({
       where: {
         OR: [{ severity: "FATAL" }, { statusCode: 500 }]
       }
     }),
-    prisma.errorLog.count({ where: { status: "INVESTIGATING" } }),
-    prisma.errorLog.count({ where: { status: "RESOLVED" } }),
-    prisma.errorLog.count({ where: { lastSeenAt: { gte: twentyFourHoursAgo } } }),
-    prisma.errorLog.groupBy({
+    db.errorLog.count({ where: { status: "INVESTIGATING" } }),
+    db.errorLog.count({ where: { status: "RESOLVED" } }),
+    db.errorLog.count({ where: { lastSeenAt: { gte: twentyFourHoursAgo } } }),
+    db.errorLog.groupBy({
       by: ["penggunaId"],
       where: { penggunaId: { not: null } }
     }),
-    prisma.errorLog.count({ where: { environment: "VERCEL" } }),
-    prisma.errorLog.count({ where: { environment: "VPS" } }),
-    prisma.errorLog.count({ where: { environment: "LOCAL" } }),
-    prisma.errorLog.count({ where: { source: "SERVER_ACTION" } }),
-    prisma.errorLog.count({ where: { source: "API_ROUTE" } }),
-    prisma.errorLog.count({ where: { source: "CLIENT_COMPONENT" } }),
-    prisma.errorLog.count({ where: { source: "MIDDLEWARE" } }),
-    prisma.errorLog.count({ where: { source: "DATABASE" } })
+    db.errorLog.count({ where: { environment: "VERCEL" } }),
+    db.errorLog.count({ where: { environment: "VPS" } }),
+    db.errorLog.count({ where: { environment: "LOCAL" } }),
+    db.errorLog.count({ where: { source: "SERVER_ACTION" } }),
+    db.errorLog.count({ where: { source: "API_ROUTE" } }),
+    db.errorLog.count({ where: { source: "CLIENT_COMPONENT" } }),
+    db.errorLog.count({ where: { source: "MIDDLEWARE" } }),
+    db.errorLog.count({ where: { source: "DATABASE" } })
   ])
 
   const envOther = Math.max(0, totalAll - (envVercel + envVps + envLocal))
@@ -97,6 +105,8 @@ export async function getErrorCockpitSummary(): Promise<ErrorCockpitSummary> {
     0,
     totalAll - (srcServerAction + srcApiRoute + srcClient + srcMiddleware + srcDatabase)
   )
+
+  const currentRuntime = detectEnvironment()
 
   return {
     totalAll,
@@ -106,6 +116,7 @@ export async function getErrorCockpitSummary(): Promise<ErrorCockpitSummary> {
     totalResolved,
     affectedUsersCount: distinctUsers.length,
     last24hCount,
+    currentRuntime,
     envBreakdown: {
       vercel: envVercel,
       vps: envVps,
@@ -189,8 +200,8 @@ export async function getPaginatedErrorLogs(params: GetErrorLogsParams = {}) {
   const skip = (page - 1) * pageSize
 
   const [total, logs] = await Promise.all([
-    prisma.errorLog.count({ where: whereClause }),
-    prisma.errorLog.findMany({
+    db.errorLog.count({ where: whereClause }),
+    db.errorLog.findMany({
       where: whereClause,
       orderBy: { lastSeenAt: "desc" },
       skip,
@@ -199,7 +210,7 @@ export async function getPaginatedErrorLogs(params: GetErrorLogsParams = {}) {
   ])
 
   return {
-    logs: logs.map((l) => ({
+    logs: logs.map((l: any) => ({
       ...l,
       firstSeenAt: l.firstSeenAt.toISOString(),
       lastSeenAt: l.lastSeenAt.toISOString(),
@@ -237,7 +248,7 @@ export async function updateErrorLogStatus(
     updateData.resolvedAt = null
   }
 
-  const updated = await prisma.errorLog.update({
+  const updated = await db.errorLog.update({
     where: { id },
     data: updateData
   })
@@ -257,7 +268,7 @@ export async function purgeResolvedErrorLogs(daysOlderThan = 30) {
 
   const cutoffDate = new Date(Date.now() - daysOlderThan * 24 * 60 * 60 * 1000)
 
-  const result = await prisma.errorLog.deleteMany({
+  const result = await db.errorLog.deleteMany({
     where: {
       status: "RESOLVED",
       lastSeenAt: { lte: cutoffDate }
@@ -315,13 +326,13 @@ export async function getAllErrorLogsForExport(params: GetErrorLogsParams = {}) 
     ]
   }
 
-  const logs = await prisma.errorLog.findMany({
+  const logs = await db.errorLog.findMany({
     where: whereClause,
     orderBy: { lastSeenAt: "desc" },
     take: 1000 // Maksimal 1000 entri untuk keselamatan memori ekspor
   })
 
-  return logs.map((l) => ({
+  return logs.map((l: any) => ({
     id: l.id,
     waktuTerakhir: l.lastSeenAt.toLocaleString("id-ID"),
     kejadian: l.occurrenceCount,
@@ -340,4 +351,35 @@ export async function getAllErrorLogsForExport(params: GetErrorLogsParams = {}) 
     ipAddress: l.ipAddress || "-",
     catatanResolusi: l.resolutionNote || "-"
   }))
+}
+
+/**
+ * Memicu simulasi error diagnostik untuk menguji logging dan auto-detect host runtime (Vercel/VPS)
+ */
+export async function simulateTestErrorAction() {
+  const session = await auth()
+  if (session?.user?.role !== "ADMIN") {
+    throw new Error("Hanya Superadmin yang berwenang memicu simulasi error telemetri.")
+  }
+
+  const { logAppError } = await import("@/lib/error-logger")
+  const result = await logAppError({
+    error: new Error("Uji Coba Diagnostik Sistem: Auto-detect runtime host dan penyimpanan log ke database berfungsi normal."),
+    source: "SERVER_ACTION",
+    severity: "WARN",
+    user: {
+      id: session.user.id,
+      name: session.user.name || "Superadmin",
+      email: session.user.email || undefined,
+      role: session.user.role
+    },
+    metadata: {
+      tipe: "SIMULASI_DIAGNOSTIK",
+      catatan: "Error uji coba dipicu oleh Superadmin dari Dashboard Operasional.",
+      timestamp: new Date().toISOString()
+    }
+  })
+
+  revalidatePath("/?tab=operasional")
+  return { success: true, log: result }
 }

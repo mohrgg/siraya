@@ -24,7 +24,7 @@ declare const globalThis: {
 // Selalu buat instance baru saat file ini direload atau jika ada model baru yang belum terdeteksi
 const prisma = isEdge
   ? prismaClientSingleton()
-  : (globalThis.prismaGlobal && (globalThis.prismaGlobal as any).statusKepegawaian)
+  : (globalThis.prismaGlobal && (globalThis.prismaGlobal as any).statusKepegawaian && (globalThis.prismaGlobal as any).errorLog)
     ? globalThis.prismaGlobal
     : prismaClientSingleton()
 

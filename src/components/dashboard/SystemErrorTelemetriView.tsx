@@ -30,7 +30,8 @@ import {
   Layers,
   FileCode,
   Tag,
-  Hash
+  Hash,
+  FlaskConical
 } from "lucide-react"
 import toast from "react-hot-toast"
 import { format, formatDistanceToNow } from "date-fns"
@@ -49,6 +50,7 @@ import {
   updateErrorLogStatus,
   purgeResolvedErrorLogs,
   getAllErrorLogsForExport,
+  simulateTestErrorAction,
   ErrorCockpitSummary
 } from "@/actions/error-log"
 import { exportToExcel } from "@/lib/excel"
@@ -127,6 +129,7 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
   // 6. Export states
   const [isExportingExcel, setIsExportingExcel] = useState(false)
   const [isExportingPDF, setIsExportingPDF] = useState(false)
+  const [isSimulating, setIsSimulating] = useState(false)
 
   // Live Clock Tick
   useEffect(() => {
@@ -307,6 +310,20 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
     }
   }
 
+  // Uji Coba Simulasi Error
+  const handleSimulateError = async () => {
+    setIsSimulating(true)
+    try {
+      await simulateTestErrorAction()
+      toast.success("Uji coba telemetri berhasil dikirim! Memuat data...")
+      await Promise.all([fetchLogs(), fetchSummary()])
+    } catch (err: any) {
+      toast.error(err?.message || "Gagal mengirim simulasi error")
+    } finally {
+      setIsSimulating(false)
+    }
+  }
+
   // Copy Stack Trace
   const handleCopyStackTrace = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -373,7 +390,7 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
         title: "LAPORAN JEJAK ERROR SISTEM & DIAGNOSTIK",
         subtitle: `Periode: ${startDate || "Awal"} s/d ${endDate || "Sekarang"} | Total: ${exportData.length} Insiden`,
         headers: ["Waktu Terakhir", "Status", "Tingkat", "Lingkungan", "Pesan Error", "Pengguna", "Frekuensi"],
-        data: exportData.map((l) => [
+        data: exportData.map((l: any) => [
           l.waktuTerakhir,
           l.status,
           l.tingkat,
@@ -407,9 +424,13 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
               <ShieldAlert size={14} className="text-rose-700" />
               Real-Time Error Telemetry
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-              <Server size={13} className="text-slate-500" />
-              Vercel & VPS Persistent Storage
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              Runtime Aktif: {summary?.currentRuntime?.environment || "Mendeteksi..."}
+              {summary?.currentRuntime?.runtimeHost ? ` (${summary.currentRuntime.runtimeHost})` : ""}
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-text-main tracking-tight">
@@ -438,6 +459,17 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
               </span>
             </div>
           </div>
+
+          {/* Tombol Uji Coba Telemetri */}
+          <button
+            onClick={handleSimulateError}
+            disabled={isSimulating}
+            className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 rounded-xl border border-amber-200 transition-colors shadow-2xs text-xs sm:text-sm font-semibold cursor-pointer disabled:opacity-50"
+            title="Kirim insiden simulasi untuk menguji deteksi Vercel/VPS"
+          >
+            <FlaskConical size={14} className={isSimulating ? "animate-spin text-amber-700" : "text-amber-700"} />
+            <span className="hidden sm:inline">{isSimulating ? "Mengirim..." : "Uji Coba Telemetri"}</span>
+          </button>
 
           {/* Tombol Segarkan */}
           <button
@@ -543,22 +575,25 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
         {/* KPI 5: Runtime Environment Breakdown */}
         <div className="bg-slate-900 text-white rounded-2xl border border-slate-800 p-4 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
-              Lingkungan Host
-            </span>
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                Log Error Per Host
+              </span>
+              <p className="text-[10px] text-slate-400">Akumulasi insiden tercatat</p>
+            </div>
             <Server size={15} className="text-emerald-400" />
           </div>
           <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-800 mt-1">
             <span className="text-slate-300 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-white"></span> Vercel:
             </span>
-            <span className="font-bold text-white">{summary?.envBreakdown.vercel ?? 0}</span>
+            <span className="font-bold text-white">{summary?.envBreakdown.vercel ?? 0} log</span>
           </div>
           <div className="flex items-center justify-between text-xs pt-1">
             <span className="text-slate-300 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> VPS:
             </span>
-            <span className="font-bold text-white">{summary?.envBreakdown.vps ?? 0}</span>
+            <span className="font-bold text-white">{summary?.envBreakdown.vps ?? 0} log</span>
           </div>
         </div>
       </div>
@@ -675,22 +710,34 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
             <h3 className="text-base font-bold text-text-main">
               Tidak Ditemukan Insiden Error
             </h3>
-            <p className="text-xs text-text-muted mt-1 max-w-sm">
-              Sistem beroperasi normal tanpa ada laporan error yang sesuai dengan filter pencarian saat ini.
+            <p className="text-xs text-text-muted mt-1 max-w-md">
+              Sistem beroperasi normal tanpa insiden runtime yang tercatat di lingkungan {summary?.currentRuntime?.environment || "server"}.
             </p>
-            <button
-              onClick={() => {
-                setStatusFilter("ALL")
-                setSeverityFilter("ALL")
-                setSourceFilter("ALL")
-                setEnvironmentFilter("ALL")
-                setDatePreset("ALL")
-                setSearchTerm("")
-              }}
-              className="mt-4 px-4 py-2 bg-bg hover:bg-slate-100 rounded-xl border border-border text-xs font-semibold text-text-main min-h-[44px] cursor-pointer"
-            >
-              Reset Semua Filter
-            </button>
+            <div className="flex items-center gap-2 mt-4 flex-wrap justify-center">
+              <button
+                onClick={handleSimulateError}
+                disabled={isSimulating}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 rounded-xl border border-amber-200 text-xs font-semibold min-h-[44px] cursor-pointer disabled:opacity-50"
+              >
+                <FlaskConical size={14} className={isSimulating ? "animate-spin text-amber-700" : "text-amber-700"} />
+                <span>{isSimulating ? "Mengirim insiden..." : "Kirim Uji Coba Telemetri"}</span>
+              </button>
+              {(statusFilter !== "ALL" || severityFilter !== "ALL" || sourceFilter !== "ALL" || environmentFilter !== "ALL" || searchTerm !== "") && (
+                <button
+                  onClick={() => {
+                    setStatusFilter("ALL")
+                    setSeverityFilter("ALL")
+                    setSourceFilter("ALL")
+                    setEnvironmentFilter("ALL")
+                    setDatePreset("ALL")
+                    setSearchTerm("")
+                  }}
+                  className="px-4 py-2 bg-bg hover:bg-slate-100 rounded-xl border border-border text-xs font-semibold text-text-main min-h-[44px] cursor-pointer"
+                >
+                  Reset Filter
+                </button>
+              )}
+            </div>
           </div>
         )}
 
