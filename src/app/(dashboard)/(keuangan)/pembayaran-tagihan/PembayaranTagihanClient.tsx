@@ -52,6 +52,49 @@ type GridRow = {
   hasOldDebts: boolean
 }
 
+const ACADEMIC_MONTH_ORDER: Record<string, number> = {
+  "JULI": 1,
+  "AGUSTUS": 2,
+  "SEPTEMBER": 3,
+  "OKTOBER": 4,
+  "NOVEMBER": 5,
+  "DESEMBER": 6,
+  "JANUARI": 7,
+  "FEBRUARI": 8,
+  "MARET": 9,
+  "APRIL": 10,
+  "MEI": 11,
+  "JUNI": 12
+}
+
+export function getNormalizedTagihanInfo(akunId: string, rawNamaTagihan: string) {
+  const cleaned = (rawNamaTagihan || "").replace(/\s+/g, ' ').trim()
+  const months = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ]
+  const upper = cleaned.toUpperCase()
+  const foundMonth = months.find(m => upper.includes(m.toUpperCase()))
+  
+  let level = ""
+  if (/\bKELAS\s+XII\b/i.test(cleaned) || /\bXII\b/i.test(cleaned)) {
+    level = "XII"
+  } else if (/\bKELAS\s+XI\b/i.test(cleaned) || /\bXI\b/i.test(cleaned)) {
+    level = "XI"
+  } else if (/\bKELAS\s+X\b/i.test(cleaned) || /\bX\b/i.test(cleaned)) {
+    level = "X"
+  }
+
+  if (foundMonth && level) {
+    const monthUpper = foundMonth.toUpperCase()
+    const key = `${akunId}::SPP_KELAS_${level}_${monthUpper}`
+    const displayName = `SPP KELAS ${level} ${monthUpper}`
+    return { key, displayName, monthOrder: ACADEMIC_MONTH_ORDER[monthUpper] || 99 }
+  }
+
+  return { key: `${akunId}::${cleaned}`, displayName: cleaned, monthOrder: 99 }
+}
+
 export default function PembayaranTagihanClient({
   activeUnitId,
   activeTahunAkademikId,
@@ -171,29 +214,38 @@ export default function PembayaranTagihanClient({
       ? muridList
       : muridList.filter(m => m.riwayatKelas?.[0]?.subKelas?.tingkat?.id === levelFilter)
 
-    const columnsMap = new Map<string, {id: string, namaTagihan: string, nama: string, kode: string}>()
+    const columnsMap = new Map<string, {id: string, namaTagihan: string, nama: string, kode: string, monthOrder: number}>()
     
     effectiveMuridList.forEach(murid => {
       murid.tagihan?.forEach((t: TagihanData) => {
-        const compId = `${t.akunId}::${t.namaTagihan}`
-        if (!columnsMap.has(compId)) {
-          columnsMap.set(compId, {
-            id: compId,
-            namaTagihan: t.namaTagihan,
-            nama: t.namaTagihan, // UI Display
-            kode: t.akun.kode
+        const norm = getNormalizedTagihanInfo(t.akunId, t.namaTagihan)
+        if (!columnsMap.has(norm.key)) {
+          columnsMap.set(norm.key, {
+            id: norm.key,
+            namaTagihan: norm.displayName,
+            nama: norm.displayName, // UI Display
+            kode: t.akun.kode,
+            monthOrder: norm.monthOrder
           })
         }
       })
     })
     
-    const columns = Array.from(columnsMap.values()).sort((a, b) => a.kode.localeCompare(b.kode))
+    const columns = Array.from(columnsMap.values()).sort((a, b) => {
+      if (a.kode !== b.kode) return a.kode.localeCompare(b.kode)
+      if (a.monthOrder !== b.monthOrder) return a.monthOrder - b.monthOrder
+      return a.nama.localeCompare(b.nama)
+    })
     
     if (order && order.length > 0) {
       columns.sort((a, b) => {
         const idxA = order.indexOf(a.id)
         const idxB = order.indexOf(b.id)
-        if (idxA === -1 && idxB === -1) return 0
+        if (idxA === -1 && idxB === -1) {
+          if (a.kode !== b.kode) return a.kode.localeCompare(b.kode)
+          if (a.monthOrder !== b.monthOrder) return a.monthOrder - b.monthOrder
+          return a.nama.localeCompare(b.nama)
+        }
         if (idxA === -1) return 1
         if (idxB === -1) return -1
         return idxA - idxB
@@ -812,8 +864,8 @@ export default function PembayaranTagihanClient({
                         </td>
                         
                         {akunColumns.map(col => {
-                          // Match using composite ID
-                          const tagihan = row.tagihanList.find(t => `${t.akunId}::${t.namaTagihan}` === col.id)
+                          // Match using normalized key
+                          const tagihan = row.tagihanList.find(t => getNormalizedTagihanInfo(t.akunId, t.namaTagihan).key === col.id)
                           
                           return (
                             <td key={col.id} className="p-4">
@@ -930,7 +982,7 @@ export default function PembayaranTagihanClient({
                     </td>
                     {akunColumns.map(col => {
                       const colTotal = filteredData.reduce((acc, row) => {
-                        const t = row.tagihanList.find(tag => `${tag.akunId}::${tag.namaTagihan}` === col.id)
+                        const t = row.tagihanList.find(tag => getNormalizedTagihanInfo(tag.akunId, tag.namaTagihan).key === col.id)
                         return acc + (t ? Math.max(0, t.sisaTagihan) : 0)
                       }, 0)
                       return (
