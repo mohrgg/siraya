@@ -15,6 +15,9 @@ import toast from "react-hot-toast"
 import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
 import { Toolbar, ToolbarSearch, ToolbarFilter, ToolbarActions, ToolbarRefreshButton, ToolbarAddButton, ToolbarDivider } from "@/components/ui/DataTableToolbar"
+import { PageHeader } from "@/components/ui/PageHeader"
+import { AkunKeuanganGuideModal } from "./AkunKeuanganGuideModal"
+import { Sparkles, HelpCircle } from "lucide-react"
 
 type Klasifikasi = { id: string, kode: string, nama: string }
 type SubKlasifikasi = { id: string, kode: string, nama: string, klasifikasiAkunId: string, klasifikasi?: Klasifikasi, _count?: { akunDetail: number } }
@@ -85,9 +88,10 @@ export default function AkunKeuanganClient({
     }
   }, [akunDetail, subKlasifikasi])
 
-  // Drawer States
+  // Drawer & Guide Modal States
   const [isSubKlasDrawerOpen, setIsSubKlasDrawerOpen] = useState(false)
   const [isAkunDrawerOpen, setIsAkunDrawerOpen] = useState(false)
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Form States
@@ -478,8 +482,27 @@ export default function AkunKeuanganClient({
         </form>
       </SideDrawer>
 
+      {/* Page Header dengan Tombol Panduan Modul */}
+      <PageHeader 
+        title="Bagan Akun Keuangan"
+        subtitle="Kelola struktur klasifikasi dan daftar akun transaksi Yayasan"
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsGuideModalOpen(true)}
+            className="border-primary/25 text-primary bg-primary/5 hover:bg-primary/10 hover:border-primary/50 font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 shadow-2xs min-h-[40px] cursor-pointer"
+          >
+            <BookOpen size={16} className="text-primary" />
+            <span>Panduan Modul</span>
+          </Button>
+        }
+      />
+
       {/* Main Container */}
       <div className="space-y-6">
+
         {/* 4 Card KPI Bagan Akun Keuangan */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="bg-surface rounded-2xl p-3.5 sm:p-5 border border-border shadow-xs flex items-center gap-3 sm:gap-4">
@@ -739,6 +762,12 @@ export default function AkunKeuanganClient({
           </div>
         )}
       </div>
+
+      {/* Modal Panduan & Tutorial Modul Akun Keuangan */}
+      <AkunKeuanganGuideModal 
+        isOpen={isGuideModalOpen} 
+        onClose={() => setIsGuideModalOpen(false)} 
+      />
     </div>
     </div>
   )
