@@ -553,6 +553,7 @@ export const getTuUnitData = getUnitDashboardData;
 
 // ==================== SUPERADMIN OPERASIONAL ====================
 import { getAuditCockpitSummary } from "@/actions/audit-log"
+import { getErrorCockpitSummary } from "@/actions/error-log"
 
 export async function getAdminOperasionalData() {
   const thirtyDaysAgo = new Date()
@@ -673,8 +674,17 @@ export async function getAdminOperasionalData() {
   const total30DaysLogs = Array.from(activityMap.values()).reduce((sum, val) => sum + val, 0)
   const avgDailyLogs = Math.round(total30DaysLogs / 30)
 
+  // NEW: Error Cockpit Telemetri Summary
+  let errorCockpitSummary = null
+  try {
+    errorCockpitSummary = await getErrorCockpitSummary()
+  } catch {
+    // Graceful fallback jika belum terotentikasi saat build
+  }
+
   return { 
     cockpitSummary,
+    errorCockpitSummary,
     trendData, modulData, roleData, heatmapData, leaderboard, recentLogs, 
     dauCount, monthlyLogsCount, totalMasterRecords, avgDailyLogs, pengaturan 
   }

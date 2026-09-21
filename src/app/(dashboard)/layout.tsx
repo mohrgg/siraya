@@ -7,6 +7,7 @@ import Header from "@/components/layout/Header"
 import MobileBottomNav from "@/components/layout/MobileBottomNav"
 import { MobileMenuProvider } from "@/components/layout/MobileMenuContext"
 import { UserActivityTracker } from "@/components/UserActivityTracker"
+import { ClientErrorTelemetry } from "@/components/ClientErrorTelemetry"
 
 import { sortUnitsByLevel } from "@/lib/constants/units"
 
@@ -79,6 +80,7 @@ export default async function DashboardLayout({
             activeYearId={activeYearId}
           />
           <UserActivityTracker />
+          <ClientErrorTelemetry />
           <main className="flex-1 p-3 sm:p-4 short:p-3 md:p-6 lg:p-8 pb-[calc(4.5rem+env(safe-area-inset-bottom))] short:pb-14 md:pb-8 overflow-y-auto overflow-x-hidden relative">
             {children}
           </main>

@@ -38,8 +38,9 @@ interface ToolbarSearchProps extends React.InputHTMLAttributes<HTMLInputElement>
 }
 
 export function ToolbarSearch({ className, containerClassName, onClear, isLoading, value, ...props }: ToolbarSearchProps) {
+  const widthClass = containerClassName?.includes("w-") ? "" : "sm:w-48 xl:w-52"
   return (
-    <div className={`relative w-full sm:w-48 xl:w-52 flex-shrink-0 ${containerClassName || ''}`}>
+    <div className={`relative w-full ${widthClass} flex-shrink-0 ${containerClassName || ""}`}>
       <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
       <input
         type="text"

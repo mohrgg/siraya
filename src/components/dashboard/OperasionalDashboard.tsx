@@ -19,9 +19,11 @@ import {
   getAuditCockpitSummary 
 } from "@/actions/audit-log"
 import { AUDIT_DOMAINS, AuditCockpitSummary } from "@/lib/constants/audit"
+import SystemErrorTelemetriView from "./SystemErrorTelemetriView"
 
 interface OperasionalDashboardProps {
   cockpitSummary?: AuditCockpitSummary
+  errorCockpitSummary?: any
   trendData?: Array<{ date: string; total: number }>
   modulData?: Array<{ name: string; value: number }>
   roleData?: Array<{ name: string; value: number }>
@@ -66,11 +68,15 @@ const DOMAIN_BG: Record<string, string> = {
 export default function OperasionalDashboard(props: OperasionalDashboardProps) {
   const {
     cockpitSummary: initialCockpit,
+    errorCockpitSummary,
     recentLogs = [],
     totalMasterRecords = 0,
     pengaturan,
     userName = "Superadmin"
   } = props
+
+  // Sub-Tab Navigation: Jejak Audit vs Telemetri Error
+  const [activeSubTab, setActiveSubTab] = useState<"audit" | "error">("audit")
 
   // State Cockpit Data
   const [cockpit, setCockpit] = useState<AuditCockpitSummary | null>(initialCockpit || null)
@@ -351,6 +357,59 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 pb-20 min-w-0 w-full animate-in fade-in duration-200">
+      {/* ======================================================== */}
+      {/* SUB-TAB NAVIGATOR: Jejak Audit vs Telemetri Error */}
+      {/* ======================================================== */}
+      <div className="flex items-center gap-2 p-1.5 bg-surface rounded-2xl border border-border shadow-2xs overflow-x-auto no-scrollbar">
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("audit")}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[44px] cursor-pointer touch-manipulation ${
+            activeSubTab === "audit"
+              ? "bg-slate-900 text-white shadow-xs"
+              : "text-text-muted hover:text-text-main hover:bg-slate-50"
+          }`}
+        >
+          <ShieldCheck size={16} />
+          <span>Jejak Audit Aktivitas</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+            activeSubTab === "audit" ? "bg-slate-800 text-slate-200" : "bg-slate-100 text-slate-600"
+          }`}>
+            {formatNumber(kpi.totalMutasi)}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("error")}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[44px] cursor-pointer touch-manipulation ${
+            activeSubTab === "error"
+              ? "bg-rose-700 text-white shadow-xs"
+              : "text-text-muted hover:text-text-main hover:bg-slate-50"
+          }`}
+        >
+          <AlertTriangle size={16} />
+          <span>Telemetri & Error Sistem</span>
+          {(errorCockpitSummary?.totalUnresolved > 0) ? (
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+              activeSubTab === "error" ? "bg-rose-900 text-white" : "bg-rose-100 text-rose-700"
+            }`}>
+              {errorCockpitSummary.totalUnresolved}
+            </span>
+          ) : (
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              activeSubTab === "error" ? "bg-rose-800 text-rose-200" : "bg-slate-100 text-slate-600"
+            }`}>
+              {errorCockpitSummary?.totalAll || 0}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {activeSubTab === "error" ? (
+        <SystemErrorTelemetriView initialSummary={errorCockpitSummary} />
+      ) : (
+        <>
       {/* ======================================================== */}
       {/* 1. HEADER COCKPIT & SYSTEM STATUS BANNER */}
       {/* ======================================================== */}
@@ -1646,6 +1705,8 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
           </div>
         </div>,
         document.body
+      )}
+        </>
       )}
     </div>
   )

@@ -469,3 +469,56 @@ model Pengaturan {
 
   updatedAt DateTime @updatedAt
 }
+
+// ========== LOG ERROR SISTEM & TELEMETRI (VERCEL & VPS) ==========
+model ErrorLog {
+  id              String    @id @default(cuid())
+  fingerprint     String    @db.VarChar(64) // Hash fingerprint untuk deduplikasi error
+  name            String    @db.VarChar(150) // Nama Exception (e.g. "TypeError", "PrismaClientKnownRequestError")
+  message         String    @db.Text
+  stack           String?   @db.Text
+  digest          String?   @db.VarChar(100) // Next.js error digest ID
+  severity        String    @default("ERROR") @db.VarChar(20) // FATAL, ERROR, WARN
+  status          String    @default("UNRESOLVED") @db.VarChar(20) // UNRESOLVED, INVESTIGATING, RESOLVED, IGNORED
+  source          String    @default("SERVER") @db.VarChar(30) // SERVER_ACTION, API_ROUTE, CLIENT_COMPONENT, MIDDLEWARE, DATABASE, AUTH
+  environment     String    @default("PRODUCTION") @db.VarChar(30) // VERCEL, VPS, LOCAL, STAGING
+  runtimeHost     String?   @db.VarChar(100) // Region/Host runtime (e.g. "vercel-sin1", "vps-srv-01", "localhost")
+
+  // Request & Network Context
+  url             String?   @db.Text
+  path            String?   @db.VarChar(255)
+  method          String?   @db.VarChar(10)
+  statusCode      Int?      @default(500)
+  ipAddress       String?   @db.VarChar(50)
+  userAgent       String?   @db.Text
+
+  // User & Tenant Identity Context
+  penggunaId      String?
+  penggunaName    String?   @db.VarChar(100)
+  penggunaEmail   String?   @db.VarChar(100)
+  penggunaRole    String?   @db.VarChar(50)
+  unitSekolahId   String?
+  unitSekolahName String?   @db.VarChar(100)
+
+  // Sanitized Metadata / Payload
+  metadata        String?   @db.Text
+
+  // Frequency & Deduplication Tracking
+  occurrenceCount Int       @default(1)
+  firstSeenAt     DateTime  @default(now())
+  lastSeenAt      DateTime  @default(now())
+  resolvedAt      DateTime?
+  resolutionNote  String?   @db.Text
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([fingerprint])
+  @@index([status])
+  @@index([severity])
+  @@index([source])
+  @@index([environment])
+  @@index([createdAt])
+  @@index([lastSeenAt])
+  @@index([penggunaId])
+}
