@@ -92,7 +92,7 @@ export default function ModalPembayaranTagihan({
       }
       setTanggal(format(new Date(), 'yyyy-MM-dd'))
       setDeskripsi(`Pembayaran Tagihan Siswa: ${muridName}`)
-      setNoReferensi(`INV-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`)
+      setNoReferensi("[Otomatis oleh Sistem]")
       setLocalItems(items.map(item => ({
         ...item, 
         potongan: 0, 
@@ -167,7 +167,7 @@ export default function ModalPembayaranTagihan({
       akunKasId,
       tanggal: new Date(tanggal),
       deskripsi,
-      noReferensi,
+      noReferensi: "", // Server akan mengenerate nomor urut resmi atomik (INV-YYYYMMDD-XXXX)
       items: localItems
     })
   }
@@ -280,8 +280,9 @@ export default function ModalPembayaranTagihan({
                   <input
                     type="text"
                     readOnly
-                    className="w-full pl-10 pr-3 py-2 bg-gray-50 border border-border rounded-xl text-sm font-medium text-text-muted cursor-not-allowed"
-                    value={noReferensi}
+                    className="w-full pl-10 pr-3 py-2 bg-gray-50 border border-border rounded-xl text-sm font-medium text-text-muted cursor-not-allowed italic"
+                    value={noReferensi || "[Otomatis oleh Sistem]"}
+                    placeholder="[Otomatis oleh Sistem]"
                   />
                 </div>
               </div>

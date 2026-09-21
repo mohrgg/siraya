@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma"
 import { revalidatePath, unstable_noStore } from "next/cache"
-
+import { format } from "date-fns"
 import { auth } from "@/lib/auth"
 
 export async function getAkunKasBankList(unitSekolahId?: string) {
@@ -239,6 +239,50 @@ async function getOrCreateAkunPotongan(tx: any, unitSekolahId: string) {
   })
 }
 
+/**
+ * Menghasilkan nomor referensi pembayaran tagihan secara urut dan atomik (INV-YYYYMMDD-XXXX).
+ * Terisolasi dari penomoran Kas Masuk (KM-) dan Kas Keluar (KK-).
+ */
+export async function generateNoReferensiTagihan(
+  tx: any,
+  tanggal: Date = new Date()
+): Promise<string> {
+  const dateStr = format(tanggal, "yyyyMMdd");
+  const prefix = `INV-${dateStr}-`;
+
+  const latestTx = await tx.transaksi.findFirst({
+    where: {
+      noReferensi: {
+        startsWith: prefix
+      }
+    },
+    orderBy: {
+      noReferensi: "desc"
+    },
+    select: {
+      noReferensi: true
+    }
+  });
+
+  let nextSeq = 1;
+  if (latestTx?.noReferensi) {
+    const parts = latestTx.noReferensi.split("-");
+    const lastNum = parseInt(parts[parts.length - 1], 10);
+    if (!isNaN(lastNum)) {
+      nextSeq = lastNum + 1;
+    }
+  }
+
+  // Pengecekan unik loop safeguard untuk mencegah collision jika ada data acak masa lalu atau gap
+  let candidate = `${prefix}${String(nextSeq).padStart(4, "0")}`;
+  while (await tx.transaksi.findUnique({ where: { noReferensi: candidate }, select: { id: true } })) {
+    nextSeq++;
+    candidate = `${prefix}${String(nextSeq).padStart(4, "0")}`;
+  }
+
+  return candidate;
+}
+
 export async function prosesPembayaranTagihan(data: {
   akunKasId: string
   tanggal: Date
@@ -268,52 +312,41 @@ export async function prosesPembayaranTagihan(data: {
       throw new Error("Total pembayaran/potongan harus lebih dari 0")
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      let finalNoReferensi = data.noReferensi;
-      if (!finalNoReferensi) {
-        const latestTx = await tx.transaksi.findFirst({
-          where: { 
-            jenis: 'KAS_MASUK',
-            tanggal: {
-              gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-              lt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1)
-            }
-          },
-          orderBy: { noReferensi: 'desc' },
-          select: { noReferensi: true }
-        });
-        
-        let nextSeq = 1;
-        if (latestTx?.noReferensi) {
-          const match = latestTx.noReferensi.match(/-(\d+)$/);
-          if (match) {
-            nextSeq = parseInt(match[1]) + 1;
-          }
-        }
-        
-        const dateStr = [
-          String(new Date().getDate()).padStart(2, '0'),
-          String(new Date().getMonth() + 1).padStart(2, '0'),
-          String(new Date().getFullYear()).slice(-2)
-        ].join('');
-        
-        finalNoReferensi = `KM-${dateStr}-${String(nextSeq).padStart(4, '0')}`;
-      }
+    // Atomic transaction dengan retry guard jika terjadi race condition
+    let result: any;
+    let attempts = 0;
+    const maxAttempts = 3;
 
-      const transaksi = await tx.transaksi.create({
-        data: {
-          noReferensi: finalNoReferensi,
-          tanggal: data.tanggal,
-          jenis: "KAS_MASUK",
-          sumber: "TAGIHAN",
-          deskripsi: data.deskripsi || `Pembayaran Tagihan Siswa: ${data.muridName}`,
-          totalNilai: totalBayar,
-          status: "POSTED",
-          namaPihakKetiga: data.muridName,
-          unitSekolahId: data.unitSekolahId,
-          pembuatId: data.pembuatId
-        }
-      })
+    while (attempts < maxAttempts) {
+      try {
+        result = await prisma.$transaction(async (tx) => {
+          let finalNoReferensi = data.noReferensi;
+          
+          // Verifikasi nomor referensi:
+          // Jika kosong, atau placeholder otomatis, atau sudah pernah dipakai di DB:
+          // Generate nomor urut resmi server secara atomik
+          const isAlreadyUsed = finalNoReferensi 
+            ? await tx.transaksi.findUnique({ where: { noReferensi: finalNoReferensi }, select: { id: true } })
+            : false;
+
+          if (!finalNoReferensi || isAlreadyUsed || finalNoReferensi.startsWith("[Otomatis")) {
+            finalNoReferensi = await generateNoReferensiTagihan(tx, data.tanggal || new Date());
+          }
+
+          const transaksi = await tx.transaksi.create({
+            data: {
+              noReferensi: finalNoReferensi,
+              tanggal: data.tanggal,
+              jenis: "KAS_MASUK",
+              sumber: "TAGIHAN",
+              deskripsi: data.deskripsi || `Pembayaran Tagihan Siswa: ${data.muridName}`,
+              totalNilai: totalBayar,
+              status: "POSTED",
+              namaPihakKetiga: data.muridName,
+              unitSekolahId: data.unitSekolahId,
+              pembuatId: data.pembuatId
+            }
+          })
 
       // 1. DEBIT Kas/Bank jika ada uang tunai yang diterima
       if (totalBayar > 0) {
@@ -414,6 +447,16 @@ export async function prosesPembayaranTagihan(data: {
 
       return transaksi
     })
+    break // Transaksi berhasil, keluar dari loop retry
+  } catch (err: any) {
+    attempts++
+    // Jika P2002 (Unique constraint failed) akibat race condition dan masih ada sisa attempts, retry
+    if (err?.code === "P2002" && attempts < maxAttempts) {
+      continue
+    }
+    throw err
+  }
+}
 
     await prisma.logAktivitas.create({
       data: {
@@ -429,7 +472,11 @@ export async function prosesPembayaranTagihan(data: {
     return { success: true, data: result }
   } catch (error: any) {
     console.error("Error prosesPembayaranTagihan:", error)
-    return { success: false, message: error.message || "Gagal memproses pembayaran" }
+    return { 
+      success: false, 
+      message: error.message || "Gagal memproses pembayaran",
+      error: error.message || "Gagal memproses pembayaran"
+    }
   }
 }
 
