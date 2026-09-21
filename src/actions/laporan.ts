@@ -51,33 +51,79 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
   let totalPendapatan = 0
   let totalPengeluaran = 0
 
-  transaksiDetails.forEach(detail => {
-    const klasifikasiKode = detail.akun.subKlasifikasi?.klasifikasi?.kode
+  function isAkunPotongan(akun: { kode?: string | null; nama?: string | null }) {
+    if (!akun) return false
+    const kode = akun.kode || ""
+    const nama = (akun.nama || "").toLowerCase()
+    return kode === "5199" || kode === "5198" || nama.includes("potongan") || nama.includes("beasiswa")
+  }
 
-    // Abaikan akun Kas/Bank atau akun Neraca Riil (Harta 1, Kewajiban 2, Ekuitas 3)
-    // Laporan ini khusus akun Nominal (Pendapatan 4 dan Beban 5)
-    if (klasifikasiKode === "1" || klasifikasiKode === "2" || klasifikasiKode === "3") return
-    if (detail.akun.isKasBank && (!klasifikasiKode || klasifikasiKode === "1")) return
+  // Group details by transaksiId to properly handle net cash inflow for transactions with discounts/scholarships
+  const trxMap = new Map<string, typeof transaksiDetails>()
+  for (const detail of transaksiDetails) {
+    const list = trxMap.get(detail.transaksiId) || []
+    list.push(detail)
+    trxMap.set(detail.transaksiId, list)
+  }
 
-    const akunId = detail.akun.id
+  for (const [, details] of trxMap.entries()) {
+    // 1. Identifikasi detail beban potongan/beasiswa non-kas
+    const potonganDetails = details.filter(d => {
+      const klasifikasiKode = d.akun.subKlasifikasi?.klasifikasi?.kode
+      return (d.posisi === "DEBIT" || klasifikasiKode === "5") && isAkunPotongan(d.akun)
+    })
+    const totalPotonganTrx = potonganDetails.reduce((sum, d) => sum + d.nilai, 0)
 
-    // Kaidah Akuntansi:
-    // - Posisi KREDIT pada akun nominal / Kode 4 = Pendapatan / Pemasukan
-    // - Posisi DEBIT pada akun nominal / Kode 5 = Beban / Pengeluaran (termasuk Beban Beasiswa & Potongan Siswa)
-    if (detail.posisi === "KREDIT" || klasifikasiKode === "4") {
+    // 2. Kumpulkan detail pendapatan (Kredit / Kode 4)
+    const pendapatanDetails = details.filter(d => {
+      const klasifikasiKode = d.akun.subKlasifikasi?.klasifikasi?.kode
+      if (klasifikasiKode === "1" || klasifikasiKode === "2" || klasifikasiKode === "3") return false
+      if (d.akun.isKasBank && (!klasifikasiKode || klasifikasiKode === "1")) return false
+      return d.posisi === "KREDIT" || klasifikasiKode === "4"
+    })
+    const totalBrutoPendapatan = pendapatanDetails.reduce((sum, d) => sum + d.nilai, 0)
+
+    // 3. Alokasikan pendapatan bersih (Net Inflow Kas Riil)
+    let sisaPotongan = totalPotonganTrx
+    pendapatanDetails.forEach((d, idx) => {
+      const akunId = d.akun.id
+      let potonganPorsi = 0
+      if (totalPotonganTrx > 0 && totalBrutoPendapatan > 0) {
+        if (idx === pendapatanDetails.length - 1) {
+          potonganPorsi = sisaPotongan
+        } else {
+          potonganPorsi = Math.round(totalPotonganTrx * (d.nilai / totalBrutoPendapatan))
+          sisaPotongan -= potonganPorsi
+        }
+      }
+      const nilaiNet = Math.max(0, d.nilai - potonganPorsi)
+      if (nilaiNet <= 0) return
+
       if (!pendapatan[akunId]) {
-        pendapatan[akunId] = { kode: detail.akun.kode, nama: detail.akun.nama, total: 0 }
+        pendapatan[akunId] = { kode: d.akun.kode, nama: d.akun.nama, total: 0 }
       }
-      pendapatan[akunId].total += detail.nilai
-      totalPendapatan += detail.nilai
-    } else if (detail.posisi === "DEBIT" || klasifikasiKode === "5") {
+      pendapatan[akunId].total += nilaiNet
+      totalPendapatan += nilaiNet
+    })
+
+    // 4. Kumpulkan pengeluaran kas riil (Debit / Kode 5) - KECUALIKAN akun potongan non-kas!
+    const pengeluaranDetails = details.filter(d => {
+      const klasifikasiKode = d.akun.subKlasifikasi?.klasifikasi?.kode
+      if (klasifikasiKode === "1" || klasifikasiKode === "2" || klasifikasiKode === "3") return false
+      if (d.akun.isKasBank && (!klasifikasiKode || klasifikasiKode === "1")) return false
+      if (isAkunPotongan(d.akun)) return false // Eksklusi potongan/beasiswa dari pengeluaran
+      return d.posisi === "DEBIT" || klasifikasiKode === "5"
+    })
+
+    pengeluaranDetails.forEach(d => {
+      const akunId = d.akun.id
       if (!pengeluaran[akunId]) {
-        pengeluaran[akunId] = { kode: detail.akun.kode, nama: detail.akun.nama, total: 0 }
+        pengeluaran[akunId] = { kode: d.akun.kode, nama: d.akun.nama, total: 0 }
       }
-      pengeluaran[akunId].total += detail.nilai
-      totalPengeluaran += detail.nilai
-    }
-  })
+      pengeluaran[akunId].total += d.nilai
+      totalPengeluaran += d.nilai
+    })
+  }
 
   return {
     pendapatan: Object.values(pendapatan).sort((a, b) => a.kode.localeCompare(b.kode)),
