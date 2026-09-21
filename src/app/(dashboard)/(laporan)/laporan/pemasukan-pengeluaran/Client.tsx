@@ -34,16 +34,40 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
   const [customStart, setCustomStart] = useState("")
   const [customEnd, setCustomEnd] = useState("")
 
+  const formatPeriodDisplay = (start: string, end: string) => {
+    if (!start || !end) return ""
+    const parseDateSafe = (dStr: string) => {
+      const parts = dStr.split('-')
+      if (parts.length === 3) {
+        return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+      }
+      return new Date(dStr)
+    }
+
+    const dStart = parseDateSafe(start)
+    const dEnd = parseDateSafe(end)
+    const opt: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" }
+
+    if (start === end) {
+      return `per ${dStart.toLocaleDateString("id-ID", opt)}`
+    }
+    return `per ${dStart.toLocaleDateString("id-ID", opt)} s/d ${dEnd.toLocaleDateString("id-ID", opt)}`
+  }
+
   const getDates = (range: string) => {
     const today = new Date()
     let start = new Date()
     let end = new Date()
 
-    if (range === "Minggu Ini") {
-      const day = today.getDay()
-      const diff = today.getDate() - day + (day === 0 ? -6 : 1) // adjust when day is sunday
-      start = new Date(today.setDate(diff))
-      end = new Date(today.setDate(start.getDate() + 6))
+    if (range === "Hari Ini") {
+      start = new Date(today)
+      end = new Date(today)
+    } else if (range === "Minggu Ini") {
+      const d = new Date(today)
+      const day = d.getDay()
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1) // adjust when day is sunday
+      start = new Date(d.setDate(diff))
+      end = new Date(d.setDate(start.getDate() + 6))
     } else if (range === "Bulan Ini") {
       start = new Date(today.getFullYear(), today.getMonth(), 1)
       end = new Date(today.getFullYear(), today.getMonth() + 1, 0)
@@ -90,7 +114,10 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
 
   const handleExportExcel = () => {
     if (!data) return
-    const filename = `Laporan_Arus_Kas_${unitName.replace(/\s+/g, '_')}_${startDate}`
+    const isSingleDay = startDate === endDate
+    const filename = isSingleDay
+      ? `Laporan_Arus_Kas_${unitName.replace(/\s+/g, '_')}_${startDate}`
+      : `Laporan_Arus_Kas_${unitName.replace(/\s+/g, '_')}_${startDate}_sd_${endDate}`
     
     // Flatten data for Excel
     const excelData: any[] = []
@@ -132,7 +159,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
 
     const unitObjForKop = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
     exportToExcel(excelData, filename, {
-      title: "Laporan Pemasukan & Pengeluaran",
+      title: `Laporan Pemasukan & Pengeluaran (${formatPeriodDisplay(startDate, endDate)})`,
       unitInfo: unitObjForKop || { name: pengaturan?.namaYayasan || "Yayasan Siraya" }
     })
     toast.success("Excel berhasil diunduh")
@@ -143,7 +170,10 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
     
     const selectedUnit = filterUnitId ? schoolUnits.find(u => u.id === filterUnitId) : undefined
     const instInfo = buildInstitutionInfo(pengaturan, selectedUnit)
-    const filename = `Laporan_Pemasukan_Pengeluaran_${startDate}.pdf`
+    const isSingleDay = startDate === endDate
+    const filename = isSingleDay
+      ? `Laporan_Pemasukan_Pengeluaran_${startDate}.pdf`
+      : `Laporan_Pemasukan_Pengeluaran_${startDate}_sd_${endDate}.pdf`
     
     exportIncomeStatementPdf({
       institutionInfo: instInfo,
@@ -189,6 +219,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
             onChange={(val) => setDateRange(val)}
             className="w-full md:w-auto sm:max-w-none md:max-w-[200px]"
             options={[
+              { label: "Hari ini", value: "Hari Ini" },
               { label: "Minggu ini", value: "Minggu Ini" },
               { label: "Bulan ini", value: "Bulan Ini" },
               { label: "Tahun ini", value: "Tahun Ini" },
@@ -279,7 +310,7 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
         <div className="text-center mb-6 sm:mb-10">
           <div className="text-xs sm:text-sm font-semibold text-text-muted uppercase tracking-widest mb-1">Data {unitName}</div>
           <h2 className="text-lg sm:text-xl font-bold text-blue-600 print:text-black uppercase mb-1">LAPORAN PEMASUKAN DAN PENGELUARAN</h2>
-          <div className="text-xs sm:text-sm font-medium text-rose-500 print:text-gray-800">per {startDate} - {endDate}</div>
+          <div className="text-xs sm:text-sm font-medium text-rose-500 print:text-gray-800">{formatPeriodDisplay(startDate, endDate)}</div>
         </div>
 
         {/* Column Header */}

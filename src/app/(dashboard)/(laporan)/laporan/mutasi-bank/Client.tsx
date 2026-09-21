@@ -48,7 +48,10 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
     let start = new Date()
     let end = new Date()
 
-    if (range === "Minggu Ini") {
+    if (range === "Hari Ini") {
+      start = new Date(now)
+      end = new Date(now)
+    } else if (range === "Minggu Ini") {
       const day = now.getDay()
       const diff = now.getDate() - day + (day === 0 ? -6 : 1)
       start = new Date(now.setDate(diff))
@@ -213,6 +216,7 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
             onChange={(val) => setDateRange(val)}
             className="w-full md:w-auto sm:max-w-none md:max-w-[200px]"
             options={[
+              { label: "Hari ini", value: "Hari Ini" },
               { label: "Minggu ini", value: "Minggu Ini" },
               { label: "Bulan ini", value: "Bulan Ini" },
               { label: "Tahun ini", value: "Tahun Ini" },
@@ -299,7 +303,11 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
 
         <div className="text-center mb-10">
           <h2 className="text-xl font-bold uppercase tracking-widest text-gray-800">MUTASI {selectedAkunName.toUpperCase()}</h2>
-          <p className="text-sm text-gray-500 mt-1">Periode: {new Date(startDate).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})} s/d {new Date(endDate).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+          <p className="text-sm text-gray-500 mt-1">
+            {startDate === endDate
+              ? `Per: ${new Date(startDate + "T00:00:00").toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}`
+              : `Periode: ${new Date(startDate + "T00:00:00").toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})} s/d ${new Date(endDate + "T00:00:00").toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}`}
+          </p>
         </div>
 
         {/* Tabel Mutasi */}

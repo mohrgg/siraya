@@ -468,13 +468,32 @@ export function IncomeStatementHtml({
 }: IncomeStatementPdfData) {
   const formatRp = (val: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(val)
 
+  const formatIndoDate = (dateStr: string) => {
+    if (!dateStr) return ""
+    try {
+      const parts = dateStr.split('-')
+      if (parts.length === 3) {
+        const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+      }
+      return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    } catch {
+      return dateStr
+    }
+  }
+
+  const isSingleDay = startDate === endDate
+  const periodeText = isSingleDay
+    ? `Per: ${formatIndoDate(startDate)}`
+    : `Periode: ${formatIndoDate(startDate)} s/d ${formatIndoDate(endDate)}`
+
   return (
     <div className="font-sans text-slate-900 bg-white">
       <PrintHeaderHtml institutionInfo={institutionInfo} />
 
       <div className="text-center mb-8">
         <h3 className="text-lg font-bold uppercase tracking-wider text-slate-800">LAPORAN PEMASUKAN DAN PENGELUARAN</h3>
-        <p className="text-sm text-slate-500 mt-1">Periode: {startDate} - {endDate}</p>
+        <p className="text-sm text-slate-500 mt-1">{periodeText}</p>
       </div>
 
       <table className="w-full text-sm border-collapse mb-2">

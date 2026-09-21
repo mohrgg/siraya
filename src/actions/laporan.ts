@@ -7,10 +7,8 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
   
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  // set end to end of day
-  end.setHours(23, 59, 59, 999)
+  const start = new Date(`${startDate}T00:00:00.000Z`)
+  const end = new Date(`${endDate}T23:59:59.999Z`)
 
   const user = session.user as any
   const restrictedUnitId = user.unitSekolahId
