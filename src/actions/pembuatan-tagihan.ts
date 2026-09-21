@@ -155,7 +155,11 @@ export async function getMuridWithTagihan(
     }
     if (subKelasId) {
       whereMurid.riwayatKelas = {
-        some: { subKelasId }
+        some: { 
+          subKelasId,
+          ...(tahunAkademikId ? { tahunAkademikId } : {}),
+          isCurrent: true 
+        }
       }
     }
 
@@ -163,6 +167,7 @@ export async function getMuridWithTagihan(
       where: whereMurid,
       include: {
         riwayatKelas: {
+          where: { isCurrent: true },
           orderBy: { createdAt: 'desc' },
           select: {
             subKelas: {
@@ -198,7 +203,13 @@ export async function getMuridWithTagihan(
   const riwayatKelas = await prisma.riwayatKelas.findMany({
     where: {
       subKelasId,
-      tahunAkademikId
+      tahunAkademikId,
+      isCurrent: true,
+      murid: {
+        isActive: true,
+        isDeleted: false,
+        status: "AKTIF"
+      }
     },
     include: {
       subKelas: {
@@ -207,7 +218,7 @@ export async function getMuridWithTagihan(
       murid: {
         include: {
           riwayatKelas: {
-            where: { subKelasId, tahunAkademikId },
+            where: { isCurrent: true, tahunAkademikId },
             select: {
               subKelas: {
                 select: { id: true, name: true }
@@ -509,7 +520,7 @@ export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: st
 
   // Ambil semua muridId di subkelas
   const riwayatKelas = await prisma.riwayatKelas.findMany({
-    where: { subKelasId, tahunAkademikId },
+    where: { subKelasId, tahunAkademikId, isCurrent: true },
     select: { muridId: true }
   })
   
@@ -568,7 +579,7 @@ export async function editTagihanMassal(subKelasId: string, tahunAkademikId: str
 
   // Ambil semua muridId di subkelas
   const riwayatKelas = await prisma.riwayatKelas.findMany({
-    where: { subKelasId, tahunAkademikId },
+    where: { subKelasId, tahunAkademikId, isCurrent: true },
     select: { muridId: true }
   })
   
@@ -657,7 +668,7 @@ export async function updateTagihanKolomMassal(
   }
 
   const riwayatKelas = await prisma.riwayatKelas.findMany({
-    where: { subKelasId, tahunAkademikId },
+    where: { subKelasId, tahunAkademikId, isCurrent: true },
     select: { muridId: true }
   })
   const muridIds = riwayatKelas.map(rk => rk.muridId)
