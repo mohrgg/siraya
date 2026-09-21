@@ -120,6 +120,7 @@ export function generateErrorFingerprint(
  * Deteksi runtime environment (Vercel vs VPS vs Local)
  */
 export function detectEnvironment(): { environment: string; runtimeHost: string } {
+  // 1. Deteksi Vercel (Vercel otomatis menginjeksi process.env.VERCEL = "1")
   if (process.env.VERCEL) {
     const region = process.env.VERCEL_REGION || "vercel-edge"
     return {
@@ -128,20 +129,19 @@ export function detectEnvironment(): { environment: string; runtimeHost: string 
     }
   }
 
-  if (process.env.VPS_HOST || process.env.HOSTING_TYPE === "VPS") {
+  // 2. Deteksi VPS (Node.js server di production luar Vercel, Docker, atau PM2)
+  if (
+    process.env.VPS_HOST ||
+    process.env.HOSTING_TYPE === "VPS" ||
+    process.env.NODE_ENV === "production"
+  ) {
     return {
       environment: "VPS",
-      runtimeHost: process.env.VPS_HOST || process.env.HOSTNAME || "vps-srv"
+      runtimeHost: process.env.VPS_HOST || process.env.HOSTNAME || "vps-server"
     }
   }
 
-  if (process.env.NODE_ENV === "production") {
-    return {
-      environment: "PRODUCTION",
-      runtimeHost: process.env.HOSTNAME || "production-server"
-    }
-  }
-
+  // 3. Fallback Local Development
   return {
     environment: "LOCAL",
     runtimeHost: "localhost"
