@@ -411,10 +411,6 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
               <Server size={13} className="text-slate-500" />
               Vercel & VPS Persistent Storage
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
-              <CheckCircle2 size={13} className="text-emerald-600" />
-              Bebas Batas 12 Jam Vercel
-            </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-text-main tracking-tight">
             Pemantauan & Pelacakan Error Sistem
