@@ -214,16 +214,16 @@ export async function createKasKeluar(data: KasKeluarPayload) {
     const transaksi = await tx.transaksi.create({
       data: {
         noReferensi: data.noReferensi,
-        noFormulir: data.noFormulir,
+        noFormulir: data.noFormulir || null,
         tanggal: data.tanggal,
         jenis: "KAS_KELUAR",
         sumber: data.sumber || "MANUAL",
         deskripsi: data.deskripsi,
         totalNilai: totalNilai,
         status: "POSTED",
-        namaPihakKetiga: data.namaPihakKetiga,
+        namaPihakKetiga: data.namaPihakKetiga || null,
         penerimaId: data.penerimaId || null,
-        divisiId: data.divisiId,
+        divisiId: data.divisiId || null,
         unitSekolahId: unitToSave,
         pembuatId: tenant.user.id,
       }
@@ -363,10 +363,10 @@ export async function updateKasKeluar(id: string, data: KasKeluarPayload) {
         tanggal: data.tanggal,
         deskripsi: data.deskripsi,
         totalNilai: totalNilai,
-        namaPihakKetiga: data.namaPihakKetiga,
+        namaPihakKetiga: data.namaPihakKetiga || null,
         penerimaId: data.penerimaId || null,
-        divisiId: data.divisiId,
-        noFormulir: data.noFormulir,
+        divisiId: data.divisiId || null,
+        noFormulir: data.noFormulir || null,
         isEdited: true,
         editReason: "Diedit melalui halaman Ubah Kas Keluar"
       }

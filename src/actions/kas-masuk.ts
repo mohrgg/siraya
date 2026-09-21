@@ -200,14 +200,14 @@ export async function createKasMasuk(data: KasMasukPayload) {
     const transaksi = await tx.transaksi.create({
       data: {
         noReferensi: data.noReferensi,
-        noFormulir: data.noFormulir,
+        noFormulir: data.noFormulir || null,
         tanggal: data.tanggal,
         jenis: "KAS_MASUK",
         sumber: data.sumber || "MANUAL",
         deskripsi: data.deskripsi,
         totalNilai: totalNilai,
         status: "POSTED",
-        namaPihakKetiga: data.namaPihakKetiga,
+        namaPihakKetiga: data.namaPihakKetiga || null,
         unitSekolahId: unitToSave,
         pembuatId: tenant.user.id,
       }
@@ -355,8 +355,8 @@ export async function updateKasMasuk(id: string, data: KasMasukPayload) {
         tanggal: data.tanggal,
         deskripsi: data.deskripsi,
         totalNilai: totalNilai,
-        namaPihakKetiga: data.namaPihakKetiga,
-        noFormulir: data.noFormulir,
+        namaPihakKetiga: data.namaPihakKetiga || null,
+        noFormulir: data.noFormulir || null,
         isEdited: true,
         editReason: "Diedit melalui halaman Ubah Kas Masuk"
       }
