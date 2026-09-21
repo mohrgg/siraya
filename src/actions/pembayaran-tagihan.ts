@@ -155,9 +155,9 @@ export async function getMuridWithTagihanUnpaid(filters: {
   }
 }
 
-async function getOrCreateAkunPotongan(tx: any, unitSekolahId: string) {
+async function getOrCreateAkunPotongan(client: any = prisma, unitSekolahId: string) {
   // 1. Cari apakah sudah ada akun Beban Potongan/Beasiswa di unit ini
-  const existing = await tx.akunDetail.findFirst({
+  const existing = await client.akunDetail.findFirst({
     where: {
       unitSekolahId,
       isActive: true,
@@ -177,7 +177,7 @@ async function getOrCreateAkunPotongan(tx: any, unitSekolahId: string) {
   if (existing) return existing
 
   // 2. Jika belum ada, pastikan Klasifikasi '5' (BEBAN (BIAYA)) ada
-  let klasifikasiBeban = await tx.klasifikasiAkun.findFirst({
+  let klasifikasiBeban = await client.klasifikasiAkun.findFirst({
     where: {
       kode: "5",
       unitSekolahId
@@ -185,7 +185,7 @@ async function getOrCreateAkunPotongan(tx: any, unitSekolahId: string) {
   })
 
   if (!klasifikasiBeban) {
-    klasifikasiBeban = await tx.klasifikasiAkun.create({
+    klasifikasiBeban = await client.klasifikasiAkun.create({
       data: {
         kode: "5",
         nama: "BEBAN (BIAYA)",
@@ -195,7 +195,7 @@ async function getOrCreateAkunPotongan(tx: any, unitSekolahId: string) {
   }
 
   // 3. Pastikan SubKlasifikasi '51' (Beban Operasional / Beban) ada
-  let subBeban = await tx.subKlasifikasiAkun.findFirst({
+  let subBeban = await client.subKlasifikasiAkun.findFirst({
     where: {
       kode: "51",
       unitSekolahId
@@ -203,7 +203,7 @@ async function getOrCreateAkunPotongan(tx: any, unitSekolahId: string) {
   })
 
   if (!subBeban) {
-    subBeban = await tx.subKlasifikasiAkun.findFirst({
+    subBeban = await client.subKlasifikasiAkun.findFirst({
       where: {
         klasifikasiAkunId: klasifikasiBeban.id,
         unitSekolahId
@@ -212,7 +212,7 @@ async function getOrCreateAkunPotongan(tx: any, unitSekolahId: string) {
   }
 
   if (!subBeban) {
-    subBeban = await tx.subKlasifikasiAkun.create({
+    subBeban = await client.subKlasifikasiAkun.create({
       data: {
         kode: "51",
         nama: "Beban Operasional",
@@ -224,7 +224,7 @@ async function getOrCreateAkunPotongan(tx: any, unitSekolahId: string) {
 
   // 4. Buat AkunDetail '5199'
   let kodeAkun = "5199"
-  const kodeUsed = await tx.akunDetail.findUnique({
+  const kodeUsed = await client.akunDetail.findUnique({
     where: {
       kode_unitSekolahId: {
         kode: kodeAkun,
@@ -236,7 +236,7 @@ async function getOrCreateAkunPotongan(tx: any, unitSekolahId: string) {
     kodeAkun = "5198"
   }
 
-  return await tx.akunDetail.create({
+  return await client.akunDetail.create({
     data: {
       kode: kodeAkun,
       nama: "Beban Beasiswa & Potongan Siswa",
@@ -254,13 +254,13 @@ async function getOrCreateAkunPotongan(tx: any, unitSekolahId: string) {
  * Terisolasi dari penomoran Kas Masuk (KM-) dan Kas Keluar (KK-).
  */
 export async function generateNoReferensiTagihan(
-  tx: any,
+  client: any = prisma,
   tanggal: Date = new Date()
 ): Promise<string> {
   const dateStr = format(tanggal, "yyyyMMdd");
   const prefix = `INV-${dateStr}-`;
 
-  const latestTx = await tx.transaksi.findFirst({
+  const latestTx = await client.transaksi.findFirst({
     where: {
       noReferensi: {
         startsWith: prefix
@@ -285,7 +285,7 @@ export async function generateNoReferensiTagihan(
 
   // Pengecekan unik loop safeguard untuk mencegah collision jika ada data acak masa lalu atau gap
   let candidate = `${prefix}${String(nextSeq).padStart(4, "0")}`;
-  while (await tx.transaksi.findUnique({ where: { noReferensi: candidate }, select: { id: true } })) {
+  while (await client.transaksi.findUnique({ where: { noReferensi: candidate }, select: { id: true } })) {
     nextSeq++;
     candidate = `${prefix}${String(nextSeq).padStart(4, "0")}`;
   }
@@ -322,152 +322,182 @@ export async function prosesPembayaranTagihan(data: {
       throw new Error("Total pembayaran/potongan harus lebih dari 0")
     }
 
-    // Atomic transaction dengan retry guard jika terjadi race condition
-    let result: any;
-    let attempts = 0;
-    const maxAttempts = 3;
+    // ==========================================
+    // TAHAP 1: PRE-FLIGHT (DI LUAR TRANSACTION)
+    // ==========================================
+    // 1. Validasi Akun Kas/Bank di luar transaksi agar tidak menahan connection lock
+    if (totalBayar > 0) {
+      if (!data.akunKasId) {
+        throw new Error("Akun Kas/Bank wajib dipilih untuk pembayaran tunai/transfer.")
+      }
+      const akunKas = await prisma.akunDetail.findUnique({
+        where: { id: data.akunKasId },
+        include: { subKlasifikasi: { include: { klasifikasi: true } } }
+      })
+      if (!akunKas || !akunKas.isKasBank || akunKas.subKlasifikasi?.klasifikasi?.kode !== "1") {
+        throw new Error("Akun Kas/Bank tidak sah atau bukan tergolong aset kas.")
+      }
+    }
+
+    // 2. Persiapkan Akun Beban Potongan/Beasiswa jika ada potongan
+    let akunBebanPotonganId: string | null = null
+    if (totalPotongan > 0) {
+      let targetUnitId: string | undefined = data.unitSekolahId
+      if (!targetUnitId && data.items.length > 0) {
+        const t = await prisma.tagihan.findUnique({
+          where: { id: data.items[0].tagihanId },
+          include: { murid: true }
+        })
+        targetUnitId = t?.murid?.unitSekolahId || undefined
+      }
+
+      if (targetUnitId) {
+        const akunBebanPotongan = await getOrCreateAkunPotongan(prisma, targetUnitId)
+        akunBebanPotonganId = akunBebanPotongan.id
+      }
+    }
+
+    // 3. Tentukan nomor referensi awal sebelum membuka transaksi
+    let initialNoReferensi = data.noReferensi
+    if (!initialNoReferensi || initialNoReferensi.startsWith("[Otomatis")) {
+      initialNoReferensi = await generateNoReferensiTagihan(prisma, data.tanggal || new Date())
+    } else {
+      const isAlreadyUsed = await prisma.transaksi.findUnique({
+        where: { noReferensi: initialNoReferensi },
+        select: { id: true }
+      })
+      if (isAlreadyUsed) {
+        initialNoReferensi = await generateNoReferensiTagihan(prisma, data.tanggal || new Date())
+      }
+    }
+
+    // ==========================================
+    // TAHAP 2: LEAN ATOMIC TRANSACTION
+    // ==========================================
+    let result: any
+    let attempts = 0
+    const maxAttempts = 3
+    let currentNoReferensi = initialNoReferensi
 
     while (attempts < maxAttempts) {
       try {
-        result = await prisma.$transaction(async (tx) => {
-          let finalNoReferensi = data.noReferensi;
-          
-          // Verifikasi nomor referensi:
-          // Jika kosong, atau placeholder otomatis, atau sudah pernah dipakai di DB:
-          // Generate nomor urut resmi server secara atomik
-          const isAlreadyUsed = finalNoReferensi 
-            ? await tx.transaksi.findUnique({ where: { noReferensi: finalNoReferensi }, select: { id: true } })
-            : false;
+        result = await prisma.$transaction(
+          async (tx) => {
+            const transaksi = await tx.transaksi.create({
+              data: {
+                noReferensi: currentNoReferensi,
+                tanggal: data.tanggal,
+                jenis: "KAS_MASUK",
+                sumber: "TAGIHAN",
+                deskripsi: data.deskripsi || `Pembayaran Tagihan Siswa: ${data.muridName}`,
+                totalNilai: totalBayar,
+                status: "POSTED",
+                namaPihakKetiga: data.muridName,
+                unitSekolahId: data.unitSekolahId,
+                pembuatId: data.pembuatId
+              }
+            })
 
-          if (!finalNoReferensi || isAlreadyUsed || finalNoReferensi.startsWith("[Otomatis")) {
-            finalNoReferensi = await generateNoReferensiTagihan(tx, data.tanggal || new Date());
-          }
-
-          const transaksi = await tx.transaksi.create({
-            data: {
-              noReferensi: finalNoReferensi,
-              tanggal: data.tanggal,
-              jenis: "KAS_MASUK",
-              sumber: "TAGIHAN",
-              deskripsi: data.deskripsi || `Pembayaran Tagihan Siswa: ${data.muridName}`,
-              totalNilai: totalBayar,
-              status: "POSTED",
-              namaPihakKetiga: data.muridName,
-              unitSekolahId: data.unitSekolahId,
-              pembuatId: data.pembuatId
+            // 1. DEBIT Kas/Bank jika ada uang tunai/transfer
+            if (totalBayar > 0) {
+              await tx.transaksiDetail.create({
+                data: {
+                  transaksiId: transaksi.id,
+                  akunId: data.akunKasId,
+                  posisi: "DEBIT",
+                  nilai: totalBayar,
+                  deskripsi: `Pembayaran Tagihan Siswa: ${data.muridName}`
+                }
+              })
             }
-          })
 
-      // 1. DEBIT Kas/Bank jika ada uang tunai yang diterima
-      if (totalBayar > 0) {
-        if (!data.akunKasId) {
-          throw new Error("Akun Kas/Bank wajib dipilih untuk pembayaran tunai/transfer.")
-        }
-        const akunKas = await tx.akunDetail.findUnique({
-          where: { id: data.akunKasId },
-          include: { subKlasifikasi: { include: { klasifikasi: true } } }
-        });
-        if (!akunKas || !akunKas.isKasBank || akunKas.subKlasifikasi?.klasifikasi?.kode !== "1") {
-          throw new Error("Akun Kas/Bank tidak sah atau bukan tergolong aset kas.")
-        }
-
-        await tx.transaksiDetail.create({
-          data: {
-            transaksiId: transaksi.id,
-            akunId: data.akunKasId,
-            posisi: "DEBIT",
-            nilai: totalBayar,
-            deskripsi: `Pembayaran Tagihan Siswa: ${data.muridName}`
-          }
-        })
-      }
-
-      // 2. DEBIT Beban Potongan/Beasiswa jika ada potongan yang diberikan
-      if (totalPotongan > 0) {
-        let targetUnitId: string | undefined = data.unitSekolahId || transaksi.unitSekolahId || undefined;
-        if (!targetUnitId && data.items.length > 0) {
-          const t = await tx.tagihan.findUnique({
-            where: { id: data.items[0].tagihanId },
-            include: { murid: true }
-          });
-          targetUnitId = t?.murid?.unitSekolahId || undefined;
-        }
-
-        if (targetUnitId) {
-          const akunBebanPotongan = await getOrCreateAkunPotongan(tx, targetUnitId);
-          await tx.transaksiDetail.create({
-            data: {
-              transaksiId: transaksi.id,
-              akunId: akunBebanPotongan.id,
-              posisi: "DEBIT",
-              nilai: totalPotongan,
-              deskripsi: `Potongan/Beasiswa Tagihan Siswa: ${data.muridName}`
+            // 2. DEBIT Beban Potongan/Beasiswa jika ada potongan
+            if (totalPotongan > 0 && akunBebanPotonganId) {
+              await tx.transaksiDetail.create({
+                data: {
+                  transaksiId: transaksi.id,
+                  akunId: akunBebanPotonganId,
+                  posisi: "DEBIT",
+                  nilai: totalPotongan,
+                  deskripsi: `Potongan/Beasiswa Tagihan Siswa: ${data.muridName}`
+                }
+              })
             }
-          })
+
+            // 3. KREDIT Pendapatan Bruto per item tagihan (Jumlah Bayar + Potongan)
+            for (const item of data.items) {
+              const totalNilaiItem = item.jumlahBayar + (item.potongan || 0)
+              if (totalNilaiItem <= 0) continue
+
+              await tx.transaksiDetail.create({
+                data: {
+                  transaksiId: transaksi.id,
+                  akunId: item.akunPendapatanId,
+                  posisi: "KREDIT",
+                  nilai: totalNilaiItem,
+                  deskripsi: `Pembayaran Tagihan Siswa: ${data.muridName}`
+                }
+              })
+            }
+
+            // 4. Update Tagihan & Buat Rekam Jejak Detail Pembayaran
+            for (const item of data.items) {
+              const currentTagihan = await tx.tagihan.findUnique({
+                where: { id: item.tagihanId }
+              })
+              if (!currentTagihan) {
+                throw new Error(`Tagihan tidak ditemukan: ${item.tagihanId}`)
+              }
+              
+              const totalPengurang = item.jumlahBayar + (item.potongan || 0)
+              if (totalPengurang > currentTagihan.sisaTagihan) {
+                throw new Error("Jumlah pembayaran dan potongan melebihi sisa tagihan")
+              }
+
+              const newSisa = currentTagihan.sisaTagihan - totalPengurang
+              const newStatus = newSisa <= 0 ? "LUNAS" : "SEBAGIAN"
+
+              await tx.tagihan.update({
+                where: { id: item.tagihanId },
+                data: {
+                  sisaTagihan: newSisa,
+                  status: newStatus
+                }
+              })
+
+              await tx.pembayaranTagihanDetail.create({
+                data: {
+                  tagihanId: item.tagihanId,
+                  transaksiId: transaksi.id,
+                  jumlahDibayar: item.jumlahBayar,
+                  potongan: item.potongan || 0,
+                  kategoriPotongan: item.kategoriPotongan === "-" ? null : (item.kategoriPotongan || null)
+                }
+              })
+            }
+
+            return transaksi
+          },
+          {
+            maxWait: 10000,
+            timeout: 25000
+          }
+        )
+        break // Transaksi berhasil, keluar dari loop retry
+      } catch (err: any) {
+        attempts++
+        // Jika P2002 (Unique constraint failed pada noReferensi) akibat race condition, retry dengan nomor baru
+        if (err?.code === "P2002" && attempts < maxAttempts) {
+          currentNoReferensi = await generateNoReferensiTagihan(prisma, data.tanggal || new Date())
+          continue
         }
+        throw err
       }
-
-      // 3. KREDIT Pendapatan Bruto per item tagihan (Jumlah Bayar + Potongan)
-      for (const item of data.items) {
-        const totalNilaiItem = item.jumlahBayar + (item.potongan || 0);
-        if (totalNilaiItem <= 0) continue;
-
-        await tx.transaksiDetail.create({
-          data: {
-            transaksiId: transaksi.id,
-            akunId: item.akunPendapatanId,
-            posisi: "KREDIT",
-            nilai: totalNilaiItem,
-            deskripsi: `Pembayaran Tagihan Siswa: ${data.muridName}`
-          }
-        })
-      }
-
-      for (const item of data.items) {
-        const currentTagihan = await tx.tagihan.findUnique({ where: { id: item.tagihanId } })
-        if (!currentTagihan) throw new Error(`Tagihan tidak ditemukan: ${item.tagihanId}`)
-        
-        const totalPengurang = item.jumlahBayar + (item.potongan || 0)
-
-        if (totalPengurang > currentTagihan.sisaTagihan) {
-          throw new Error("Jumlah pembayaran dan potongan melebihi sisa tagihan")
-        }
-
-        const newSisa = currentTagihan.sisaTagihan - totalPengurang
-        const newStatus = newSisa <= 0 ? "LUNAS" : "SEBAGIAN"
-
-        await tx.tagihan.update({
-          where: { id: item.tagihanId },
-          data: {
-            sisaTagihan: newSisa,
-            status: newStatus
-          }
-        })
-
-        await tx.pembayaranTagihanDetail.create({
-          data: {
-            tagihanId: item.tagihanId,
-            transaksiId: transaksi.id,
-            jumlahDibayar: item.jumlahBayar,
-            potongan: item.potongan || 0,
-            kategoriPotongan: item.kategoriPotongan === "-" ? null : (item.kategoriPotongan || null)
-          }
-        })
-      }
-
-      return transaksi
-    })
-    break // Transaksi berhasil, keluar dari loop retry
-  } catch (err: any) {
-    attempts++
-    // Jika P2002 (Unique constraint failed) akibat race condition dan masih ada sisa attempts, retry
-    if (err?.code === "P2002" && attempts < maxAttempts) {
-      continue
     }
-    throw err
-  }
-}
 
+    // ==========================================
+    // TAHAP 3: POST-TRANSACTION SIDE EFFECTS
+    // ==========================================
     await prisma.logAktivitas.create({
       data: {
         penggunaId: (session.user as any).id,
@@ -482,10 +512,22 @@ export async function prosesPembayaranTagihan(data: {
     return { success: true, data: result }
   } catch (error: any) {
     console.error("Error prosesPembayaranTagihan:", error)
+    let userFriendlyMessage = error.message || "Gagal memproses pembayaran"
+
+    if (
+      error?.message?.includes("Transaction not found") ||
+      error?.message?.includes("timed out") ||
+      error?.code === "P2028"
+    ) {
+      userFriendlyMessage = "Waktu proses transaksi database habis. Silakan periksa koneksi internet Anda dan coba beberapa saat lagi."
+    } else if (error?.code === "P2002") {
+      userFriendlyMessage = "Nomor referensi transaksi bertabrakan. Silakan coba kembali beberapa detik lagi."
+    }
+
     return { 
       success: false, 
-      message: error.message || "Gagal memproses pembayaran",
-      error: error.message || "Gagal memproses pembayaran"
+      message: userFriendlyMessage,
+      error: userFriendlyMessage
     }
   }
 }
