@@ -29,8 +29,8 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
     totalPengeluaran: number
   } | null>(null)
 
-  // Default to current month
-  const [dateRange, setDateRange] = useState("Bulan Ini")
+  // Default to today
+  const [dateRange, setDateRange] = useState("Hari Ini")
   const [customStart, setCustomStart] = useState("")
   const [customEnd, setCustomEnd] = useState("")
 

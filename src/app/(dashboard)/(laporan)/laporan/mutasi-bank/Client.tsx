@@ -38,8 +38,8 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
   // Default to first bank account if available
   const [selectedAkunId, setSelectedAkunId] = useState(akunKasBank[0]?.id || "")
 
-  // Default to current month
-  const [dateRange, setDateRange] = useState("Bulan Ini")
+  // Default to today
+  const [dateRange, setDateRange] = useState("Hari Ini")
   const [customStart, setCustomStart] = useState(new Date().toISOString().split('T')[0])
   const [customEnd, setCustomEnd] = useState(new Date().toISOString().split('T')[0])
 
