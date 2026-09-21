@@ -5,7 +5,7 @@ import { Search, Plus, Printer, Download, RefreshCw, Eye, Edit, Trash2, Calendar
 import { Button } from "@/components/ui/Button"
 import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
-import { format } from "date-fns"
+import { format, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -39,7 +39,7 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
   const isReadOnly = userRole === "KEPALA_SEKOLAH" || userRole === "YAYASAN"
   
   const [filterBy, setFilterBy] = useState<'tanggal_transaksi' | 'tanggal_pembuatan'>('tanggal_transaksi')
-  const [timeRange, setTimeRange] = useState<'hari' | 'minggu' | 'bulan' | 'custom'>('bulan')
+  const [timeRange, setTimeRange] = useState<'hari' | 'minggu' | 'bulan' | 'custom'>('hari')
   
   // Custom date state if needed
   const [startDate, setStartDate] = useState("")
@@ -64,14 +64,33 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
     }
   }
 
-  // Frontend filter for search (since backend filter is already applied, but we can do instant filtering)
   const filteredData = useMemo(() => {
-    return data.filter((item: any) => 
-      item.noReferensi.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.namaPihakKetiga || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.deskripsi || "").toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [data, searchTerm])
+    return data.filter((item: any) => {
+      // 1. Search Filter
+      const matchesSearch = item.noReferensi.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.namaPihakKetiga || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.deskripsi || "").toLowerCase().includes(searchTerm.toLowerCase())
+      
+      if (!matchesSearch) return false
+
+      // 2. Date Filter
+      const dateToFilter = filterBy === 'tanggal_pembuatan' ? new Date(item.createdAt) : new Date(item.tanggal)
+      
+      if (timeRange === 'hari') {
+        return isToday(dateToFilter)
+      } else if (timeRange === 'minggu') {
+        return isThisWeek(dateToFilter, { weekStartsOn: 1 })
+      } else if (timeRange === 'bulan') {
+        return isThisMonth(dateToFilter)
+      } else if (timeRange === 'custom' && startDate && endDate) {
+        const start = startOfDay(new Date(startDate))
+        const end = endOfDay(new Date(endDate))
+        return isWithinInterval(dateToFilter, { start, end })
+      }
+
+      return true
+    })
+  }, [data, searchTerm, filterBy, timeRange, startDate, endDate])
 
   const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
