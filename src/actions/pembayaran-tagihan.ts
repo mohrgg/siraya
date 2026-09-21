@@ -100,7 +100,13 @@ export async function getMuridWithTagihanUnpaid(filters: {
             subKelas: {
               select: {
                 id: true,
-                name: true
+                name: true,
+                tingkat: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                }
               }
             }
           },

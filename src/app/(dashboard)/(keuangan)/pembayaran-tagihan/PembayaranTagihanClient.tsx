@@ -45,6 +45,7 @@ type GridRow = {
   nisn: string
   formNo: string
   subKelasName?: string
+  tingkatName?: string
   tagihanList: TagihanData[]
   // State for checkboxes: Map<tagihanId, boolean>
   selectedItems: Record<string, boolean>
@@ -88,6 +89,10 @@ export default function PembayaranTagihanClient({
   const [isLoading, setIsLoading] = useState(false)
   const [gridData, setGridData] = useState<GridRow[]>([])
   const [akunColumns, setAkunColumns] = useState<{id: string, nama: string, kode: string}[]>([])
+  const [rawMuridList, setRawMuridList] = useState<any[]>([])
+  const [columnOrder, setColumnOrder] = useState<string[]>([])
+  const [selectedLevelFilter, setSelectedLevelFilter] = useState<string>("ALL")
+  const [selectedCheckboxes, setSelectedCheckboxes] = useState<Record<string, Record<string, boolean>>>({})
 
   const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
@@ -137,11 +142,38 @@ export default function PembayaranTagihanClient({
     })
   }, [kelasId, jurusanId, jurusanList.length])
 
+  // Extract available levels for pills filter in search mode
+  const availableLevels = useMemo(() => {
+    if (rawMuridList.length === 0) return []
+    const levelMap = new Map<string, { id: string, name: string, count: number }>()
+    rawMuridList.forEach(m => {
+      const tingkat = m.riwayatKelas?.[0]?.subKelas?.tingkat
+      if (tingkat?.id && tingkat?.name) {
+        const existing = levelMap.get(tingkat.id)
+        if (existing) {
+          existing.count += 1
+        } else {
+          levelMap.set(tingkat.id, { id: tingkat.id, name: tingkat.name, count: 1 })
+        }
+      }
+    })
+    return Array.from(levelMap.values()).sort((a, b) => a.name.localeCompare(b.name))
+  }, [rawMuridList])
+
   // Process data
-  const processData = (muridList: any[], order: string[]) => {
+  const processData = (
+    muridList: any[], 
+    order: string[], 
+    levelFilter: string = "ALL",
+    currentCheckboxes: Record<string, Record<string, boolean>> = selectedCheckboxes
+  ) => {
+    const effectiveMuridList = levelFilter === "ALL"
+      ? muridList
+      : muridList.filter(m => m.riwayatKelas?.[0]?.subKelas?.tingkat?.id === levelFilter)
+
     const columnsMap = new Map<string, {id: string, namaTagihan: string, nama: string, kode: string}>()
     
-    muridList.forEach(murid => {
+    effectiveMuridList.forEach(murid => {
       murid.tagihan?.forEach((t: TagihanData) => {
         const compId = `${t.akunId}::${t.namaTagihan}`
         if (!columnsMap.has(compId)) {
@@ -170,9 +202,11 @@ export default function PembayaranTagihanClient({
     
     setAkunColumns(columns)
 
-    const rows: GridRow[] = muridList.map(murid => {
+    const rows: GridRow[] = effectiveMuridList.map(murid => {
       const hasOldDebts = (murid._count?.tagihan || 0) > 0
-      const subKelasName = murid.riwayatKelas?.[0]?.subKelas?.name || ""
+      const subKelas = murid.riwayatKelas?.[0]?.subKelas
+      const subKelasName = subKelas?.name || ""
+      const tingkatName = subKelas?.tingkat?.name || ""
       
       return {
         id: murid.id,
@@ -180,14 +214,20 @@ export default function PembayaranTagihanClient({
         nisn: murid.nisn || "-",
         formNo: murid.formNo || "-",
         subKelasName,
+        tingkatName,
         tagihanList: murid.tagihan || [],
-        selectedItems: {},
+        selectedItems: currentCheckboxes[murid.id] || {},
         hasOldDebts: hasOldDebts
       }
     })
     
     setGridData(rows)
     setCurrentPage(1)
+  }
+
+  const handleSelectLevelFilter = (lvlId: string) => {
+    setSelectedLevelFilter(lvlId)
+    processData(rawMuridList, columnOrder, lvlId, selectedCheckboxes)
   }
 
   const handleResetFilter = () => {
@@ -199,6 +239,9 @@ export default function PembayaranTagihanClient({
     setSubKelasId("")
     setSubKelasList([])
     setGridData([])
+    setRawMuridList([])
+    setSelectedLevelFilter("ALL")
+    setSelectedCheckboxes({})
     setCurrentPage(1)
   }
 
@@ -224,7 +267,11 @@ export default function PembayaranTagihanClient({
         }),
         getColumnOrder(activeUnitId)
       ])
-      processData(res, order)
+      setRawMuridList(res)
+      setColumnOrder(order)
+      setSelectedLevelFilter("ALL")
+      setSelectedCheckboxes({})
+      processData(res, order, "ALL", {})
       if (res.length === 0) {
         toast("Tidak ada data murid yang ditemukan", { icon: "ℹ️" })
       }
@@ -256,7 +303,11 @@ export default function PembayaranTagihanClient({
         }),
         getColumnOrder(activeUnitId)
       ])
-      processData(res, order)
+      setRawMuridList(res)
+      setColumnOrder(order)
+      setSelectedLevelFilter("ALL")
+      setSelectedCheckboxes({})
+      processData(res, order, "ALL", {})
       if (res.length === 0) {
         toast("Tidak ada data murid di rombel ini", { icon: "ℹ️" })
       }
@@ -293,6 +344,19 @@ export default function PembayaranTagihanClient({
   }, [filteredData.length, pageSize])
 
   const handleCheckboxChange = (muridId: string, tagihanId: string, checked: boolean) => {
+    setSelectedCheckboxes(prev => {
+      const muridSelected = { ...(prev[muridId] || {}) }
+      if (checked) {
+        muridSelected[tagihanId] = true
+      } else {
+        delete muridSelected[tagihanId]
+      }
+      return {
+        ...prev,
+        [muridId]: muridSelected
+      }
+    })
+
     setGridData(prev => prev.map(row => {
       if (row.id === muridId) {
         return {
@@ -326,9 +390,26 @@ export default function PembayaranTagihanClient({
       }
     })
 
+    // Jika belum ada checkbox yang dicentang manual di tabel,
+    // otomatis ambil seluruh tagihan siswa yang belum lunas (sisaTagihan > 0)
     if (itemsToPay.length === 0) {
-      toast.error("Pilih minimal 1 tagihan untuk dibayar")
-      return
+      const unpaidItems = row.tagihanList.filter(t => t.sisaTagihan > 0)
+      if (unpaidItems.length === 0) {
+        toast.error("Tidak ada tagihan yang belum lunas untuk siswa ini")
+        return
+      }
+      unpaidItems.forEach(t => {
+        itemsToPay.push({
+          tagihanId: t.id,
+          namaAkun: t.namaTagihan,
+          kodeAkun: t.akun.kode,
+          akunPendapatanId: t.akun.id,
+          sisaTagihan: t.sisaTagihan,
+          jumlahBayar: t.sisaTagihan,
+          potongan: 0,
+          kategoriPotongan: "-"
+        })
+      })
     }
 
     setModalItems(itemsToPay)
@@ -504,21 +585,59 @@ export default function PembayaranTagihanClient({
             </Toolbar>
 
             {lastSearchedQuery && (
-              <div className="flex items-center justify-between bg-emerald-50/70 border border-emerald-200 text-emerald-800 text-xs px-4 py-2.5 rounded-xl mt-3">
-                <span>
-                  Menampilkan hasil pencarian untuk: <strong className="font-semibold">&quot;{lastSearchedQuery}&quot;</strong> ({gridData.length} siswa ditemukan lintas kelas)
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery("")
-                    setLastSearchedQuery("")
-                    setGridData([])
-                  }}
-                  className="underline hover:text-emerald-950 font-medium"
-                >
-                  Bersihkan Pencarian
-                </button>
+              <div className="bg-emerald-50/70 border border-emerald-200 text-emerald-800 text-xs px-4 py-3 rounded-xl mt-3 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between">
+                  <span>
+                    Menampilkan hasil pencarian untuk: <strong className="font-semibold">&quot;{lastSearchedQuery}&quot;</strong> ({rawMuridList.length} siswa ditemukan{availableLevels.length > 1 ? " lintas jenjang kelas" : ""})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("")
+                      setLastSearchedQuery("")
+                      setGridData([])
+                      setRawMuridList([])
+                      setSelectedLevelFilter("ALL")
+                      setSelectedCheckboxes({})
+                    }}
+                    className="underline hover:text-emerald-950 font-medium"
+                  >
+                    Bersihkan Pencarian
+                  </button>
+                </div>
+
+                {availableLevels.length > 1 && (
+                  <div className="flex items-center gap-2 pt-2 border-t border-emerald-200/70 flex-wrap">
+                    <span className="font-semibold text-emerald-900 text-xs">
+                      Saring Jenjang:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectLevelFilter("ALL")}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                        selectedLevelFilter === "ALL"
+                          ? "bg-emerald-700 text-white shadow-sm"
+                          : "bg-white text-emerald-800 border border-emerald-300 hover:bg-emerald-100"
+                      }`}
+                    >
+                      Semua Jenjang ({rawMuridList.length})
+                    </button>
+                    {availableLevels.map(lvl => (
+                      <button
+                        key={lvl.id}
+                        type="button"
+                        onClick={() => handleSelectLevelFilter(lvl.id)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                          selectedLevelFilter === lvl.id
+                            ? "bg-emerald-700 text-white shadow-sm"
+                            : "bg-white text-emerald-800 border border-emerald-300 hover:bg-emerald-100"
+                        }`}
+                      >
+                        {lvl.name} ({lvl.count})
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -678,6 +797,11 @@ export default function PembayaranTagihanClient({
                             )}
                           </div>
                           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            {row.tingkatName && (
+                              <span className="text-[10px] font-semibold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded border border-blue-200">
+                                {row.tingkatName}
+                              </span>
+                            )}
                             {row.subKelasName && (
                               <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-200">
                                 {row.subKelasName}
@@ -769,21 +893,27 @@ export default function PembayaranTagihanClient({
                         
                         <td className="p-4 text-right bg-gray-50 group-hover:bg-gray-100">
                           <div className="font-bold text-emerald-600 text-base">
-                            Rp {formatRupiah(totalBerjalan)}
+                            Rp {formatRupiah(totalBerjalan > 0 ? totalBerjalan : totalTagihanSiswa)}
                           </div>
                           <div className="text-[10px] text-text-muted mt-0.5 font-medium">
-                            Total Seluruh: Rp {formatRupiah(totalTagihanSiswa)}
+                            {totalBerjalan > 0 ? (
+                              <span>Dipilih • Total: Rp {formatRupiah(totalTagihanSiswa)}</span>
+                            ) : (
+                              <span>Sisa Tagihan Belum Lunas</span>
+                            )}
                           </div>
                         </td>
                         {!isReadOnly && (
                           <td className="p-4 text-center md:sticky md:right-0 bg-white md:z-10 md:shadow-[-1px_0_0_0_#e2e8f0] group-hover:bg-gray-50">
                             <Button 
                               size="sm"
-                              variant="primary"
-                              disabled={totalBerjalan === 0}
+                              variant={totalBerjalan > 0 ? "primary" : "outline"}
+                              disabled={totalTagihanSiswa === 0}
                               onClick={() => handleBayarClick(row)}
+                              className={totalBerjalan > 0 ? "font-bold" : "border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-semibold"}
+                              title={totalBerjalan > 0 ? `Bayar ${formatRupiah(totalBerjalan)} yang dicentang` : `Bayar tagihan siswa (Total Rp ${formatRupiah(totalTagihanSiswa)})`}
                             >
-                              Bayar
+                              {totalBerjalan > 0 ? "Bayar" : "Bayar Langsung"}
                             </Button>
                           </td>
                         )}
