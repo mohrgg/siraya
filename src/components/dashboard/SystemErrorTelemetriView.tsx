@@ -31,7 +31,13 @@ import {
   FileCode,
   Tag,
   Hash,
-  FlaskConical
+  FlaskConical,
+  Table,
+  Play,
+  Pause,
+  Radio,
+  Smartphone,
+  Laptop
 } from "lucide-react"
 import toast from "react-hot-toast"
 import { format, formatDistanceToNow } from "date-fns"
@@ -131,6 +137,11 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
   const [isExportingPDF, setIsExportingPDF] = useState(false)
   const [isSimulating, setIsSimulating] = useState(false)
 
+  // 7. Live Stream & View Mode states
+  const [isLiveStreaming, setIsLiveStreaming] = useState(true)
+  const [viewMode, setViewMode] = useState<"table" | "terminal">("table")
+  const [newLogIds, setNewLogIds] = useState<Set<string>>(new Set())
+
   // Live Clock Tick
   useEffect(() => {
     setCurrentTime(new Date())
@@ -192,6 +203,72 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
   useEffect(() => {
     fetchLogs()
   }, [fetchLogs])
+
+  // Polling Live Streaming setiap 3 detik (Vercel-like real-time monitor)
+  useEffect(() => {
+    if (!isLiveStreaming) return
+    if (selectedLogIndex !== null) return // Jeda otomatis saat Side Drawer terbuka
+
+    const interval = setInterval(async () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return // Jeda saat tab browser tidak aktif (hemat koneksi)
+      }
+
+      try {
+        const res = await getPaginatedErrorLogs({
+          page: 1,
+          pageSize,
+          status: statusFilter,
+          severity: severityFilter,
+          source: sourceFilter,
+          environment: environmentFilter,
+          search: searchTerm,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined
+        })
+
+        setLogs((prevLogs) => {
+          if (prevLogs.length === 0 && res.logs.length > 0) {
+            return res.logs
+          }
+          const newItems = res.logs.filter(
+            (nl: any) => !prevLogs.some((pl: any) => pl.id === nl.id)
+          )
+
+          if (newItems.length > 0) {
+            const freshIds = new Set<string>(newItems.map((l: any) => String(l.id)))
+            setNewLogIds(freshIds)
+            setTimeout(() => {
+              setNewLogIds(new Set())
+            }, 4000)
+          }
+
+          return res.logs
+        })
+
+        setTotalLogs(res.total)
+        setTotalPages(res.totalPages)
+
+        const latestSummary = await getErrorCockpitSummary()
+        setSummary(latestSummary)
+      } catch (err) {
+        // Silent catch background stream
+      }
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [
+    isLiveStreaming,
+    selectedLogIndex,
+    pageSize,
+    statusFilter,
+    severityFilter,
+    sourceFilter,
+    environmentFilter,
+    searchTerm,
+    startDate,
+    endDate
+  ])
 
   useEffect(() => {
     if (!initialSummary) {
@@ -460,6 +537,33 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
             </div>
           </div>
 
+          {/* Live Streaming Toggle Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsLiveStreaming((prev) => !prev)
+              toast(isLiveStreaming ? "Live stream dijeda" : "Live stream diaktifkan", {
+                icon: isLiveStreaming ? "⏸️" : "🟢"
+              })
+            }}
+            className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-xl border transition-all text-xs sm:text-sm font-bold cursor-pointer ${
+              isLiveStreaming
+                ? "bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs"
+                : "bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200"
+            }`}
+            title={isLiveStreaming ? "Klik untuk menjeda live stream" : "Klik untuk mengaktifkan live stream"}
+          >
+            <span className="relative flex h-2.5 w-2.5">
+              {isLiveStreaming && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              )}
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                isLiveStreaming ? "bg-emerald-500" : "bg-slate-400"
+              }`}></span>
+            </span>
+            <span>{isLiveStreaming ? "LIVE (3s)" : "STREAM DIJEDA"}</span>
+          </button>
+
           {/* Tombol Uji Coba Telemetri */}
           <button
             onClick={handleSimulateError}
@@ -675,6 +779,36 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
           </div>
 
           <ToolbarActions>
+            {/* View Mode Switcher: Tabel vs Terminal Vercel Style */}
+            <div className="flex items-center p-1 bg-bg border border-border rounded-xl">
+              <button
+                type="button"
+                onClick={() => setViewMode("table")}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  viewMode === "table"
+                    ? "bg-surface text-primary shadow-xs border border-border/80"
+                    : "text-text-muted hover:text-text-main"
+                }`}
+                title="Tampilan Tabel Data"
+              >
+                <Table size={13} />
+                <span className="hidden sm:inline">Tabel</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("terminal")}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  viewMode === "terminal"
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "text-text-muted hover:text-text-main"
+                }`}
+                title="Tampilan Konsol Terminal ala Vercel"
+              >
+                <Terminal size={13} />
+                <span className="hidden sm:inline">Console</span>
+              </button>
+            </div>
+
             <ToolbarExportExcel
               onClick={handleExportExcel}
               isExporting={isExportingExcel}
@@ -741,18 +875,128 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
           </div>
         )}
 
-        {/* VIEW A: DESKTOP TABLE VIEW (>=md) */}
-        {!isLoading && logs.length > 0 && (
+        {/* VIEW A: TERMINAL CONSOLE VIEW (VERCEL STYLE) */}
+        {!isLoading && logs.length > 0 && viewMode === "terminal" && (
+          <div className="bg-slate-950 font-mono text-xs overflow-hidden">
+            {/* Terminal Header Bar */}
+            <div className="bg-slate-900/90 px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-3 select-none">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block"></span>
+                  <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
+                  <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
+                </div>
+                <span className="text-slate-400 text-[11px] font-semibold ml-2">
+                  siraya-runtime ~ /var/log/telemetry.stream
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {isLiveStreaming ? (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    LIVE STREAM (3s)
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 text-[10px] font-bold">
+                    STREAM DIJEDA
+                  </span>
+                )}
+                <span className="text-slate-500 text-[11px]">{totalLogs} log</span>
+              </div>
+            </div>
+
+            {/* Terminal Body */}
+            <div className="p-3 sm:p-4 max-h-[600px] overflow-y-auto space-y-1.5 divide-y divide-slate-900/60 font-mono">
+              {logs.map((log, idx) => {
+                const isNew = newLogIds.has(log.id)
+                const isVercel = log.environment === "VERCEL"
+                const isPost = log.method === "POST"
+                const is500 = (log.statusCode || 500) >= 500
+                const ua = log.parsedUa
+
+                return (
+                  <div
+                    key={log.id}
+                    onClick={() => setSelectedLogIndex(idx)}
+                    className={`pt-2.5 pb-2 px-3 rounded-lg hover:bg-slate-900 transition-all cursor-pointer group flex flex-col gap-1.5 ${
+                      isNew ? "bg-emerald-950/40 ring-1 ring-emerald-500/50 animate-pulse" : ""
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 flex-wrap text-[11px]">
+                      {/* Timestamp, Host, Method, Status */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-slate-500">
+                          {format(new Date(log.lastSeenAt), "HH:mm:ss.SSS")}
+                        </span>
+                        {isVercel ? (
+                          <span className="px-1.5 py-0.2 rounded bg-black border border-slate-700 text-white font-bold text-[10px]">
+                            ▲ {log.runtimeHost || "vercel"}
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.2 rounded bg-indigo-950 text-indigo-300 border border-indigo-800 font-bold text-[10px]">
+                            {log.runtimeHost || "vps"}
+                          </span>
+                        )}
+                        <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] ${
+                          isPost ? "bg-blue-950 text-blue-300 border border-blue-800" : "bg-emerald-950 text-emerald-300 border border-emerald-800"
+                        }`}>
+                          {log.method || "GET"}
+                        </span>
+                        <span className={`px-1.5 py-0.2 rounded font-black text-[10px] ${
+                          is500 ? "bg-rose-950 text-rose-300 border border-rose-800" : "bg-amber-950 text-amber-300 border border-amber-800"
+                        }`}>
+                          {log.statusCode || 500}
+                        </span>
+                        <span className="text-slate-200 font-semibold truncate max-w-xs sm:max-w-md">
+                          {log.path || log.url || "/"}
+                        </span>
+                      </div>
+
+                      {/* User & Client Device */}
+                      <div className="flex items-center gap-2 text-[10px] text-slate-400 ml-auto">
+                        <span className="text-amber-300/90 font-medium">
+                          {log.penggunaName ? `${log.penggunaName} (${log.penggunaRole || "USER"})` : "Tamu Publik"}
+                        </span>
+                        <span>•</span>
+                        <span className="text-purple-300/90">
+                          {ua?.summary || "Browser Lain"}
+                        </span>
+                        {log.occurrenceCount > 1 && (
+                          <span className="px-1.5 rounded-full bg-rose-500/20 text-rose-300 font-bold">
+                            {log.occurrenceCount}x
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Error Message & Stack Preview */}
+                    <div className="flex items-center gap-2 pl-2 border-l-2 border-rose-500/40 text-rose-300 text-xs">
+                      <span className="font-bold text-rose-400 shrink-0">{log.name}:</span>
+                      <span className="truncate">{log.message}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* VIEW B: DESKTOP TABLE VIEW (>=md) */}
+        {!isLoading && logs.length > 0 && viewMode === "table" && (
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
                   <th className="py-3 px-4 font-bold">Waktu Terakhir</th>
                   <th className="py-3 px-4 font-bold">Status</th>
-                  <th className="py-3 px-4 font-bold">Tingkat</th>
                   <th className="py-3 px-4 font-bold">Host</th>
-                  <th className="py-3 px-4 font-bold">Pesan Error & Endpoint</th>
-                  <th className="py-3 px-4 font-bold">Pengguna</th>
+                  <th className="py-3 px-4 font-bold">Request Endpoint</th>
+                  <th className="py-3 px-4 font-bold">Pesan Error</th>
+                  <th className="py-3 px-4 font-bold">Pengguna & Perangkat</th>
                   <th className="py-3 px-4 font-bold text-center">Frekuensi</th>
                   <th className="py-3 px-4 font-bold text-right">Aksi</th>
                 </tr>
@@ -762,12 +1006,16 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
                   const statusInfo = STATUS_COLORS[log.status] || STATUS_COLORS.UNRESOLVED
                   const sevInfo = SEVERITY_COLORS[log.severity] || SEVERITY_COLORS.ERROR
                   const isVercel = log.environment === "VERCEL"
+                  const isNew = newLogIds.has(log.id)
+                  const ua = log.parsedUa
 
                   return (
                     <tr
                       key={log.id}
                       onClick={() => setSelectedLogIndex(idx)}
-                      className="hover:bg-slate-50/70 transition-colors cursor-pointer group"
+                      className={`hover:bg-slate-50/70 transition-all cursor-pointer group ${
+                        isNew ? "bg-emerald-50/80 ring-1 ring-emerald-400" : ""
+                      }`}
                     >
                       {/* Waktu */}
                       <td className="py-3 px-4">
@@ -783,13 +1031,6 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border ${statusInfo.bg} ${statusInfo.text} ${statusInfo.border}`}>
                           {statusInfo.label}
-                        </span>
-                      </td>
-
-                      {/* Tingkat / Severity */}
-                      <td className="py-3 px-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold tracking-wider uppercase border ${sevInfo.bg} ${sevInfo.border}`}>
-                          {log.severity}
                         </span>
                       </td>
 
@@ -811,29 +1052,56 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
                         </div>
                       </td>
 
-                      {/* Pesan Error & Path */}
-                      <td className="py-3 px-4 max-w-xs xl:max-w-md">
-                        <div className="font-bold text-text-main truncate" title={log.message}>
-                          {log.name ? `${log.name}: ` : ""}{log.message}
+                      {/* Request Endpoint & Status */}
+                      <td className="py-3 px-4 max-w-xs">
+                        <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase border ${
+                            log.method === "POST" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          }`}>
+                            {log.method || "GET"}
+                          </span>
+                          <span className="font-bold text-slate-800 truncate max-w-[150px]">
+                            {log.path || log.url || "/"}
+                          </span>
                         </div>
-                        <div className="text-[10px] text-text-muted font-mono truncate flex items-center gap-1 mt-0.5">
-                          <span className="font-semibold text-slate-700">{log.method || "POST"}</span>
-                          <span>{log.path || log.url || "-"}</span>
+                        <div className="flex items-center gap-1 text-[10px] text-text-muted mt-0.5">
+                          <span className={`font-bold ${
+                            (log.statusCode || 500) >= 500 ? "text-rose-600" : "text-amber-600"
+                          }`}>
+                            Status {log.statusCode || 500}
+                          </span>
                           {log.digest && (
-                            <span className="text-[9px] px-1 bg-slate-100 rounded text-slate-600">
+                            <span className="text-[9px] px-1 bg-slate-100 rounded text-slate-600 font-mono">
                               #{log.digest.slice(0, 8)}
                             </span>
                           )}
                         </div>
                       </td>
 
-                      {/* Pengguna Terdampak */}
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-text-main truncate max-w-[130px]">
-                          {log.penggunaName || "Publik / Anonim"}
+                      {/* Pesan Error */}
+                      <td className="py-3 px-4 max-w-xs xl:max-w-sm">
+                        <div className="font-bold text-text-main truncate" title={log.message}>
+                          {log.name ? `${log.name}: ` : ""}{log.message}
                         </div>
-                        <div className="text-[10px] text-text-muted truncate max-w-[130px]">
-                          {log.unitSekolahName ? `${log.unitSekolahName} • ` : ""}{log.penggunaRole || "-"}
+                      </td>
+
+                      {/* Pengguna & Perangkat Browser */}
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-text-main truncate max-w-[160px] flex items-center gap-1.5">
+                          <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">
+                            {(log.penggunaName || "P")[0].toUpperCase()}
+                          </span>
+                          <span className="truncate">{log.penggunaName || "Publik / Tamu"}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <span className="text-[10px] font-medium text-text-muted">
+                            {log.penggunaRole ? `${log.penggunaRole}` : (log.ipAddress || "Tamu")}
+                          </span>
+                          <span>•</span>
+                          <span className="inline-flex items-center gap-1 text-[10px] text-slate-600 font-medium">
+                            <Globe size={11} className="text-slate-400" />
+                            {ua?.summary || "Browser Lain"}
+                          </span>
                         </div>
                       </td>
 
@@ -870,28 +1138,34 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
           </div>
         )}
 
-        {/* VIEW B: MOBILE CARD STREAM (<md) (Antislop-Layoutmobile Compliant) */}
-        {!isLoading && logs.length > 0 && (
+        {/* VIEW C: MOBILE CARD STREAM (<md) (Antislop-Layoutmobile Compliant) */}
+        {!isLoading && logs.length > 0 && viewMode === "table" && (
           <div className="md:hidden divide-y divide-border">
             {logs.map((log, idx) => {
               const statusInfo = STATUS_COLORS[log.status] || STATUS_COLORS.UNRESOLVED
               const sevInfo = SEVERITY_COLORS[log.severity] || SEVERITY_COLORS.ERROR
               const isVercel = log.environment === "VERCEL"
+              const isNew = newLogIds.has(log.id)
+              const ua = log.parsedUa
 
               return (
                 <div
                   key={log.id}
                   onClick={() => setSelectedLogIndex(idx)}
-                  className="p-4 flex flex-col gap-2.5 active:bg-slate-50 transition-colors cursor-pointer"
+                  className={`p-4 flex flex-col gap-2.5 active:bg-slate-50 transition-all cursor-pointer ${
+                    isNew ? "bg-emerald-50/80 ring-1 ring-emerald-400" : ""
+                  }`}
                 >
-                  {/* Top Bar: Status, Severity, Time, Occurrences */}
+                  {/* Top Bar: Status, Method, Host, Time */}
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-1.5">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${statusInfo.bg} ${statusInfo.text} ${statusInfo.border}`}>
                         {statusInfo.label}
                       </span>
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase border ${sevInfo.bg} ${sevInfo.border}`}>
-                        {log.severity}
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                        log.method === "POST" ? "bg-blue-50 text-blue-700 border border-blue-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      }`}>
+                        {log.method || "GET"}
                       </span>
                       {isVercel ? (
                         <span className="px-1.5 py-0.5 rounded bg-black text-white text-[9px] font-bold">
@@ -916,33 +1190,24 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
                     </div>
                   </div>
 
-                  {/* Error Message */}
+                  {/* Error Message & Path */}
                   <div>
                     <h4 className="text-xs font-bold text-text-main line-clamp-2 break-words">
                       {log.name ? `${log.name}: ` : ""}{log.message}
                     </h4>
                     <p className="text-[11px] font-mono text-text-muted truncate mt-0.5">
-                      <span className="font-bold text-slate-700 mr-1">{log.method || "POST"}</span>
-                      {log.path || log.url || "-"}
+                      {log.path || log.url || "/"}
                     </p>
                   </div>
 
-                  {/* User Context & Action */}
-                  <div className="flex items-center justify-between pt-2 border-t border-border/60 text-xs">
-                    <div className="truncate max-w-[200px]">
-                      <span className="font-semibold text-text-main">{log.penggunaName || "Publik"}</span>
-                      {log.penggunaRole && (
-                        <span className="text-[10px] text-text-muted ml-1">({log.penggunaRole})</span>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1 text-xs font-bold text-primary min-h-[44px] min-w-[44px] justify-end"
-                    >
-                      <span>Inspeksi</span>
-                      <ChevronRight size={14} />
-                    </button>
+                  {/* User & Device */}
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/60 text-[10px] text-text-muted">
+                    <span className="font-semibold text-text-main truncate max-w-[140px]">
+                      {log.penggunaName || "Publik / Tamu"} ({log.penggunaRole || "PUBLIC"})
+                    </span>
+                    <span className="truncate text-slate-600 font-medium">
+                      {ua?.summary || "Browser Lain"}
+                    </span>
                   </div>
                 </div>
               )
@@ -1116,14 +1381,41 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
                     </span>
                   </div>
                 </div>
-                {activeLog.userAgent && (
-                  <div className="mt-3 p-2.5 rounded-lg bg-bg border border-border">
-                    <span className="text-[10px] text-text-muted block mb-0.5">User Agent:</span>
-                    <span className="text-[10px] text-slate-600 font-mono break-all leading-tight">
-                      {activeLog.userAgent}
+                {/* Rincian Klien, Browser & Perangkat */}
+                <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-2">
+                  <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider block">
+                    Browser & Sistem Operasi Pengguna:
+                  </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 shadow-2xs">
+                      <Globe size={13} className="text-primary" />
+                      {activeLog.parsedUa?.browser || "Browser Lain"} {activeLog.parsedUa?.browserVersion || ""}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 shadow-2xs">
+                      <Monitor size={13} className="text-slate-500" />
+                      {activeLog.parsedUa?.os || "OS"} {activeLog.parsedUa?.osVersion || ""}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-xs font-bold text-indigo-700 shadow-2xs">
+                      <Cpu size={13} />
+                      {activeLog.parsedUa?.deviceType || "DESKTOP"}
                     </span>
                   </div>
-                )}
+                  {activeLog.userAgent && (
+                    <div className="mt-1 pt-1.5 border-t border-slate-200/80 flex items-start justify-between gap-2">
+                      <span className="text-[10px] text-slate-500 font-mono break-all leading-tight select-all">
+                        {activeLog.userAgent}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyStackTrace(activeLog.userAgent)}
+                        className="shrink-0 text-slate-400 hover:text-slate-700 p-1 rounded hover:bg-slate-200 cursor-pointer"
+                        title="Salin User-Agent"
+                      >
+                        <Copy size={11} />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Detail 3: Konteks Permintaan / HTTP Request */}
