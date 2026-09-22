@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/Button"
-import { Plus, Edit2, Trash2, Layers, Book, BookOpen, Wallet, Receipt, Search, X, PowerOff, Building2 } from "lucide-react"
+import { Plus, Edit2, Trash2, Layers, Book, BookOpen, Wallet, Receipt, Search, X, PowerOff, Building2, Lock } from "lucide-react"
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { DeleteWarningModal } from "@/components/ui/DeleteWarningModal"
@@ -97,6 +97,20 @@ export default function AkunKeuanganClient({
   // Form States
   const [subKlasForm, setSubKlasForm] = useState({ id: "", kode: "", nama: "", klasifikasiAkunId: klasifikasi[0]?.id || "" })
   const [akunForm, setAkunForm] = useState({ id: "", kode: "", nama: "", subKlasifikasiAkunId: subKlasifikasi[0]?.id || "", unitSekolahId: activeUnitId || "", isKasBank: false, isSPP: false, isActive: true })
+
+  // Validasi Klasifikasi Induk Akun (Standar Akuntansi: Kas/Bank hanya untuk Harta/Aset Kode 1)
+  const selectedAkunSubKlas = useMemo(() => {
+    return subKlasifikasi.find(s => s.id === akunForm.subKlasifikasiAkunId)
+  }, [subKlasifikasi, akunForm.subKlasifikasiAkunId])
+
+  const selectedAkunParentKlas = useMemo(() => {
+    if (!selectedAkunSubKlas) return null
+    return klasifikasi.find(k => k.id === selectedAkunSubKlas.klasifikasiAkunId) || selectedAkunSubKlas.klasifikasi || null
+  }, [klasifikasi, selectedAkunSubKlas])
+
+  const isAset = selectedAkunParentKlas?.kode === "1" || selectedAkunSubKlas?.kode.startsWith("1") || false
+  const isBeban = selectedAkunParentKlas?.kode === "5" || selectedAkunSubKlas?.kode.startsWith("5") || false
+  const isSPPDisabled = akunForm.isKasBank || isBeban
 
   // Delete States
   const [deleteSubKlasId, setDeleteSubKlasId] = useState<string | null>(null)
@@ -423,10 +437,28 @@ export default function AkunKeuanganClient({
               value={akunForm.subKlasifikasiAkunId} 
               onChange={e => {
                 const newSubId = e.target.value
+                const targetSub = subKlasifikasi.find(s => s.id === newSubId)
+                const targetParent = klasifikasi.find(k => k.id === targetSub?.klasifikasiAkunId) || targetSub?.klasifikasi
+                const targetIsAset = targetParent?.kode === "1" || targetSub?.kode.startsWith("1") || false
+                const targetIsBeban = targetParent?.kode === "5" || targetSub?.kode.startsWith("5") || false
+
+                // Jika bukan aset, paksa false. Jika aset, cek apakah nama subklasifikasi atau nama akun mengandung kata kas/bank
+                let nextIsKasBank = false
+                if (targetIsAset) {
+                  const subHasKeyword = /(kas|bank)/i.test(targetSub?.nama || "")
+                  const nameHasKeyword = /(kas|bank)/i.test(akunForm.nama || "")
+                  nextIsKasBank = subHasKeyword || nameHasKeyword || akunForm.isKasBank
+                }
+
+                // isSPP hanya relevan untuk pos pendapatan/tagihan, bukan Kas/Bank atau Beban
+                const nextIsSPP = (!targetIsAset && !targetIsBeban && !nextIsKasBank) ? akunForm.isSPP : false
+
                 setAkunForm({ 
                   ...akunForm, 
                   subKlasifikasiAkunId: newSubId, 
-                  kode: akunForm.id ? akunForm.kode : generateAkunKode(newSubId, akunDetail) 
+                  kode: akunForm.id ? akunForm.kode : generateAkunKode(newSubId, akunDetail),
+                  isKasBank: nextIsKasBank,
+                  isSPP: nextIsSPP
                 })
               }} 
               required
@@ -440,7 +472,27 @@ export default function AkunKeuanganClient({
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text-main">Nama Akun</label>
-            <Input placeholder="Contoh: Kas Tunai Yayasan" value={akunForm.nama} onChange={e => setAkunForm({ ...akunForm, nama: e.target.value })} required />
+            <Input 
+              placeholder="Contoh: Kas Tunai Yayasan" 
+              value={akunForm.nama} 
+              onChange={e => {
+                const val = e.target.value
+                let nextIsKasBank = akunForm.isKasBank
+
+                // Auto-centang jika dalam klasifikasi Harta/Aset dan terdeteksi kata kunci kas/bank
+                if (isAset && /(kas|bank)/i.test(val)) {
+                  nextIsKasBank = true
+                }
+
+                setAkunForm({ 
+                  ...akunForm, 
+                  nama: val,
+                  isKasBank: nextIsKasBank,
+                  isSPP: nextIsKasBank ? false : akunForm.isSPP
+                })
+              }} 
+              required 
+            />
           </div>
           
           <div className="flex flex-col gap-1.5 p-4 bg-primary/5 border border-primary/10 rounded-xl mt-2">
@@ -451,24 +503,69 @@ export default function AkunKeuanganClient({
           </div>
 
           <div className="flex flex-col gap-3 mt-2">
-            <label className="flex items-center gap-3 cursor-pointer p-3 border border-border rounded-xl hover:bg-bg transition-colors">
-              <input type="checkbox" checked={akunForm.isKasBank} onChange={e => setAkunForm({ ...akunForm, isKasBank: e.target.checked })} className="w-4 h-4 accent-primary" />
-              <div>
-                <span className="text-sm font-semibold text-text-main block">Akun Kas / Bank (Liquid)</span>
-                <span className="text-xs text-text-muted">Centang jika akun ini bisa menerima atau mengeluarkan uang secara langsung.</span>
+            <label className={`flex items-start gap-3 p-3.5 border rounded-xl transition-all ${!isAset ? "bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed opacity-75" : "border-border hover:bg-bg cursor-pointer"}`}>
+              <input 
+                type="checkbox" 
+                disabled={!isAset} 
+                checked={akunForm.isKasBank} 
+                onChange={e => {
+                  const checked = e.target.checked
+                  setAkunForm({ 
+                    ...akunForm, 
+                    isKasBank: checked,
+                    isSPP: checked ? false : akunForm.isSPP
+                  })
+                }} 
+                className="mt-0.5 w-4 h-4 accent-primary disabled:cursor-not-allowed" 
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-semibold ${!isAset ? "text-gray-500" : "text-text-main"}`}>Akun Kas / Bank (Liquid)</span>
+                  {!isAset ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+                      <Lock size={11} /> Terkunci (Bukan Aset)
+                    </span>
+                  ) : akunForm.isKasBank ? (
+                    <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">LIQUID</span>
+                  ) : null}
+                </div>
+                <span className="text-xs text-text-muted block mt-0.5">
+                  {!isAset 
+                    ? "Terkunci: Berdasarkan standar akuntansi, akun Kas/Bank hanya diperbolehkan untuk kelompok Harta / Aset (Kode 1)." 
+                    : "Centang jika akun ini menampung kas riil / saldo bank yang dapat menerima atau mengeluarkan uang secara langsung."}
+                </span>
               </div>
             </label>
             
-            <label className="flex items-center gap-3 cursor-pointer p-3 border border-border rounded-xl hover:bg-bg transition-colors">
-              <input type="checkbox" checked={akunForm.isSPP || false} onChange={e => setAkunForm({ ...akunForm, isSPP: e.target.checked })} className="w-4 h-4 accent-primary" />
-              <div>
-                <span className="text-sm font-semibold text-text-main block">Kategori Tagihan Bulanan (SPP)</span>
-                <span className="text-xs text-text-muted">Centang jika tagihan akun ini rutin per bulan dan akan dikelompokkan secara matriks.</span>
+            <label className={`flex items-start gap-3 p-3.5 border rounded-xl transition-all ${isSPPDisabled ? "bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed opacity-75" : "border-border hover:bg-bg cursor-pointer"}`}>
+              <input 
+                type="checkbox" 
+                disabled={isSPPDisabled} 
+                checked={akunForm.isSPP || false} 
+                onChange={e => setAkunForm({ ...akunForm, isSPP: e.target.checked })} 
+                className="mt-0.5 w-4 h-4 accent-primary disabled:cursor-not-allowed" 
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-semibold ${isSPPDisabled ? "text-gray-500" : "text-text-main"}`}>Kategori Tagihan Bulanan (SPP)</span>
+                  {isSPPDisabled && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200 px-2 py-0.5 rounded-full">
+                      <Lock size={11} /> Terkunci
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-text-muted block mt-0.5">
+                  {akunForm.isKasBank 
+                    ? "Tidak dapat diaktifkan untuk akun Kas/Bank (hanya untuk pos tagihan/pendapatan siswa)." 
+                    : isBeban 
+                    ? "Tidak dapat diaktifkan untuk akun Beban/Biaya." 
+                    : "Centang jika tagihan akun ini rutin per bulan dan akan dikelompokkan secara matriks."}
+                </span>
               </div>
             </label>
             
             {akunForm.id && (
-              <label className="flex items-center gap-3 cursor-pointer p-3 border border-border rounded-xl hover:bg-bg transition-colors">
+              <label className="flex items-center gap-3 cursor-pointer p-3.5 border border-border rounded-xl hover:bg-bg transition-colors">
                 <input type="checkbox" checked={akunForm.isActive} onChange={e => setAkunForm({ ...akunForm, isActive: e.target.checked })} className="w-4 h-4 accent-albas-green" />
                 <span className="text-sm font-semibold text-text-main">Akun Aktif</span>
               </label>
@@ -607,7 +704,21 @@ export default function AkunKeuanganClient({
                   {activeTab === 'AKUN' && (
                     <ToolbarAddButton onClick={() => {
                       const defaultSubId = subKlasifikasi[0]?.id || ""
-                      setAkunForm({ id: "", kode: generateAkunKode(defaultSubId, akunDetail), nama: "", subKlasifikasiAkunId: defaultSubId, unitSekolahId: activeUnitId || "", isKasBank: false, isSPP: false, isActive: true })
+                      const defaultSub = subKlasifikasi[0]
+                      const defaultParent = klasifikasi.find(k => k.id === defaultSub?.klasifikasiAkunId) || defaultSub?.klasifikasi
+                      const defaultIsAset = defaultParent?.kode === "1" || defaultSub?.kode.startsWith("1") || false
+                      const defaultIsKasBank = defaultIsAset && /(kas|bank)/i.test(defaultSub?.nama || "")
+
+                      setAkunForm({ 
+                        id: "", 
+                        kode: generateAkunKode(defaultSubId, akunDetail), 
+                        nama: "", 
+                        subKlasifikasiAkunId: defaultSubId, 
+                        unitSekolahId: activeUnitId || "", 
+                        isKasBank: defaultIsKasBank, 
+                        isSPP: false, 
+                        isActive: true 
+                      })
                       setIsAkunDrawerOpen(true)
                     }}>
                       Tambah Akun
