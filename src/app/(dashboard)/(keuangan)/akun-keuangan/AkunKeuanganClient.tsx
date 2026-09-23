@@ -3,7 +3,11 @@
 import { useState, useMemo } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/Button"
+<<<<<<< HEAD
 import { Plus, Edit2, Trash2, Layers, Book, BookOpen, Wallet, Receipt, Search, X, PowerOff, Building2, Lock, ShieldAlert } from "lucide-react"
+=======
+import { Plus, Edit2, Trash2, Layers, Book, BookOpen, Wallet, Receipt, Search, X, PowerOff, Building2, Lock } from "lucide-react"
+>>>>>>> feature/akun-blocking-checklist
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { DeleteWarningModal } from "@/components/ui/DeleteWarningModal"
@@ -112,6 +116,7 @@ export default function AkunKeuanganClient({
   const isBeban = selectedAkunParentKlas?.kode === "5" || selectedAkunSubKlas?.kode.startsWith("5") || false
   const isSPPDisabled = akunForm.isKasBank || isBeban
 
+<<<<<<< HEAD
   // Validasi real-time keunikan kode akun di unit yang sedang aktif
   const isKodeDuplicate = useMemo(() => {
     if (!akunForm.kode) return false
@@ -119,6 +124,8 @@ export default function AkunKeuanganClient({
     return akunDetail.some(a => a.kode.trim().toLowerCase() === cleanKode && a.id !== akunForm.id)
   }, [akunDetail, akunForm.kode, akunForm.id])
 
+=======
+>>>>>>> feature/akun-blocking-checklist
   // Delete States
   const [deleteSubKlasId, setDeleteSubKlasId] = useState<string | null>(null)
   const [deleteAkunId, setDeleteAkunId] = useState<string | null>(null)
