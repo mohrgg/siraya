@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import { 
   Database, Server, HardDrive, Zap, Activity, RefreshCw, 
-  Clock, ShieldCheck, CheckCircle2, AlertTriangle, Layers, Info
+  Clock, ShieldCheck, CheckCircle2, Layers, Search, X, 
+  Check, FileText, Cpu, ArrowUpRight
 } from "lucide-react"
-import { Button } from "@/components/ui/Button"
+import { format } from "date-fns"
+import { id as idLocale } from "date-fns/locale"
 import toast from "react-hot-toast"
 import { 
   getDatabaseMetricsSummary, 
@@ -17,7 +19,22 @@ export default function DatabaseMonitoringView() {
   const [data, setData] = useState<DatabaseMetricsSummary | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+
+  // Live Real-Time Clock (Ticks every 1 second, matching Audit and Error tabs)
+  const [currentTime, setCurrentTime] = useState<Date | null>(null)
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null)
+
+  useEffect(() => {
+    setCurrentTime(new Date())
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const formattedLiveTime = currentTime ? format(currentTime, "HH:mm:ss") : "--:--:--"
+  const formattedLiveDate = currentTime
+    ? format(currentTime, "EEEE, dd MMM yyyy", { locale: idLocale })
+    : ""
 
   const fetchData = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) setIsRefreshing(true)
@@ -44,166 +61,327 @@ export default function DatabaseMonitoringView() {
 
   const formatNumber = (num: number) => new Intl.NumberFormat("id-ID").format(num || 0)
 
-  // Hitung persentase kapasitas tabel terbesar untuk bar visual
+  // Filter tabel berdasarkan search term
+  const filteredTables = useMemo(() => {
+    if (!data?.topTables) return []
+    if (!searchTerm.trim()) return data.topTables
+    const q = searchTerm.toLowerCase()
+    return data.topTables.filter(t => t.tableName.toLowerCase().includes(q))
+  }, [data?.topTables, searchTerm])
+
+  // Kapasitas terbesar untuk visual bar
   const maxTableBytes = data?.topTables?.[0]?.totalBytes || 1
 
   return (
-    <div className="space-y-6">
-      {/* Header Toolbar & Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shadow-xs">
-            <Database size={20} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">Kesehatan & Telemetri Database</h2>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100/80 text-emerald-800 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {data?.status === "ONLINE" ? "Live Connected" : "Checking"}
+    <div className="flex flex-col gap-6 sm:gap-8 w-full min-w-0 animate-in fade-in duration-200">
+      {/* ======================================================== */}
+      {/* 1. HEADER COCKPIT & SYSTEM STATUS BANNER                 */}
+      {/* ======================================================== */}
+      {/* 1A. DESKTOP HEADER (>=md) */}
+      <div className="hidden md:flex bg-surface rounded-2xl border border-border p-5 lg:p-6 shadow-xs flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <Database size={14} className="text-emerald-700" />
+              Live Database Telemetry
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Provider: <span className="font-medium text-slate-700">{data?.provider || "Supabase PostgreSQL"}</span>
-              {data?.host && <span className="ml-2 font-mono text-[11px] text-slate-400">({data.host})</span>}
-            </p>
+              Host: {data?.host || "Supabase Pooler"}
+            </span>
           </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight">
+            Pemantauan & Kesehatan Database
+          </h1>
+          <p className="text-xs sm:text-sm text-text-muted mt-1 leading-relaxed">
+            Telemetri performa engine PostgreSQL Supabase, kapasitas penyimpanan tabel, efisiensi buffer cache, dan status koneksi pool aktif.
+          </p>
         </div>
 
-        <div className="flex items-center gap-3 self-end sm:self-center">
-          {lastRefreshedAt && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-              <Clock size={13} className="text-slate-400" />
-              <span>Diperbarui: {lastRefreshedAt.toLocaleTimeString("id-ID")}</span>
+        <div className="flex items-center gap-3 shrink-0 self-start md:self-center flex-wrap">
+          {/* Live Clock Widget */}
+          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-900 text-white border border-slate-800 shadow-2xs min-h-[44px]">
+            <div className="relative flex h-2.5 w-2.5 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </div>
-          )}
-          <Button
-            size="sm"
+            <div className="flex flex-col text-left">
+              <div className="flex items-center gap-1.5 font-mono text-xs font-bold tracking-wider text-emerald-400">
+                <Clock size={12} className="text-slate-400" />
+                <span>{formattedLiveTime}</span>
+                <span className="text-[10px] text-slate-400 font-semibold">WIB</span>
+              </div>
+              {formattedLiveDate ? (
+                <span className="text-[10px] text-slate-300 font-medium leading-none mt-0.5">
+                  {formattedLiveDate}
+                </span>
+              ) : (
+                <span className="text-[10px] text-slate-400 font-medium leading-none mt-0.5">
+                  Zona: UTC+7
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Tombol Segarkan */}
+          <button
             onClick={() => fetchData(true)}
             disabled={isRefreshing || isLoading}
-            className="opacity-100 border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-xs"
+            className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 bg-surface hover:bg-slate-50 active:bg-slate-100 text-text-main rounded-xl border border-border transition-colors shadow-2xs text-xs sm:text-sm font-semibold disabled:opacity-50 cursor-pointer"
+            title="Segarkan Metrik Database"
           >
-            <RefreshCw size={14} className={isRefreshing ? "animate-spin text-primary" : "text-slate-500"} />
-            <span>{isRefreshing ? "Menyegarkan..." : "Segarkan Metrik"}</span>
-          </Button>
+            <RefreshCw size={15} className={isRefreshing ? "animate-spin text-primary" : "text-text-muted"} />
+            <span>{isRefreshing ? "Menyegarkan..." : "Segarkan"}</span>
+          </button>
         </div>
       </div>
 
-      {/* Hero Metric KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Total Storage DB */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs relative overflow-hidden group hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Ukuran Storage DB</span>
-            <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center border border-sky-100">
-              <HardDrive size={16} />
-            </div>
+      {/* 1B. MOBILE HEADER (<md) */}
+      <div className="flex md:hidden bg-surface rounded-2xl border border-border p-4 shadow-xs flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+            <Database size={12} className="text-emerald-700" />
+            Live Database
+          </span>
+
+          <div className="flex items-center gap-1.5 font-mono text-xs font-bold bg-slate-900 text-emerald-400 px-2.5 py-1 rounded-lg border border-slate-800">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>{formattedLiveTime} WIB</span>
           </div>
-          {isLoading ? (
-            <div className="h-8 w-24 bg-slate-100 rounded-md animate-pulse mb-1" />
-          ) : (
-            <div className="text-2xl font-black text-slate-900 tracking-tight">
-              {data?.totalDatabaseSize || "0 MB"}
-            </div>
-          )}
-          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-            <CheckCircle2 size={12} className="text-emerald-500" />
-            <span>Kapasitas Postgres Supabase</span>
+        </div>
+
+        <div>
+          <h1 className="text-xl font-extrabold text-text-main tracking-tight leading-tight">
+            Pemantauan Database
+          </h1>
+          <p className="text-xs text-text-muted mt-1 leading-relaxed">
+            Status PostgreSQL Supabase dan kapasitas penyimpanan tabel.
           </p>
         </div>
 
-        {/* Card 2: Cache Hit Ratio */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs relative overflow-hidden group hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Cache Hit Ratio</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
-              <Zap size={16} />
-            </div>
-          </div>
-          {isLoading ? (
-            <div className="h-8 w-20 bg-slate-100 rounded-md animate-pulse mb-1" />
-          ) : (
-            <div className="text-2xl font-black text-slate-900 tracking-tight">
-              {data?.cacheHitRatio ?? 100}%
-            </div>
-          )}
-          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-            <ShieldCheck size={12} className="text-emerald-500" />
-            <span>Efisiensi buffer memori tinggi</span>
-          </p>
-        </div>
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
+          <span className="text-[11px] text-text-muted font-medium flex items-center gap-1">
+            <Server size={12} className="text-slate-400" />
+            {data?.provider || "Supabase"}
+          </span>
 
-        {/* Card 3: Connection Pool */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs relative overflow-hidden group hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Koneksi Pool</span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center border border-indigo-100">
-              <Server size={16} />
-            </div>
-          </div>
-          {isLoading ? (
-            <div className="h-8 w-28 bg-slate-100 rounded-md animate-pulse mb-1" />
-          ) : (
-            <div className="text-2xl font-black text-slate-900 tracking-tight">
-              {data?.connections.total ?? 0}{" "}
-              <span className="text-xs font-medium text-slate-500">total terbuka</span>
-            </div>
-          )}
-          <p className="text-xs text-slate-500 mt-1">
-            <span className="font-semibold text-emerald-600">{data?.connections.active ?? 0} aktif</span>
-            {" · "}
-            <span className="text-slate-500">{data?.connections.idle ?? 0} idle pool</span>
-          </p>
-        </div>
-
-        {/* Card 4: Response Latency */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs relative overflow-hidden group hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Latency Ping</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-100">
-              <Activity size={16} />
-            </div>
-          </div>
-          {isLoading ? (
-            <div className="h-8 w-20 bg-slate-100 rounded-md animate-pulse mb-1" />
-          ) : (
-            <div className="text-2xl font-black text-slate-900 tracking-tight">
-              {data?.latencyMs ?? 0} <span className="text-sm font-semibold text-slate-500">ms</span>
-            </div>
-          )}
-          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span>Waktu respon round-trip query</span>
-          </p>
+          <button
+            onClick={() => fetchData(true)}
+            disabled={isRefreshing || isLoading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-bg hover:bg-slate-100 text-text-main border border-border text-xs font-bold transition-all min-h-[38px] cursor-pointer"
+          >
+            <RefreshCw size={13} className={isRefreshing ? "animate-spin text-primary" : "text-text-muted"} />
+            <span>Segarkan</span>
+          </button>
         </div>
       </div>
 
-      {/* Main Table: Top 10 Largest Tables */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Layers size={18} className="text-slate-600" />
-            <h3 className="text-sm font-bold text-slate-900 tracking-tight">10 Tabel Terbesar (Storage Breakdown)</h3>
+      {/* ======================================================== */}
+      {/* 2. TOP DATABASE METRIC KPI STRIP                         */}
+      {/* ======================================================== */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between px-0.5">
+          <h2 className="text-sm sm:text-base font-extrabold text-text-main tracking-tight flex items-center gap-2">
+            <Activity size={16} className="text-primary" />
+            Ringkasan Performa & Kapasitas Database
+          </h2>
+          {lastRefreshedAt && (
+            <span className="text-xs text-text-muted font-medium">
+              Update: {lastRefreshedAt.toLocaleTimeString("id-ID")}
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
+          {/* KPI 1: Ukuran Total DB (Dark Theme Slate Card - Standard Hero KPI) */}
+          <div className="col-span-2 sm:col-span-1 bg-[#0f172a] text-white rounded-2xl border border-slate-800 p-3.5 sm:p-4 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                Ukuran Total DB
+              </span>
+              <div className="w-7 h-7 bg-slate-800 text-emerald-400 rounded-lg flex items-center justify-center shrink-0">
+                <HardDrive size={15} />
+              </div>
+            </div>
+            <div>
+              {isLoading ? (
+                <div className="h-8 w-20 bg-slate-800 rounded animate-pulse mb-1" />
+              ) : (
+                <div className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">
+                  {data?.totalDatabaseSize || "0 MB"}
+                </div>
+              )}
+              <p className="text-[11px] text-slate-400 mt-0.5">Kapasitas PostgreSQL disk</p>
+            </div>
           </div>
-          <span className="text-xs font-medium text-slate-500">
-            Diurutkan berdasarkan total disk size di storage database
+
+          {/* KPI 2: Cache Hit Ratio */}
+          <div className="bg-surface rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                Cache Hit Ratio
+              </span>
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                <Zap size={15} />
+              </div>
+            </div>
+            <div>
+              {isLoading ? (
+                <div className="h-8 w-16 bg-slate-100 rounded animate-pulse mb-1" />
+              ) : (
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight">
+                    {data?.cacheHitRatio ?? 100}
+                  </span>
+                  <span className="text-xs font-bold text-emerald-600">%</span>
+                </div>
+              )}
+              <p className="text-[11px] text-emerald-600 font-medium mt-0.5">Efisiensi buffer memori</p>
+            </div>
+          </div>
+
+          {/* KPI 3: Koneksi Pool Terbuka */}
+          <div className="bg-surface rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                Koneksi Pool
+              </span>
+              <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
+                <Server size={15} />
+              </div>
+            </div>
+            <div>
+              {isLoading ? (
+                <div className="h-8 w-20 bg-slate-100 rounded animate-pulse mb-1" />
+              ) : (
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight">
+                    {data?.connections.total ?? 0}
+                  </span>
+                  <span className="text-xs text-text-muted">Pool</span>
+                </div>
+              )}
+              <p className="text-[11px] text-text-muted mt-0.5">
+                <span className="font-semibold text-emerald-600">{data?.connections.active ?? 0} aktif</span> · {data?.connections.idle ?? 0} idle
+              </p>
+            </div>
+          </div>
+
+          {/* KPI 4: Query Latency Ping */}
+          <div className="bg-surface rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                Query Latency
+              </span>
+              <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                <Activity size={15} />
+              </div>
+            </div>
+            <div>
+              {isLoading ? (
+                <div className="h-8 w-16 bg-slate-100 rounded animate-pulse mb-1" />
+              ) : (
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight">
+                    {data?.latencyMs ?? 0}
+                  </span>
+                  <span className="text-xs font-bold text-amber-600">ms</span>
+                </div>
+              )}
+              <p className="text-[11px] text-text-muted mt-0.5">Round-trip database ping</p>
+            </div>
+          </div>
+
+          {/* KPI 5: Provider & Status */}
+          <div className="col-span-2 sm:col-span-1 bg-surface rounded-2xl border border-border p-3.5 sm:p-4 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                Infrastruktur
+              </span>
+              <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center shrink-0">
+                <Cpu size={15} />
+              </div>
+            </div>
+            <div>
+              <div className="text-base sm:text-lg font-extrabold text-text-main tracking-tight truncate">
+                {data?.provider || "Supabase"}
+              </div>
+              <p className="text-[11px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-1">
+                <CheckCircle2 size={12} />
+                <span>Engine Siap</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================================== */}
+      {/* 3. MAIN CARD: TOOLBAR + TABEL 10 TABEL TERBESAR         */}
+      {/* ======================================================== */}
+      <section className="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6 flex flex-col gap-5">
+        {/* Fake Tab Header Wajib (Aturan UI/UX Siraya Unified Layout) */}
+        <div className="flex items-center justify-between border-b border-border pb-0">
+          <div className="flex gap-2">
+            <button className="px-5 py-3 font-bold text-xs sm:text-sm transition-colors border-b-2 border-primary text-primary flex items-center gap-2 cursor-default">
+              <Layers size={16} />
+              <span>10 Tabel Terbesar Database</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-bold">
+                {filteredTables.length} Tabel
+              </span>
+            </button>
+          </div>
+          <span className="text-xs text-text-muted hidden sm:inline">
+            Diurutkan berdasarkan disk storage fisik
           </span>
         </div>
 
+        {/* Toolbar Pencarian */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted/60" size={16} />
+            <input
+              type="text"
+              placeholder="Cari nama tabel (misal: LogAktivitas, Tagihan)..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-10 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm font-medium text-text-main placeholder-text-muted/50"
+            />
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main p-0.5"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <div className="text-xs text-text-muted font-medium self-end sm:self-center">
+            Total Database: <span className="font-bold text-text-main">{data?.totalDatabaseSize || "11 MB"}</span>
+          </div>
+        </div>
+
+        {/* Tabel Data (Aturan UI/UX Siraya 5: Pembungkus tabel hanya overflow-x-auto) */}
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/60 text-slate-500 text-xs uppercase tracking-wider">
+              <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
                 <th className="py-3 px-4 font-semibold w-12 text-center">#</th>
                 <th className="py-3 px-4 font-semibold">Nama Tabel</th>
                 <th className="py-3 px-4 font-semibold text-right">Estimasi Baris</th>
                 <th className="py-3 px-4 font-semibold text-right">Penggunaan Disk</th>
-                <th className="py-3 px-6 font-semibold w-64">Distribusi Ukuran</th>
+                <th className="py-3 px-6 font-semibold w-64">Distribusi Kapasitas</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border/60">
               {isLoading ? (
-                Array.from({ length: 5 }).map((_, idx) => (
+                Array.from({ length: 6 }).map((_, idx) => (
                   <tr key={idx} className="animate-pulse">
                     <td className="py-3.5 px-4 text-center"><div className="h-4 w-4 bg-slate-100 mx-auto rounded" /></td>
                     <td className="py-3.5 px-4"><div className="h-4 w-32 bg-slate-100 rounded" /></td>
@@ -212,31 +390,40 @@ export default function DatabaseMonitoringView() {
                     <td className="py-3.5 px-6"><div className="h-2 w-full bg-slate-100 rounded-full" /></td>
                   </tr>
                 ))
-              ) : !data?.topTables || data.topTables.length === 0 ? (
+              ) : filteredTables.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-400">
-                    <Database size={40} className="mx-auto text-slate-300 mb-3" />
-                    Belum ada data tabel yang terdeteksi...
+                  <td colSpan={5} className="p-8">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <Database size={40} className="text-gray-300 mb-3" />
+                      <p className="text-text-muted font-medium text-sm">Belum ada data...</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
-                data.topTables.map((t, idx) => {
-                  const percent = Math.max(4, Math.round((t.totalBytes / maxTableBytes) * 100))
+                filteredTables.map((t, idx) => {
+                  const percent = Math.max(3, Math.round((t.totalBytes / maxTableBytes) * 100))
                   return (
-                    <tr key={t.tableName} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="py-3 px-4 text-center text-xs font-semibold text-slate-400">
+                    <tr key={t.tableName} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
+                      <td className="py-3.5 px-4 text-center text-xs font-semibold text-text-muted">
                         {idx + 1}
                       </td>
-                      <td className="py-3 px-4 font-mono text-xs font-semibold text-slate-800">
-                        {t.tableName}
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                            <FileText size={13} />
+                          </div>
+                          <span className="font-mono text-xs font-bold text-text-main group-hover:text-primary transition-colors">
+                            {t.tableName}
+                          </span>
+                        </div>
                       </td>
-                      <td className="py-3 px-4 text-right font-medium text-slate-600">
-                        {formatNumber(t.estimatedRows)} <span className="text-[11px] text-slate-400">baris</span>
+                      <td className="py-3.5 px-4 text-right font-medium text-text-muted">
+                        {formatNumber(t.estimatedRows)} <span className="text-[11px] opacity-70">baris</span>
                       </td>
-                      <td className="py-3 px-4 text-right font-bold text-slate-900">
+                      <td className="py-3.5 px-4 text-right font-black text-text-main">
                         {t.totalSize}
                       </td>
-                      <td className="py-3 px-6">
+                      <td className="py-3.5 px-6">
                         <div className="flex items-center gap-3">
                           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                             <div 
@@ -244,7 +431,7 @@ export default function DatabaseMonitoringView() {
                               style={{ width: `${percent}%` }}
                             />
                           </div>
-                          <span className="text-[11px] font-medium text-slate-400 w-9 text-right">
+                          <span className="text-[11px] font-mono font-medium text-text-muted w-9 text-right">
                             {percent}%
                           </span>
                         </div>
@@ -256,18 +443,16 @@ export default function DatabaseMonitoringView() {
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      {/* Zero-Waste Telemetry Note Box */}
-      <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 flex items-start gap-3">
-        <Info size={18} className="text-emerald-700 shrink-0 mt-0.5" />
-        <div className="text-xs text-emerald-900 leading-relaxed">
-          <p className="font-bold mb-0.5">Arsitektur Zero-Waste & Anti-Usage Vercel</p>
-          <p className="text-emerald-800">
-            Tab monitoring ini menggunakan mekanisme <strong>On-Demand Lazy Loading</strong> dan <strong>Manual Refresh</strong>. 
-            Data metrik diambil langsung dari katalog sistem internal PostgreSQL Supabase dengan payload super kecil (~1,5 KB) 
-            dan waktu eksekusi secepat kilat (&lt;30 ms), sehingga <strong>100% aman dan tidak membebani kuota Vercel Function maupun Fast Origin Transfer</strong>.
-          </p>
+      {/* ======================================================== */}
+      {/* 4. SECURITY & USAGE NOTE BOX (Matching Audit Tab Note)   */}
+      {/* ======================================================== */}
+      <div className="p-3.5 sm:p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600 flex items-start gap-2.5 shadow-2xs">
+        <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+        <div className="leading-relaxed text-[11px] sm:text-xs">
+          <strong className="text-slate-900 block mb-0.5">Arsitektur Zero-Waste & Anti-Usage Vercel</strong>
+          Metrik database ini menggunakan pola <em>On-Demand Lazy Loading</em> dan <em>Manual Refresh</em>. Data diambil langsung dari katalog internal PostgreSQL Supabase dengan payload mikro (&plusmn;1,5 KB) dan waktu eksekusi secepat kilat (&lt;30 ms), sehingga 100% aman dan tidak menambah kuota Vercel Function ataupun Fast Origin Transfer.
         </div>
       </div>
     </div>

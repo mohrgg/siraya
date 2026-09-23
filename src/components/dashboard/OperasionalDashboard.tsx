@@ -416,11 +416,11 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
           }`}
         >
           <Database size={16} />
-          <span>Database Supabase</span>
+          <span>Telemetri Database</span>
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
             activeSubTab === "database" ? "bg-emerald-900 text-emerald-100" : "bg-emerald-50 text-emerald-700"
           }`}>
-            Live
+            Supabase
           </span>
         </button>
       </div>
