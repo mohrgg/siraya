@@ -99,6 +99,16 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
 
   // 2. Filters & Search
   const [searchTerm, setSearchTerm] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+
+  // Debounce search 400ms untuk menekan lonjakan serverless invocation
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setCurrentPage(1)
+    }, 400)
+    return () => clearTimeout(handler)
+  }, [searchTerm])
   const [statusFilter, setStatusFilter] = useState("ALL")
   const [severityFilter, setSeverityFilter] = useState("ALL")
   const [sourceFilter, setSourceFilter] = useState("ALL")
@@ -164,7 +174,7 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
         severity: severityFilter,
         source: sourceFilter,
         environment: environmentFilter,
-        search: searchTerm,
+        search: debouncedSearch,
         startDate: startDate || undefined,
         endDate: endDate || undefined
       })
@@ -184,7 +194,7 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
     severityFilter,
     sourceFilter,
     environmentFilter,
-    searchTerm,
+    debouncedSearch,
     startDate,
     endDate
   ])
