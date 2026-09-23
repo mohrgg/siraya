@@ -20,6 +20,7 @@ import {
 } from "@/actions/audit-log"
 import { AUDIT_DOMAINS, AuditCockpitSummary } from "@/lib/constants/audit"
 import SystemErrorTelemetriView from "./SystemErrorTelemetriView"
+import DatabaseMonitoringView from "./DatabaseMonitoringView"
 
 interface OperasionalDashboardProps {
   cockpitSummary?: AuditCockpitSummary
@@ -75,8 +76,8 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
     userName = "Superadmin"
   } = props
 
-  // Sub-Tab Navigation: Jejak Audit vs Telemetri Error
-  const [activeSubTab, setActiveSubTab] = useState<"audit" | "error">("audit")
+  // Sub-Tab Navigation: Jejak Audit vs Telemetri Error vs Database Supabase
+  const [activeSubTab, setActiveSubTab] = useState<"audit" | "error" | "database">("audit")
 
   // State Cockpit Data
   const [cockpit, setCockpit] = useState<AuditCockpitSummary | null>(initialCockpit || null)
@@ -404,9 +405,29 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
             </span>
           )}
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("database")}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[44px] cursor-pointer touch-manipulation ${
+            activeSubTab === "database"
+              ? "bg-emerald-700 text-white shadow-xs"
+              : "text-text-muted hover:text-text-main hover:bg-slate-50"
+          }`}
+        >
+          <Database size={16} />
+          <span>Database Supabase</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+            activeSubTab === "database" ? "bg-emerald-900 text-emerald-100" : "bg-emerald-50 text-emerald-700"
+          }`}>
+            Live
+          </span>
+        </button>
       </div>
 
-      {activeSubTab === "error" ? (
+      {activeSubTab === "database" ? (
+        <DatabaseMonitoringView />
+      ) : activeSubTab === "error" ? (
         <SystemErrorTelemetriView initialSummary={errorCockpitSummary} />
       ) : (
         <>
