@@ -200,7 +200,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
       }
     }
 
-    const timer = setTimeout(() => fetchLogs(), 300)
+    const timer = setTimeout(() => fetchLogs(), 400)
     return () => { isMounted = false; clearTimeout(timer) }
   }, [currentPage, pageSize, startDate, endDate, searchTerm, severity, selectedDomain])
 

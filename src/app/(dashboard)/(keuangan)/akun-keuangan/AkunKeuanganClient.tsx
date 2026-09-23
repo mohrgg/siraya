@@ -118,7 +118,6 @@ export default function AkunKeuanganClient({
     const cleanKode = akunForm.kode.trim().toLowerCase()
     return akunDetail.some(a => a.kode.trim().toLowerCase() === cleanKode && a.id !== akunForm.id)
   }, [akunDetail, akunForm.kode, akunForm.id])
-
   // Delete States
   const [deleteSubKlasId, setDeleteSubKlasId] = useState<string | null>(null)
   const [deleteAkunId, setDeleteAkunId] = useState<string | null>(null)

@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache"
 import prisma from "@/lib/prisma"
 import { normalizeStatusKepegawaian } from "@/lib/constants/kepegawaian"
 
@@ -77,8 +78,8 @@ function generateInteractiveChartData(transactions: any[], todayStart: Date, wee
   return { pendapatanHariIniChart, pendapatanMingguIniChart, pendapatanBulanIniChart, pendapatanPerUnitChart }
 }
 
-// ==================== STANDAR YAYASAN (GLOBAL) ====================
-export async function getYayasanDashboardData(yearId?: string) {
+// ==================== SUPERADMIN YAYASAN (ADMIN / TU YAYASAN) ====================
+async function fetchYayasanDashboardData(yearId?: string) {
   const [totalPegawai, totalUnit, totalRombel, totalSiswa, totalGuru] = await Promise.all([
     prisma.pengguna.count({ where: { isActive: true } }),
     prisma.unitSekolah.count({ where: { isActive: true } }),
@@ -126,24 +127,24 @@ export async function getYayasanDashboardData(yearId?: string) {
     orderBy: { name: 'asc' }
   })
 
-  // Hitung kolektibilitas per unit
-  const tagihanUnitRaw = await prisma.tagihan.findMany({
-    select: {
-      jumlah: true,
-      sisaTagihan: true,
-      murid: { select: { unitSekolahId: true } }
-    }
-  })
+  // Hitung kolektibilitas per unit via SQL Agregasi (Hemat 1,7MB transfer & memori)
+  const tagihanUnitAgg = await prisma.$queryRaw<Array<{ unitSekolahId: string; jumlah: number; terbayar: number }>>`
+    SELECT 
+      m."unitSekolahId",
+      COALESCE(SUM(t.jumlah), 0)::float as jumlah,
+      COALESCE(SUM(t.jumlah - t."sisaTagihan"), 0)::float as terbayar
+    FROM "Tagihan" t
+    JOIN "Murid" m ON t."muridId" = m.id
+    WHERE m."unitSekolahId" IS NOT NULL
+    GROUP BY m."unitSekolahId"
+  `
 
   const kolektibilitasMap = new Map<string, { jumlah: number, terbayar: number }>()
-  tagihanUnitRaw.forEach(t => {
-    const unitId = t.murid?.unitSekolahId
-    if (unitId) {
-      const data = kolektibilitasMap.get(unitId) || { jumlah: 0, terbayar: 0 }
-      data.jumlah += t.jumlah
-      data.terbayar += (t.jumlah - t.sisaTagihan)
-      kolektibilitasMap.set(unitId, data)
-    }
+  tagihanUnitAgg.forEach(row => {
+    kolektibilitasMap.set(row.unitSekolahId, {
+      jumlah: Number(row.jumlah),
+      terbayar: Number(row.terbayar)
+    })
   })
 
   const unitDistribution = unitsRaw.map(u => {
@@ -281,25 +282,25 @@ export async function getYayasanDashboardData(yearId?: string) {
   })
   const arusKasTrend = Array.from(monthsMap.values())
 
-  // 4. Top Unit Tunggakan
-  const tunggakanRaw = await prisma.tagihan.findMany({
-    where: { sisaTagihan: { gt: 0 } },
-    select: { sisaTagihan: true, murid: { select: { unitSekolah: { select: { id: true, name: true } } } } }
-  })
-  
-  const unitTunggakanMap = new Map<string, { id: string, name: string, total: number }>()
-  tunggakanRaw.forEach(t => {
-    const u = t.murid.unitSekolah
-    if (u) {
-      const existing = unitTunggakanMap.get(u.id) || { id: u.id, name: u.name, total: 0 }
-      existing.total += t.sisaTagihan
-      unitTunggakanMap.set(u.id, existing)
-    }
-  })
-  
-  const topUnitTunggakan = Array.from(unitTunggakanMap.values())
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5)
+  // 4. Top Unit Tunggakan via SQL Agregasi (Hemat 1,7MB transfer & sorting in-memory)
+  const topUnitTunggakanRaw = await prisma.$queryRaw<Array<{ id: string; name: string; total: number }>>`
+    SELECT 
+      u.id, 
+      u.name, 
+      COALESCE(SUM(t."sisaTagihan"), 0)::float as total
+    FROM "Tagihan" t
+    JOIN "Murid" m ON t."muridId" = m.id
+    JOIN "UnitSekolah" u ON m."unitSekolahId" = u.id
+    WHERE t."sisaTagihan" > 0
+    GROUP BY u.id, u.name
+    ORDER BY total DESC
+    LIMIT 5
+  `
+  const topUnitTunggakan = topUnitTunggakanRaw.map(r => ({
+    id: r.id,
+    name: r.name,
+    total: Number(r.total)
+  }))
 
   // 5. Perbandingan Pendapatan (Hari, Minggu, Bulan Ini)
   const todayStart = new Date()
@@ -338,11 +339,17 @@ export async function getYayasanDashboardData(yearId?: string) {
   }
 }
 
+export const getYayasanDashboardData = unstable_cache(
+  fetchYayasanDashboardData,
+  ['dashboard-yayasan-data'],
+  { revalidate: 60, tags: ['dashboard-data'] }
+)
+
 // Alias untuk menjaga kompabilitas
 export const getAdminYayasanData = getYayasanDashboardData;
 export const getTuYayasanData = getYayasanDashboardData;
 
-export async function getUnitDashboardData(unitId: string, yearId?: string) {
+async function fetchUnitDashboardData(unitId: string, yearId?: string) {
   const [totalMurid, totalRombel, totalGuru] = await Promise.all([
     prisma.murid.count({ 
       where: { 
@@ -547,6 +554,12 @@ export async function getUnitDashboardData(unitId: string, yearId?: string) {
   }
 }
 
+export const getUnitDashboardData = unstable_cache(
+  fetchUnitDashboardData,
+  ['dashboard-unit-data'],
+  { revalidate: 60, tags: ['dashboard-data'] }
+)
+
 // Alias untuk menjaga kompabilitas
 export const getAdminUnitData = getUnitDashboardData;
 export const getTuUnitData = getUnitDashboardData;
@@ -694,7 +707,7 @@ export async function getAdminOperasionalData() {
 
 
 // ==================== KEPALA SEKOLAH ====================
-export async function getKepsekData(unitId: string, yearId?: string) {
+async function fetchKepsekData(unitId: string, yearId?: string) {
   const [totalMurid, totalRombel, totalGuru] = await Promise.all([
     prisma.murid.count({ 
       where: { 
@@ -862,3 +875,9 @@ export async function getKepsekData(unitId: string, yearId?: string) {
     ...interactiveChartDataK
   }
 }
+
+export const getKepsekData = unstable_cache(
+  fetchKepsekData,
+  ['dashboard-kepsek-data'],
+  { revalidate: 60, tags: ['dashboard-data'] }
+)
