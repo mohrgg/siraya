@@ -4,7 +4,6 @@ import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { detectEnvironment } from "@/lib/error-logger"
-import { parseUserAgent } from "@/lib/user-agent"
 
 // Client database dengan type-safety lengkap
 const db = prisma as any
@@ -217,8 +216,7 @@ export async function getPaginatedErrorLogs(params: GetErrorLogsParams = {}) {
       lastSeenAt: l.lastSeenAt.toISOString(),
       resolvedAt: l.resolvedAt ? l.resolvedAt.toISOString() : null,
       createdAt: l.createdAt.toISOString(),
-      updatedAt: l.updatedAt.toISOString(),
-      parsedUa: parseUserAgent(l.userAgent)
+      updatedAt: l.updatedAt.toISOString()
     })),
     total,
     totalPages: Math.max(1, Math.ceil(total / pageSize)),
@@ -334,66 +332,24 @@ export async function getAllErrorLogsForExport(params: GetErrorLogsParams = {}) 
     take: 1000 // Maksimal 1000 entri untuk keselamatan memori ekspor
   })
 
-  return logs.map((l: any) => {
-    const uaInfo = parseUserAgent(l.userAgent)
-    return {
-      id: l.id,
-      waktuTerakhir: l.lastSeenAt.toLocaleString("id-ID"),
-      kejadian: l.occurrenceCount,
-      status: l.status,
-      tingkat: l.severity,
-      sumber: l.source,
-      lingkungan: l.environment,
-      host: l.runtimeHost || "-",
-      method: l.method || "GET",
-      statusCode: l.statusCode || 500,
-      namaError: l.name,
-      pesanError: l.message,
-      pathUrl: l.path || l.url || "-",
-      namaPengguna: l.penggunaName || "Anonim / Publik",
-      emailPengguna: l.penggunaEmail || "-",
-      rolePengguna: l.penggunaRole || "-",
-      unitSekolah: l.unitSekolahName || "-",
-      browser: uaInfo.browser,
-      sistemOperasi: uaInfo.os,
-      perangkat: uaInfo.summary,
-      ipAddress: l.ipAddress || "-",
-      catatanResolusi: l.resolutionNote || "-"
-    }
-  })
-}
-
-/**
- * Mengambil log telemetri streaming terbaru (Live Stream) berbasis cursor timestamp
- */
-export async function getLiveErrorLogsStream(sinceTimestamp?: string) {
-  const session = await auth()
-  if (session?.user?.role !== "ADMIN") {
-    throw new Error("Akses ditolak.")
-  }
-
-  const whereClause: any = {}
-  if (sinceTimestamp) {
-    const sinceDate = new Date(sinceTimestamp)
-    if (!isNaN(sinceDate.getTime())) {
-      whereClause.lastSeenAt = { gt: sinceDate }
-    }
-  }
-
-  const logs = await db.errorLog.findMany({
-    where: whereClause,
-    orderBy: { lastSeenAt: "desc" },
-    take: 40
-  })
-
   return logs.map((l: any) => ({
-    ...l,
-    firstSeenAt: l.firstSeenAt.toISOString(),
-    lastSeenAt: l.lastSeenAt.toISOString(),
-    resolvedAt: l.resolvedAt ? l.resolvedAt.toISOString() : null,
-    createdAt: l.createdAt.toISOString(),
-    updatedAt: l.updatedAt.toISOString(),
-    parsedUa: parseUserAgent(l.userAgent)
+    id: l.id,
+    waktuTerakhir: l.lastSeenAt.toLocaleString("id-ID"),
+    kejadian: l.occurrenceCount,
+    status: l.status,
+    tingkat: l.severity,
+    sumber: l.source,
+    lingkungan: l.environment,
+    host: l.runtimeHost || "-",
+    namaError: l.name,
+    pesanError: l.message,
+    pathUrl: l.path || l.url || "-",
+    namaPengguna: l.penggunaName || "Anonim / Publik",
+    emailPengguna: l.penggunaEmail || "-",
+    rolePengguna: l.penggunaRole || "-",
+    unitSekolah: l.unitSekolahName || "-",
+    ipAddress: l.ipAddress || "-",
+    catatanResolusi: l.resolutionNote || "-"
   }))
 }
 
