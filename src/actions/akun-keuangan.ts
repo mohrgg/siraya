@@ -215,115 +215,137 @@ export async function getAkunDetail(unitId?: string) {
 }
 
 export async function tambahAkunDetail(data: { kode: string, nama: string, subKlasifikasiAkunId: string, unitSekolahId?: string, isKasBank: boolean, isSPP?: boolean, isActive: boolean }) {
-  const tenant = await getTenantContext()
-  if (tenant.role === "KEPALA_SEKOLAH" || tenant.role === "YAYASAN") throw new Error("Akses ditolak (Read-Only).")
+  try {
+    const tenant = await getTenantContext()
+    if (tenant.role === "KEPALA_SEKOLAH" || tenant.role === "YAYASAN") {
+      return { success: false, error: "Akses ditolak (Read-Only)." }
+    }
 
-  const targetUnitId = data.unitSekolahId || tenant.unitId
-  if (!targetUnitId) throw new Error("Unit sekolah harus dipilih.")
+    const targetUnitId = data.unitSekolahId || tenant.unitId
+    if (!targetUnitId) {
+      return { success: false, error: "Unit sekolah harus dipilih." }
+    }
 
-  const existing = await prisma.akunDetail.findUnique({ 
-    where: { 
-      kode_unitSekolahId: {
-        kode: data.kode,
-        unitSekolahId: targetUnitId
-      }
-    } 
-  })
-  if (existing) throw new Error("Kode akun sudah digunakan di unit ini.")
-
-  // Validasi Akun Kas/Bank HANYA untuk Klasifikasi Harta/Aset (Kode 1)
-  if (data.isKasBank) {
-    const subKlas = await prisma.subKlasifikasiAkun.findUnique({
-      where: { id: data.subKlasifikasiAkunId },
-      include: { klasifikasi: true }
+    const cleanKode = data.kode.trim()
+    const existing = await prisma.akunDetail.findUnique({ 
+      where: { 
+        kode_unitSekolahId: {
+          kode: cleanKode,
+          unitSekolahId: targetUnitId
+        }
+      } 
     })
-    if (subKlas && subKlas.klasifikasi.kode !== "1") {
-      throw new Error(`Akun Kas/Bank hanya diperbolehkan untuk klasifikasi Harta / Aset (Kode 1), bukan untuk ${subKlas.klasifikasi.nama} (Kode ${subKlas.klasifikasi.kode}).`)
+    if (existing) {
+      return { success: false, error: `Kode akun "${cleanKode}" sudah digunakan oleh akun lain di unit ini.` }
     }
+
+    // Validasi Akun Kas/Bank HANYA untuk Klasifikasi Harta/Aset (Kode 1)
+    if (data.isKasBank) {
+      const subKlas = await prisma.subKlasifikasiAkun.findUnique({
+        where: { id: data.subKlasifikasiAkunId },
+        include: { klasifikasi: true }
+      })
+      if (subKlas && subKlas.klasifikasi.kode !== "1") {
+        return { success: false, error: `Akun Kas/Bank hanya diperbolehkan untuk klasifikasi Harta / Aset (Kode 1), bukan untuk ${subKlas.klasifikasi.nama} (Kode ${subKlas.klasifikasi.kode}).` }
+      }
+    }
+
+    const result = await prisma.akunDetail.create({ 
+      data: {
+        kode: cleanKode,
+        nama: data.nama.trim(),
+        subKlasifikasiAkunId: data.subKlasifikasiAkunId,
+        unitSekolahId: targetUnitId,
+        isKasBank: data.isKasBank,
+        isSPP: data.isSPP || false,
+        isActive: data.isActive
+      } 
+    })
+
+    await prisma.logAktivitas.create({
+      data: {
+        penggunaId: tenant.user.id,
+        aksi: "CREATE",
+        modul: "AKUN_KEUANGAN",
+        keterangan: `Menambahkan Akun Detail baru: ${cleanKode} - ${data.nama}`
+      }
+    })
+
+    revalidatePath("/akun-keuangan")
+    return { success: true, data: result }
+  } catch (err: any) {
+    return { success: false, error: err.message || "Gagal menambahkan akun" }
   }
-
-  const result = await prisma.akunDetail.create({ 
-    data: {
-      kode: data.kode,
-      nama: data.nama,
-      subKlasifikasiAkunId: data.subKlasifikasiAkunId,
-      unitSekolahId: targetUnitId,
-      isKasBank: data.isKasBank,
-      isSPP: data.isSPP || false,
-      isActive: data.isActive
-    } 
-  })
-
-  await prisma.logAktivitas.create({
-    data: {
-      penggunaId: tenant.user.id,
-      aksi: "CREATE",
-      modul: "AKUN_KEUANGAN",
-      keterangan: `Menambahkan Akun Detail baru: ${data.kode} - ${data.nama}`
-    }
-  })
-
-  revalidatePath("/akun-keuangan")
-  return result
 }
 
 export async function editAkunDetail(id: string, data: { kode?: string, nama?: string, subKlasifikasiAkunId?: string, unitSekolahId?: string, isKasBank?: boolean, isSPP?: boolean, isActive?: boolean }) {
-  const tenant = await getTenantContext()
-  if (tenant.role === "KEPALA_SEKOLAH" || tenant.role === "YAYASAN") throw new Error("Akses ditolak (Read-Only).")
+  try {
+    const tenant = await getTenantContext()
+    if (tenant.role === "KEPALA_SEKOLAH" || tenant.role === "YAYASAN") {
+      return { success: false, error: "Akses ditolak (Read-Only)." }
+    }
 
-  const current = await prisma.akunDetail.findUnique({ where: { id } })
-  if (!current) throw new Error("Akun tidak ditemukan")
+    const current = await prisma.akunDetail.findUnique({ where: { id } })
+    if (!current) {
+      return { success: false, error: "Akun tidak ditemukan" }
+    }
 
-  if (tenant.role === "TATA_USAHA" && current.unitSekolahId !== tenant.unitId) {
-    throw new Error("Anda hanya dapat mengedit akun milik unit Anda sendiri.")
-  }
+    if (tenant.role === "TATA_USAHA" && current.unitSekolahId !== tenant.unitId) {
+      return { success: false, error: "Anda hanya dapat mengedit akun milik unit Anda sendiri." }
+    }
 
-  const targetUnitId = current.unitSekolahId
+    const targetUnitId = current.unitSekolahId
 
-  if (data.kode) {
-    const existing = await prisma.akunDetail.findFirst({ 
-      where: { kode: data.kode, unitSekolahId: targetUnitId, id: { not: id } } 
+    const cleanKode = data.kode?.trim()
+    if (cleanKode) {
+      const existing = await prisma.akunDetail.findFirst({ 
+        where: { kode: cleanKode, unitSekolahId: targetUnitId, id: { not: id } } 
+      })
+      if (existing) {
+        return { success: false, error: `Kode akun "${cleanKode}" sudah digunakan oleh akun lain di unit ini.` }
+      }
+    }
+
+    // Validasi Akun Kas/Bank HANYA untuk Klasifikasi Harta/Aset (Kode 1)
+    const targetIsKasBank = data.isKasBank !== undefined ? data.isKasBank : current.isKasBank
+    const targetSubKlasId = data.subKlasifikasiAkunId || current.subKlasifikasiAkunId
+
+    if (targetIsKasBank) {
+      const subKlas = await prisma.subKlasifikasiAkun.findUnique({
+        where: { id: targetSubKlasId },
+        include: { klasifikasi: true }
+      })
+      if (subKlas && subKlas.klasifikasi.kode !== "1") {
+        return { success: false, error: `Akun Kas/Bank hanya diperbolehkan untuk klasifikasi Harta / Aset (Kode 1), bukan untuk ${subKlas.klasifikasi.nama} (Kode ${subKlas.klasifikasi.kode}).` }
+      }
+    }
+
+    const result = await prisma.akunDetail.update({
+      where: { id },
+      data: {
+        kode: cleanKode,
+        nama: data.nama?.trim(),
+        subKlasifikasiAkunId: data.subKlasifikasiAkunId,
+        isKasBank: data.isKasBank,
+        isSPP: data.isSPP !== undefined ? data.isSPP : current.isSPP,
+        isActive: data.isActive
+      }
     })
-    if (existing) throw new Error("Kode akun sudah digunakan di unit ini.")
-  }
 
-  // Validasi Akun Kas/Bank HANYA untuk Klasifikasi Harta/Aset (Kode 1)
-  const targetIsKasBank = data.isKasBank !== undefined ? data.isKasBank : current.isKasBank
-  const targetSubKlasId = data.subKlasifikasiAkunId || current.subKlasifikasiAkunId
-
-  if (targetIsKasBank) {
-    const subKlas = await prisma.subKlasifikasiAkun.findUnique({
-      where: { id: targetSubKlasId },
-      include: { klasifikasi: true }
+    await prisma.logAktivitas.create({
+      data: {
+        penggunaId: tenant.user.id,
+        aksi: "UPDATE",
+        modul: "AKUN_KEUANGAN",
+        keterangan: `Memperbarui Akun Detail: ${result.kode} - ${result.nama}`
+      }
     })
-    if (subKlas && subKlas.klasifikasi.kode !== "1") {
-      throw new Error(`Akun Kas/Bank hanya diperbolehkan untuk klasifikasi Harta / Aset (Kode 1), bukan untuk ${subKlas.klasifikasi.nama} (Kode ${subKlas.klasifikasi.kode}).`)
-    }
+
+    revalidatePath("/akun-keuangan")
+    return { success: true, data: result }
+  } catch (err: any) {
+    return { success: false, error: err.message || "Gagal memperbarui akun" }
   }
-
-  const result = await prisma.akunDetail.update({
-    where: { id },
-    data: {
-      kode: data.kode,
-      nama: data.nama,
-      subKlasifikasiAkunId: data.subKlasifikasiAkunId,
-      isKasBank: data.isKasBank,
-      isSPP: data.isSPP !== undefined ? data.isSPP : current.isSPP,
-      isActive: data.isActive
-    }
-  })
-
-  await prisma.logAktivitas.create({
-    data: {
-      penggunaId: tenant.user.id,
-      aksi: "UPDATE",
-      modul: "AKUN_KEUANGAN",
-      keterangan: `Memperbarui Akun Detail: ${result.kode} - ${result.nama}`
-    }
-  })
-
-  revalidatePath("/akun-keuangan")
-  return result
 }
 
 export async function hapusAkunDetail(id: string) {

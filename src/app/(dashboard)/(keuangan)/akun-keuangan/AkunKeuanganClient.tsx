@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/Button"
-import { Plus, Edit2, Trash2, Layers, Book, BookOpen, Wallet, Receipt, Search, X, PowerOff, Building2 } from "lucide-react"
+import { Plus, Edit2, Trash2, Layers, Book, BookOpen, Wallet, Receipt, Search, X, PowerOff, Building2, Lock, ShieldAlert } from "lucide-react"
 import { Input } from "@/components/ui/Input"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { DeleteWarningModal } from "@/components/ui/DeleteWarningModal"
@@ -98,6 +98,27 @@ export default function AkunKeuanganClient({
   const [subKlasForm, setSubKlasForm] = useState({ id: "", kode: "", nama: "", klasifikasiAkunId: klasifikasi[0]?.id || "" })
   const [akunForm, setAkunForm] = useState({ id: "", kode: "", nama: "", subKlasifikasiAkunId: subKlasifikasi[0]?.id || "", unitSekolahId: activeUnitId || "", isKasBank: false, isSPP: false, isActive: true })
 
+  // Validasi Klasifikasi Induk Akun (Standar Akuntansi: Kas/Bank hanya untuk Harta/Aset Kode 1)
+  const selectedAkunSubKlas = useMemo(() => {
+    return subKlasifikasi.find(s => s.id === akunForm.subKlasifikasiAkunId)
+  }, [subKlasifikasi, akunForm.subKlasifikasiAkunId])
+
+  const selectedAkunParentKlas = useMemo(() => {
+    if (!selectedAkunSubKlas) return null
+    return klasifikasi.find(k => k.id === selectedAkunSubKlas.klasifikasiAkunId) || selectedAkunSubKlas.klasifikasi || null
+  }, [klasifikasi, selectedAkunSubKlas])
+
+  const isAset = selectedAkunParentKlas?.kode === "1" || selectedAkunSubKlas?.kode.startsWith("1") || false
+  const isBeban = selectedAkunParentKlas?.kode === "5" || selectedAkunSubKlas?.kode.startsWith("5") || false
+  const isSPPDisabled = akunForm.isKasBank || isBeban
+
+  // Validasi real-time keunikan kode akun di unit yang sedang aktif
+  const isKodeDuplicate = useMemo(() => {
+    if (!akunForm.kode) return false
+    const cleanKode = akunForm.kode.trim().toLowerCase()
+    return akunDetail.some(a => a.kode.trim().toLowerCase() === cleanKode && a.id !== akunForm.id)
+  }, [akunDetail, akunForm.kode, akunForm.id])
+
   // Delete States
   const [deleteSubKlasId, setDeleteSubKlasId] = useState<string | null>(null)
   const [deleteAkunId, setDeleteAkunId] = useState<string | null>(null)
@@ -138,11 +159,32 @@ export default function AkunKeuanganClient({
     const sub = subKlasifikasi.find(s => s.id === subKlasId)
     if (!sub) return ""
     const prefix = sub.kode
-    const existing = currentAkunList.filter(a => a.subKlasifikasiAkunId === subKlasId && a.kode.startsWith(prefix))
-    if (existing.length === 0) return prefix + "01"
-    const nums = existing.map(a => parseInt(a.kode)).filter(n => !isNaN(n))
-    if (nums.length === 0) return prefix + "01"
-    return (Math.max(...nums) + 1).toString()
+    
+    // Cek semua akun yang ada di subklasifikasi ini
+    const existingInSub = currentAkunList.filter(a => a.subKlasifikasiAkunId === subKlasId)
+    const nums = existingInSub
+      .map(a => parseInt(a.kode))
+      .filter(n => !isNaN(n))
+    
+    // Jika ada nomor akun numerik di subklasifikasi ini, cari dari max + 1
+    if (nums.length > 0) {
+      let candidateNum = Math.max(...nums) + 1
+      while (currentAkunList.some(a => a.kode === candidateNum.toString())) {
+        candidateNum++
+      }
+      return candidateNum.toString()
+    }
+
+    // Jika belum ada akun di subklasifikasi ini, coba sekuensial prefix + 01, 02, ...
+    for (let i = 1; i <= 999; i++) {
+      const suffix = i < 10 ? `0${i}` : `${i}`
+      const candidate = `${prefix}${suffix}`
+      if (!currentAkunList.some(a => a.kode === candidate)) {
+        return candidate
+      }
+    }
+
+    return `${prefix}01`
   }
 
   // ===================== HANDLERS UNTUK SUBKLASIFIKASI =====================
@@ -196,6 +238,10 @@ export default function AkunKeuanganClient({
 
   const handleSaveAkun = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isKodeDuplicate) {
+      toast.error(`Kode akun "${akunForm.kode}" sudah digunakan di unit ini.`)
+      return
+    }
     setIsSubmitting(true)
     try {
       const { id, ...restForm } = akunForm
@@ -206,20 +252,30 @@ export default function AkunKeuanganClient({
 
       if (akunForm.id) {
         const res = await editAkunDetail(akunForm.id, payload)
-        const subK = subKlasifikasi.find(s => s.id === res.subKlasifikasiAkunId)
-        const unit = unitSekolahList.find(u => u.id === res.unitSekolahId)
-        setAkunDetail(prev => prev.map(a => a.id === akunForm.id ? { ...a, ...res, subKlasifikasi: subK, unitSekolah: unit } : a))
+        if (!res.success) {
+          toast.error(res.error || "Gagal memperbarui akun")
+          return
+        }
+        const updatedAkun = res.data!
+        const subK = subKlasifikasi.find(s => s.id === updatedAkun.subKlasifikasiAkunId)
+        const unit = unitSekolahList.find(u => u.id === updatedAkun.unitSekolahId)
+        setAkunDetail(prev => prev.map(a => a.id === akunForm.id ? { ...a, ...updatedAkun, subKlasifikasi: subK, unitSekolah: unit } : a))
         toast.success("Akun berhasil diperbarui")
       } else {
         const res = await tambahAkunDetail(payload)
-        const subK = subKlasifikasi.find(s => s.id === res.subKlasifikasiAkunId)
-        const unit = unitSekolahList.find(u => u.id === res.unitSekolahId)
-        setAkunDetail(prev => [...prev, { ...res, subKlasifikasi: subK, unitSekolah: unit }])
+        if (!res.success) {
+          toast.error(res.error || "Gagal menambahkan akun")
+          return
+        }
+        const newAkun = res.data!
+        const subK = subKlasifikasi.find(s => s.id === newAkun.subKlasifikasiAkunId)
+        const unit = unitSekolahList.find(u => u.id === newAkun.unitSekolahId)
+        setAkunDetail(prev => [...prev, { ...newAkun, subKlasifikasi: subK, unitSekolah: unit }])
         toast.success("Akun berhasil ditambahkan")
       }
       setIsAkunDrawerOpen(false)
     } catch (err: any) {
-      toast.error(err.message)
+      toast.error(err.message || "Terjadi kesalahan saat menyimpan akun.")
     } finally {
       setIsSubmitting(false)
     }
@@ -238,7 +294,11 @@ export default function AkunKeuanganClient({
     if (!deleteAkunId || !targetAkun) return
     setIsDeleting(true)
     try {
-      await editAkunDetail(deleteAkunId, { isActive: false })
+      const res = await editAkunDetail(deleteAkunId, { isActive: false })
+      if (!res.success) {
+        toast.error(res.error || "Gagal menonaktifkan akun.")
+        return
+      }
       setAkunDetail(prev => prev.map(a => a.id === deleteAkunId ? { ...a, isActive: false } : a))
       toast.success(`Akun "${targetAkun.kode} - ${targetAkun.nama}" berhasil dinonaktifkan.`)
       setDeleteAkunId(null)
@@ -423,10 +483,28 @@ export default function AkunKeuanganClient({
               value={akunForm.subKlasifikasiAkunId} 
               onChange={e => {
                 const newSubId = e.target.value
+                const targetSub = subKlasifikasi.find(s => s.id === newSubId)
+                const targetParent = klasifikasi.find(k => k.id === targetSub?.klasifikasiAkunId) || targetSub?.klasifikasi
+                const targetIsAset = targetParent?.kode === "1" || targetSub?.kode.startsWith("1") || false
+                const targetIsBeban = targetParent?.kode === "5" || targetSub?.kode.startsWith("5") || false
+
+                // Jika bukan aset, paksa false. Jika aset, cek apakah nama subklasifikasi atau nama akun mengandung kata kas/bank
+                let nextIsKasBank = false
+                if (targetIsAset) {
+                  const subHasKeyword = /(kas|bank)/i.test(targetSub?.nama || "")
+                  const nameHasKeyword = /(kas|bank)/i.test(akunForm.nama || "")
+                  nextIsKasBank = subHasKeyword || nameHasKeyword || akunForm.isKasBank
+                }
+
+                // isSPP hanya relevan untuk pos pendapatan/tagihan, bukan Kas/Bank atau Beban
+                const nextIsSPP = (!targetIsAset && !targetIsBeban && !nextIsKasBank) ? akunForm.isSPP : false
+
                 setAkunForm({ 
                   ...akunForm, 
                   subKlasifikasiAkunId: newSubId, 
-                  kode: akunForm.id ? akunForm.kode : generateAkunKode(newSubId, akunDetail) 
+                  kode: akunForm.id ? akunForm.kode : generateAkunKode(newSubId, akunDetail),
+                  isKasBank: nextIsKasBank,
+                  isSPP: nextIsSPP
                 })
               }} 
               required
@@ -435,12 +513,50 @@ export default function AkunKeuanganClient({
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-text-main">Kode Akun</label>
-            <Input placeholder="Contoh: 1101" value={akunForm.kode} onChange={e => setAkunForm({ ...akunForm, kode: e.target.value })} required />
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-text-main">Kode Akun</label>
+              {isKodeDuplicate && (
+                <span className="text-xs font-semibold text-rose-600 flex items-center gap-1">
+                  <ShieldAlert size={12} /> Kode sudah terpakai
+                </span>
+              )}
+            </div>
+            <Input 
+              placeholder="Contoh: 1101" 
+              value={akunForm.kode} 
+              onChange={e => setAkunForm({ ...akunForm, kode: e.target.value })} 
+              className={isKodeDuplicate ? "border-rose-500 focus:ring-rose-500/30" : ""}
+              required 
+            />
+            {isKodeDuplicate && (
+              <p className="text-xs text-rose-600 font-medium">
+                Nomor akun &quot;{akunForm.kode}&quot; sudah digunakan oleh akun lain di unit ini. Silakan ganti dengan kode unik lainnya.
+              </p>
+            )}
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text-main">Nama Akun</label>
-            <Input placeholder="Contoh: Kas Tunai Yayasan" value={akunForm.nama} onChange={e => setAkunForm({ ...akunForm, nama: e.target.value })} required />
+            <Input 
+              placeholder="Contoh: Kas Tunai Yayasan" 
+              value={akunForm.nama} 
+              onChange={e => {
+                const val = e.target.value
+                let nextIsKasBank = akunForm.isKasBank
+
+                // Auto-centang jika dalam klasifikasi Harta/Aset dan terdeteksi kata kunci kas/bank
+                if (isAset && /(kas|bank)/i.test(val)) {
+                  nextIsKasBank = true
+                }
+
+                setAkunForm({ 
+                  ...akunForm, 
+                  nama: val,
+                  isKasBank: nextIsKasBank,
+                  isSPP: nextIsKasBank ? false : akunForm.isSPP
+                })
+              }} 
+              required 
+            />
           </div>
           
           <div className="flex flex-col gap-1.5 p-4 bg-primary/5 border border-primary/10 rounded-xl mt-2">
@@ -451,24 +567,69 @@ export default function AkunKeuanganClient({
           </div>
 
           <div className="flex flex-col gap-3 mt-2">
-            <label className="flex items-center gap-3 cursor-pointer p-3 border border-border rounded-xl hover:bg-bg transition-colors">
-              <input type="checkbox" checked={akunForm.isKasBank} onChange={e => setAkunForm({ ...akunForm, isKasBank: e.target.checked })} className="w-4 h-4 accent-primary" />
-              <div>
-                <span className="text-sm font-semibold text-text-main block">Akun Kas / Bank (Liquid)</span>
-                <span className="text-xs text-text-muted">Centang jika akun ini bisa menerima atau mengeluarkan uang secara langsung.</span>
+            <label className={`flex items-start gap-3 p-3.5 border rounded-xl transition-all ${!isAset ? "bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed opacity-75" : "border-border hover:bg-bg cursor-pointer"}`}>
+              <input 
+                type="checkbox" 
+                disabled={!isAset} 
+                checked={akunForm.isKasBank} 
+                onChange={e => {
+                  const checked = e.target.checked
+                  setAkunForm({ 
+                    ...akunForm, 
+                    isKasBank: checked,
+                    isSPP: checked ? false : akunForm.isSPP
+                  })
+                }} 
+                className="mt-0.5 w-4 h-4 accent-primary disabled:cursor-not-allowed" 
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-semibold ${!isAset ? "text-gray-500" : "text-text-main"}`}>Akun Kas / Bank (Liquid)</span>
+                  {!isAset ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+                      <Lock size={11} /> Terkunci (Bukan Aset)
+                    </span>
+                  ) : akunForm.isKasBank ? (
+                    <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">LIQUID</span>
+                  ) : null}
+                </div>
+                <span className="text-xs text-text-muted block mt-0.5">
+                  {!isAset 
+                    ? "Terkunci: Berdasarkan standar akuntansi, akun Kas/Bank hanya diperbolehkan untuk kelompok Harta / Aset (Kode 1)." 
+                    : "Centang jika akun ini menampung kas riil / saldo bank yang dapat menerima atau mengeluarkan uang secara langsung."}
+                </span>
               </div>
             </label>
             
-            <label className="flex items-center gap-3 cursor-pointer p-3 border border-border rounded-xl hover:bg-bg transition-colors">
-              <input type="checkbox" checked={akunForm.isSPP || false} onChange={e => setAkunForm({ ...akunForm, isSPP: e.target.checked })} className="w-4 h-4 accent-primary" />
-              <div>
-                <span className="text-sm font-semibold text-text-main block">Kategori Tagihan Bulanan (SPP)</span>
-                <span className="text-xs text-text-muted">Centang jika tagihan akun ini rutin per bulan dan akan dikelompokkan secara matriks.</span>
+            <label className={`flex items-start gap-3 p-3.5 border rounded-xl transition-all ${isSPPDisabled ? "bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed opacity-75" : "border-border hover:bg-bg cursor-pointer"}`}>
+              <input 
+                type="checkbox" 
+                disabled={isSPPDisabled} 
+                checked={akunForm.isSPP || false} 
+                onChange={e => setAkunForm({ ...akunForm, isSPP: e.target.checked })} 
+                className="mt-0.5 w-4 h-4 accent-primary disabled:cursor-not-allowed" 
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-semibold ${isSPPDisabled ? "text-gray-500" : "text-text-main"}`}>Kategori Tagihan Bulanan (SPP)</span>
+                  {isSPPDisabled && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200 px-2 py-0.5 rounded-full">
+                      <Lock size={11} /> Terkunci
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-text-muted block mt-0.5">
+                  {akunForm.isKasBank 
+                    ? "Tidak dapat diaktifkan untuk akun Kas/Bank (hanya untuk pos tagihan/pendapatan siswa)." 
+                    : isBeban 
+                    ? "Tidak dapat diaktifkan untuk akun Beban/Biaya." 
+                    : "Centang jika tagihan akun ini rutin per bulan dan akan dikelompokkan secara matriks."}
+                </span>
               </div>
             </label>
             
             {akunForm.id && (
-              <label className="flex items-center gap-3 cursor-pointer p-3 border border-border rounded-xl hover:bg-bg transition-colors">
+              <label className="flex items-center gap-3 cursor-pointer p-3.5 border border-border rounded-xl hover:bg-bg transition-colors">
                 <input type="checkbox" checked={akunForm.isActive} onChange={e => setAkunForm({ ...akunForm, isActive: e.target.checked })} className="w-4 h-4 accent-albas-green" />
                 <span className="text-sm font-semibold text-text-main">Akun Aktif</span>
               </label>
@@ -477,7 +638,7 @@ export default function AkunKeuanganClient({
 
           <div className="pt-4 border-t border-border flex justify-end gap-3 mt-auto">
             <Button type="button" variant="outline" onClick={() => setIsAkunDrawerOpen(false)}>Batal</Button>
-            <Button type="submit" isLoading={isSubmitting}>Simpan</Button>
+            <Button type="submit" isLoading={isSubmitting} disabled={isSubmitting || isKodeDuplicate}>Simpan</Button>
           </div>
         </form>
       </SideDrawer>
@@ -607,7 +768,21 @@ export default function AkunKeuanganClient({
                   {activeTab === 'AKUN' && (
                     <ToolbarAddButton onClick={() => {
                       const defaultSubId = subKlasifikasi[0]?.id || ""
-                      setAkunForm({ id: "", kode: generateAkunKode(defaultSubId, akunDetail), nama: "", subKlasifikasiAkunId: defaultSubId, unitSekolahId: activeUnitId || "", isKasBank: false, isSPP: false, isActive: true })
+                      const defaultSub = subKlasifikasi[0]
+                      const defaultParent = klasifikasi.find(k => k.id === defaultSub?.klasifikasiAkunId) || defaultSub?.klasifikasi
+                      const defaultIsAset = defaultParent?.kode === "1" || defaultSub?.kode.startsWith("1") || false
+                      const defaultIsKasBank = defaultIsAset && /(kas|bank)/i.test(defaultSub?.nama || "")
+
+                      setAkunForm({ 
+                        id: "", 
+                        kode: generateAkunKode(defaultSubId, akunDetail), 
+                        nama: "", 
+                        subKlasifikasiAkunId: defaultSubId, 
+                        unitSekolahId: activeUnitId || "", 
+                        isKasBank: defaultIsKasBank, 
+                        isSPP: false, 
+                        isActive: true 
+                      })
                       setIsAkunDrawerOpen(true)
                     }}>
                       Tambah Akun
