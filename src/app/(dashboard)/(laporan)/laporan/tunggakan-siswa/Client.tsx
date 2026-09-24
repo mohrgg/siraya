@@ -125,6 +125,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
           sppCount: sppSpan.count
         }
       })
+      .sort((a, b) => (a.namaSiswa || "").localeCompare(b.namaSiswa || "", "id", { sensitivity: "base" }))
 
     return { rows, categories }
   }, [filteredData])
