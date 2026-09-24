@@ -23,6 +23,7 @@ import {
   ToolbarFilter,
   ToolbarSearch
 } from "@/components/ui/DataTableToolbar"
+import { formatAcademicMonthSpans, MonthSpanResult } from "@/lib/academic-months"
 
 export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], grades = [], classrooms = [], userRole, userUnitId, userName }: { pengaturan?: any, schoolUnits?: any[], grades?: any[], classrooms?: any[], userRole?: string, userUnitId?: string, userName?: string }) {
   const router = useRouter()
@@ -75,17 +76,6 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
     const studentMap = new Map<string, any>()
     const categorySet = new Set<string>()
 
-    const MONTH_NAMES = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember", "Jan", "Feb", "Mar", "Apr", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"]
-
-    const extractMonth = (text: string) => {
-      for (const month of MONTH_NAMES) {
-        if (new RegExp(`\\b${month}\\b`, 'i').test(text)) {
-          return month
-        }
-      }
-      return text
-    }
-
     filteredData.forEach(item => {
       if (!studentMap.has(item.muridId)) {
         studentMap.set(item.muridId, {
@@ -93,7 +83,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
           nis: item.nis || "-",
           namaSiswa: item.namaSiswa,
           rombel: item.rombel,
-          sppMonths: [],
+          sppMonths: [] as string[],
           sppAmount: 0,
           sppDibayar: 0,
           categories: {} as Record<string, { sisa: number, dibayar: number }>,
@@ -105,10 +95,8 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
       
       if (item.isSPP) {
         if (item.sisa > 0) {
-          const month = extractMonth(item.deskripsiTagihan || item.kategori || "")
-          if (!student.sppMonths.includes(month)) {
-            student.sppMonths.push(month)
-          }
+          const monthText = item.deskripsiTagihan || item.kategori || ""
+          student.sppMonths.push(monthText)
         }
         student.sppAmount += item.sisa
         student.sppDibayar += item.dibayar
@@ -127,11 +115,16 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
 
     const rows = Array.from(studentMap.values())
       .filter(s => s.totalTunggakan > 0)
-      .map(s => ({
-        ...s,
-        sppMonthString: s.sppMonths.join("/") || "-",
-        sppCount: s.sppMonths.length
-      }))
+      .map(s => {
+        const sppSpan: MonthSpanResult = formatAcademicMonthSpans(s.sppMonths)
+        return {
+          ...s,
+          sppSpan,
+          sppMonthString: sppSpan.displayShort,
+          sppDisplayFull: sppSpan.displayFull,
+          sppCount: sppSpan.count
+        }
+      })
 
     return { rows, categories }
   }, [filteredData])
@@ -153,7 +146,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
         "NIS": item.nis,
         "Nama Siswa": item.namaSiswa,
         "Rombel": item.rombel,
-        "Bulan (SPP)": item.sppMonthString,
+        "Bulan (SPP)": item.sppDisplayFull && item.sppDisplayFull !== "-" ? item.sppDisplayFull : item.sppMonthString,
         "Jml Bln": item.sppCount,
         "Nilai SPP": item.sppAmount,
       }
@@ -368,11 +361,11 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
                     
                     {/* SPP Breakdown */}
                     <div className="bg-bg p-2.5 rounded-xl border border-border flex items-center justify-between text-xs">
-                      <div>
+                      <div className="min-w-0 pr-2">
                         <span className="font-bold text-primary block">SPP ({item.sppCount || 0} Bln)</span>
-                        <span className="text-[11px] text-text-muted">{item.sppMonthString}</span>
+                        <span className="text-[11px] text-text-muted break-words">{item.sppMonthString}</span>
                       </div>
-                      <span className="font-mono font-bold text-primary">
+                      <span className="font-mono font-bold text-primary shrink-0">
                         {item.sppAmount > 0 
                           ? `Rp ${new Intl.NumberFormat("id-ID").format(item.sppAmount)}` 
                           : <span className="text-emerald-600 font-bold">LUNAS</span>}
@@ -442,15 +435,93 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
                           <td className="p-3 font-mono font-medium border-r border-border/50">{item.nis}</td>
                           <td className="p-3 font-bold text-gray-700 border-r border-border/50">{item.namaSiswa}</td>
                           <td className="p-3 text-gray-600 border-r border-border/50">{item.rombel}</td>
-                          <td className="p-3 text-center text-xs text-primary/80 border-r border-border/50 max-w-[150px] relative group/tooltip cursor-help">
-                            <div className="truncate">
-                              {item.sppMonthString}
-                            </div>
-                            {item.sppMonthString !== "-" && (
-                              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-200 z-50 w-max max-w-[250px] bg-slate-800 text-white text-[11px] rounded-lg px-3 py-2 shadow-xl border border-slate-700 whitespace-normal text-center leading-relaxed">
-                                <span className="font-semibold block mb-1 text-slate-300 border-b border-slate-600 pb-1">Bulan Tunggakan SPP:</span>
-                                {item.sppMonthString.split('/').join(', ')}
-                                <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-slate-800 rotate-45 -mt-1 border-r border-b border-slate-700"></div>
+                          <td className="p-3 text-center border-r border-border/50 relative group/tooltip">
+                            {item.sppCount > 0 ? (
+                              <div 
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/80 hover:bg-rose-100 transition-colors cursor-help"
+                                title={item.sppDisplayFull}
+                              >
+                                <span>{item.sppMonthString}</span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 text-xs">-</span>
+                            )}
+
+                            {item.sppCount > 0 && item.sppSpan && (
+                              <div className={`absolute left-1/2 -translate-x-1/2 ${
+                                idx < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
+                              } opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-200 z-50 w-72 bg-slate-900/95 backdrop-blur-md text-white text-xs rounded-xl p-3 shadow-xl border border-slate-700/80 whitespace-normal text-left pointer-events-none group-hover/tooltip:pointer-events-auto`}>
+                                {/* Popover Header */}
+                                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-[11px]">
+                                  <span className="font-bold text-slate-200">Status SPP (12 Bulan)</span>
+                                  <span className="font-mono text-rose-400 font-semibold">{item.sppCount} Bln Menunggak</span>
+                                </div>
+
+                                {/* Semester 1 Ganjil */}
+                                <div className="mb-2">
+                                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 flex justify-between">
+                                    <span>Semester Ganjil</span>
+                                    <span className="text-slate-500 font-normal">Jul – Des</span>
+                                  </div>
+                                  <div className="grid grid-cols-6 gap-1">
+                                    {item.sppSpan.allMonthsStatus.slice(0, 6).map((m: any) => (
+                                      <div
+                                        key={m.name}
+                                        title={`${m.name}: ${m.isUnpaid ? 'Menunggak' : 'Lunas'}`}
+                                        className={`py-1 text-center rounded text-[10px] font-bold font-mono transition-colors ${
+                                          m.isUnpaid
+                                            ? 'bg-rose-500/25 text-rose-300 border border-rose-500/50 ring-1 ring-rose-500/20'
+                                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                        }`}
+                                      >
+                                        {m.shortName}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Semester 2 Genap */}
+                                <div>
+                                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 flex justify-between">
+                                    <span>Semester Genap</span>
+                                    <span className="text-slate-500 font-normal">Jan – Jun</span>
+                                  </div>
+                                  <div className="grid grid-cols-6 gap-1">
+                                    {item.sppSpan.allMonthsStatus.slice(6, 12).map((m: any) => (
+                                      <div
+                                        key={m.name}
+                                        title={`${m.name}: ${m.isUnpaid ? 'Menunggak' : 'Lunas'}`}
+                                        className={`py-1 text-center rounded text-[10px] font-bold font-mono transition-colors ${
+                                          m.isUnpaid
+                                            ? 'bg-rose-500/25 text-rose-300 border border-rose-500/50 ring-1 ring-rose-500/20'
+                                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                        }`}
+                                      >
+                                        {m.shortName}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Mini Legend & Full Text */}
+                                <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-800 text-[10px] text-slate-400">
+                                  <span className="truncate max-w-[130px] text-slate-400 font-normal" title={item.sppDisplayFull}>{item.sppDisplayFull}</span>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className="inline-flex items-center gap-1 text-emerald-400">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Lunas
+                                    </span>
+                                    <span className="inline-flex items-center gap-1 text-rose-400">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Nunggak
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Arrow Pointer */}
+                                {idx < 2 ? (
+                                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full w-2.5 h-2.5 bg-slate-900 rotate-45 -mb-1.25 border-l border-t border-slate-700/80"></div>
+                                ) : (
+                                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-2.5 h-2.5 bg-slate-900 rotate-45 -mt-1.25 border-r border-b border-slate-700/80"></div>
+                                )}
                               </div>
                             )}
                           </td>

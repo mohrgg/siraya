@@ -723,7 +723,7 @@ export function TunggakanMatriksHtml({
               <td className="py-1.5 px-2 font-mono text-[8px] border-x border-slate-200">{item.nis}</td>
               <td className="py-1.5 px-2 font-semibold border-x border-slate-200">{item.namaSiswa}</td>
               <td className="py-1.5 px-2 border-x border-slate-200">{item.rombel}</td>
-              <td className="py-1.5 px-2 text-center border-x border-slate-200 truncate max-w-[80px]" title={item.sppMonthString}>{item.sppMonthString}</td>
+              <td className="py-1 px-1.5 text-center border-x border-slate-200 text-[8.5px] leading-tight whitespace-normal max-w-[90px]" title={item.sppMonthString}>{item.sppMonthString}</td>
               <td className="py-1.5 px-2 text-center border-x border-slate-200">{item.sppCount || "-"}</td>
               <td className="py-1.5 px-2 text-right border-x border-slate-200">
                 {item.sppAmount > 0 ? formatRp(item.sppAmount) : (item.sppDibayar > 0 ? "LUNAS" : "-")}
