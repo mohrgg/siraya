@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { 
   Users, GraduationCap, LayoutDashboard, AlertTriangle, 
   CheckCircle2, PlusCircle, ArrowRight, UserCheck, Activity,
-  ShieldCheck, School
+  ShieldCheck, School, ChevronRight, ArrowLeft
 } from "lucide-react"
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, 
@@ -74,7 +74,8 @@ export default function UnitDashboard(props: UnitDashboardProps) {
   } = props
 
   const [selectedRombelDrilldown, setSelectedRombelDrilldown] = useState<any>(null)
-  const [selectedTingkat, setSelectedTingkat] = useState<string>('ALL')
+  const [selectedTingkatDrilldown, setSelectedTingkatDrilldown] = useState<string | null>(null)
+  const [isOverCapacityFilterActive, setIsOverCapacityFilterActive] = useState<boolean>(false)
 
   // Helper untuk ekstraksi tingkat dari nama rombel (misal "X AK 1" -> "Kelas X")
   const extractTingkat = React.useCallback((name: string): string => {
@@ -87,35 +88,96 @@ export default function UnitDashboard(props: UnitDashboardProps) {
     return 'Lainnya'
   }, [])
 
-  // Opsi Tingkat dinamis dari data riil rombel
-  const tingkatOptions = React.useMemo(() => {
+  // Agregasi per tingkat untuk Level 1 Bar Chart
+  const tingkatAggregatedData = React.useMemo(() => {
     if (!rombelData || rombelData.length === 0) return []
-    const map = new Map<string, number>()
+    const map = new Map<string, {
+      name: string
+      tingkatId: string
+      totalSiswa: number
+      totalRombel: number
+      overCapacityCount: number
+      rombelList: typeof rombelData
+    }>()
+
     rombelData.forEach(r => {
       const t = extractTingkat(r.name)
-      map.set(t, (map.get(t) || 0) + 1)
+      if (!map.has(t)) {
+        map.set(t, { name: t, tingkatId: t, totalSiswa: 0, totalRombel: 0, overCapacityCount: 0, rombelList: [] })
+      }
+      const entry = map.get(t)!
+      entry.totalSiswa += r.total
+      entry.totalRombel += 1
+      entry.rombelList.push(r)
+      if (r.total > 35) entry.overCapacityCount += 1
     })
 
-    return Array.from(map.entries())
-      .map(([tingkat, count]) => ({ id: tingkat, label: tingkat, count }))
-      .sort((a, b) => a.label.localeCompare(b.label, 'id', { numeric: true }))
+    return Array.from(map.values())
+      .map(entry => ({
+        ...entry,
+        rataRata: Math.round(entry.totalSiswa / (entry.totalRombel || 1))
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'id', { numeric: true }))
   }, [rombelData, extractTingkat])
 
-  // Filter rombel berdasarkan tab tingkat atau over-capacity
-  const displayedRombel = React.useMemo(() => {
+  // Opsi Tingkat dinamis dari data riil rombel untuk selector cepat
+  const tingkatOptions = React.useMemo(() => {
+    return tingkatAggregatedData.map(t => ({ id: t.tingkatId, label: t.name, count: t.totalRombel }))
+  }, [tingkatAggregatedData])
+
+  // Data Rombel aktif di Level 2 (Berdasarkan tingkat yang dipilih atau filter over-kapasitas)
+  const activeLevel2Rombel = React.useMemo(() => {
     if (!rombelData) return []
-    if (selectedTingkat === 'OVER_CAPACITY') {
-      return rombelData.filter(r => r.total > 35)
+    let list = rombelData
+    if (selectedTingkatDrilldown) {
+      list = list.filter(r => extractTingkat(r.name) === selectedTingkatDrilldown)
     }
-    if (selectedTingkat === 'ALL') {
-      return rombelData
+    if (isOverCapacityFilterActive) {
+      list = list.filter(r => r.total > 35)
     }
-    return rombelData.filter(r => extractTingkat(r.name) === selectedTingkat)
-  }, [rombelData, selectedTingkat, extractTingkat])
+    return list
+  }, [rombelData, selectedTingkatDrilldown, isOverCapacityFilterActive, extractTingkat])
 
   const overCapacityCount = React.useMemo(() => {
     return rombelData.filter(r => r.total > 35).length
   }, [rombelData])
+
+  // Helper render label badge untuk batas ideal pada reference line (anti-tertindih bar)
+  const renderIdealLimitBadge = (labelTxt: string) => (props: any) => {
+    const { viewBox } = props
+    if (!viewBox) return null
+    const { x, y, width } = viewBox
+    const badgeWidth = labelTxt.length > 18 ? 128 : 108
+    const badgeHeight = 20
+    const badgeX = x + width - badgeWidth - 4
+    const badgeY = y - 10
+
+    return (
+      <g>
+        <rect
+          x={badgeX}
+          y={badgeY}
+          width={badgeWidth}
+          height={badgeHeight}
+          rx={5}
+          fill="#ffffff"
+          stroke="#f87171"
+          strokeWidth={1}
+        />
+        <text
+          x={badgeX + badgeWidth / 2}
+          y={badgeY + badgeHeight / 2}
+          fill="#dc2626"
+          fontSize={10}
+          fontWeight={700}
+          textAnchor="middle"
+          dominantBaseline="central"
+        >
+          {labelTxt}
+        </text>
+      </g>
+    )
+  }
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
   const formatCurrency = (num: number) => `Rp ${new Intl.NumberFormat('id-ID').format(num || 0)}`
@@ -262,28 +324,89 @@ export default function UnitDashboard(props: UnitDashboardProps) {
           <p className="text-xs text-text-muted">Distribusi kapasitas rombel belajar, komposisi gender, dan riwayat pertumbuhan siswa.</p>
         </div>
 
-        {/* CARD 1: Kepadatan Siswa per Rombel (FULL WIDTH 100% - Adaptif untuk 50+ Rombel) */}
+        {/* CARD 1: Kepadatan Siswa per Rombel (2-Level Interactive Drill-Down Bar Chart - 100% Fit, Bebas Potong) */}
         <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-2xs flex flex-col min-h-[460px]">
-          {/* Card Header with Tingkat Filter & Overcapacity Alert */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 pb-3 border-b border-border/60">
-            <div>
+          {/* Card Header with Breadcrumb, Legend & Controls */}
+          <div className="flex flex-col sm:flex-row sm:items-start lg:items-center justify-between gap-3 mb-3 pb-3 border-b border-border">
+            <div className="min-w-0 flex-1">
+              {/* Breadcrumb Navigasi */}
+              {selectedRombelDrilldown ? (
+                <div className="flex items-center gap-1.5 text-xs text-text-muted mb-1 font-medium">
+                  <button 
+                    type="button" 
+                    onClick={() => { setSelectedRombelDrilldown(null); setSelectedTingkatDrilldown(null); setIsOverCapacityFilterActive(false); }}
+                    className="hover:text-primary transition-colors cursor-pointer"
+                  >
+                    Semua Tingkat
+                  </button>
+                  <ChevronRight size={12} className="text-text-muted" />
+                  <button 
+                    type="button" 
+                    onClick={() => setSelectedRombelDrilldown(null)}
+                    className="hover:text-primary transition-colors cursor-pointer"
+                  >
+                    {extractTingkat(selectedRombelDrilldown.name)}
+                  </button>
+                  <ChevronRight size={12} className="text-text-muted" />
+                  <span className="font-bold text-text-main">{selectedRombelDrilldown.name}</span>
+                </div>
+              ) : selectedTingkatDrilldown || isOverCapacityFilterActive ? (
+                <div className="flex items-center gap-1.5 text-xs text-text-muted mb-1 font-medium">
+                  <button 
+                    type="button" 
+                    onClick={() => { setSelectedTingkatDrilldown(null); setIsOverCapacityFilterActive(false); }}
+                    className="hover:text-primary transition-colors cursor-pointer"
+                  >
+                    Semua Tingkat
+                  </button>
+                  <ChevronRight size={12} className="text-text-muted" />
+                  <span className="font-bold text-text-main">
+                    {isOverCapacityFilterActive && !selectedTingkatDrilldown
+                      ? `Rombel Over-Kapasitas (${activeLevel2Rombel.length})`
+                      : `${selectedTingkatDrilldown} (${activeLevel2Rombel.length} Rombel)`}
+                  </span>
+                </div>
+              ) : null}
+
               <h3 className="font-bold text-text-main text-lg flex items-center gap-2">
                 <Users size={18} className="text-[#065f32]" />
                 <span>Kepadatan Siswa per Rombel</span>
               </h3>
               <p className="text-xs text-text-muted mt-0.5">
-                Evaluasi kapasitas rombel belajar (Batas ideal: 35 siswa/rombel).
+                {selectedRombelDrilldown 
+                  ? `Detail statistik siswa dan komposisi kelas ${selectedRombelDrilldown.name}.`
+                  : selectedTingkatDrilldown || isOverCapacityFilterActive
+                  ? `Rincian kapasitas rombel pada tingkat terpilih. Klik salah satu bar untuk detail siswa.`
+                  : `Tingkat agregasi sekolah. Klik salah satu bar tingkat untuk zoom-in ke rombel masing-masing (Standar Permendikbud: 20 – 35 siswa/rombel).`}
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Alert Overcapacity Pill */}
+            <div className="flex items-center gap-2 shrink-0 flex-nowrap self-start sm:self-center">
+              {/* Legend Ringkas */}
+              <div className="hidden sm:flex items-center gap-2.5 mr-1 text-[11px] font-medium text-text-muted shrink-0">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#065f32]"></span> Ideal (20-35)
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-rose-600"></span> Over (&gt;35)
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span> Minim (&lt;20)
+                </span>
+              </div>
+
+              {/* Alert Overcapacity Filter Button */}
               {overCapacityCount > 0 && !selectedRombelDrilldown && (
                 <button
                   type="button"
-                  onClick={() => setSelectedTingkat(selectedTingkat === 'OVER_CAPACITY' ? 'ALL' : 'OVER_CAPACITY')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    selectedTingkat === 'OVER_CAPACITY'
+                  onClick={() => {
+                    setIsOverCapacityFilterActive(!isOverCapacityFilterActive)
+                    if (!isOverCapacityFilterActive) {
+                      setSelectedTingkatDrilldown(null)
+                    }
+                  }}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                    isOverCapacityFilterActive
                       ? 'bg-rose-600 text-white shadow-xs'
                       : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
                   }`}
@@ -294,56 +417,76 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                 </button>
               )}
 
+              {/* Back Button */}
               {selectedRombelDrilldown ? (
                 <button
+                  type="button"
                   onClick={() => setSelectedRombelDrilldown(null)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all shadow-2xs shrink-0 cursor-pointer"
+                  className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-bg text-text-main font-semibold text-xs transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] shrink-0 cursor-pointer"
+                  title={`Kembali ke ${selectedTingkatDrilldown || 'Daftar Rombel'}`}
                 >
-                  ← Kembali ke Grafik
+                  <ArrowLeft size={14} className="shrink-0 text-text-muted group-hover:text-text-main transition-colors" />
+                  <span>Kembali</span>
                 </button>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-200/80 rounded-lg text-xs font-bold">
-                  Batas Ideal: 35
-                </span>
-              )}
+              ) : (selectedTingkatDrilldown || isOverCapacityFilterActive) ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTingkatDrilldown(null)
+                    setIsOverCapacityFilterActive(false)
+                  }}
+                  className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-bg text-text-main font-semibold text-xs transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] shrink-0 cursor-pointer"
+                  title="Kembali ke Semua Tingkat"
+                >
+                  <ArrowLeft size={14} className="shrink-0 text-text-muted group-hover:text-text-main transition-colors" />
+                  <span>Kembali</span>
+                </button>
+              ) : null}
             </div>
           </div>
 
-          {/* Interactive Tingkat Filter Tabs */}
+          {/* Quick Filter Tingkat Tabs */}
           {!selectedRombelDrilldown && tingkatOptions.length > 0 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2 select-none custom-scrollbar">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 select-none custom-scrollbar">
               <button
                 type="button"
-                onClick={() => setSelectedTingkat('ALL')}
+                onClick={() => {
+                  setSelectedTingkatDrilldown(null)
+                  setIsOverCapacityFilterActive(false)
+                }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                  selectedTingkat === 'ALL'
+                  selectedTingkatDrilldown === null && !isOverCapacityFilterActive
                     ? 'bg-primary text-white shadow-xs'
                     : 'bg-bg text-text-muted hover:text-text-main border border-border'
                 }`}
               >
-                Semua Rombel ({rombelData.length})
+                Semua Tingkat ({tingkatAggregatedData.length})
               </button>
 
               {tingkatOptions.map(t => (
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => setSelectedTingkat(t.id)}
+                  onClick={() => {
+                    setSelectedTingkatDrilldown(t.id)
+                    setIsOverCapacityFilterActive(false)
+                  }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                    selectedTingkat === t.id
+                    selectedTingkatDrilldown === t.id && !isOverCapacityFilterActive
                       ? 'bg-primary text-white shadow-xs'
                       : 'bg-bg text-text-muted hover:text-text-main border border-border'
                   }`}
                 >
-                  {t.label} ({t.count})
+                  {t.label} ({t.count} Kelas)
                 </button>
               ))}
             </div>
           )}
 
-          {/* Chart / Drilldown Canvas */}
-          <div className="flex-1 w-full mt-2 min-h-0">
+          {/* Canvas Area: Level 3 (Student Detail), Level 2 (Rombel Detail), Level 1 (Tingkat Overview) */}
+          <div className="flex-1 w-full min-h-0">
             {selectedRombelDrilldown ? (
+              /* LEVEL 3: Detail Siswa & Komposisi Gender */
               <div className="h-full flex flex-col sm:flex-row gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex-1 min-w-[200px] flex flex-col items-center justify-center bg-bg rounded-xl p-4 border border-border">
                   <h4 className="text-sm font-bold text-text-main mb-2">Komposisi Gender Kelas {selectedRombelDrilldown.name}</h4>
@@ -375,7 +518,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                     <span>Daftar Siswa (Sampel)</span>
                     <span className="text-[10px] font-bold px-2.5 py-0.5 bg-emerald-50 text-[#065f32] border border-emerald-200 rounded-full">{selectedRombelDrilldown.total} Total</span>
                   </h4>
-                  <div className="flex-1 overflow-y-auto pr-1 space-y-2">
+                  <div className="flex-1 overflow-y-auto pr-1 space-y-2 max-h-[220px] custom-scrollbar">
                     {selectedRombelDrilldown.topStudents && selectedRombelDrilldown.topStudents.length > 0 ? (
                       selectedRombelDrilldown.topStudents.map((s: any, idx: number) => (
                         <div key={idx} className="flex items-center justify-between p-2.5 bg-surface rounded-lg border border-border shadow-2xs">
@@ -397,80 +540,217 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                   )}
                 </div>
               </div>
-            ) : displayedRombel && displayedRombel.length > 0 ? (
-              <div className="w-full overflow-x-auto custom-scrollbar pb-2">
-                <div style={{ minWidth: displayedRombel.length > 14 ? `${displayedRombel.length * 44}px` : '100%', height: '360px' }}>
+            ) : selectedTingkatDrilldown !== null || isOverCapacityFilterActive ? (
+              /* LEVEL 2: Bar Chart Rombel di Tingkat Terpilih (Full-Width, 100% Fit) */
+              <div className="h-[340px] w-full min-h-[300px]">
+                {activeLevel2Rombel.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={displayedRombel} 
-                      margin={{ top: 25, right: 15, left: -15, bottom: 45 }}
-                      onClick={(data: any) => {
-                        if (data && data.activePayload && data.activePayload[0] && data.activePayload[0].payload) {
-                          setSelectedRombelDrilldown(data.activePayload[0].payload)
+                    <BarChart
+                      data={activeLevel2Rombel}
+                      margin={{ top: 20, right: 20, left: -10, bottom: 40 }}
+                      onClick={(state: any) => {
+                        if (state && state.activePayload && state.activePayload.length > 0) {
+                          setSelectedRombelDrilldown(state.activePayload[0].payload)
                         }
                       }}
+                      className="cursor-pointer"
                     >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
                       <XAxis 
                         dataKey="name" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fill: '#64748b', fontSize: 11 }} 
+                        tick={{ fontSize: 11, fill: 'currentColor' }} 
+                        className="text-text-muted font-medium" 
                         interval={0}
-                        angle={-25}
+                        angle={-30}
                         textAnchor="end"
+                        height={45}
                       />
                       <YAxis 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fill: '#64748b', fontSize: 12 }}
+                        domain={[0, (dataMax: number) => Math.max(40, dataMax + 5)]} 
+                        tick={{ fontSize: 11, fill: 'currentColor' }} 
+                        className="text-text-muted font-medium" 
                       />
                       <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} 
-                        formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Jumlah']}
                         cursor={{ fill: '#f8fafc' }}
-                      />
-                      <ReferenceLine 
-                        y={35} 
-                        label={{ 
-                          value: 'Maks Ideal (35)', 
-                          fill: '#e11d48', 
-                          fontSize: 11, 
-                          fontWeight: 'bold', 
-                          position: 'top',
-                          dy: -6
-                        }} 
-                        stroke="#e11d48" 
-                        strokeDasharray="4 4" 
-                        strokeWidth={2} 
+                        content={({ active, payload }: any) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload
+                            const isOver = data.total > 35
+                            const isUnder = data.total < 20
+                            return (
+                              <div className="bg-surface p-3 rounded-xl border border-border shadow-md text-xs">
+                                <p className="font-bold text-text-main text-sm mb-1">{data.name}</p>
+                                <p className="flex items-center justify-between gap-4 text-text-muted">
+                                  <span>Total Siswa:</span>
+                                  <span className="font-black text-text-main text-sm">{data.total} Siswa</span>
+                                </p>
+                                <p className="flex items-center justify-between gap-4 text-text-muted mt-1">
+                                  <span>Status Kapasitas:</span>
+                                  <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${
+                                    isOver ? 'bg-rose-100 text-rose-700' : isUnder ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                                  }`}>
+                                    {isOver ? 'Over-Kapasitas (>35)' : isUnder ? 'Di Bawah Standar (<20)' : 'Ideal'}
+                                  </span>
+                                </p>
+                                <p className="text-[10px] text-primary font-semibold mt-2 pt-1 border-t border-border/60">
+                                  💡 Klik bar untuk melihat sampel siswa
+                                </p>
+                              </div>
+                            )
+                          }
+                          return null
+                        }}
                       />
                       <Bar 
                         dataKey="total" 
-                        radius={[6, 6, 0, 0]} 
-                        barSize={28}
-                        cursor="pointer"
-                        onClick={(data: any) => {
-                          if (data) {
-                            setSelectedRombelDrilldown(data)
-                          }
-                        }}
+                        radius={[6, 6, 0, 0]}
+                        maxBarSize={48}
                       >
-                        {displayedRombel.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={entry.total > 35 ? '#e11d48' : '#065f32'} 
-                          />
-                        ))}
+                        {activeLevel2Rombel.map((entry, index) => {
+                          const isOver = entry.total > 35
+                          const isUnder = entry.total < 20
+                          return (
+                            <Cell 
+                              key={`cell-rombel-${index}`} 
+                              fill={isOver ? '#e11d48' : isUnder ? '#f59e0b' : '#065f32'} 
+                              className="transition-all duration-300 hover:opacity-85 cursor-pointer"
+                              onClick={() => setSelectedRombelDrilldown(entry)}
+                            />
+                          )
+                        })}
                       </Bar>
+                      <ReferenceLine 
+                        y={35} 
+                        stroke="#dc2626" 
+                        strokeDasharray="4 4" 
+                        label={renderIdealLimitBadge('Batas Ideal (35)')} 
+                      />
                     </BarChart>
                   </ResponsiveContainer>
-                </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-bg rounded-xl border border-dashed border-border">
+                    <LayoutDashboard size={32} className="text-gray-300 mb-2" />
+                    <p className="text-sm font-semibold text-text-muted">Tidak Ada Rombel yang Sesuai Filter</p>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-bg rounded-xl border border-dashed border-border">
-                <LayoutDashboard size={32} className="text-gray-300 mb-2" />
-                <p className="text-sm font-semibold text-text-muted">Tidak Ada Rombel yang Sesuai Filter</p>
+              /* LEVEL 1: Bar Chart Tingkat Overview (Agregasi Sekolah) */
+              <div className="h-[340px] w-full min-h-[300px]">
+                {tingkatAggregatedData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={tingkatAggregatedData}
+                      margin={{ top: 20, right: 20, left: -10, bottom: 20 }}
+                      onClick={(state: any) => {
+                        if (state && state.activePayload && state.activePayload.length > 0) {
+                          const clickedTingkat = state.activePayload[0].payload.tingkatId
+                          setSelectedTingkatDrilldown(clickedTingkat)
+                        }
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
+                      <XAxis 
+                        dataKey="name" 
+                        tick={{ fontSize: 13, fill: 'currentColor' }} 
+                        className="text-text-main font-bold" 
+                      />
+                      <YAxis 
+                        domain={[0, 45]} 
+                        tick={{ fontSize: 11, fill: 'currentColor' }} 
+                        className="text-text-muted font-medium" 
+                      />
+                      <Tooltip 
+                        cursor={{ fill: '#f8fafc' }}
+                        content={({ active, payload }: any) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload
+                            return (
+                              <div className="bg-surface p-3 rounded-xl border border-border shadow-md text-xs min-w-[210px]">
+                                <p className="font-bold text-text-main text-sm mb-1">{data.name}</p>
+                                <div className="space-y-1 my-2">
+                                  <p className="flex items-center justify-between text-text-muted">
+                                    <span>Rata-Rata Siswa/Kelas:</span>
+                                    <span className="font-bold text-text-main">{data.rataRata} Siswa</span>
+                                  </p>
+                                  <p className="flex items-center justify-between text-text-muted">
+                                    <span>Total Seluruh Siswa:</span>
+                                    <span className="font-bold text-text-main">{formatNumber(data.totalSiswa)} Siswa</span>
+                                  </p>
+                                  <p className="flex items-center justify-between text-text-muted">
+                                    <span>Jumlah Rombel:</span>
+                                    <span className="font-bold text-text-main">{data.totalRombel} Rombel</span>
+                                  </p>
+                                  {data.overCapacityCount > 0 && (
+                                    <p className="flex items-center justify-between text-rose-700 font-semibold pt-1 border-t border-border/50">
+                                      <span>Over-Kapasitas (&gt;35):</span>
+                                      <span className="bg-rose-100 px-1.5 py-0.5 rounded text-[10px]">{data.overCapacityCount} Rombel</span>
+                                    </p>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-primary font-bold mt-2 pt-1.5 border-t border-border/60 flex items-center gap-1">
+                                  <span>🔍 Klik bar tingkat ini untuk rincian kelas</span>
+                                </p>
+                              </div>
+                            )
+                          }
+                          return null
+                        }}
+                      />
+                      <Bar 
+                        dataKey="rataRata" 
+                        radius={[8, 8, 0, 0]}
+                        maxBarSize={64}
+                      >
+                        {tingkatAggregatedData.map((entry, index) => {
+                          const isOver = entry.rataRata > 35
+                          return (
+                            <Cell 
+                              key={`cell-tingkat-${index}`} 
+                              fill={isOver ? '#e11d48' : '#065f32'} 
+                              className="transition-all duration-300 hover:opacity-85 hover:brightness-110 cursor-pointer"
+                              onClick={() => setSelectedTingkatDrilldown(entry.tingkatId)}
+                            />
+                          )
+                        })}
+                      </Bar>
+                      <ReferenceLine 
+                        y={35} 
+                        stroke="#dc2626" 
+                        strokeDasharray="4 4" 
+                        label={renderIdealLimitBadge('Batas Ideal (35 Siswa)')} 
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-bg rounded-xl border border-dashed border-border">
+                    <LayoutDashboard size={32} className="text-gray-300 mb-2" />
+                    <p className="text-sm font-semibold text-text-muted">Tidak Ada Data Rombel Tersedia</p>
+                  </div>
+                )}
               </div>
+            )}
+          </div>
+
+          {/* Footer Guide & Status Hierarchy */}
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-border/50 text-[11px] text-text-muted">
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-text-main">Hierarki Navigasi:</span>
+              {selectedRombelDrilldown ? (
+                <span>Level 3 (Detail Sampel Murid {selectedRombelDrilldown.name})</span>
+              ) : selectedTingkatDrilldown || isOverCapacityFilterActive ? (
+                <span>Level 2 (Rincian Kelas {selectedTingkatDrilldown || 'Over-Kapasitas'} — {activeLevel2Rombel.length} Rombel Full-Width)</span>
+              ) : (
+                <span>Level 1 (Ringkasan per Tingkat — {tingkatAggregatedData.length} Tingkat)</span>
+              )}
+            </div>
+            {!selectedRombelDrilldown && (
+              <span className="text-primary font-medium">
+                {selectedTingkatDrilldown || isOverCapacityFilterActive 
+                  ? "💡 Klik salah satu bar rombel untuk melihat komposisi siswa"
+                  : "💡 Klik salah satu batang tingkat untuk rincian kelas per tingkat"}
+              </span>
             )}
           </div>
         </div>
