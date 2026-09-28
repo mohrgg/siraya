@@ -37,7 +37,10 @@ interface UnitDashboardProps {
   // Keuangan Unit
   penerimaanBulanIni?: number
   pengeluaranBulanIni?: number
+  totalTagihanUnit?: number
+  terbayarUnit?: number
   totalTunggakanUnit?: number
+  capacityWarnings?: Array<any>
   tunggakanKritisList?: Array<any>
   pendapatanHariIniChart?: any[]
   pendapatanMingguIniChart?: any[]
@@ -59,7 +62,10 @@ export default function UnitDashboard(props: UnitDashboardProps) {
     guruStatusData = [],
     penerimaanBulanIni = 0,
     pengeluaranBulanIni = 0,
+    totalTagihanUnit = 0,
+    terbayarUnit = 0,
     totalTunggakanUnit = 0,
+    capacityWarnings = [],
     tunggakanKritisList = [],
     pendapatanHariIniChart = [], pendapatanMingguIniChart = [], pendapatanBulanIniChart = [],
     trendData = [],
@@ -68,6 +74,48 @@ export default function UnitDashboard(props: UnitDashboardProps) {
   } = props
 
   const [selectedRombelDrilldown, setSelectedRombelDrilldown] = useState<any>(null)
+  const [selectedTingkat, setSelectedTingkat] = useState<string>('ALL')
+
+  // Helper untuk ekstraksi tingkat dari nama rombel (misal "X AK 1" -> "Kelas X")
+  const extractTingkat = React.useCallback((name: string): string => {
+    if (!name) return 'Lainnya'
+    const trimmed = name.trim()
+    const match = trimmed.match(/^(XII|XI|X|VII|VIII|IX|VI|IV|V|I{1,3}|\d+)/i)
+    if (match) {
+      return `Kelas ${match[1].toUpperCase()}`
+    }
+    return 'Lainnya'
+  }, [])
+
+  // Opsi Tingkat dinamis dari data riil rombel
+  const tingkatOptions = React.useMemo(() => {
+    if (!rombelData || rombelData.length === 0) return []
+    const map = new Map<string, number>()
+    rombelData.forEach(r => {
+      const t = extractTingkat(r.name)
+      map.set(t, (map.get(t) || 0) + 1)
+    })
+
+    return Array.from(map.entries())
+      .map(([tingkat, count]) => ({ id: tingkat, label: tingkat, count }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'id', { numeric: true }))
+  }, [rombelData, extractTingkat])
+
+  // Filter rombel berdasarkan tab tingkat atau over-capacity
+  const displayedRombel = React.useMemo(() => {
+    if (!rombelData) return []
+    if (selectedTingkat === 'OVER_CAPACITY') {
+      return rombelData.filter(r => r.total > 35)
+    }
+    if (selectedTingkat === 'ALL') {
+      return rombelData
+    }
+    return rombelData.filter(r => extractTingkat(r.name) === selectedTingkat)
+  }, [rombelData, selectedTingkat, extractTingkat])
+
+  const overCapacityCount = React.useMemo(() => {
+    return rombelData.filter(r => r.total > 35).length
+  }, [rombelData])
 
   const formatNumber = (num: number) => new Intl.NumberFormat('id-ID').format(num || 0)
   const formatCurrency = (num: number) => `Rp ${new Intl.NumberFormat('id-ID').format(num || 0)}`
@@ -207,173 +255,230 @@ export default function UnitDashboard(props: UnitDashboardProps) {
       </section>
 
       {/* SECTION 3: Statistik Akademik (Forest Green & Emerald Charts) */}
-      <section className="flex flex-col gap-3.5">
+      {/* SECTION 3: Statistik Akademik (Data-Density Proportionate Layout) */}
+      <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-0.5 px-1 mt-2">
           <h2 className="text-lg sm:text-xl font-extrabold text-text-main tracking-tight">Statistik Akademik</h2>
-          <p className="text-xs text-text-muted">Distribusi kepadatan siswa per kelas belajar dan komposisi gender unit.</p>
+          <p className="text-xs text-text-muted">Distribusi kapasitas rombel belajar, komposisi gender, dan riwayat pertumbuhan siswa.</p>
         </div>
 
-        {/* Row 1: Kepadatan Rombel + Gender */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Bar Chart: Kepadatan Rombel (2 Kolom) */}
-          <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-2xs lg:col-span-2 flex flex-col min-h-[420px]">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <h3 className="font-bold text-text-main text-lg flex items-center gap-2">
-                  <Users size={18} className="text-[#065f32]" />
-                  <span>Kepadatan Siswa per Rombel</span>
-                </h3>
-                <p className="text-xs text-text-muted mt-0.5">
-                  Batas ideal maksimal adalah 35 siswa/rombel.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                {selectedRombelDrilldown ? (
-                  <button
-                    onClick={() => setSelectedRombelDrilldown(null)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all shadow-2xs shrink-0 min-h-[44px] cursor-pointer"
-                  >
-                    ← Kembali
-                  </button>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-200/80 rounded-lg text-xs font-bold min-h-[32px]">
-                    Batas Ideal: 35
-                  </span>
-                )}
-              </div>
+        {/* CARD 1: Kepadatan Siswa per Rombel (FULL WIDTH 100% - Adaptif untuk 50+ Rombel) */}
+        <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-2xs flex flex-col min-h-[460px]">
+          {/* Card Header with Tingkat Filter & Overcapacity Alert */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 pb-3 border-b border-border/60">
+            <div>
+              <h3 className="font-bold text-text-main text-lg flex items-center gap-2">
+                <Users size={18} className="text-[#065f32]" />
+                <span>Kepadatan Siswa per Rombel</span>
+              </h3>
+              <p className="text-xs text-text-muted mt-0.5">
+                Evaluasi kapasitas rombel belajar (Batas ideal: 35 siswa/rombel).
+              </p>
             </div>
 
-            <div className="flex-1 w-full mt-4 min-h-0">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Alert Overcapacity Pill */}
+              {overCapacityCount > 0 && !selectedRombelDrilldown && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedTingkat(selectedTingkat === 'OVER_CAPACITY' ? 'ALL' : 'OVER_CAPACITY')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    selectedTingkat === 'OVER_CAPACITY'
+                      ? 'bg-rose-600 text-white shadow-xs'
+                      : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
+                  }`}
+                  title="Klik untuk menyaring hanya rombel yang over-kapasitas"
+                >
+                  <AlertTriangle size={13} />
+                  <span>{overCapacityCount} Over-Kapasitas</span>
+                </button>
+              )}
+
               {selectedRombelDrilldown ? (
-                <div className="h-full flex flex-col sm:flex-row gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                  <div className="flex-1 min-w-[200px] flex flex-col items-center justify-center bg-bg rounded-xl p-4 border border-border">
-                    <h4 className="text-sm font-bold text-text-main mb-2">Komposisi Gender Kelas {selectedRombelDrilldown.name}</h4>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie
-                          data={selectedRombelDrilldown.genderDist || []}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={50}
-                          outerRadius={80}
-                          paddingAngle={2}
-                          dataKey="value"
-                        >
-                          {(selectedRombelDrilldown.genderDist || []).map((entry: any, index: number) => {
-                            const isMale = entry.name?.toLowerCase().includes('laki')
-                            return (
-                              <Cell key={`cell-${index}`} fill={isMale ? '#065f32' : '#10b981'} />
-                            )
-                          })}
-                        </Pie>
-                        <Tooltip formatter={(value: any) => [`${value} Siswa`, 'Jumlah']} />
-                        <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex-1 flex flex-col bg-bg rounded-xl p-4 border border-border overflow-hidden">
-                    <h4 className="text-sm font-bold text-text-main mb-3 flex items-center justify-between">
-                      <span>Daftar Siswa (Sampel)</span>
-                      <span className="text-[10px] font-bold px-2.5 py-0.5 bg-emerald-50 text-[#065f32] border border-emerald-200 rounded-full">{selectedRombelDrilldown.total} Total</span>
-                    </h4>
-                    <div className="flex-1 overflow-y-auto pr-1 space-y-2">
-                      {selectedRombelDrilldown.topStudents && selectedRombelDrilldown.topStudents.length > 0 ? (
-                        selectedRombelDrilldown.topStudents.map((s: any, idx: number) => (
-                          <div key={idx} className="flex items-center justify-between p-2.5 bg-surface rounded-lg border border-border shadow-2xs">
-                            <span className="text-xs font-semibold text-text-main line-clamp-1">{s.name}</span>
-                            <span className="text-[10px] text-text-muted font-mono bg-bg px-2 py-0.5 rounded border border-border">{s.gender}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-xs text-center text-text-muted py-6">Data siswa tidak tersedia</div>
-                      )}
-                    </div>
-                    {selectedRombelDrilldown.id && (
-                      <Link 
-                        href={`/kelas`}
-                        className="mt-3 w-full flex items-center justify-center py-2.5 bg-surface border border-border rounded-xl text-xs font-bold text-primary hover:bg-slate-50 transition-colors min-h-[44px] shadow-2xs"
-                      >
-                        Kelola Kelas di Modul Akademik
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              ) : rombelData && rombelData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart 
-                    data={rombelData} 
-                    margin={{ top: 25, right: 10, left: -20, bottom: 40 }}
-                    onClick={(data: any) => {
-                      if (data && data.activePayload && data.activePayload[0] && data.activePayload[0].payload) {
-                        setSelectedRombelDrilldown(data.activePayload[0].payload)
-                      }
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#64748b', fontSize: 11 }} 
-                      interval={0}
-                      angle={-30}
-                      textAnchor="end"
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#64748b', fontSize: 12 }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} 
-                      formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Jumlah']}
-                      cursor={{ fill: '#f8fafc' }}
-                    />
-                    <ReferenceLine 
-                      y={35} 
-                      label={{ 
-                        value: 'Maks Ideal (35)', 
-                        fill: '#e11d48', 
-                        fontSize: 11, 
-                        fontWeight: 'bold', 
-                        position: 'top',
-                        dy: -6
-                      }} 
-                      stroke="#e11d48" 
-                      strokeDasharray="4 4" 
-                      strokeWidth={2} 
-                    />
-                    <Bar 
-                      dataKey="total" 
-                      radius={[6, 6, 0, 0]} 
-                      barSize={32}
-                      cursor="pointer"
-                      onClick={(data: any) => {
-                        if (data) {
-                          setSelectedRombelDrilldown(data)
-                        }
-                      }}
-                    >
-                      {rombelData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={entry.total > 35 ? '#e11d48' : '#065f32'} 
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <button
+                  onClick={() => setSelectedRombelDrilldown(null)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all shadow-2xs shrink-0 cursor-pointer"
+                >
+                  ← Kembali ke Grafik
+                </button>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-bg rounded-xl border border-dashed border-border">
-                  <LayoutDashboard size={32} className="text-gray-300 mb-2" />
-                  <p className="text-sm font-semibold text-text-muted">Belum Ada Rombel Aktif</p>
-                </div>
+                <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-200/80 rounded-lg text-xs font-bold">
+                  Batas Ideal: 35
+                </span>
               )}
             </div>
           </div>
 
-          {/* Pie: Gender (1 Kolom) */}
-          <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-2xs flex flex-col justify-between min-h-[420px]">
+          {/* Interactive Tingkat Filter Tabs */}
+          {!selectedRombelDrilldown && tingkatOptions.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2 select-none custom-scrollbar">
+              <button
+                type="button"
+                onClick={() => setSelectedTingkat('ALL')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  selectedTingkat === 'ALL'
+                    ? 'bg-primary text-white shadow-xs'
+                    : 'bg-bg text-text-muted hover:text-text-main border border-border'
+                }`}
+              >
+                Semua Rombel ({rombelData.length})
+              </button>
+
+              {tingkatOptions.map(t => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setSelectedTingkat(t.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    selectedTingkat === t.id
+                      ? 'bg-primary text-white shadow-xs'
+                      : 'bg-bg text-text-muted hover:text-text-main border border-border'
+                  }`}
+                >
+                  {t.label} ({t.count})
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Chart / Drilldown Canvas */}
+          <div className="flex-1 w-full mt-2 min-h-0">
+            {selectedRombelDrilldown ? (
+              <div className="h-full flex flex-col sm:flex-row gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="flex-1 min-w-[200px] flex flex-col items-center justify-center bg-bg rounded-xl p-4 border border-border">
+                  <h4 className="text-sm font-bold text-text-main mb-2">Komposisi Gender Kelas {selectedRombelDrilldown.name}</h4>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={selectedRombelDrilldown.genderDist || []}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {(selectedRombelDrilldown.genderDist || []).map((entry: any, index: number) => {
+                          const isMale = entry.name?.toLowerCase().includes('laki')
+                          return (
+                            <Cell key={`cell-${index}`} fill={isMale ? '#065f32' : '#10b981'} />
+                          )
+                        })}
+                      </Pie>
+                      <Tooltip formatter={(value: any) => [`${value} Siswa`, 'Jumlah']} />
+                      <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex-1 flex flex-col bg-bg rounded-xl p-4 border border-border overflow-hidden">
+                  <h4 className="text-sm font-bold text-text-main mb-3 flex items-center justify-between">
+                    <span>Daftar Siswa (Sampel)</span>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 bg-emerald-50 text-[#065f32] border border-emerald-200 rounded-full">{selectedRombelDrilldown.total} Total</span>
+                  </h4>
+                  <div className="flex-1 overflow-y-auto pr-1 space-y-2">
+                    {selectedRombelDrilldown.topStudents && selectedRombelDrilldown.topStudents.length > 0 ? (
+                      selectedRombelDrilldown.topStudents.map((s: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-2.5 bg-surface rounded-lg border border-border shadow-2xs">
+                          <span className="text-xs font-semibold text-text-main line-clamp-1">{s.name}</span>
+                          <span className="text-[10px] text-text-muted font-mono bg-bg px-2 py-0.5 rounded border border-border">{s.gender}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-xs text-center text-text-muted py-6">Data siswa tidak tersedia</div>
+                    )}
+                  </div>
+                  {selectedRombelDrilldown.id && (
+                    <Link 
+                      href={`/kelas`}
+                      className="mt-3 w-full flex items-center justify-center py-2.5 bg-surface border border-border rounded-xl text-xs font-bold text-primary hover:bg-slate-50 transition-colors min-h-[44px] shadow-2xs"
+                    >
+                      Kelola Kelas di Modul Akademik
+                    </Link>
+                  )}
+                </div>
+              </div>
+            ) : displayedRombel && displayedRombel.length > 0 ? (
+              <div className="w-full overflow-x-auto custom-scrollbar pb-2">
+                <div style={{ minWidth: displayedRombel.length > 14 ? `${displayedRombel.length * 44}px` : '100%', height: '360px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart 
+                      data={displayedRombel} 
+                      margin={{ top: 25, right: 15, left: -15, bottom: 45 }}
+                      onClick={(data: any) => {
+                        if (data && data.activePayload && data.activePayload[0] && data.activePayload[0].payload) {
+                          setSelectedRombelDrilldown(data.activePayload[0].payload)
+                        }
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis 
+                        dataKey="name" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: '#64748b', fontSize: 11 }} 
+                        interval={0}
+                        angle={-25}
+                        textAnchor="end"
+                      />
+                      <YAxis 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: '#64748b', fontSize: 12 }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} 
+                        formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Jumlah']}
+                        cursor={{ fill: '#f8fafc' }}
+                      />
+                      <ReferenceLine 
+                        y={35} 
+                        label={{ 
+                          value: 'Maks Ideal (35)', 
+                          fill: '#e11d48', 
+                          fontSize: 11, 
+                          fontWeight: 'bold', 
+                          position: 'top',
+                          dy: -6
+                        }} 
+                        stroke="#e11d48" 
+                        strokeDasharray="4 4" 
+                        strokeWidth={2} 
+                      />
+                      <Bar 
+                        dataKey="total" 
+                        radius={[6, 6, 0, 0]} 
+                        barSize={28}
+                        cursor="pointer"
+                        onClick={(data: any) => {
+                          if (data) {
+                            setSelectedRombelDrilldown(data)
+                          }
+                        }}
+                      >
+                        {displayedRombel.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={entry.total > 35 ? '#e11d48' : '#065f32'} 
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-bg rounded-xl border border-dashed border-border">
+                <LayoutDashboard size={32} className="text-gray-300 mb-2" />
+                <p className="text-sm font-semibold text-text-muted">Tidak Ada Rombel yang Sesuai Filter</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ROW 2: Demografi Gender (50%) & Trend Siswa Baru (50%) Berdampingan Seimbang */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Card A: Demografi Gender */}
+          <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-2xs flex flex-col justify-between min-h-[380px]">
             <div>
               <h3 className="font-bold text-text-main text-lg flex items-center gap-2 mb-1">
                 <Users size={20} className="text-[#065f32]" />
@@ -382,7 +487,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
               <p className="text-xs text-text-muted">Perbandingan siswa laki-laki dan perempuan di unit ini.</p>
             </div>
 
-            <div className="flex-1 min-h-[220px] my-4 flex items-center justify-center">
+            <div className="flex-1 min-h-[200px] my-3 flex items-center justify-center">
               {refinedGenderData && refinedGenderData.length > 0 && refinedGenderData.some(d => d.value > 0) ? (
                 <div className="w-full flex flex-col items-center">
                   <div className="w-full h-[180px]">
@@ -433,45 +538,49 @@ export default function UnitDashboard(props: UnitDashboardProps) {
               </span>
             </div>
           </div>
-        </div>
 
-        {/* Row 2: Pertumbuhan Siswa Line Chart */}
-        <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-2xs flex flex-col min-h-[350px]">
-          <div className="flex items-center justify-between mb-2">
+          {/* Card B: Trend Pertumbuhan Siswa Baru */}
+          <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-2xs flex flex-col justify-between min-h-[380px]">
             <div>
-              <h3 className="font-bold text-text-main text-lg flex items-center gap-2">
+              <h3 className="font-bold text-text-main text-lg flex items-center gap-2 mb-1">
                 <Activity size={18} className="text-[#065f32]" />
                 <span>Trend Pertumbuhan Siswa Baru</span>
               </h3>
-              <p className="text-xs text-text-muted mt-0.5">Pertumbuhan siswa 3 tahun terakhir.</p>
+              <p className="text-xs text-text-muted">Pertumbuhan penerimaan siswa 3 tahun terakhir.</p>
             </div>
-          </div>
-          <div className="w-full mt-4 h-[260px] min-h-[260px]">
-            {trendData && trendData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} 
-                    formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Siswa Baru']}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="total" 
-                    stroke="#065f32" 
-                    strokeWidth={3} 
-                    dot={{ r: 4, strokeWidth: 2, fill: '#ffffff', stroke: '#065f32' }} 
-                    activeDot={{ r: 6, fill: '#065f32' }} 
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-bg rounded-xl border border-dashed border-border">
-                <p className="text-sm font-semibold text-text-muted">Belum Ada Data Trend</p>
-              </div>
-            )}
+
+            <div className="w-full my-3 h-[220px] min-h-[220px]">
+              {trendData && trendData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendData} margin={{ top: 15, right: 15, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} 
+                      formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Siswa Baru']}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="total" 
+                      stroke="#065f32" 
+                      strokeWidth={3} 
+                      dot={{ r: 4, strokeWidth: 2, fill: '#ffffff', stroke: '#065f32' }} 
+                      activeDot={{ r: 6, fill: '#065f32' }} 
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-bg rounded-xl border border-dashed border-border">
+                  <p className="text-sm font-semibold text-text-muted">Belum Ada Data Trend</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-3 bg-bg rounded-xl border border-border flex items-center justify-between text-xs font-medium text-text-muted">
+              <span>Status Trend</span>
+              <span className="font-bold text-emerald-700">Tahun Akademik Berjalan</span>
+            </div>
           </div>
         </div>
       </section>
@@ -553,52 +662,113 @@ export default function UnitDashboard(props: UnitDashboardProps) {
         </div>
       </section>
 
-      {/* SECTION 5: Keuangan Unit (Solid Matte Cards) */}
+      {/* SECTION 5: Keuangan Unit (Arus Kas Riil vs Proyeksi Tagihan & Sisa Piutang) */}
       <section className="flex flex-col gap-3.5">
         <div className="flex flex-col gap-0.5 px-1 mt-2">
           <h2 className="text-lg sm:text-xl font-extrabold text-text-main tracking-tight">Keuangan Unit</h2>
-          <p className="text-xs text-text-muted">Realisasi penerimaan kas bulan ini, total piutang berjalan, dan rasio kolektibilitas.</p>
+          <p className="text-xs text-text-muted">Realisasi kas masuk nyata, proyeksi tagihan diterbitkan, dan rasio efektivitas penagihan piutang.</p>
         </div>
 
-        {/* 3 KPI Cards (Solid Matte, Disciplined Borders) */}
+        {/* 3 KPI Cards: Arus Kas Riil vs Proyeksi Tagihan vs Sisa Piutang */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-surface rounded-2xl border border-emerald-200/80 p-5 shadow-2xs">
-            <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 mb-2">Pendapatan Bulan Ini</div>
-            <div className="my-1">
-              <AdaptiveValue 
-                value={formatCurrency(penerimaanBulanIni)}
-                className="text-emerald-800"
-                maxFontSize={30}
-                minFontSize={16}
-              />
+          {/* Card 1: Realisasi Kas Masuk (Riil) */}
+          <div className="bg-surface rounded-2xl border border-emerald-200/90 p-5 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">Arus Kas Masuk (Bulan Ini)</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  Uang Kas Riil
+                </span>
+              </div>
+              <div className="my-1">
+                <AdaptiveValue 
+                  value={formatCurrency(penerimaanBulanIni)}
+                  className="text-emerald-800 font-black"
+                  maxFontSize={30}
+                  minFontSize={16}
+                />
+              </div>
             </div>
-            <p className="text-xs text-emerald-700/80 mt-1 font-medium">Realisasi transaksi penerimaan kas</p>
+            <p className="text-xs text-emerald-700/80 mt-2 font-medium">Realisasi pembayaran tunai & bank yang telah diverifikasi</p>
           </div>
           
-          <div className="bg-surface rounded-2xl border border-rose-200/80 p-5 shadow-2xs">
-            <div className="text-xs font-bold uppercase tracking-wider text-rose-700 mb-2">Total Piutang (Tunggakan)</div>
-            <div className="my-1">
-              <AdaptiveValue 
-                value={formatCurrency(totalTunggakanUnit)}
-                className="text-rose-700"
-                maxFontSize={30}
-                minFontSize={16}
-              />
+          {/* Card 2: Proyeksi Target Tagihan (Billing) */}
+          <div className="bg-surface rounded-2xl border border-blue-200/90 p-5 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-800">Target Tagihan (Tahun Ini)</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                  Proyeksi Invoice
+                </span>
+              </div>
+              <div className="my-1">
+                <AdaptiveValue 
+                  value={formatCurrency(totalTagihanUnit)}
+                  className="text-blue-900 font-black"
+                  maxFontSize={30}
+                  minFontSize={16}
+                />
+              </div>
             </div>
-            <p className="text-xs text-rose-600/80 mt-1 font-medium">Akumulasi tagihan siswa belum lunas</p>
+            <p className="text-xs text-blue-700/80 mt-2 font-medium">Total kewajiban biaya pendidikan yang diterbitkan</p>
           </div>
 
-          <div className="bg-surface rounded-2xl border border-border p-5 shadow-2xs">
-            <div className="text-xs font-bold uppercase tracking-wider text-text-muted mb-2">Kolektibilitas Unit</div>
-            <div className="text-2xl sm:text-3xl font-black text-text-main">{kolektibilitasUnit === null ? 'N/A' : `${kolektibilitasUnit}%`}</div>
-            <div className="mt-1.5">
-              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${
-                kolektibilitasUnit && kolektibilitasUnit >= 80 
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                  : 'bg-amber-50 text-amber-700 border-amber-200'
-              }`}>
-                {kolektibilitasUnit && kolektibilitasUnit >= 80 ? 'Kolektibilitas Sehat' : 'Perlu Atensi'}
-              </span>
+          {/* Card 3: Sisa Piutang / Tunggakan */}
+          <div className="bg-surface rounded-2xl border border-rose-200/90 p-5 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-rose-700">Sisa Piutang (Tunggakan)</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                  Belum Tertagih
+                </span>
+              </div>
+              <div className="my-1">
+                <AdaptiveValue 
+                  value={formatCurrency(totalTunggakanUnit)}
+                  className="text-rose-700 font-black"
+                  maxFontSize={30}
+                  minFontSize={16}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-rose-600/80 mt-2 font-medium">Akumulasi tunggakan siswa yang belum lunas</p>
+          </div>
+        </div>
+
+        {/* Visual Reconciliation Bar: Rasio Realisasi Kas Masuk vs Proyeksi Tagihan */}
+        <div className="bg-surface rounded-2xl border border-border p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 w-full sm:w-auto">
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center shrink-0 font-black text-sm">
+              {kolektibilitasUnit === null ? 'N/A' : `${kolektibilitasUnit}%`}
+            </div>
+            <div>
+              <div className="text-xs font-bold text-text-main flex items-center gap-2">
+                <span>Efektivitas Penagihan Tagihan (Kolektibilitas)</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                  kolektibilitasUnit && kolektibilitasUnit >= 80 
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                }`}>
+                  {kolektibilitasUnit && kolektibilitasUnit >= 80 ? 'Kolektibilitas Sehat' : 'Perlu Atensi'}
+                </span>
+              </div>
+              <p className="text-[11px] text-text-muted mt-0.5">
+                Dari total proyeksi tagihan {formatCurrency(totalTagihanUnit)}, sebesar {formatCurrency(terbayarUnit)} ({kolektibilitasUnit || 0}%) telah terealisasi masuk kas.
+              </p>
+            </div>
+          </div>
+
+          <div className="w-full sm:w-72 shrink-0 flex flex-col gap-1.5">
+            <div className="h-3 w-full bg-rose-100 rounded-full overflow-hidden flex">
+              <div 
+                className="bg-emerald-600 h-full transition-all duration-500 rounded-full"
+                style={{ width: `${Math.min(100, Math.max(0, kolektibilitasUnit || 0))}%` }}
+                title={`Terbayar: ${kolektibilitasUnit || 0}%`}
+              />
+            </div>
+            <div className="flex justify-between text-[10px] text-text-muted font-medium">
+              <span className="text-emerald-700 font-bold">● Kas Masuk {kolektibilitasUnit || 0}%</span>
+              <span className="text-rose-600 font-bold">● Piutang {100 - (kolektibilitasUnit || 0)}%</span>
             </div>
           </div>
         </div>

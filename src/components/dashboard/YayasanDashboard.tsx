@@ -420,10 +420,10 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
             <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs h-full flex flex-col">
               <div className="mb-4">
                 <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-[#065f32] border border-emerald-200/80 inline-block mb-1">
-                  Arus Kas Masuk
+                  Arus Kas Masuk (Riil)
                 </span>
-                <h3 className="text-lg font-bold text-slate-900">Penerimaan Kas & Pendapatan Konsolidasi</h3>
-                <p className="text-xs text-slate-500">Pantau transaksi penerimaan berdasarkan interval hari, minggu, bulan, atau distribusi per unit.</p>
+                <h3 className="text-lg font-bold text-slate-900">Penerimaan Kas Riil Konsolidasi</h3>
+                <p className="text-xs text-slate-500">Pantau transaksi penerimaan kas riil (tunai & bank) yang telah diverifikasi per hari, minggu, bulan, atau distribusi per unit.</p>
               </div>
 
               <div className="flex-1 min-h-[380px] w-full">
@@ -449,7 +449,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                     <TrendingUp size={18} className="text-[#065f32]" />
                     Trend Arus Kas (6 Bulan)
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Perbandingan pemasukan vs pengeluaran konsolidasi.</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Perbandingan arus kas masuk riil vs pengeluaran operasional.</p>
                 </div>
               </div>
 
@@ -479,8 +479,8 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                         contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }}
                         formatter={(value: any) => formatCurrency(Number(value))}
                       />
-                      <Area type="monotone" name="Pemasukan" dataKey="pemasukan" stroke="#065f32" strokeWidth={2.5} fillOpacity={1} fill="url(#colorPemasukanYayasan)" />
-                      <Area type="monotone" name="Pengeluaran" dataKey="pengeluaran" stroke="#e11d48" strokeWidth={2.5} fillOpacity={1} fill="url(#colorPengeluaranYayasan)" />
+                      <Area type="monotone" name="Kas Masuk (Riil)" dataKey="pemasukan" stroke="#065f32" strokeWidth={2.5} fillOpacity={1} fill="url(#colorPemasukanYayasan)" />
+                      <Area type="monotone" name="Kas Keluar (Operasional)" dataKey="pengeluaran" stroke="#e11d48" strokeWidth={2.5} fillOpacity={1} fill="url(#colorPengeluaranYayasan)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
@@ -492,10 +492,10 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
 
               <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-100 mt-2 text-slate-500">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#065f32]"></span> Pemasukan
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#065f32]"></span> Kas Masuk (Riil)
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#e11d48]"></span> Pengeluaran
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#e11d48]"></span> Kas Keluar
                 </span>
               </div>
             </div>

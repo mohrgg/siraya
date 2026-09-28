@@ -548,7 +548,7 @@ async function fetchUnitDashboardData(unitId: string, yearId?: string) {
     guruStatusData, guruPendidikanData,
     trendData,
     // Ekstra Keuangan Unit
-    penerimaanBulanIni, pengeluaranBulanIni, totalTunggakanUnit, tunggakanKritisList, kolektibilitasUnit,
+    penerimaanBulanIni, pengeluaranBulanIni, totalTagihanUnit, terbayarUnit, totalTunggakanUnit, tunggakanKritisList, kolektibilitasUnit,
     incompleteDataCount,
     ...interactiveChartDataU
   }
