@@ -69,7 +69,8 @@ export async function getMuridWithTagihanUnpaid(filters: {
           some: {
             subKelasId: filters.subKelasId,
             ...(filters.tahunAkademikId ? { tahunAkademikId: filters.tahunAkademikId } : {}),
-            isCurrent: true
+            isCurrent: true,
+            subKelas: { isDeleted: false }
           }
         }
       }
@@ -78,8 +79,11 @@ export async function getMuridWithTagihanUnpaid(filters: {
         some: {
           tahunAkademikId: filters.tahunAkademikId,
           isCurrent: true,
-          ...(filters.subKelasId ? { subKelasId: filters.subKelasId } : {}),
-          ...(filters.kelasId && !filters.subKelasId ? { subKelas: { tingkatId: filters.kelasId } } : {})
+          subKelas: {
+            isDeleted: false,
+            ...(filters.kelasId && !filters.subKelasId ? { tingkatId: filters.kelasId } : {})
+          },
+          ...(filters.subKelasId ? { subKelasId: filters.subKelasId } : {})
         }
       }
     }
@@ -92,7 +96,10 @@ export async function getMuridWithTagihanUnpaid(filters: {
         nisn: true,
         formNo: true,
         riwayatKelas: {
-          where: { isCurrent: true },
+          where: { 
+            isCurrent: true,
+            subKelas: { isDeleted: false }
+          },
           orderBy: {
             createdAt: 'desc'
           },

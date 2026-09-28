@@ -49,10 +49,26 @@ export async function getKelasByUnit(unitSekolahId: string) {
   }
   const result = await prisma.tingkat.findMany({
     where,
+    include: {
+      _count: {
+        select: {
+          subKelas: { where: { isDeleted: false } }
+        }
+      }
+    },
     orderBy: { order: 'asc' }
   })
-  console.log("getKelasByUnit called with", unitSekolahId, "Result length:", result.length)
-  return result
+  
+  // Deduplikasi tingkat jika ada record ganda dengan nama sama pada unit sekolah
+  // Prioritaskan record yang memiliki subkelas aktif terbanyak
+  const uniqueMap = new Map<string, typeof result[0]>()
+  for (const item of result) {
+    const existing = uniqueMap.get(item.name)
+    if (!existing || (item._count?.subKelas || 0) > (existing._count?.subKelas || 0)) {
+      uniqueMap.set(item.name, item)
+    }
+  }
+  return Array.from(uniqueMap.values()).sort((a, b) => a.order - b.order)
 }
 
 export async function getSubKelasByKelas(tingkatId: string, jurusanId?: string, tahunAkademikId?: string) {

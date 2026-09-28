@@ -179,24 +179,28 @@ export default function PembayaranTagihanClient({
       return
     }
     
-    getSubKelasByKelas(kelasId, jurusanList.length > 0 && jurusanId ? jurusanId : undefined).then(res => {
+    getSubKelasByKelas(
+      kelasId, 
+      jurusanList.length > 0 && jurusanId ? jurusanId : undefined,
+      activeTahunAkademikId || undefined
+    ).then(res => {
       setSubKelasList(res)
       setSubKelasId("")
     })
-  }, [kelasId, jurusanId, jurusanList.length])
+  }, [kelasId, jurusanId, jurusanList.length, activeTahunAkademikId])
 
-  // Extract available levels for pills filter in search mode
+  // Extract available levels for pills filter in search mode (grouped by unique level name)
   const availableLevels = useMemo(() => {
     if (rawMuridList.length === 0) return []
     const levelMap = new Map<string, { id: string, name: string, count: number }>()
     rawMuridList.forEach(m => {
       const tingkat = m.riwayatKelas?.[0]?.subKelas?.tingkat
-      if (tingkat?.id && tingkat?.name) {
-        const existing = levelMap.get(tingkat.id)
+      if (tingkat?.name) {
+        const existing = levelMap.get(tingkat.name)
         if (existing) {
           existing.count += 1
         } else {
-          levelMap.set(tingkat.id, { id: tingkat.id, name: tingkat.name, count: 1 })
+          levelMap.set(tingkat.name, { id: tingkat.name, name: tingkat.name, count: 1 })
         }
       }
     })
@@ -212,7 +216,10 @@ export default function PembayaranTagihanClient({
   ) => {
     const effectiveMuridList = levelFilter === "ALL"
       ? muridList
-      : muridList.filter(m => m.riwayatKelas?.[0]?.subKelas?.tingkat?.id === levelFilter)
+      : muridList.filter(m => {
+          const t = m.riwayatKelas?.[0]?.subKelas?.tingkat
+          return t?.id === levelFilter || t?.name === levelFilter
+        })
 
     const columnsMap = new Map<string, {id: string, namaTagihan: string, nama: string, kode: string, monthOrder: number}>()
     

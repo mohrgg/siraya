@@ -23,7 +23,7 @@ export default async function KelasPage() {
   const academicYears = await getTahunAkademik()
   const activeYearId = cookieStore.get("activeYearId")?.value || academicYears.find((y: any) => y.isActive)?.id
 
-  const grades = await getTingkatan(activeUnitId)
+  const grades = await getTingkatan(activeUnitId, activeYearId)
   const majors = await getJurusan()
   const classrooms = await getKelas(activeUnitId, activeYearId)
   const teachers = await getGuruList()

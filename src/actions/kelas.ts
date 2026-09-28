@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth"
 import { logAktivitas } from "@/lib/logger"
 
 // --- GRADES ---
-export async function getTingkatan(unitSekolahId?: string) {
+export async function getTingkatan(unitSekolahId?: string, tahunAkademikId?: string) {
   const session = await auth()
   if (!session) throw new Error("Unauthorized")
 
@@ -19,7 +19,12 @@ export async function getTingkatan(unitSekolahId?: string) {
       unitSekolah: true,
       _count: {
         select: {
-          subKelas: { where: { isDeleted: false } }
+          subKelas: { 
+            where: { 
+              isDeleted: false,
+              ...(tahunAkademikId ? { tahunAkademikId } : {})
+            } 
+          }
         }
       }
     },
@@ -451,5 +456,6 @@ export async function hapusKelas(id: string) {
   await logAktivitas("HAPUS_KELAS", "AKADEMIK_KELAS", `Menghapus rombel kelas: ${result.name} (ID: ${id})`)
 
   revalidatePath("/data-master")
+  revalidatePath("/kelas")
   return result
 }

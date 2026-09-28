@@ -312,6 +312,20 @@ export default function KelasClient({
       } else if (deleteData.type === "subkelas") {
         await hapusKelas(deleteData.id)
         data.setClassrooms(data.classrooms.filter((c: any) => c.id !== deleteData.id))
+        if (targetClassroom?.tingkatId) {
+          data.setGrades((prev: any[]) => prev.map((g: any) => {
+            if (g.id === targetClassroom.tingkatId) {
+              return {
+                ...g,
+                _count: {
+                  ...g._count,
+                  subKelas: Math.max(0, (g._count?.subKelas || 1) - 1)
+                }
+              }
+            }
+            return g
+          }))
+        }
       } else if (deleteData.type === "murid") {
         await hapusSiswa(deleteData.id)
         data.setStudents(data.students.filter((s: any) => s.id !== deleteData.id))
@@ -370,8 +384,20 @@ export default function KelasClient({
     setIsSubmitting(true)
     try {
       if (formSubKelas.id) {
+        const oldClassroom = data.classrooms.find((c: any) => c.id === formSubKelas.id)
         const res = await editKelas(formSubKelas.id, formSubKelas)
         data.setClassrooms(data.classrooms.map((c: any) => c.id === formSubKelas.id ? { ...res, tingkat: data.grades.find((g: any) => g.id === formSubKelas.tingkatId) } : c))
+        if (oldClassroom && oldClassroom.tingkatId !== formSubKelas.tingkatId) {
+          data.setGrades((prev: any[]) => prev.map((g: any) => {
+            if (g.id === oldClassroom.tingkatId) {
+              return { ...g, _count: { ...g._count, subKelas: Math.max(0, (g._count?.subKelas || 1) - 1) } }
+            }
+            if (g.id === formSubKelas.tingkatId) {
+              return { ...g, _count: { ...g._count, subKelas: (g._count?.subKelas || 0) + 1 } }
+            }
+            return g
+          }))
+        }
       } else {
         const res = await tambahKelas(formSubKelas)
         data.setClassrooms([...data.classrooms, {
@@ -379,6 +405,18 @@ export default function KelasClient({
           tingkat: data.grades.find((g: any) => g.id === formSubKelas.tingkatId),
           _count: { murid: 0 }
         }])
+        data.setGrades((prev: any[]) => prev.map((g: any) => {
+          if (g.id === formSubKelas.tingkatId) {
+            return {
+              ...g,
+              _count: {
+                ...g._count,
+                subKelas: (g._count?.subKelas || 0) + 1
+              }
+            }
+          }
+          return g
+        }))
       }
       toast.success("Sub kelas berhasil disimpan")
       setShowModalSubKelas(false)
