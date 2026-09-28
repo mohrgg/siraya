@@ -82,6 +82,10 @@ export default function RekapitulasiTunggakanClient({
   const [studentSearch, setStudentSearch] = useState("")
   const [detailCurrentPage, setDetailCurrentPage] = useState(1)
   const [detailPageSize, setDetailPageSize] = useState(10)
+  const [summaryCurrentPage1, setSummaryCurrentPage1] = useState(1)
+  const [summaryPageSize1, setSummaryPageSize1] = useState(10)
+  const [summaryCurrentPage2, setSummaryCurrentPage2] = useState(1)
+  const [summaryPageSize2, setSummaryPageSize2] = useState(10)
 
   const executiveMetrics = useMemo(() => {
     const totalTagihan = rekapData.reduce((sum, r) => sum + (r.totalTagihan || 0), 0)
@@ -139,11 +143,25 @@ export default function RekapitulasiTunggakanClient({
     )
   }, [rekapData, searchTerm1])
 
+  const totalPages1 = Math.ceil(filteredData1.length / summaryPageSize1) || 1
+
+  const paginatedData1 = useMemo(() => {
+    const start = (summaryCurrentPage1 - 1) * summaryPageSize1
+    return filteredData1.slice(start, start + summaryPageSize1)
+  }, [filteredData1, summaryCurrentPage1, summaryPageSize1])
+
   const filteredData2 = useMemo(() => {
     return rekapData.filter(item => 
       item.subKelasName.toLowerCase().includes(searchTerm2.toLowerCase())
     )
   }, [rekapData, searchTerm2])
+
+  const totalPages2 = Math.ceil(filteredData2.length / summaryPageSize2) || 1
+
+  const paginatedData2 = useMemo(() => {
+    const start = (summaryCurrentPage2 - 1) * summaryPageSize2
+    return filteredData2.slice(start, start + summaryPageSize2)
+  }, [filteredData2, summaryCurrentPage2, summaryPageSize2])
 
   const selectedKelasData = useMemo(() => {
     return rekapData.find(r => r.subKelasId === selectedSubKelasId)
@@ -480,7 +498,14 @@ export default function RekapitulasiTunggakanClient({
                 <Toolbar>
                   <ToolbarSearch 
                     value={searchTerm1}
-                    onChange={(e: any) => setSearchTerm1(e.target.value)}
+                    onChange={(e: any) => {
+                      setSearchTerm1(e.target.value)
+                      setSummaryCurrentPage1(1)
+                    }}
+                    onClear={() => {
+                      setSearchTerm1("")
+                      setSummaryCurrentPage1(1)
+                    }}
                     placeholder="Cari kelas..." 
                     disabled={rekapData.length === 0}
                   />
@@ -522,20 +547,23 @@ export default function RekapitulasiTunggakanClient({
                           </td>
                         </tr>
                       ) : (
-                        filteredData1.map((row, idx) => (
-                          <tr key={row.subKelasId} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
-                            <td className="p-4 text-center text-text-muted">
-                              {idx + 1}
-                            </td>
-                            <td className="p-4 font-medium text-text-main">
-                              {row.subKelasName.toUpperCase()}
-                            </td>
-                            <td className="p-4 text-right font-medium">Rp. {formatRupiah(row.totalTagihan)}</td>
-                            <td className="p-4 text-right font-medium">Rp. {formatRupiah(row.totalDibayar)}</td>
-                            <td className="p-4 text-right font-medium">Rp. {formatRupiah(row.totalTunggakan)}</td>
-                            <td className="p-4 text-right font-medium">Rp. {formatRupiah(row.totalTunggakan)}</td>
-                          </tr>
-                        ))
+                        paginatedData1.map((row, idx) => {
+                          const itemIndex = (summaryCurrentPage1 - 1) * summaryPageSize1 + idx + 1
+                          return (
+                            <tr key={row.subKelasId} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
+                              <td className="p-4 text-center text-text-muted">
+                                {itemIndex}
+                              </td>
+                              <td className="p-4 font-medium text-text-main">
+                                {row.subKelasName.toUpperCase()}
+                              </td>
+                              <td className="p-4 text-right font-medium">Rp. {formatRupiah(row.totalTagihan)}</td>
+                              <td className="p-4 text-right font-medium">Rp. {formatRupiah(row.totalDibayar)}</td>
+                              <td className="p-4 text-right font-medium">Rp. {formatRupiah(row.totalTunggakan)}</td>
+                              <td className="p-4 text-right font-medium">Rp. {formatRupiah(row.totalTunggakan)}</td>
+                            </tr>
+                          )
+                        })
                       )}
                     </tbody>
                     {filteredData1.length > 0 && (
@@ -561,6 +589,52 @@ export default function RekapitulasiTunggakanClient({
                     )}
                   </table>
                 </div>
+
+                {/* Pagination Controls Tabel 1 */}
+                {filteredData1.length > 0 && (
+                  <div className="pt-4 mt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
+                      <select
+                        value={summaryPageSize1}
+                        onChange={(e) => {
+                          setSummaryPageSize1(Number(e.target.value))
+                          setSummaryCurrentPage1(1)
+                        }}
+                        className="px-3 py-1.5 bg-bg border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/50 text-text-main"
+                      >
+                        {[10, 25, 50, 100].map(size => (
+                          <option key={size} value={size}>{size}</option>
+                        ))}
+                      </select>
+                      <span className="text-xs text-text-muted">
+                        Total {filteredData1.length} kelas
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSummaryCurrentPage1(p => Math.max(1, p - 1))}
+                        disabled={summaryCurrentPage1 === 1}
+                      >
+                        Sebelumnya
+                      </Button>
+                      <span className="font-medium text-text-muted text-sm">
+                        Hal {summaryCurrentPage1} dari {totalPages1}
+                      </span>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSummaryCurrentPage1(p => Math.min(totalPages1, p + 1))}
+                        disabled={summaryCurrentPage1 === totalPages1 || totalPages1 === 0}
+                      >
+                        Berikutnya
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -717,7 +791,7 @@ export default function RekapitulasiTunggakanClient({
                           setDetailPageSize(Number(e.target.value))
                           setDetailCurrentPage(1)
                         }}
-                        className="px-3 py-1.5 bg-bg border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/50"
+                        className="px-3 py-1.5 bg-bg border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/50 text-text-main"
                       >
                         {[10, 25, 50, 100].map(size => (
                           <option key={size} value={size}>{size}</option>
@@ -772,7 +846,14 @@ export default function RekapitulasiTunggakanClient({
               <Toolbar>
                 <ToolbarSearch 
                   value={searchTerm2}
-                  onChange={(e: any) => setSearchTerm2(e.target.value)}
+                  onChange={(e: any) => {
+                    setSearchTerm2(e.target.value)
+                    setSummaryCurrentPage2(1)
+                  }}
+                  onClear={() => {
+                    setSearchTerm2("")
+                    setSummaryCurrentPage2(1)
+                  }}
                   placeholder="Cari kelas..." 
                   disabled={rekapData.length === 0}
                 />
@@ -808,29 +889,32 @@ export default function RekapitulasiTunggakanClient({
                         </td>
                       </tr>
                     ) : (
-                      filteredData2.map((row, idx) => (
-                        <tr key={row.subKelasId} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
-                          <td className="p-4 text-center text-text-muted">
-                            {idx + 1}
-                          </td>
-                          <td className="p-4 font-medium text-text-main">
-                            {row.subKelasName.toUpperCase()}
-                          </td>
-                          
-                          {akunList.map(akun => {
-                            const detail = row.detailKomponen[akun.id]
-                            const tunggakan = detail?.tunggakan || 0
-                            const dibayar = detail?.dibayar || 0
-                            return (
-                              <td key={akun.id} className="p-4 text-right font-medium opacity-80">
-                                {tunggakan > 0 
-                                  ? `Rp. ${formatRupiah(tunggakan)}` 
-                                  : (dibayar > 0 ? <span className="text-emerald-600 font-semibold text-xs">LUNAS</span> : "-")}
-                              </td>
-                            )
-                          })}
-                        </tr>
-                      ))
+                      paginatedData2.map((row, idx) => {
+                        const itemIndex = (summaryCurrentPage2 - 1) * summaryPageSize2 + idx + 1
+                        return (
+                          <tr key={row.subKelasId} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
+                            <td className="p-4 text-center text-text-muted">
+                              {itemIndex}
+                            </td>
+                            <td className="p-4 font-medium text-text-main">
+                              {row.subKelasName.toUpperCase()}
+                            </td>
+                            
+                            {akunList.map(akun => {
+                              const detail = row.detailKomponen[akun.id]
+                              const tunggakan = detail?.tunggakan || 0
+                              const dibayar = detail?.dibayar || 0
+                              return (
+                                <td key={akun.id} className="p-4 text-right font-medium opacity-80">
+                                  {tunggakan > 0 
+                                    ? `Rp. ${formatRupiah(tunggakan)}` 
+                                    : (dibayar > 0 ? <span className="text-emerald-600 font-semibold text-xs">LUNAS</span> : "-")}
+                                </td>
+                              )
+                            })}
+                          </tr>
+                        )
+                      })
                     )}
                   </tbody>
                   {filteredData2.length > 0 && (
@@ -853,6 +937,52 @@ export default function RekapitulasiTunggakanClient({
                   )}
                 </table>
               </div>
+
+              {/* Pagination Controls Tabel 2 */}
+              {filteredData2.length > 0 && (
+                <div className="pt-4 mt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
+                    <select
+                      value={summaryPageSize2}
+                      onChange={(e) => {
+                        setSummaryPageSize2(Number(e.target.value))
+                        setSummaryCurrentPage2(1)
+                      }}
+                      className="px-3 py-1.5 bg-bg border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/50 text-text-main"
+                    >
+                      {[10, 25, 50, 100].map(size => (
+                        <option key={size} value={size}>{size}</option>
+                      ))}
+                    </select>
+                    <span className="text-xs text-text-muted">
+                      Total {filteredData2.length} kelas
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSummaryCurrentPage2(p => Math.max(1, p - 1))}
+                      disabled={summaryCurrentPage2 === 1}
+                    >
+                      Sebelumnya
+                    </Button>
+                    <span className="font-medium text-text-muted text-sm">
+                      Hal {summaryCurrentPage2} dari {totalPages2}
+                    </span>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSummaryCurrentPage2(p => Math.min(totalPages2, p + 1))}
+                      disabled={summaryCurrentPage2 === totalPages2 || totalPages2 === 0}
+                    >
+                      Berikutnya
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>
