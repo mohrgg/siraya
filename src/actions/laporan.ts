@@ -3,6 +3,98 @@
 import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 
+interface AkunLaporanItem {
+  kode: string
+  nama: string
+  total: number
+}
+
+function parseAkunPendapatan(item: AkunLaporanItem) {
+  const origNama = (item.nama || "").trim()
+  const upperNama = origNama.toUpperCase()
+  const kode = (item.kode || "").trim()
+
+  // 1. Ekstrak tahun jika ada (misal 2024, 2025, 2026, 2027)
+  const matchYear = upperNama.match(/\b(20\d{2})\b/)
+  const year = matchYear ? parseInt(matchYear[1], 10) : 9999
+
+  // Hapus pola tahun dari string sementara agar tidak mengganggu deteksi angka kelas
+  const cleanNamaForLevel = upperNama.replace(/\b20\d{2}\b/g, " ")
+
+  // 2. Ekstrak tingkatan kelas (Romawi / Arab)
+  let level = 999
+  const romanMap: Record<string, number> = {
+    "XII": 12, "XI": 11, "X": 10, "IX": 9, "VIII": 8, "VII": 7,
+    "VI": 6, "V": 5, "IV": 4, "III": 3, "II": 2, "I": 1
+  }
+  for (const [roman, num] of Object.entries(romanMap)) {
+    if (new RegExp(`\\b${roman}\\b`).test(cleanNamaForLevel)) {
+      level = num
+      break
+    }
+  }
+  if (level === 999) {
+    const matchArab = cleanNamaForLevel.match(/\b([1-9]|1[0-2])\b/)
+    if (matchArab) {
+      level = parseInt(matchArab[1], 10)
+    }
+  }
+
+  // 3. Tentukan kategori / rank prioritas
+  let rank = 100
+  if (upperNama.includes("SPP") && level !== 999) {
+    rank = 10 // SPP per tingkat (X, XI, XII / 1-12)
+  } else if (upperNama.includes("SPP")) {
+    rank = 20 // SPP tahunan / umum
+  } else if (upperNama.includes("PSB") || upperNama.includes("PPDB") || upperNama.includes("PENDAFTARAN") || upperNama.includes("PANGKAL")) {
+    rank = 30 // Penerimaan Siswa Baru
+  } else if (upperNama.includes("DAFTAR ULANG") || upperNama.includes("REGISTRASI ULANG")) {
+    rank = 40 // Daftar Ulang
+  } else if (upperNama.includes("BAT") || upperNama.includes("AWAL TAHUN") || upperNama.includes("GEDUNG") || upperNama.includes("SARANA")) {
+    rank = 50 // Biaya Awal Tahun / Sarana
+  } else if (upperNama.includes("SERAGAM") || upperNama.includes("BUKU") || upperNama.includes("LKS") || upperNama.includes("KEGIATAN") || upperNama.includes("UJIAN") || upperNama.includes("ASESMEN") || upperNama.includes("PRAKERIN") || upperNama.includes("PKL")) {
+    rank = 60 // Biaya kesiswaan/akademik
+  }
+
+  return { rank, level, year, kode, nama: origNama }
+}
+
+function sortLaporanPendapatan(a: AkunLaporanItem, b: AkunLaporanItem): number {
+  const pA = parseAkunPendapatan(a)
+  const pB = parseAkunPendapatan(b)
+
+  // 1. Urutkan berdasarkan prioritas kategori
+  if (pA.rank !== pB.rank) return pA.rank - pB.rank
+
+  // 2. Jika SPP per tingkat, utamakan tingkatan kelas (X -> XI -> XII atau 1 -> 12)
+  if (pA.rank === 10 && pA.level !== pB.level) {
+    return pA.level - pB.level
+  }
+
+  // 3. Urutkan kronologis tahun akademik (2024 -> 2025 -> 2026)
+  if (pA.year !== pB.year) {
+    return pA.year - pB.year
+  }
+
+  // 4. Level kelas untuk pos non-SPP
+  if (pA.level !== pB.level) {
+    return pA.level - pB.level
+  }
+
+  // 5. Fallback alfabetis nama
+  const compNama = pA.nama.localeCompare(pB.nama, "id", { numeric: true, sensitivity: "base" })
+  if (compNama !== 0) return compNama
+
+  // 6. Fallback kode akun numerik alami
+  return pA.kode.localeCompare(pB.kode, undefined, { numeric: true })
+}
+
+function sortLaporanPengeluaran(a: AkunLaporanItem, b: AkunLaporanItem): number {
+  const compKode = (a.kode || "").localeCompare(b.kode || "", undefined, { numeric: true })
+  if (compKode !== 0) return compKode
+  return (a.nama || "").localeCompare(b.nama || "", "id", { numeric: true, sensitivity: "base" })
+}
+
 export async function getLaporanPemasukanPengeluaran(startDate: string, endDate: string, filterUnitId?: string) {
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
@@ -126,9 +218,9 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
   }
 
   return {
-    pendapatan: Object.values(pendapatan).sort((a, b) => a.kode.localeCompare(b.kode)),
+    pendapatan: Object.values(pendapatan).sort(sortLaporanPendapatan),
     totalPendapatan,
-    pengeluaran: Object.values(pengeluaran).sort((a, b) => a.kode.localeCompare(b.kode)),
+    pengeluaran: Object.values(pengeluaran).sort(sortLaporanPengeluaran),
     totalPengeluaran
   }
 }
