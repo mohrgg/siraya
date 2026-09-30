@@ -316,8 +316,173 @@ export default function UnitDashboard(props: UnitDashboardProps) {
         </div>
       </section>
 
-      {/* SECTION 3: Statistik Akademik (Forest Green & Emerald Charts) */}
-      {/* SECTION 3: Statistik Akademik (Data-Density Proportionate Layout) */}
+      {/* SECTION 3: Keuangan Unit (Arus Kas Riil vs Proyeksi Tagihan & Sisa Piutang) */}
+      <section className="flex flex-col gap-3.5">
+        <div className="flex flex-col gap-0.5 px-1 mt-2">
+          <h2 className="text-lg sm:text-xl font-extrabold text-text-main tracking-tight">Keuangan Unit</h2>
+          <p className="text-xs text-text-muted">Realisasi kas masuk nyata, proyeksi tagihan diterbitkan, dan rasio efektivitas penagihan piutang.</p>
+        </div>
+
+        {/* 3 KPI Cards: Arus Kas Riil vs Proyeksi Tagihan vs Sisa Piutang */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Card 1: Realisasi Kas Masuk (Riil) */}
+          <div className="bg-surface rounded-2xl border border-emerald-200/90 p-5 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">Arus Kas Masuk (Bulan Ini)</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  Uang Kas Riil
+                </span>
+              </div>
+              <div className="my-1">
+                <AdaptiveValue 
+                  value={formatCurrency(penerimaanBulanIni)}
+                  className="text-emerald-800 font-black"
+                  maxFontSize={30}
+                  minFontSize={16}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-emerald-700/80 mt-2 font-medium">Realisasi pembayaran tunai & bank yang telah diverifikasi</p>
+          </div>
+          
+          {/* Card 2: Proyeksi Target Tagihan (Billing) */}
+          <div className="bg-surface rounded-2xl border border-blue-200/90 p-5 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-800">Target Tagihan (Tahun Ini)</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                  Proyeksi Invoice
+                </span>
+              </div>
+              <div className="my-1">
+                <AdaptiveValue 
+                  value={formatCurrency(totalTagihanUnit)}
+                  className="text-blue-900 font-black"
+                  maxFontSize={30}
+                  minFontSize={16}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-blue-700/80 mt-2 font-medium">Total kewajiban biaya pendidikan yang diterbitkan</p>
+          </div>
+
+          {/* Card 3: Sisa Piutang / Tunggakan */}
+          <div className="bg-surface rounded-2xl border border-rose-200/90 p-5 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-rose-700">Sisa Piutang (Tunggakan)</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                  Belum Tertagih
+                </span>
+              </div>
+              <div className="my-1">
+                <AdaptiveValue 
+                  value={formatCurrency(totalTunggakanUnit)}
+                  className="text-rose-700 font-black"
+                  maxFontSize={30}
+                  minFontSize={16}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-rose-600/80 mt-2 font-medium">Akumulasi tunggakan siswa yang belum lunas</p>
+          </div>
+        </div>
+
+        {/* Visual Reconciliation Bar: Rasio Realisasi Kas Masuk vs Proyeksi Tagihan */}
+        <div className="bg-surface rounded-2xl border border-border p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 w-full sm:w-auto">
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center shrink-0 font-black text-sm">
+              {kolektibilitasUnit === null ? 'N/A' : `${kolektibilitasUnit}%`}
+            </div>
+            <div>
+              <div className="text-xs font-bold text-text-main flex items-center gap-2">
+                <span>Efektivitas Penagihan Tagihan (Kolektibilitas)</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                  kolektibilitasUnit && kolektibilitasUnit >= 80 
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                }`}>
+                  {kolektibilitasUnit && kolektibilitasUnit >= 80 ? 'Kolektibilitas Sehat' : 'Perlu Atensi'}
+                </span>
+              </div>
+              <p className="text-[11px] text-text-muted mt-0.5">
+                Dari total proyeksi tagihan {formatCurrency(totalTagihanUnit)}, sebesar {formatCurrency(terbayarUnit)} ({kolektibilitasUnit || 0}%) telah terealisasi masuk kas.
+              </p>
+            </div>
+          </div>
+
+          <div className="w-full sm:w-72 shrink-0 flex flex-col gap-1.5">
+            <div className="h-3 w-full bg-rose-100 rounded-full overflow-hidden flex">
+              <div 
+                className="bg-emerald-600 h-full transition-all duration-500 rounded-full"
+                style={{ width: `${Math.min(100, Math.max(0, kolektibilitasUnit || 0))}%` }}
+                title={`Terbayar: ${kolektibilitasUnit || 0}%`}
+              />
+            </div>
+            <div className="flex justify-between text-[10px] text-text-muted font-medium">
+              <span className="text-emerald-700 font-bold">● Kas Masuk {kolektibilitasUnit || 0}%</span>
+              <span className="text-rose-600 font-bold">● Piutang {100 - (kolektibilitasUnit || 0)}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Trend Pendapatan & Tunggakan Kritis */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 min-h-[420px]">
+            <PendapatanInteractiveChart 
+              hariIniData={pendapatanHariIniChart}
+              mingguIniData={pendapatanMingguIniChart}
+              bulanIniData={pendapatanBulanIniChart}
+            />
+          </div>
+
+          <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-2xs flex flex-col justify-between min-h-[420px]">
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex items-center justify-between mb-4 border-b border-border pb-3 shrink-0">
+                <h3 className="font-bold text-text-main text-lg flex items-center gap-2">
+                  <AlertTriangle size={18} className="text-rose-600" />
+                  <span>Tunggakan Kritis</span>
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                  Prioritas
+                </span>
+              </div>
+              <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 min-h-0">
+                {tunggakanKritisList && tunggakanKritisList.length > 0 ? (
+                  tunggakanKritisList.map((item, idx) => (
+                    <div key={idx} className="p-3.5 bg-rose-50/40 border border-rose-100 rounded-xl flex items-center justify-between gap-3 text-xs">
+                      <div className="min-w-0">
+                        <p className="font-bold text-text-main truncate">{item.murid?.name}</p>
+                        <p className="text-[11px] text-text-muted font-mono mt-0.5">NIS: {item.murid?.nis}</p>
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                          <span className="bg-surface border border-rose-200 text-rose-700 px-1.5 py-0.5 rounded text-[10px] font-bold">{item.akun?.nama}</span>
+                          <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded text-[10px] font-extrabold">{formatCurrency(item.sisaTagihan)}</span>
+                        </div>
+                      </div>
+                      <Link
+                        href={`/laporan/tunggakan-siswa`}
+                        className="min-w-[44px] min-h-[44px] flex items-center justify-center text-rose-700 hover:bg-rose-100/80 rounded-xl transition-colors shrink-0 cursor-pointer"
+                        title="Tindak Lanjut"
+                      >
+                        <ArrowRight size={16} />
+                      </Link>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12 text-text-muted text-xs">
+                    <CheckCircle2 size={28} className="text-emerald-500 mx-auto mb-2" />
+                    <p className="font-semibold text-text-main">Tidak Ada Tunggakan Kritis</p>
+                    <p className="text-[11px] mt-0.5">Seluruh tagihan unit tertagih dengan baik.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4: Statistik Akademik (Data-Density Proportionate Layout) */}
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-0.5 px-1 mt-2">
           <h2 className="text-lg sm:text-xl font-extrabold text-text-main tracking-tight">Statistik Akademik</h2>
@@ -865,7 +1030,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
         </div>
       </section>
 
-      {/* SECTION 4: Sumber Daya Manusia */}
+      {/* SECTION 5: Sumber Daya Manusia */}
       <section className="flex flex-col gap-3.5">
         <div className="flex flex-col gap-0.5 px-1 mt-2">
           <h2 className="text-lg sm:text-xl font-extrabold text-text-main tracking-tight">Sumber Daya Manusia</h2>
@@ -942,171 +1107,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
         </div>
       </section>
 
-      {/* SECTION 5: Keuangan Unit (Arus Kas Riil vs Proyeksi Tagihan & Sisa Piutang) */}
-      <section className="flex flex-col gap-3.5">
-        <div className="flex flex-col gap-0.5 px-1 mt-2">
-          <h2 className="text-lg sm:text-xl font-extrabold text-text-main tracking-tight">Keuangan Unit</h2>
-          <p className="text-xs text-text-muted">Realisasi kas masuk nyata, proyeksi tagihan diterbitkan, dan rasio efektivitas penagihan piutang.</p>
-        </div>
 
-        {/* 3 KPI Cards: Arus Kas Riil vs Proyeksi Tagihan vs Sisa Piutang */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Card 1: Realisasi Kas Masuk (Riil) */}
-          <div className="bg-surface rounded-2xl border border-emerald-200/90 p-5 shadow-2xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">Arus Kas Masuk (Bulan Ini)</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  Uang Kas Riil
-                </span>
-              </div>
-              <div className="my-1">
-                <AdaptiveValue 
-                  value={formatCurrency(penerimaanBulanIni)}
-                  className="text-emerald-800 font-black"
-                  maxFontSize={30}
-                  minFontSize={16}
-                />
-              </div>
-            </div>
-            <p className="text-xs text-emerald-700/80 mt-2 font-medium">Realisasi pembayaran tunai & bank yang telah diverifikasi</p>
-          </div>
-          
-          {/* Card 2: Proyeksi Target Tagihan (Billing) */}
-          <div className="bg-surface rounded-2xl border border-blue-200/90 p-5 shadow-2xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-blue-800">Target Tagihan (Tahun Ini)</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
-                  Proyeksi Invoice
-                </span>
-              </div>
-              <div className="my-1">
-                <AdaptiveValue 
-                  value={formatCurrency(totalTagihanUnit)}
-                  className="text-blue-900 font-black"
-                  maxFontSize={30}
-                  minFontSize={16}
-                />
-              </div>
-            </div>
-            <p className="text-xs text-blue-700/80 mt-2 font-medium">Total kewajiban biaya pendidikan yang diterbitkan</p>
-          </div>
-
-          {/* Card 3: Sisa Piutang / Tunggakan */}
-          <div className="bg-surface rounded-2xl border border-rose-200/90 p-5 shadow-2xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-rose-700">Sisa Piutang (Tunggakan)</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
-                  Belum Tertagih
-                </span>
-              </div>
-              <div className="my-1">
-                <AdaptiveValue 
-                  value={formatCurrency(totalTunggakanUnit)}
-                  className="text-rose-700 font-black"
-                  maxFontSize={30}
-                  minFontSize={16}
-                />
-              </div>
-            </div>
-            <p className="text-xs text-rose-600/80 mt-2 font-medium">Akumulasi tunggakan siswa yang belum lunas</p>
-          </div>
-        </div>
-
-        {/* Visual Reconciliation Bar: Rasio Realisasi Kas Masuk vs Proyeksi Tagihan */}
-        <div className="bg-surface rounded-2xl border border-border p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5 w-full sm:w-auto">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center shrink-0 font-black text-sm">
-              {kolektibilitasUnit === null ? 'N/A' : `${kolektibilitasUnit}%`}
-            </div>
-            <div>
-              <div className="text-xs font-bold text-text-main flex items-center gap-2">
-                <span>Efektivitas Penagihan Tagihan (Kolektibilitas)</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                  kolektibilitasUnit && kolektibilitasUnit >= 80 
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                    : 'bg-amber-50 text-amber-700 border border-amber-200'
-                }`}>
-                  {kolektibilitasUnit && kolektibilitasUnit >= 80 ? 'Kolektibilitas Sehat' : 'Perlu Atensi'}
-                </span>
-              </div>
-              <p className="text-[11px] text-text-muted mt-0.5">
-                Dari total proyeksi tagihan {formatCurrency(totalTagihanUnit)}, sebesar {formatCurrency(terbayarUnit)} ({kolektibilitasUnit || 0}%) telah terealisasi masuk kas.
-              </p>
-            </div>
-          </div>
-
-          <div className="w-full sm:w-72 shrink-0 flex flex-col gap-1.5">
-            <div className="h-3 w-full bg-rose-100 rounded-full overflow-hidden flex">
-              <div 
-                className="bg-emerald-600 h-full transition-all duration-500 rounded-full"
-                style={{ width: `${Math.min(100, Math.max(0, kolektibilitasUnit || 0))}%` }}
-                title={`Terbayar: ${kolektibilitasUnit || 0}%`}
-              />
-            </div>
-            <div className="flex justify-between text-[10px] text-text-muted font-medium">
-              <span className="text-emerald-700 font-bold">● Kas Masuk {kolektibilitasUnit || 0}%</span>
-              <span className="text-rose-600 font-bold">● Piutang {100 - (kolektibilitasUnit || 0)}%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Trend Pendapatan & Tunggakan Kritis */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 min-h-[420px]">
-            <PendapatanInteractiveChart 
-              hariIniData={pendapatanHariIniChart}
-              mingguIniData={pendapatanMingguIniChart}
-              bulanIniData={pendapatanBulanIniChart}
-            />
-          </div>
-
-          <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-2xs flex flex-col justify-between min-h-[420px]">
-            <div className="flex flex-col flex-1 min-h-0">
-              <div className="flex items-center justify-between mb-4 border-b border-border pb-3 shrink-0">
-                <h3 className="font-bold text-text-main text-lg flex items-center gap-2">
-                  <AlertTriangle size={18} className="text-rose-600" />
-                  <span>Tunggakan Kritis</span>
-                </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
-                  Prioritas
-                </span>
-              </div>
-              <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 min-h-0">
-                {tunggakanKritisList && tunggakanKritisList.length > 0 ? (
-                  tunggakanKritisList.map((item, idx) => (
-                    <div key={idx} className="p-3.5 bg-rose-50/40 border border-rose-100 rounded-xl flex items-center justify-between gap-3 text-xs">
-                      <div className="min-w-0">
-                        <p className="font-bold text-text-main truncate">{item.murid?.name}</p>
-                        <p className="text-[11px] text-text-muted font-mono mt-0.5">NIS: {item.murid?.nis}</p>
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          <span className="bg-surface border border-rose-200 text-rose-700 px-1.5 py-0.5 rounded text-[10px] font-bold">{item.akun?.nama}</span>
-                          <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded text-[10px] font-extrabold">{formatCurrency(item.sisaTagihan)}</span>
-                        </div>
-                      </div>
-                      <Link
-                        href={`/laporan/tunggakan-siswa`}
-                        className="min-w-[44px] min-h-[44px] flex items-center justify-center text-rose-700 hover:bg-rose-100/80 rounded-xl transition-colors shrink-0 cursor-pointer"
-                        title="Tindak Lanjut"
-                      >
-                        <ArrowRight size={16} />
-                      </Link>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-12 text-text-muted text-xs">
-                    <CheckCircle2 size={28} className="text-emerald-500 mx-auto mb-2" />
-                    <p className="font-semibold text-text-main">Tidak Ada Tunggakan Kritis</p>
-                    <p className="text-[11px] mt-0.5">Seluruh tagihan unit tertagih dengan baik.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* SECTION 6: Peringatan Data Tidak Lengkap */}
       {incompleteDataCount > 0 && (

@@ -132,7 +132,19 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
           }
         }
       },
-      transaksi: true
+      transaksi: {
+        include: {
+          pembayaranTagihan: {
+            include: {
+              tagihan: {
+                include: {
+                  akun: true
+                }
+              }
+            }
+          }
+        }
+      }
     }
   })
 
@@ -159,46 +171,64 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
   }
 
   for (const [, details] of trxMap.entries()) {
-    // 1. Identifikasi detail beban potongan/beasiswa non-kas
-    const potonganDetails = details.filter(d => {
-      const klasifikasiKode = d.akun.subKlasifikasi?.klasifikasi?.kode
-      return (d.posisi === "DEBIT" || klasifikasiKode === "5") && isAkunPotongan(d.akun)
-    })
-    const totalPotonganTrx = potonganDetails.reduce((sum, d) => sum + d.nilai, 0)
+    const trx = details[0]?.transaksi
 
-    // 2. Kumpulkan detail pendapatan (Kredit / Kode 4)
-    const pendapatanDetails = details.filter(d => {
-      const klasifikasiKode = d.akun.subKlasifikasi?.klasifikasi?.kode
-      if (klasifikasiKode === "1" || klasifikasiKode === "2" || klasifikasiKode === "3") return false
-      if (d.akun.isKasBank && (!klasifikasiKode || klasifikasiKode === "1")) return false
-      return d.posisi === "KREDIT" || klasifikasiKode === "4"
-    })
-    const totalBrutoPendapatan = pendapatanDetails.reduce((sum, d) => sum + d.nilai, 0)
+    // 1. Alokasikan pendapatan bersih (Net Inflow Kas Riil)
+    if (trx?.pembayaranTagihan && trx.pembayaranTagihan.length > 0) {
+      // Pembayaran tagihan kesiswaan: ambil kas masuk riil per akun tagihan dari PembayaranTagihanDetail (100% bulat)
+      for (const pt of trx.pembayaranTagihan) {
+        const akunTagihan = pt.tagihan?.akun
+        if (!akunTagihan) continue
+        const akunId = akunTagihan.id
+        const nilaiNet = pt.jumlahDibayar
+        if (nilaiNet <= 0) continue
 
-    // 3. Alokasikan pendapatan bersih (Net Inflow Kas Riil)
-    let sisaPotongan = totalPotonganTrx
-    pendapatanDetails.forEach((d, idx) => {
-      const akunId = d.akun.id
-      let potonganPorsi = 0
-      if (totalPotonganTrx > 0 && totalBrutoPendapatan > 0) {
-        if (idx === pendapatanDetails.length - 1) {
-          potonganPorsi = sisaPotongan
-        } else {
-          potonganPorsi = Math.round(totalPotonganTrx * (d.nilai / totalBrutoPendapatan))
-          sisaPotongan -= potonganPorsi
+        if (!pendapatan[akunId]) {
+          pendapatan[akunId] = { kode: akunTagihan.kode, nama: akunTagihan.nama, total: 0 }
         }
+        pendapatan[akunId].total += nilaiNet
+        totalPendapatan += nilaiNet
       }
-      const nilaiNet = Math.max(0, d.nilai - potonganPorsi)
-      if (nilaiNet <= 0) return
+    } else {
+      // Transaksi manual / non-tagihan
+      const potonganDetails = details.filter(d => {
+        const klasifikasiKode = d.akun.subKlasifikasi?.klasifikasi?.kode
+        return (d.posisi === "DEBIT" || klasifikasiKode === "5") && isAkunPotongan(d.akun)
+      })
+      const totalPotonganTrx = potonganDetails.reduce((sum, d) => sum + d.nilai, 0)
 
-      if (!pendapatan[akunId]) {
-        pendapatan[akunId] = { kode: d.akun.kode, nama: d.akun.nama, total: 0 }
-      }
-      pendapatan[akunId].total += nilaiNet
-      totalPendapatan += nilaiNet
-    })
+      const pendapatanDetails = details.filter(d => {
+        const klasifikasiKode = d.akun.subKlasifikasi?.klasifikasi?.kode
+        if (klasifikasiKode === "1" || klasifikasiKode === "2" || klasifikasiKode === "3") return false
+        if (d.akun.isKasBank && (!klasifikasiKode || klasifikasiKode === "1")) return false
+        return d.posisi === "KREDIT" || klasifikasiKode === "4"
+      })
+      const totalBrutoPendapatan = pendapatanDetails.reduce((sum, d) => sum + d.nilai, 0)
 
-    // 4. Kumpulkan pengeluaran kas riil (Debit / Kode 5) - KECUALIKAN akun potongan non-kas!
+      let sisaPotongan = totalPotonganTrx
+      pendapatanDetails.forEach((d, idx) => {
+        const akunId = d.akun.id
+        let potonganPorsi = 0
+        if (totalPotonganTrx > 0 && totalBrutoPendapatan > 0) {
+          if (idx === pendapatanDetails.length - 1) {
+            potonganPorsi = sisaPotongan
+          } else {
+            potonganPorsi = Math.round(totalPotonganTrx * (d.nilai / totalBrutoPendapatan))
+            sisaPotongan -= potonganPorsi
+          }
+        }
+        const nilaiNet = Math.max(0, d.nilai - potonganPorsi)
+        if (nilaiNet <= 0) return
+
+        if (!pendapatan[akunId]) {
+          pendapatan[akunId] = { kode: d.akun.kode, nama: d.akun.nama, total: 0 }
+        }
+        pendapatan[akunId].total += nilaiNet
+        totalPendapatan += nilaiNet
+      })
+    }
+
+    // 2. Kumpulkan pengeluaran kas riil (Debit / Kode 5) - KECUALIKAN akun potongan non-kas!
     const pengeluaranDetails = details.filter(d => {
       const klasifikasiKode = d.akun.subKlasifikasi?.klasifikasi?.kode
       if (klasifikasiKode === "1" || klasifikasiKode === "2" || klasifikasiKode === "3") return false

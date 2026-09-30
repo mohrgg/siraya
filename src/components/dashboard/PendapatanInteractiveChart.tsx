@@ -105,7 +105,7 @@ export default function PendapatanInteractiveChart({
       </div>
 
       <div className="flex-1 w-full min-h-0">
-        {data && data.length > 0 ? (
+        {data && data.length > 0 && totalValue > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -138,7 +138,17 @@ export default function PendapatanInteractiveChart({
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-full text-xs text-gray-400">Belum ada transaksi pada periode ini.</div>
+          <div className="flex flex-col items-center justify-center h-full text-center p-6 text-slate-400">
+            <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-3 text-slate-300 shadow-2xs">
+              <Wallet size={22} />
+            </div>
+            <p className="text-sm font-bold text-slate-700">Belum ada penerimaan kas pada {activeTab === 'hari' ? 'hari ini' : activeTab === 'minggu' ? 'minggu ini' : activeTab === 'bulan' ? 'bulan ini' : 'periode ini'}</p>
+            <p className="text-xs text-slate-400 mt-1 max-w-sm">
+              {activeTab === 'hari' 
+                ? 'Transaksi penerimaan kas yang masuk hari ini akan otomatis terpetakan per jam secara real-time.' 
+                : 'Belum ada transaksi penerimaan kas masuk terverifikasi pada rentang waktu ini.'}
+            </p>
+          </div>
         )}
       </div>
     </div>

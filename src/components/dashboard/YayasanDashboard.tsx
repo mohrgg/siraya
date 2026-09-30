@@ -284,130 +284,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
         </div>
       </section>
 
-      {/* SECTION 3: Scorecard Matrix Komparasi Kinerja Antar Unit (SD, SMP, SMK) */}
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Scorecard Kinerja Antar Unit Sekolah</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Komparasi komprehensif populasi siswa, rombel, kapasitas guru, dan efektivitas penerimaan SPP.</p>
-          </div>
-          <Link 
-            href="/unit-sekolah" 
-            className="text-xs font-semibold text-[#065f32] hover:text-[#054d28] inline-flex items-center gap-1 self-start sm:self-auto"
-          >
-            Kelola Master Unit Sekolah <ArrowRight size={14} />
-          </Link>
-        </div>
-
-        <div className={getScorecardGridClass(performaUnitData.length)}>
-          {performaUnitData.map((item, idx) => {
-            const kolektibilitasVal = typeof item.kolektibilitas === 'number' ? item.kolektibilitas : 0
-            const isUnitSehat = item.status === 'sehat'
-            const isUnitKritis = item.status === 'kritis'
-            const avgPerRombel = item.rombel > 0 ? Math.round(item.siswa / item.rombel) : 0
-
-            return (
-              <div 
-                key={idx} 
-                className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2.5 pb-3 border-b border-slate-100 mb-3.5">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
-                        {item.unit}
-                      </h3>
-                    </div>
-                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border shrink-0 ${
-                      isUnitSehat 
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : isUnitKritis
-                        ? 'bg-rose-50 text-rose-700 border-rose-200'
-                        : 'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}>
-                      {item.status === 'sehat' ? 'Kinerja Sehat' : item.status === 'kritis' ? 'Audit Kritis' : 'Perlu Atensi'}
-                    </span>
-                  </div>
-
-                  {/* 4 KPI Grid Per Unit */}
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4">
-                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Siswa</span>
-                      <span className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.siswa)}</span>
-                      <span className="text-[10px] text-slate-500 font-medium block">{avgPerRombel} siswa/rombel</span>
-                    </div>
-
-                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Rombel Aktif</span>
-                      <span className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.rombel)}</span>
-                      <span className="text-[10px] text-slate-500 font-medium block">Kelas Belajar</span>
-                    </div>
-
-                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tenaga Guru</span>
-                      <span className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.guru)}</span>
-                      <span className="text-[10px] text-slate-500 font-medium block">Pengajar Unit</span>
-                    </div>
-
-                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kolektibilitas</span>
-                      <span className={`text-lg sm:text-xl font-black mt-0.5 block ${isUnitSehat ? 'text-[#065f32]' : isUnitKritis ? 'text-rose-600' : 'text-amber-600'}`}>
-                        {item.kolektibilitas === 'N/A' ? '-' : `${item.kolektibilitas}%`}
-                      </span>
-                      <span className="text-[10px] text-slate-500 font-medium block">Realisasi SPP</span>
-                    </div>
-                  </div>
-
-                  {/* Progress Kolektibilitas Bar */}
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between text-xs mb-1.5 font-medium">
-                      <span className="text-slate-600">Efektivitas Pelunasan</span>
-                      <span className="font-bold text-slate-900">{item.kolektibilitas === 'N/A' ? 'N/A' : `${item.kolektibilitas}%`}</span>
-                    </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          isUnitSehat ? 'bg-[#065f32]' : isUnitKritis ? 'bg-rose-500' : 'bg-amber-500'
-                        }`}
-                        style={{ width: `${Math.min(100, Math.max(0, kolektibilitasVal))}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedDrawerIndex(idx)
-                      setIsDrawerOpen(true)
-                    }}
-                    className="inline-flex items-center justify-center gap-1.5 py-2.5 px-2.5 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200 text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group whitespace-nowrap min-w-0"
-                    title={`Audit sebaran rombel & siswa ${item.unit}`}
-                  >
-                    <Layers size={14} className="text-[#065f32] shrink-0 group-hover:scale-110 transition-transform" />
-                    <span className="truncate">Audit Rombel</span>
-                    <ChevronRight size={13} className="text-[#065f32]/70 shrink-0 group-hover:translate-x-0.5 transition-transform ml-auto" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleDrilldownUnitDashboard(item.id || item.raw?.id)}
-                    className="inline-flex items-center justify-center gap-1.5 py-2.5 px-2.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-emerald-300 text-slate-700 hover:text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group whitespace-nowrap min-w-0"
-                    title={`Buka dashboard ${item.unit}`}
-                  >
-                    <LayoutDashboard size={14} className="text-slate-400 group-hover:text-[#065f32] shrink-0 transition-colors" />
-                    <span className="truncate">Dashboard Unit</span>
-                    <ChevronRight size={13} className="text-slate-400 group-hover:text-[#065f32] shrink-0 group-hover:translate-x-0.5 transition-transform ml-auto" />
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* SECTION 4: Asymmetric 12-Col Split: Konsolidasi Arus Kas & Piutang Yayasan */}
+      {/* SECTION 3: Asymmetric 12-Col Split: Konsolidasi Arus Kas & Piutang Yayasan */}
       <section className="flex flex-col gap-3">
         <div>
           <h2 className="text-xl font-bold text-slate-900 tracking-tight">Audit Arus Kas & Likuiditas Konsolidasi</h2>
@@ -548,6 +425,129 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* SECTION 4: Scorecard Matrix Komparasi Kinerja Antar Unit (SD, SMP, SMK) */}
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Scorecard Kinerja Antar Unit Sekolah</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Komparasi komprehensif populasi siswa, rombel, kapasitas guru, dan efektivitas penerimaan SPP.</p>
+          </div>
+          <Link 
+            href="/unit-sekolah" 
+            className="text-xs font-semibold text-[#065f32] hover:text-[#054d28] inline-flex items-center gap-1 self-start sm:self-auto"
+          >
+            Kelola Master Unit Sekolah <ArrowRight size={14} />
+          </Link>
+        </div>
+
+        <div className={getScorecardGridClass(performaUnitData.length)}>
+          {performaUnitData.map((item, idx) => {
+            const kolektibilitasVal = typeof item.kolektibilitas === 'number' ? item.kolektibilitas : 0
+            const isUnitSehat = item.status === 'sehat'
+            const isUnitKritis = item.status === 'kritis'
+            const avgPerRombel = item.rombel > 0 ? Math.round(item.siswa / item.rombel) : 0
+
+            return (
+              <div 
+                key={idx} 
+                className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2.5 pb-3 border-b border-slate-100 mb-3.5">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
+                        {item.unit}
+                      </h3>
+                    </div>
+                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border shrink-0 ${
+                      isUnitSehat 
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : isUnitKritis
+                        ? 'bg-rose-50 text-rose-700 border-rose-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {item.status === 'sehat' ? 'Kinerja Sehat' : item.status === 'kritis' ? 'Audit Kritis' : 'Perlu Atensi'}
+                    </span>
+                  </div>
+
+                  {/* 4 KPI Grid Per Unit */}
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4">
+                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Siswa</span>
+                      <span className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.siswa)}</span>
+                      <span className="text-[10px] text-slate-500 font-medium block">{avgPerRombel} siswa/rombel</span>
+                    </div>
+
+                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Rombel Aktif</span>
+                      <span className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.rombel)}</span>
+                      <span className="text-[10px] text-slate-500 font-medium block">Kelas Belajar</span>
+                    </div>
+
+                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tenaga Guru</span>
+                      <span className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.guru)}</span>
+                      <span className="text-[10px] text-slate-500 font-medium block">Pengajar Unit</span>
+                    </div>
+
+                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kolektibilitas</span>
+                      <span className={`text-lg sm:text-xl font-black mt-0.5 block ${isUnitSehat ? 'text-[#065f32]' : isUnitKritis ? 'text-rose-600' : 'text-amber-600'}`}>
+                        {item.kolektibilitas === 'N/A' ? '-' : `${item.kolektibilitas}%`}
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium block">Realisasi SPP</span>
+                    </div>
+                  </div>
+
+                  {/* Progress Kolektibilitas Bar */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between text-xs mb-1.5 font-medium">
+                      <span className="text-slate-600">Efektivitas Pelunasan</span>
+                      <span className="font-bold text-slate-900">{item.kolektibilitas === 'N/A' ? 'N/A' : `${item.kolektibilitas}%`}</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          isUnitSehat ? 'bg-[#065f32]' : isUnitKritis ? 'bg-rose-500' : 'bg-amber-500'
+                        }`}
+                        style={{ width: `${Math.min(100, Math.max(0, kolektibilitasVal))}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDrawerIndex(idx)
+                      setIsDrawerOpen(true)
+                    }}
+                    className="inline-flex items-center justify-center gap-1.5 py-2.5 px-2.5 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200 text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group whitespace-nowrap min-w-0"
+                    title={`Audit sebaran rombel & siswa ${item.unit}`}
+                  >
+                    <Layers size={14} className="text-[#065f32] shrink-0 group-hover:scale-110 transition-transform" />
+                    <span className="truncate">Audit Rombel</span>
+                    <ChevronRight size={13} className="text-[#065f32]/70 shrink-0 group-hover:translate-x-0.5 transition-transform ml-auto" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDrilldownUnitDashboard(item.id || item.raw?.id)}
+                    className="inline-flex items-center justify-center gap-1.5 py-2.5 px-2.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-emerald-300 text-slate-700 hover:text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group whitespace-nowrap min-w-0"
+                    title={`Buka dashboard ${item.unit}`}
+                  >
+                    <LayoutDashboard size={14} className="text-slate-400 group-hover:text-[#065f32] shrink-0 transition-colors" />
+                    <span className="truncate">Dashboard Unit</span>
+                    <ChevronRight size={13} className="text-slate-400 group-hover:text-[#065f32] shrink-0 group-hover:translate-x-0.5 transition-transform ml-auto" />
+                  </button>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </section>
 

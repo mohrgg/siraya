@@ -34,14 +34,51 @@ export function sortSchoolClasses(a: string, b: string): number {
   return parsedA.suffix.localeCompare(parsedB.suffix, 'id', { numeric: true, sensitivity: 'base' })
 }
 
+// Helper konversi waktu ke WIB (UTC+7)
+function getWIBHour(d: Date | string | null | undefined): number {
+  if (!d) return 8
+  const dateObj = typeof d === 'string' ? new Date(d) : d
+  if (isNaN(dateObj.getTime())) return 8
+  return (dateObj.getUTCHours() + 7) % 24
+}
+
+function getWIBDateString(d: Date | string | null | undefined): string {
+  if (!d) return ""
+  const dateObj = typeof d === 'string' ? new Date(d) : d
+  if (isNaN(dateObj.getTime())) return ""
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(dateObj)
+}
+
 function generateInteractiveChartData(transactions: any[], todayStart: Date, weekStart: Date, monthStart: Date) {
-  // Hari Ini (per jam)
-  const todayTx = transactions.filter(t => t.tanggal >= todayStart)
+  const todayWIBStr = getWIBDateString(new Date())
+
+  // Hari Ini (per jam operasional 06:00 - 18:00)
+  // Transaksi hari ini jika tanggal t.tanggal cocok dengan tanggal hari ini di WIB, atau t.createdAt di WIB hari ini
+  const todayTx = transactions.filter(t => {
+    const tglStr = getWIBDateString(t.tanggal)
+    const createdStr = t.createdAt ? getWIBDateString(t.createdAt) : ""
+    return tglStr === todayWIBStr || createdStr === todayWIBStr || (t.tanggal >= todayStart)
+  })
+
   const hariIniMap = new Map<number, number>()
-  for (let i = 6; i <= 18; i++) hariIniMap.set(i, 0) // Jam operasional 06:00 - 18:00
+  for (let i = 6; i <= 18; i++) hariIniMap.set(i, 0) // Slot jam 06:00 - 18:00
+
   todayTx.forEach(t => {
-    const h = t.tanggal.getHours()
-    if (h >= 6 && h <= 18) hariIniMap.set(h, (hariIniMap.get(h) || 0) + t.totalNilai)
+    // Ambil jam riil dari createdAt (jika ada), jika tidak ada fallback ke t.tanggal, atau default jam 8 pagi
+    let h = 8
+    if (t.createdAt) {
+      h = getWIBHour(t.createdAt)
+    } else if (t.tanggal) {
+      const tHour = getWIBHour(t.tanggal)
+      h = tHour === 7 ? 8 : tHour
+    }
+
+    // Clamping jam operasional: transaksi sebelum 06:00 masuk ke 06:00, setelah 18:00 masuk ke 18:00
+    // Menjamin total nominal penerimaan hari ini tidak ada yang hilang / terbuang
+    if (h < 6) h = 6
+    if (h > 18) h = 18
+
+    hariIniMap.set(h, (hariIniMap.get(h) || 0) + (Number(t.totalNilai) || 0))
   })
   const pendapatanHariIniChart = Array.from(hariIniMap.entries()).map(([k, v]) => ({ name: `${String(k).padStart(2, '0')}:00`, value: v }))
 
@@ -52,7 +89,7 @@ function generateInteractiveChartData(transactions: any[], todayStart: Date, wee
   weekTx.forEach(t => {
     let dayIdx = t.tanggal.getDay() // 0 = Sunday, 1 = Monday
     const dStr = dayIdx === 0 ? 'Minggu' : days[dayIdx - 1]
-    mingguIniMap.set(dStr, (mingguIniMap.get(dStr) || 0) + t.totalNilai)
+    mingguIniMap.set(dStr, (mingguIniMap.get(dStr) || 0) + (Number(t.totalNilai) || 0))
   })
   const pendapatanMingguIniChart = Array.from(mingguIniMap.entries()).map(([k, v]) => ({ name: k, value: v }))
 
@@ -62,7 +99,7 @@ function generateInteractiveChartData(transactions: any[], todayStart: Date, wee
   for (let i = 1; i <= daysInMonth; i++) bulanIniMap.set(i, 0)
   transactions.forEach(t => {
     const d = t.tanggal.getDate()
-    bulanIniMap.set(d, (bulanIniMap.get(d) || 0) + t.totalNilai)
+    bulanIniMap.set(d, (bulanIniMap.get(d) || 0) + (Number(t.totalNilai) || 0))
   })
   const pendapatanBulanIniChart = Array.from(bulanIniMap.entries()).map(([k, v]) => ({ name: `${k}`, value: v }))
 
@@ -70,7 +107,7 @@ function generateInteractiveChartData(transactions: any[], todayStart: Date, wee
   const unitMap = new Map<string, number>()
   transactions.forEach(t => {
     if (t.unitSekolah?.name) {
-      unitMap.set(t.unitSekolah.name, (unitMap.get(t.unitSekolah.name) || 0) + t.totalNilai)
+      unitMap.set(t.unitSekolah.name, (unitMap.get(t.unitSekolah.name) || 0) + (Number(t.totalNilai) || 0))
     }
   })
   const pendapatanPerUnitChart = Array.from(unitMap.entries()).map(([k, v]) => ({ name: k, value: v }))
@@ -127,17 +164,28 @@ async function fetchYayasanDashboardData(yearId?: string) {
     orderBy: { name: 'asc' }
   })
 
-  // Hitung kolektibilitas per unit via SQL Agregasi (Hemat 1,7MB transfer & memori)
-  const tagihanUnitAgg = await prisma.$queryRaw<Array<{ unitSekolahId: string; jumlah: number; terbayar: number }>>`
-    SELECT 
-      m."unitSekolahId",
-      COALESCE(SUM(t.jumlah), 0)::float as jumlah,
-      COALESCE(SUM(t.jumlah - t."sisaTagihan"), 0)::float as terbayar
-    FROM "Tagihan" t
-    JOIN "Murid" m ON t."muridId" = m.id
-    WHERE m."unitSekolahId" IS NOT NULL
-    GROUP BY m."unitSekolahId"
-  `
+  // Hitung kolektibilitas dan kas riil per unit via SQL Agregasi (Hemat 1,7MB transfer & memori)
+  const [tagihanUnitAgg, kasUnitAgg] = await Promise.all([
+    prisma.$queryRaw<Array<{ unitSekolahId: string; jumlah: number; terbayar: number }>>`
+      SELECT 
+        m."unitSekolahId",
+        COALESCE(SUM(t.jumlah), 0)::float as jumlah,
+        COALESCE(SUM(t.jumlah - t."sisaTagihan"), 0)::float as terbayar
+      FROM "Tagihan" t
+      JOIN "Murid" m ON t."muridId" = m.id
+      WHERE m."unitSekolahId" IS NOT NULL
+      GROUP BY m."unitSekolahId"
+    `,
+    prisma.$queryRaw<Array<{ unitSekolahId: string; masuk: number; keluar: number }>>`
+      SELECT 
+        t."unitSekolahId",
+        COALESCE(SUM(CASE WHEN t.jenis = 'KAS_MASUK' THEN t."totalNilai" ELSE 0 END), 0)::float as masuk,
+        COALESCE(SUM(CASE WHEN t.jenis = 'KAS_KELUAR' THEN t."totalNilai" ELSE 0 END), 0)::float as keluar
+      FROM "Transaksi" t
+      WHERE t.status = 'POSTED' AND t."unitSekolahId" IS NOT NULL
+      GROUP BY t."unitSekolahId"
+    `
+  ])
 
   const kolektibilitasMap = new Map<string, { jumlah: number, terbayar: number }>()
   tagihanUnitAgg.forEach(row => {
@@ -147,8 +195,17 @@ async function fetchYayasanDashboardData(yearId?: string) {
     })
   })
 
+  const kasUnitMap = new Map<string, { masuk: number, keluar: number }>()
+  kasUnitAgg.forEach(row => {
+    kasUnitMap.set(row.unitSekolahId, {
+      masuk: Number(row.masuk),
+      keluar: Number(row.keluar)
+    })
+  })
+
   const unitDistribution = unitsRaw.map(u => {
     const kData = kolektibilitasMap.get(u.id) || { jumlah: 0, terbayar: 0 }
+    const kasData = kasUnitMap.get(u.id) || { masuk: 0, keluar: 0 }
     const kolektibilitas = kData.jumlah > 0 ? Math.round((kData.terbayar / kData.jumlah) * 100) : null
     
     return {
@@ -161,6 +218,9 @@ async function fetchYayasanDashboardData(yearId?: string) {
       tagihanTotal: kData.jumlah,
       tagihanTerbayar: kData.terbayar,
       tagihanSisa: kData.jumlah - kData.terbayar,
+      kasMasuk: kasData.masuk,
+      kasKeluar: kasData.keluar,
+      saldoKas: kasData.masuk - kasData.keluar,
       classes: u.tingkat.map(t => ({
         name: t.name,
         total: t.subKelas.reduce((sum, sk) => sum + sk._count.riwayatKelas, 0),
@@ -319,7 +379,7 @@ async function fetchYayasanDashboardData(yearId?: string) {
   })
   const rawMonthTransactions = await prisma.transaksi.findMany({
     where: { jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: monthStart } },
-    select: { tanggal: true, totalNilai: true, unitSekolah: { select: { name: true } } }
+    select: { tanggal: true, createdAt: true, totalNilai: true, unitSekolah: { select: { name: true } } }
   })
   const interactiveChartData = generateInteractiveChartData(rawMonthTransactions, todayStart, weekStart, monthStart)
 
@@ -517,7 +577,7 @@ async function fetchUnitDashboardData(unitId: string, yearId?: string) {
   const monthStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), 1)
   const rawMonthTransactionsU = await prisma.transaksi.findMany({
     where: { unitSekolahId: unitId, jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: monthStart } },
-    select: { tanggal: true, totalNilai: true }
+    select: { tanggal: true, createdAt: true, totalNilai: true }
   })
   const interactiveChartDataU = generateInteractiveChartData(rawMonthTransactionsU, todayStart, weekStart, monthStart)
 
@@ -605,9 +665,9 @@ export async function getAdminOperasionalData() {
     // Role
     roleMap.set(log.pengguna.role, (roleMap.get(log.pengguna.role) || 0) + 1)
 
-    // Heatmap
-    const day = log.createdAt.getDay()
-    const hour = log.createdAt.getHours()
+    // Heatmap (konversi ke WIB agar akurat di server UTC)
+    const hour = getWIBHour(log.createdAt)
+    const day = new Date(log.createdAt.getTime() + (7 * 3600000)).getUTCDay()
     const heatKey = `${day}-${hour}`
     heatmapMap.set(heatKey, (heatmapMap.get(heatKey) || 0) + 1)
 
@@ -833,10 +893,12 @@ async function fetchKepsekData(unitId: string, yearId?: string) {
     { name: 'Belum Lunas', value: totalSisaTagihanUnit, color: '#f43f5e' } // rose
   ]
 
-  // Alokasi Pengeluaran
+  // Alokasi Pengeluaran (Hanya ambil akun beban DEBIT, bukan akun kas/bank KREDIT)
   const pengeluaranDetailRaw = await prisma.transaksiDetail.findMany({
     where: {
-      transaksi: { unitSekolahId: unitId, jenis: 'KAS_KELUAR', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } }
+      transaksi: { unitSekolahId: unitId, jenis: 'KAS_KELUAR', status: 'POSTED', tanggal: { gte: startOfMonth, lte: endOfMonth } },
+      posisi: 'DEBIT',
+      akun: { isKasBank: false }
     },
     select: { nilai: true, akun: { select: { nama: true } } }
   })
@@ -859,7 +921,7 @@ async function fetchKepsekData(unitId: string, yearId?: string) {
   const monthStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), 1)
   const rawMonthTransactionsK = await prisma.transaksi.findMany({
     where: { unitSekolahId: unitId, jenis: 'KAS_MASUK', status: 'POSTED', tanggal: { gte: monthStart } },
-    select: { tanggal: true, totalNilai: true }
+    select: { tanggal: true, createdAt: true, totalNilai: true }
   })
   const interactiveChartDataK = generateInteractiveChartData(rawMonthTransactionsK, todayStart, weekStart, monthStart)
 
