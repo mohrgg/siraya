@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { Search, Plus, Printer, Download, RefreshCw, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown, FileSpreadsheet, FileText, ArrowDownLeft } from "lucide-react"
+import { Search, Plus, Printer, Download, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown, FileSpreadsheet, FileText, ArrowDownLeft } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
@@ -10,7 +10,6 @@ import { id as idLocale } from "date-fns/locale"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { hapusKasMasuk } from "@/actions/kas-masuk"
-import { sinkronkanDeskripsiTagihanLama } from "@/actions/pembayaran-tagihan"
 import toast from "react-hot-toast"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
@@ -35,7 +34,6 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
   const [searchTerm, setSearchTerm] = useState("")
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [isSyncing, setIsSyncing] = useState(false)
   const [isExportingExcel, setIsExportingExcel] = useState(false)
   const [isExportingPDF, setIsExportingPDF] = useState(false)
   const isReadOnly = userRole === "KEPALA_SEKOLAH" || userRole === "YAYASAN"
@@ -53,25 +51,6 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
 
   const handleRefresh = () => {
     router.refresh()
-  }
-
-  const handleSyncDeskripsi = async () => {
-    if (!confirm("Perbarui deskripsi transaksi tagihan siswa lama agar memuat nama pos spesifik (SPP, BAT, PSB, PTS/PAT)?")) return
-    setIsSyncing(true)
-    const tId = toast.loading("Menyinkronkan deskripsi transaksi tagihan...")
-    try {
-      const res = await sinkronkanDeskripsiTagihanLama(userUnitId)
-      if (res.success) {
-        toast.success(`Berhasil memperbarui ${res.count} deskripsi transaksi tagihan!`, { id: tId })
-        router.refresh()
-      } else {
-        toast.error(res.error || "Gagal menyinkronkan deskripsi", { id: tId })
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Terjadi kesalahan sistem", { id: tId })
-    } finally {
-      setIsSyncing(false)
-    }
   }
 
   const handleDelete = async () => {
@@ -339,19 +318,6 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
               onClick={handleRefresh} 
               title="Segarkan Data" 
             />
-            {!isReadOnly && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSyncDeskripsi}
-                disabled={isSyncing}
-                title="Perbarui deskripsi transaksi tagihan siswa lama ke format spesifik (SPP, BAT, PTS/PAT, dll.)"
-                className="opacity-100 border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-800 flex items-center gap-1.5 h-9"
-              >
-                <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
-                <span className="hidden md:inline">{isSyncing ? "Sinkronisasi..." : "Sinkron Deskripsi"}</span>
-              </Button>
-            )}
             <ToolbarExportExcel 
               onClick={handleExportExcel}
               disabled={isExportingExcel || filteredData.length === 0}
