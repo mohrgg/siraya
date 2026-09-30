@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
-import { X, Calendar as CalendarIcon, FileText, CreditCard, AlertCircle } from "lucide-react"
+import { X, Calendar as CalendarIcon, FileText, CreditCard, AlertCircle, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import toast from "react-hot-toast"
+import { buildDeskripsiPembayaranTagihan } from "@/lib/tagihan-helpers"
 
 export type TagihanItem = {
   tagihanId: string
@@ -41,6 +42,7 @@ export default function ModalPembayaranTagihan({
   const [akunKasId, setAkunKasId] = useState("")
   const [tanggal, setTanggal] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [deskripsi, setDeskripsi] = useState("")
+  const [isManualDeskripsi, setIsManualDeskripsi] = useState(false)
   const [noReferensi, setNoReferensi] = useState("")
   const [localItems, setLocalItems] = useState<TagihanItem[]>([])
   
@@ -91,16 +93,25 @@ export default function ModalPembayaranTagihan({
         setAkunKasId(akunKasBankList[0].id)
       }
       setTanggal(format(new Date(), 'yyyy-MM-dd'))
-      setDeskripsi(`Pembayaran Tagihan Siswa: ${muridName}`)
       setNoReferensi("[Otomatis oleh Sistem]")
-      setLocalItems(items.map(item => ({
+      const initialItems = items.map(item => ({
         ...item, 
         potongan: 0, 
         kategoriPotongan: "-"
-      })))
+      }))
+      setLocalItems(initialItems)
+      setDeskripsi(buildDeskripsiPembayaranTagihan(initialItems, muridName))
+      setIsManualDeskripsi(false)
       setIsCustomKategoriMap({})
     }
   }, [isOpen, akunKasBankList, muridName, items])
+
+  // Perbarui deskripsi otomatis saat item tagihan yang dibayar berubah (jika belum diedit manual)
+  useEffect(() => {
+    if (isOpen && !isManualDeskripsi && localItems.length > 0) {
+      setDeskripsi(buildDeskripsiPembayaranTagihan(localItems, muridName))
+    }
+  }, [localItems, muridName, isManualDeskripsi, isOpen])
 
   if (!isOpen || !mounted) return null
 
@@ -290,7 +301,21 @@ export default function ModalPembayaranTagihan({
 
             {/* Deskripsi */}
             <div>
-              <label className="text-xs font-bold text-text-main block mb-1.5">Deskripsi</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-text-main block">Deskripsi Transaksi Kas Masuk</label>
+                {isManualDeskripsi && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsManualDeskripsi(false)
+                      setDeskripsi(buildDeskripsiPembayaranTagihan(localItems, muridName))
+                    }}
+                    className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <RotateCcw size={11} /> Reset Otomatis
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <div className="absolute top-2.5 left-3 pointer-events-none">
                   <div className="w-5 h-5 bg-emerald-100 text-emerald-600 rounded flex items-center justify-center">
@@ -302,9 +327,16 @@ export default function ModalPembayaranTagihan({
                   rows={2}
                   className="w-full pl-10 pr-3 py-2 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-sm font-medium resize-none"
                   value={deskripsi}
-                  onChange={(e) => setDeskripsi(e.target.value)}
+                  onChange={(e) => {
+                    setIsManualDeskripsi(true)
+                    setDeskripsi(e.target.value)
+                  }}
+                  placeholder="Deskripsi pembayaran tagihan..."
                 />
               </div>
+              <p className="text-[11px] text-text-muted mt-1">
+                * Otomatis menyebutkan pos pembayaran (SPP, BAT, PSB, PTS/PAT, dll.). Anda dapat menyuntingnya jika diperlukan.
+              </p>
             </div>
 
             {/* Table of selected items */}

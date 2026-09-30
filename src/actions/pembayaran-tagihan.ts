@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma"
 import { revalidatePath, unstable_noStore } from "next/cache"
 import { format } from "date-fns"
 import { auth } from "@/lib/auth"
+import { buildDeskripsiPembayaranTagihan } from "@/lib/tagihan-helpers"
 
 export async function getAkunKasBankList(unitSekolahId?: string) {
   unstable_noStore()
@@ -314,6 +315,7 @@ export async function prosesPembayaranTagihan(data: {
     jumlahBayar: number
     potongan?: number
     kategoriPotongan?: string
+    namaAkun?: string
   }[]
 }) {
   const session = await auth()
@@ -378,6 +380,32 @@ export async function prosesPembayaranTagihan(data: {
       }
     }
 
+    // 4. Siapkan nama-nama pos tagihan untuk deskripsi spesifik
+    const tagihanIds = data.items.map(i => i.tagihanId)
+    const tagihanRecords = await prisma.tagihan.findMany({
+      where: { id: { in: tagihanIds } },
+      select: { id: true, namaTagihan: true, akun: { select: { nama: true } } }
+    })
+    const tagihanNameMap = new Map<string, string>()
+    tagihanRecords.forEach(t => {
+      tagihanNameMap.set(t.id, t.namaTagihan || t.akun.nama)
+    })
+
+    const itemsForDeskripsi = data.items.map(item => ({
+      namaAkun: item.namaAkun || tagihanNameMap.get(item.tagihanId) || "Tagihan",
+      jumlahBayar: item.jumlahBayar,
+      potongan: item.potongan
+    }))
+
+    // Cek apakah deskripsi yang dikirim adalah custom dari user atau masih teks default/kosong
+    const isDefaultOrEmpty = !data.deskripsi || 
+      data.deskripsi.trim() === `Pembayaran Tagihan Siswa: ${data.muridName}` ||
+      data.deskripsi.trim() === "Pembayaran Tagihan Siswa"
+
+    const finalDeskripsi = isDefaultOrEmpty
+      ? buildDeskripsiPembayaranTagihan(itemsForDeskripsi, data.muridName)
+      : data.deskripsi.trim()
+
     // ==========================================
     // TAHAP 2: LEAN ATOMIC TRANSACTION
     // ==========================================
@@ -396,7 +424,7 @@ export async function prosesPembayaranTagihan(data: {
                 tanggal: data.tanggal,
                 jenis: "KAS_MASUK",
                 sumber: "TAGIHAN",
-                deskripsi: data.deskripsi || `Pembayaran Tagihan Siswa: ${data.muridName}`,
+                deskripsi: finalDeskripsi,
                 totalNilai: totalBayar,
                 status: "POSTED",
                 namaPihakKetiga: data.muridName,
@@ -413,7 +441,7 @@ export async function prosesPembayaranTagihan(data: {
                   akunId: data.akunKasId,
                   posisi: "DEBIT",
                   nilai: totalBayar,
-                  deskripsi: `Pembayaran Tagihan Siswa: ${data.muridName}`
+                  deskripsi: finalDeskripsi
                 }
               })
             }
@@ -436,13 +464,15 @@ export async function prosesPembayaranTagihan(data: {
               const totalNilaiItem = item.jumlahBayar + (item.potongan || 0)
               if (totalNilaiItem <= 0) continue
 
+              const itemNama = item.namaAkun || tagihanNameMap.get(item.tagihanId) || "Tagihan"
+
               await tx.transaksiDetail.create({
                 data: {
                   transaksiId: transaksi.id,
                   akunId: item.akunPendapatanId,
                   posisi: "KREDIT",
                   nilai: totalNilaiItem,
-                  deskripsi: `Pembayaran Tagihan Siswa: ${data.muridName}`
+                  deskripsi: `Pembayaran ${itemNama} - Siswa: ${data.muridName}`
                 }
               })
             }
@@ -619,5 +649,104 @@ export async function getRiwayatTransaksiByTagihan(tagihanId: string) {
   } catch (error: any) {
     console.error("Error getRiwayatTransaksiByTagihan:", error)
     return []
+  }
+}
+
+/**
+ * Server action untuk menyinkronkan dan memperbarui deskripsi transaksi tagihan lama
+ * yang masih berformat generik "Pembayaran Tagihan Siswa: [Nama]" menjadi deskripsi spesifik
+ * pos pembayaran (misal: SPP, BAT, PSB, PTS/PAT).
+ */
+export async function sinkronkanDeskripsiTagihanLama(unitSekolahId?: string) {
+  const session = await auth()
+  if (!session?.user || !["ADMIN", "TATA_USAHA", "SUPERADMIN", "YAYASAN"].includes((session.user as any).role)) {
+    throw new Error("Akses ditolak.")
+  }
+
+  try {
+    const isGlobal = !unitSekolahId || unitSekolahId === "all"
+    const whereClause: any = {
+      jenis: "KAS_MASUK",
+      sumber: "TAGIHAN",
+      OR: [
+        { deskripsi: { startsWith: "Pembayaran Tagihan Siswa:" } },
+        { deskripsi: "Pembayaran Tagihan Siswa" }
+      ]
+    }
+
+    if (!isGlobal) {
+      whereClause.unitSekolahId = unitSekolahId
+    }
+
+    const transaksiList = await prisma.transaksi.findMany({
+      where: whereClause,
+      include: {
+        pembayaranTagihan: {
+          include: {
+            tagihan: {
+              select: { 
+                namaTagihan: true, 
+                akunId: true,
+                akun: { select: { nama: true } } 
+              }
+            }
+          }
+        },
+        detail: {
+          select: { id: true, akunId: true, posisi: true, deskripsi: true }
+        }
+      },
+      take: 500 // Batch hingga 500 transaksi
+    })
+
+    let updatedCount = 0
+
+    for (const tx of transaksiList) {
+      if (!tx.pembayaranTagihan || tx.pembayaranTagihan.length === 0) continue
+
+      const itemsDesc = tx.pembayaranTagihan.map(pt => ({
+        namaAkun: pt.tagihan.namaTagihan || pt.tagihan.akun.nama,
+        jumlahBayar: pt.jumlahDibayar,
+        potongan: pt.potongan || 0
+      }))
+
+      const muridName = tx.namaPihakKetiga || ""
+      const newDeskripsi = buildDeskripsiPembayaranTagihan(itemsDesc, muridName)
+
+      if (newDeskripsi && newDeskripsi !== tx.deskripsi) {
+        await prisma.transaksi.update({
+          where: { id: tx.id },
+          data: { deskripsi: newDeskripsi }
+        })
+
+        // Perbarui detail transaksi kas masuk (posisi DEBIT & KREDIT)
+        for (const td of tx.detail) {
+          if (td.posisi === "DEBIT") {
+            await prisma.transaksiDetail.update({
+              where: { id: td.id },
+              data: { deskripsi: newDeskripsi }
+            })
+          } else if (td.posisi === "KREDIT") {
+            const matchedPt = tx.pembayaranTagihan.find(pt => pt.tagihan.akunId === td.akunId)
+            if (matchedPt) {
+              const itemNama = matchedPt.tagihan.namaTagihan || matchedPt.tagihan.akun.nama
+              await prisma.transaksiDetail.update({
+                where: { id: td.id },
+                data: { deskripsi: `Pembayaran ${itemNama} - Siswa: ${muridName}` }
+              })
+            }
+          }
+        }
+
+        updatedCount++
+      }
+    }
+
+    revalidatePath("/(dashboard)/(keuangan)/kas-masuk")
+    revalidatePath("/(dashboard)/(keuangan)/pembayaran-tagihan")
+    return { success: true, count: updatedCount }
+  } catch (error: any) {
+    console.error("Error sinkronkanDeskripsiTagihanLama:", error)
+    return { success: false, error: error.message }
   }
 }
