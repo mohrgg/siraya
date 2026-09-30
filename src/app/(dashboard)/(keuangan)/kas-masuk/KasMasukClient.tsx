@@ -183,7 +183,7 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
       const { buildInstitutionInfo, getSignatoryKiri } = await import("@/lib/pdf-helpers")
       
       const tableColumn = ["No", "Tgl Transaksi", "No Referensi", "Penyetor", "Deskripsi", "Total Nilai", "Pembuat", "Status"]
-      const tableRows = filteredData.map((item: any, index: number) => [
+      const tableRows: any[][] = filteredData.map((item: any, index: number) => [
         index + 1,
         format(new Date(item.tanggal), "dd/MM/yyyy"),
         item.noReferensi,
@@ -194,9 +194,23 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
         item.status
       ])
 
+      if (filteredData.length > 0) {
+        const totalNilaiAll = filteredData.reduce((acc: number, curr: any) => acc + (Number(curr.totalNilai) || 0), 0)
+        tableRows.push([
+          "",
+          "TOTAL PENERIMAAN",
+          "",
+          "",
+          "",
+          `Rp ${totalNilaiAll.toLocaleString('id-ID')}`,
+          "",
+          ""
+        ])
+      }
+
       const unitObj = userUnitId ? schoolUnits.find((u: any) => u.id === userUnitId) : undefined
 
-      exportTablePdf({
+      await exportTablePdf({
         institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
         title: "Laporan Kas Masuk (Penerimaan)",
         subtitle: `Unit: ${unitObj?.name || "Semua Unit"} • Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
@@ -393,7 +407,7 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
                 <tbody>
                   {paginatedData.map((item: any, idx: number) => (
                     <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
-                      <td className="p-4 text-center text-text-muted">{idx + 1}</td>
+                      <td className="p-4 text-center text-text-muted">{(currentPage - 1) * pageSize + idx + 1}</td>
                       <td className="p-4 font-medium text-text-main">{format(new Date(item.tanggal), 'dd MMM yyyy', { locale: idLocale })}</td>
                       <td className="p-4 text-text-muted">{format(new Date(item.createdAt), 'dd MMM yyyy HH:mm', { locale: idLocale })}</td>
                       <td className="p-4 font-semibold text-primary">{item.noReferensi}</td>

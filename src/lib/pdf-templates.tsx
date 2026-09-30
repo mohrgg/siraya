@@ -5,15 +5,16 @@ import { PdfInstitutionInfo } from './pdf-types'
 // 1. KOMPONEN KOP SURAT (HEADER)
 // ============================================================================
 interface PrintHeaderHtmlProps {
-  institutionInfo: PdfInstitutionInfo
+  institutionInfo?: PdfInstitutionInfo
 }
 
 export function PrintHeaderHtml({ institutionInfo }: PrintHeaderHtmlProps) {
+  const info = institutionInfo || { namaYayasan: "YAYASAN AL BASYARIAH", kotaPenandatangan: "Bandung" } as any
   const parts: string[] = []
-  if (institutionInfo.alamat) parts.push(institutionInfo.alamat)
-  if (institutionInfo.telepon) parts.push(`Telp: ${institutionInfo.telepon}`)
-  if (institutionInfo.email) parts.push(`Email: ${institutionInfo.email}`)
-  if (institutionInfo.website) parts.push(`Web: ${institutionInfo.website}`)
+  if (info.alamat) parts.push(info.alamat)
+  if (info.telepon) parts.push(`Telp: ${info.telepon}`)
+  if (info.email) parts.push(`Email: ${info.email}`)
+  if (info.website) parts.push(`Web: ${info.website}`)
   const subtitle = parts.join(' \u2022 ')
 
   return (
@@ -21,9 +22,9 @@ export function PrintHeaderHtml({ institutionInfo }: PrintHeaderHtmlProps) {
       <div className="flex items-center mb-1.5">
         {/* Logo */}
         <div className="w-12 h-12 relative mr-3 flex-shrink-0">
-          {institutionInfo.logoUrl ? (
+          {info.logoUrl ? (
             <img 
-              src={institutionInfo.logoUrl} 
+              src={info.logoUrl} 
               alt="Logo" 
               className="w-full h-full object-contain"
             />
@@ -32,18 +33,18 @@ export function PrintHeaderHtml({ institutionInfo }: PrintHeaderHtmlProps) {
         
         {/* Header Text */}
         <div className="flex-1 flex flex-col justify-center text-center">
-          {institutionInfo.namaUnit ? (
+          {info.namaUnit ? (
             <>
               <h2 className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-800 mb-0.5">
-                {institutionInfo.namaYayasan || "YAYASAN AL BASYARIAH"}
+                {info.namaYayasan || "YAYASAN AL BASYARIAH"}
               </h2>
               <h1 className="text-[16px] font-black uppercase tracking-[0.1em] text-slate-900 mb-0.5 leading-tight">
-                {institutionInfo.namaUnit}
+                {info.namaUnit}
               </h1>
             </>
           ) : (
             <h1 className="text-[16px] font-black uppercase tracking-[0.1em] text-slate-900 mb-0.5 leading-tight mt-1">
-              {institutionInfo.namaYayasan || "YAYASAN AL BASYARIAH"}
+              {info.namaYayasan || "YAYASAN AL BASYARIAH"}
             </h1>
           )}
           <p className="text-[9px] text-slate-700 max-w-2xl mx-auto leading-tight">
@@ -127,7 +128,7 @@ export function PrintSignatureHtml({
 // 3. LAYOUT TABEL REPORT (MASTER)
 // ============================================================================
 export interface TableReportData {
-  institutionInfo: PdfInstitutionInfo
+  institutionInfo?: PdfInstitutionInfo
   title: string
   subtitle?: string
   headers: string[]
@@ -147,9 +148,11 @@ export function TableReportHtml({
   penandatanganKiri,
   penandatanganKanan
 }: TableReportData) {
+  const info = institutionInfo || { namaYayasan: "YAYASAN AL BASYARIAH", kotaPenandatangan: "Bandung" } as any
+
   return (
     <div className="font-sans text-slate-900 bg-white block">
-      <PrintHeaderHtml institutionInfo={institutionInfo} />
+      <PrintHeaderHtml institutionInfo={info} />
       
       <div className="text-center mb-6">
         <h3 className="text-lg font-bold uppercase tracking-wider text-emerald-700">{title}</h3>
@@ -167,36 +170,35 @@ export function TableReportHtml({
           </tr>
         </thead>
         <tbody style={{ display: 'table-row-group' }}>
-          {data.slice(0, Math.max(0, data.length - 1)).map((row, rIdx) => (
-            <tr key={rIdx} className={rIdx % 2 === 0 ? "bg-white" : "bg-slate-50"} style={{ pageBreakInside: 'avoid' }}>
-              {row.map((cell, cIdx) => (
-                <td key={cIdx} className="py-2 px-3 border border-slate-200 text-slate-700">
-                  {cell !== null && cell !== undefined ? String(cell) : "-"}
-                </td>
-              ))}
-            </tr>
-          ))}
+          {data.map((row, rIdx) => {
+            const isTotalRow = row.some(cell => typeof cell === 'string' && cell.trim().toUpperCase().includes('TOTAL'))
+            return (
+              <tr 
+                key={rIdx} 
+                className={isTotalRow ? "bg-slate-100 font-bold border-t-2 border-slate-400" : (rIdx % 2 === 0 ? "bg-white" : "bg-slate-50")} 
+                style={{ pageBreakInside: 'avoid' }}
+              >
+                {row.map((cell, cIdx) => (
+                  <td 
+                    key={cIdx} 
+                    className={`py-2 px-3 border border-slate-200 ${isTotalRow ? "text-slate-900 font-bold" : "text-slate-700"}`}
+                  >
+                    {cell !== null && cell !== undefined ? String(cell) : "-"}
+                  </td>
+                ))}
+              </tr>
+            )
+          })}
         </tbody>
-        <tfoot style={{ display: 'table-row-group' }}>
-          {data.length > 0 && (
-            <tr className={(data.length - 1) % 2 === 0 ? "bg-white" : "bg-slate-50"}>
-              {data[data.length - 1].map((cell, cIdx) => (
-                <td key={cIdx} className="py-2 px-3 border border-slate-200 text-slate-700">
-                  {cell !== null && cell !== undefined ? String(cell) : "-"}
-                </td>
-              ))}
-            </tr>
-          )}
-        </tfoot>
       </table>
 
       <div className="mt-6 mb-2 break-inside-avoid" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
         <PrintSignatureHtml 
-          kotaPenandatangan={institutionInfo.kotaPenandatangan || "Bandung"}
+          kotaPenandatangan={info.kotaPenandatangan || "Bandung"}
           tanggalCetak={tanggalCetak}
           penandatanganKiri={penandatanganKiri}
           penandatanganKanan={penandatanganKanan}
-          catatanKwitansi={institutionInfo.catatanKwitansi}
+          catatanKwitansi={info.catatanKwitansi}
         />
       </div>
     </div>

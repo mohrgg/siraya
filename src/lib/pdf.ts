@@ -4,6 +4,24 @@ import {
   ExportJurnalPdfOptions,
   ExportIncomeStatementPdfOptions
 } from './pdf-types'
+async function downloadPdfResponse(response: Response, defaultFilename: string) {
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null)
+    const errorMsg = errorData?.error || errorData?.message || response.statusText || `HTTP ${response.status}`
+    throw new Error(`Gagal mengekspor PDF: ${errorMsg}`)
+  }
+
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = defaultFilename.endsWith('.pdf') ? defaultFilename : `${defaultFilename}.pdf`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  setTimeout(() => URL.revokeObjectURL(url), 100)
+}
+
 /**
  * Helper universal untuk mengekspor data tabel menjadi dokumen PDF resmi.
  */
@@ -49,19 +67,7 @@ export async function exportTablePdf({
       body: JSON.stringify(payload)
     })
 
-    if (!response.ok) {
-      throw new Error(`Gagal mengekspor PDF: ${response.statusText}`)
-    }
-
-    const blob = await response.blob()
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${filename || 'export_tabel'}.pdf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    setTimeout(() => URL.revokeObjectURL(url), 100)
+    await downloadPdfResponse(response, filename || 'export_tabel')
   } catch (error) {
     console.error("Export PDF error:", error)
     throw error
@@ -87,17 +93,7 @@ export async function exportResiPdf(data: ExportResiPdfOptions) {
       body: JSON.stringify(payload)
     })
 
-    if (!response.ok) throw new Error(`Gagal mengekspor PDF: ${response.statusText}`)
-
-    const blob = await response.blob()
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = data.filename || `Kwitansi_${data.noReferensi}.pdf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    setTimeout(() => URL.revokeObjectURL(url), 100)
+    await downloadPdfResponse(response, data.filename || `Kwitansi_${data.noReferensi}.pdf`)
   } catch (error) {
     console.error("Export PDF error:", error)
     throw error
@@ -123,17 +119,7 @@ export async function exportJurnalPdf(data: ExportJurnalPdfOptions) {
       body: JSON.stringify(payload)
     })
 
-    if (!response.ok) throw new Error(`Gagal mengekspor PDF: ${response.statusText}`)
-
-    const blob = await response.blob()
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = data.filename || `Jurnal_${data.noReferensi}.pdf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    setTimeout(() => URL.revokeObjectURL(url), 100)
+    await downloadPdfResponse(response, data.filename || `Jurnal_${data.noReferensi}.pdf`)
   } catch (error) {
     console.error("Export PDF error:", error)
     throw error
@@ -159,17 +145,7 @@ export async function exportIncomeStatementPdf(data: ExportIncomeStatementPdfOpt
       body: JSON.stringify(payload)
     })
 
-    if (!response.ok) throw new Error(`Gagal mengekspor PDF: ${response.statusText}`)
-
-    const blob = await response.blob()
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${data.filename || 'Laporan_Pemasukan_Pengeluaran'}.pdf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    setTimeout(() => URL.revokeObjectURL(url), 100)
+    await downloadPdfResponse(response, `${data.filename || 'Laporan_Pemasukan_Pengeluaran'}.pdf`)
   } catch (error) {
     console.error("Export PDF error:", error)
     throw error
@@ -192,17 +168,7 @@ export async function exportMutasiBankPdf(data: any) {
       body: JSON.stringify(payload)
     })
 
-    if (!response.ok) throw new Error(`Gagal mengekspor PDF: ${response.statusText}`)
-
-    const blob = await response.blob()
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = data.filename || 'Mutasi_Bank.pdf'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    setTimeout(() => URL.revokeObjectURL(url), 100)
+    await downloadPdfResponse(response, data.filename || 'Mutasi_Bank.pdf')
   } catch (error) {
     console.error("Export PDF error:", error)
     throw error
@@ -225,17 +191,7 @@ export async function exportTunggakanMatriksPdf(data: any) {
       body: JSON.stringify(payload)
     })
 
-    if (!response.ok) throw new Error(`Gagal mengekspor PDF: ${response.statusText}`)
-
-    const blob = await response.blob()
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = data.filename || `Laporan_Tunggakan.pdf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    setTimeout(() => URL.revokeObjectURL(url), 100)
+    await downloadPdfResponse(response, data.filename || `Laporan_Tunggakan.pdf`)
   } catch (error) {
     console.error("Export PDF error:", error)
     throw error
