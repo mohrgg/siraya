@@ -20,6 +20,7 @@ import PrintFooter from "@/components/shared/print/PrintFooter"
 import { getRiwayatTransaksiByTagihan } from "@/actions/pembayaran-tagihan"
 import { exportResiPdf } from "@/lib/pdf"
 import ModalPilihRiwayatTransaksi from "@/app/(dashboard)/(keuangan)/pembayaran-tagihan/ModalPilihRiwayatTransaksi"
+import InteractiveReceiptModal, { ReceiptData } from "@/components/shared/print/InteractiveReceiptModal"
 
 interface MuridDetailClientProps {
   initialMurid: any
@@ -65,6 +66,7 @@ export default function MuridDetailClient({
   const [isPrintingTagihan, setIsPrintingTagihan] = useState<string | null>(null)
   const [riwayatModalOpen, setRiwayatModalOpen] = useState(false)
   const [selectedRiwayatList, setSelectedRiwayatList] = useState<any[]>([])
+  const [receiptModalData, setReceiptModalData] = useState<ReceiptData | null>(null)
 
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
@@ -184,55 +186,34 @@ export default function MuridDetailClient({
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(val)
   }
 
-  const executeExportKwitansiPdf = async (dataResi: any) => {
-    try {
-      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
-      const institutionInfo = buildInstitutionInfo(pengaturan, murid.unitSekolah)
-
-      await exportResiPdf({
-        institutionInfo,
-        noReferensi: dataResi.noReferensi,
-        tanggal: dataResi.tanggal,
-        penerimaDari: dataResi.muridName || murid.name,
-        items: dataResi.items.map((item: any) => ({
-          keterangan: item.namaAkun,
-          nominal: item.jumlahBayar,
-          sisaTagihanAwal: item.sisaTagihanAwal,
-          potongan: item.potongan,
-          kategoriPotongan: item.kategoriPotongan,
-          sisaTagihan: item.sisaTagihan
-        })),
-        total: dataResi.total,
-        catatan: pengaturan?.catatanKwitansi,
-        penandatanganKanan: { jabatan: "Bendahara Penerima", nama: userName || "Staf Keuangan" },
-        filename: `Kwitansi_${dataResi.noReferensi}`
-      })
-      toast.success(`Bukti Pembayaran ${dataResi.noReferensi} berhasil diunduh`)
-    } catch (error: any) {
-      toast.error(error.message || "Gagal mencetak bukti pembayaran")
-    }
+  const executeExportKwitansiPdf = (dataResi: any) => {
+    setReceiptModalData({
+      noReferensi: dataResi.noReferensi,
+      tanggal: dataResi.tanggal,
+      muridName: dataResi.muridName || murid.name,
+      items: dataResi.items.map((item: any) => ({
+        namaAkun: item.namaAkun,
+        jumlahBayar: item.jumlahBayar,
+        sisaTagihanAwal: item.sisaTagihanAwal,
+        potongan: item.potongan,
+        kategoriPotongan: item.kategoriPotongan,
+        sisaTagihan: item.sisaTagihan
+      })),
+      total: dataResi.total
+    })
   }
 
   const handleDirectPrintTagihan = async (t: any) => {
     setIsPrintingTagihan(t.id)
     try {
-      const { buildInstitutionInfo } = await import("@/lib/pdf-helpers")
-      const institutionInfo = buildInstitutionInfo(pengaturan, murid.unitSekolah)
-
       if (t.status === "BELUM_BAYAR") {
-        await exportResiPdf({
-          institutionInfo,
-          title: "SURAT TAGIHAN SPP / BIAYA",
+        setReceiptModalData({
           noReferensi: `TAG-${t.id.slice(-6).toUpperCase()}`,
           tanggal: new Date(),
-          penerimaDari: murid.name,
-          items: [{ keterangan: t.akun?.nama || "Tagihan", nominal: t.jumlah }],
-          total: t.jumlah,
-          catatan: "Mohon segera melunasi tagihan ini sebelum tanggal jatuh tempo.",
-          penandatanganKanan: { jabatan: "Tata Usaha", nama: userName || "Admin" },
-          filename: `Tagihan_${murid.name}_${t.akun?.nama}`
+          muridName: murid.name,
+          items: [{ namaAkun: t.akun?.nama || t.namaTagihan || "Tagihan", jumlahBayar: t.jumlah }],
+          total: t.jumlah
         })
-        toast.success("Surat Tagihan berhasil diunduh")
       } else {
         const riwayat = await getRiwayatTransaksiByTagihan(t.id)
         if (!riwayat || riwayat.length === 0) {
@@ -241,8 +222,8 @@ export default function MuridDetailClient({
         }
 
         if (riwayat.length === 1) {
-          // Pembayaran tunggal: langsung unduh resi lengkap dengan rincian diskon & sisa
-          await executeExportKwitansiPdf(riwayat[0])
+          // Pembayaran tunggal: buka modal kwitansi interaktif lengkap
+          executeExportKwitansiPdf(riwayat[0])
         } else {
           // Pembayaran bertahap (nyicil): buka modal pemilihan termin
           setSelectedRiwayatList(riwayat)
@@ -256,9 +237,9 @@ export default function MuridDetailClient({
     }
   }
 
-  const handleSelectTerminResi = async (dataResi: any) => {
+  const handleSelectTerminResi = (dataResi: any) => {
     setRiwayatModalOpen(false)
-    await executeExportKwitansiPdf(dataResi)
+    executeExportKwitansiPdf(dataResi)
   }
 
   return (
@@ -1097,6 +1078,16 @@ export default function MuridDetailClient({
         onClose={() => setRiwayatModalOpen(false)}
         riwayat={selectedRiwayatList}
         onSelect={handleSelectTerminResi}
+      />
+
+      {/* Modal Pratinjau & Cetak Kwitansi Interaktif */}
+      <InteractiveReceiptModal
+        isOpen={Boolean(receiptModalData)}
+        onClose={() => setReceiptModalData(null)}
+        data={receiptModalData}
+        unitInfo={murid.unitSekolah}
+        pengaturan={pengaturan}
+        currentUser={{ name: userName }}
       />
 
     </div>

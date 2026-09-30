@@ -225,6 +225,7 @@ export interface ResiPdfData {
   penandatanganKiri?: { jabatan: string; nama: string }
   penandatanganKanan?: { jabatan: string; nama: string }
   catatan?: string
+  terbilang?: string
 }
 
 export function ResiHtml({
@@ -237,7 +238,8 @@ export function ResiHtml({
   total,
   penandatanganKiri,
   penandatanganKanan,
-  catatan
+  catatan,
+  terbilang
 }: ResiPdfData) {
   const parsedDate = new Date(tanggal)
   const dateStr = !isNaN(parsedDate.getTime()) 
@@ -329,6 +331,13 @@ export function ResiHtml({
           </tr>
         </tfoot>
       </table>
+
+      {terbilang && (
+        <div className="mb-2 p-1 bg-slate-50 border border-slate-200 text-[9px] italic text-slate-700" style={{ pageBreakInside: 'avoid' }}>
+          <span className="font-semibold text-slate-800 not-italic">Terbilang: </span>
+          {terbilang}
+        </div>
+      )}
 
       <div className="mt-3 break-inside-avoid" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
         <PrintSignatureHtml 

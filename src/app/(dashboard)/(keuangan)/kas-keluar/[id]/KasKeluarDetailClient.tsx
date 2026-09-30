@@ -9,12 +9,14 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import toast from "react-hot-toast"
+import InteractiveReceiptModal, { ReceiptData } from "@/components/shared/print/InteractiveReceiptModal"
 
 export default function KasKeluarDetailClient({ transaksi, pengaturan }: { transaksi: any, pengaturan?: any }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab") || "resi"
   const [activeTab, setActiveTab] = useState<'resi' | 'jurnal'>(tabParam as any)
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false)
 
   useEffect(() => {
     if (tabParam === "resi" || tabParam === "jurnal") {
@@ -114,6 +116,17 @@ export default function KasKeluarDetailClient({ transaksi, pengaturan }: { trans
     }
   }
 
+  const receiptData: ReceiptData = {
+    noReferensi: transaksi.noReferensi,
+    tanggal: transaksi.tanggal,
+    muridName: transaksi.namaPihakKetiga || "Penerima",
+    items: detailDebit.map((d: any) => ({
+      namaAkun: `${d.akun.kode} - ${d.akun.nama} ${d.deskripsi ? `(${d.deskripsi})` : ''}`,
+      jumlahBayar: d.nilai
+    })),
+    total: transaksi.totalNilai
+  }
+
   return (
     <div className="w-full pb-24">
       <PageHeader 
@@ -127,7 +140,7 @@ export default function KasKeluarDetailClient({ transaksi, pengaturan }: { trans
             <Button 
               variant="outline"
               size="sm"
-              onClick={activeTab === 'resi' ? handleExportResiPDF : handleExportJurnalPDF}
+              onClick={activeTab === 'resi' ? () => setIsReceiptModalOpen(true) : handleExportJurnalPDF}
               disabled={isExportingPDF}
               className="flex-1 sm:flex-initial justify-center opacity-100 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 min-h-[38px] sm:min-h-[36px]"
             >
@@ -299,6 +312,14 @@ export default function KasKeluarDetailClient({ transaksi, pengaturan }: { trans
           </div>
         )}
       </div>
+
+      <InteractiveReceiptModal 
+        isOpen={isReceiptModalOpen}
+        onClose={() => setIsReceiptModalOpen(false)}
+        data={receiptData}
+        pengaturan={pengaturan}
+        unitInfo={transaksi.unitSekolah}
+      />
     </div>
   )
 }

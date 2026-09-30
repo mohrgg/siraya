@@ -76,7 +76,7 @@ export async function exportResiPdf(data: ExportResiPdfOptions) {
     type: "resi",
     data: {
       ...data,
-      config: { orientation: 'landscape', format: 'A5' }
+      config: data.config || { orientation: 'landscape', format: 'A5' }
     }
   }
 

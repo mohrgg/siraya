@@ -50,9 +50,11 @@ export interface ExportResiPdfOptions {
   }[]
   total: number
   catatan?: string
+  terbilang?: string
   penandatanganKiri?: PdfSignatory
   penandatanganKanan?: PdfSignatory
   filename?: string
+  config?: { orientation?: 'portrait' | 'landscape', format?: string }
 }
 
 export interface ExportJurnalPdfOptions {
