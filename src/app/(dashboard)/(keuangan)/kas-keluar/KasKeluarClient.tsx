@@ -5,7 +5,7 @@ import { Search, Plus, Printer, Download, RefreshCw, Eye, Edit, Trash2, Calendar
 import { Button } from "@/components/ui/Button"
 import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
-import { format, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay } from "date-fns"
+import { format, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay, subMonths } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -25,6 +25,7 @@ import {
   ToolbarRefreshButton
 } from "@/components/ui/DataTableToolbar"
 import { PageHeader } from "@/components/ui/PageHeader"
+import { Layers } from "lucide-react"
 
 type TransaksiWithRelations = any // Type will be inferred properly in real project
 
@@ -58,10 +59,56 @@ export function extractKasKeluarItems(item: any): KasKeluarItem[] {
   ]
 }
 
-export default function KasKeluarClient({ initialData, userRole, pengaturan, schoolUnits = [], userUnitId, userName }: { initialData: TransaksiWithRelations[], userRole: string, pengaturan?: any, schoolUnits?: any[], userUnitId?: string, userName?: string }) {
+export function filterKasKeluarItemMatches(it: KasKeluarItem, filterVal: string): boolean {
+  if (!filterVal || filterVal === "ALL") return true
+  if (filterVal.startsWith("CAT:")) {
+    const cat = filterVal.replace("CAT:", "").toUpperCase()
+    const targetText = `${it.keterangan} ${it.akunNama || ''}`.toUpperCase()
+    if (cat === "GAJI") {
+      return targetText.includes("GAJI") || targetText.includes("HONOR")
+    }
+    if (cat === "ATK") {
+      return targetText.includes("ATK") || targetText.includes("ALAT TULIS")
+    }
+    if (cat === "UTILITAS") {
+      return targetText.includes("LISTRIK") || targetText.includes("AIR") || targetText.includes("INTERNET") || targetText.includes("TELEPON")
+    }
+    return targetText.includes(cat)
+  }
+  if (filterVal.startsWith("AKUN:")) {
+    const targetAkunId = filterVal.replace("AKUN:", "")
+    return it.akunId === targetAkunId
+  }
+  return true
+}
+
+export function getVisibleItemsForKasKeluar(item: any, filterVal: string): KasKeluarItem[] {
+  const allItems = extractKasKeluarItems(item)
+  if (!filterVal || filterVal === "ALL") return allItems
+  return allItems.filter(it => filterKasKeluarItemMatches(it, filterVal))
+}
+
+export default function KasKeluarClient({ 
+  initialData, 
+  userRole, 
+  pengaturan, 
+  schoolUnits = [], 
+  userUnitId, 
+  userName,
+  opsiJenisPengeluaran = []
+}: { 
+  initialData: TransaksiWithRelations[], 
+  userRole: string, 
+  pengaturan?: any, 
+  schoolUnits?: any[], 
+  userUnitId?: string, 
+  userName?: string,
+  opsiJenisPengeluaran?: { label: string, value: string }[]
+}) {
   const router = useRouter()
   const [data, setData] = useState(initialData)
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedJenisPengeluaran, setSelectedJenisPengeluaran] = useState<string>("ALL")
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isExportingExcel, setIsExportingExcel] = useState(false)
@@ -69,7 +116,7 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
   const isReadOnly = userRole === "KEPALA_SEKOLAH" || userRole === "YAYASAN"
   
   const [filterBy, setFilterBy] = useState<'tanggal_transaksi' | 'tanggal_pembuatan'>('tanggal_transaksi')
-  const [timeRange, setTimeRange] = useState<'hari' | 'minggu' | 'bulan' | 'custom'>('hari')
+  const [timeRange, setTimeRange] = useState<'semua' | 'hari' | 'minggu' | 'bulan' | 'bulan_lalu' | 'custom'>('hari')
   
   // Custom date state if needed
   const [startDate, setStartDate] = useState("")
@@ -96,14 +143,22 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
 
   const filteredData = useMemo(() => {
     return data.filter((item: any) => {
-      // 1. Search Filter
+      // 1. Filter Jenis Pengeluaran
+      const visibleItems = getVisibleItemsForKasKeluar(item, selectedJenisPengeluaran)
+      if (visibleItems.length === 0) return false
+
+      // 2. Search Filter
       const matchesSearch = item.noReferensi.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.namaPihakKetiga || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.deskripsi || "").toLowerCase().includes(searchTerm.toLowerCase())
+        (item.deskripsi || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        visibleItems.some(it => it.keterangan.toLowerCase().includes(searchTerm.toLowerCase()))
       
       if (!matchesSearch) return false
 
-      // 2. Date Filter
+      // 3. Date Filter
+      if (timeRange === 'semua') {
+        return true
+      }
       const dateToFilter = filterBy === 'tanggal_pembuatan' ? new Date(item.createdAt) : new Date(item.tanggal)
       
       if (timeRange === 'hari') {
@@ -112,6 +167,9 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
         return isThisWeek(dateToFilter, { weekStartsOn: 1 })
       } else if (timeRange === 'bulan') {
         return isThisMonth(dateToFilter)
+      } else if (timeRange === 'bulan_lalu') {
+        const lastMonth = subMonths(new Date(), 1)
+        return dateToFilter.getMonth() === lastMonth.getMonth() && dateToFilter.getFullYear() === lastMonth.getFullYear()
       } else if (timeRange === 'custom' && startDate && endDate) {
         const start = startOfDay(new Date(startDate))
         const end = endOfDay(new Date(endDate))
@@ -120,14 +178,14 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
 
       return true
     })
-  }, [data, searchTerm, filterBy, timeRange, startDate, endDate])
+  }, [data, searchTerm, filterBy, timeRange, startDate, endDate, selectedJenisPengeluaran])
 
   const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, filterBy, timeRange, startDate, endDate])
+  }, [searchTerm, filterBy, timeRange, startDate, endDate, selectedJenisPengeluaran])
 
   const paginatedData = useMemo(() => {
     return filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
@@ -136,9 +194,16 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
   const computedTotalPages = Math.ceil(filteredData.length / pageSize)
 
   const executiveMetrics = useMemo(() => {
-    const totalKeluar = filteredData.reduce((sum: number, item: any) => sum + (item.totalNilai || 0), 0)
+    const totalKeluar = filteredData.reduce((sum: number, item: any) => {
+      const items = getVisibleItemsForKasKeluar(item, selectedJenisPengeluaran)
+      return sum + items.reduce((s, it) => s + it.nominal, 0)
+    }, 0)
     const countTrans = filteredData.length
-    const largeTrans = filteredData.filter((item: any) => (item.totalNilai || 0) >= 1000000).length
+    const largeTrans = filteredData.filter((item: any) => {
+      const items = getVisibleItemsForKasKeluar(item, selectedJenisPengeluaran)
+      const transTotal = items.reduce((s, it) => s + it.nominal, 0)
+      return transTotal >= 1000000
+    }).length
     const avgTrans = countTrans > 0 ? Math.round(totalKeluar / countTrans) : 0
     return {
       totalKeluar,
@@ -146,7 +211,7 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
       largeTrans,
       avgTrans
     }
-  }, [filteredData])
+  }, [filteredData, selectedJenisPengeluaran])
 
   const handleExportExcel = async () => {
     setIsExportingExcel(true)
@@ -155,7 +220,7 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
       const exportData: any[] = []
       let rowNum = 1
       filteredData.forEach((item: any) => {
-        const items = extractKasKeluarItems(item)
+        const items = getVisibleItemsForKasKeluar(item, selectedJenisPengeluaran)
         items.forEach((it, i) => {
           exportData.push({
             No: i === 0 ? rowNum : "",
@@ -175,9 +240,14 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
       })
       
       const unitObj = userUnitId ? schoolUnits.find(u => u.id === userUnitId) : undefined
+      const rawLabel = selectedJenisPengeluaran !== "ALL" ? (opsiJenisPengeluaran.find(o => o.value === selectedJenisPengeluaran)?.label || selectedJenisPengeluaran) : ""
+      const jenisText = rawLabel ? rawLabel.replace(/^Semua\s+/i, "") : ""
+      const excelFilename = jenisText
+        ? `Kas_Keluar_${jenisText.replace(/[^a-zA-Z0-9_-]/g, '_')}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_')
+        : `Kas_Keluar_${format(new Date(), "yyyyMMdd")}`
 
-      exportToExcel(exportData, `Kas_Keluar_${format(new Date(), "yyyyMMdd")}`, {
-        title: "Laporan Kas Keluar (Pengeluaran)",
+      exportToExcel(exportData, excelFilename, {
+        title: jenisText ? `Laporan Kas Keluar - ${jenisText}` : "Laporan Kas Keluar (Pengeluaran)",
         unitInfo: unitObj || pengaturan || { name: "Yayasan Siraya" }
       })
       toast.success("Berhasil mengekspor Excel")
@@ -199,7 +269,7 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
       const tableRows: any[][] = []
       let rowNum = 1
       filteredData.forEach((item: any) => {
-        const items = extractKasKeluarItems(item)
+        const items = getVisibleItemsForKasKeluar(item, selectedJenisPengeluaran)
         items.forEach((it, i) => {
           tableRows.push([
             i === 0 ? rowNum : "",
@@ -216,7 +286,10 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
       })
 
       if (filteredData.length > 0) {
-        const totalNilaiAll = filteredData.reduce((acc: number, curr: any) => acc + (Number(curr.totalNilai) || 0), 0)
+        const totalNilaiAll = filteredData.reduce((acc: number, curr: any) => {
+          const items = getVisibleItemsForKasKeluar(curr, selectedJenisPengeluaran)
+          return acc + items.reduce((s, it) => s + it.nominal, 0)
+        }, 0)
         tableRows.push([
           "",
           "TOTAL PENGELUARAN",
@@ -230,14 +303,21 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
       }
 
       const unitObj = userUnitId ? schoolUnits.find((u: any) => u.id === userUnitId) : undefined
+      const rawLabel = selectedJenisPengeluaran !== "ALL" ? (opsiJenisPengeluaran.find(o => o.value === selectedJenisPengeluaran)?.label || selectedJenisPengeluaran) : ""
+      const jenisText = rawLabel ? rawLabel.replace(/^Semua\s+/i, "") : ""
+      const pdfTitle = jenisText ? `Laporan Kas Keluar - ${jenisText}` : "Laporan Kas Keluar (Pengeluaran)"
+      const pdfFilename = jenisText
+        ? `Kas_Keluar_${jenisText.replace(/[^a-zA-Z0-9_-]/g, '_')}_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_')
+        : `Kas_Keluar_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_')
+      const filterLabel = rawLabel ? ` • Jenis: ${rawLabel}` : ""
 
       await exportTablePdf({
         institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
-        title: "Laporan Kas Keluar (Pengeluaran)",
-        subtitle: `Unit: ${unitObj?.name || "Semua Unit"} • Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
+        title: pdfTitle,
+        subtitle: `Unit: ${unitObj?.name || "Semua Unit"}${filterLabel} • Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
         headers: tableColumn,
         data: tableRows,
-        filename: `Kas_Keluar_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_'),
+        filename: pdfFilename,
         config: { orientation: 'landscape' },
         penandatanganKiri: getSignatoryKiri(pengaturan, unitObj),
         penandatanganKanan: { jabatan: "Bendahara Pengeluaran,", nama: unitObj?.namaBendaharaUnit || pengaturan?.namaBendaharaYayasan || userName || "____________________" }
@@ -323,6 +403,16 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
           />
 
           <div className="grid grid-cols-2 sm:flex gap-2.5 w-full sm:w-auto">
+            {opsiJenisPengeluaran && opsiJenisPengeluaran.length > 0 && (
+              <ToolbarFilter
+                icon={<Layers size={14} />}
+                value={selectedJenisPengeluaran}
+                onChange={(val) => setSelectedJenisPengeluaran(val)}
+                options={opsiJenisPengeluaran}
+                className="col-span-2 sm:col-span-1 sm:max-w-[200px] xl:max-w-[220px]"
+              />
+            )}
+
             <ToolbarFilter
               icon={<Filter size={14} />}
               value={filterBy}
@@ -338,9 +428,11 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
               value={timeRange}
               onChange={(val) => setTimeRange(val as any)}
               options={[
+                { label: "Semua Waktu", value: "semua" },
                 { label: "Hari Ini", value: "hari" },
                 { label: "Minggu Ini", value: "minggu" },
                 { label: "Bulan Ini", value: "bulan" },
+                { label: "Bulan Lalu", value: "bulan_lalu" },
                 { label: "Custom Tanggal", value: "custom" }
               ]}
             />
@@ -387,8 +479,12 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
         {filteredData.length === 0 ? (
           <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center text-text-muted w-full">
             <Receipt size={40} className="text-gray-300 mb-3 stroke-[1.5]" />
-            <p className="font-bold text-text-main text-base mb-1">Belum Ada Transaksi Kas Keluar</p>
-            <p className="text-xs text-text-muted max-w-sm">Data transaksi kas keluar akan muncul di sini setelah dibuat.</p>
+            <p className="font-bold text-text-main text-base mb-1">
+              {selectedJenisPengeluaran !== "ALL" || searchTerm ? "Tidak Ada Data yang Cocok" : "Belum Ada Transaksi Kas Keluar"}
+            </p>
+            <p className="text-xs text-text-muted max-w-sm">
+              {selectedJenisPengeluaran !== "ALL" || searchTerm ? "Coba sesuaikan filter jenis pengeluaran atau kata kunci pencarian." : "Data transaksi kas keluar akan muncul di sini setelah dibuat."}
+            </p>
           </div>
         ) : (
           <>
@@ -413,7 +509,7 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
                 </thead>
                 <tbody>
                   {paginatedData.map((item: any, idx: number) => {
-                    const items = extractKasKeluarItems(item)
+                    const items = getVisibleItemsForKasKeluar(item, selectedJenisPengeluaran)
                     const rowTotal = items.reduce((s, it) => s + it.nominal, 0)
                     return (
                     <tr key={item.id} className="align-top border-b border-border hover:bg-gray-50/50 transition-colors group">

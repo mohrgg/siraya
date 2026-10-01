@@ -119,6 +119,33 @@ export async function getPengeluaranAccounts(unitSekolahId?: string) {
   })
 }
 
+export async function getOpsiJenisPengeluaran(unitSekolahId?: string) {
+  const accounts = await getPengeluaranAccounts(unitSekolahId)
+
+  const hasGaji = accounts.some(a => a.nama.toUpperCase().includes("GAJI") || a.nama.toUpperCase().includes("HONOR"))
+  const hasOperasional = accounts.some(a => a.nama.toUpperCase().includes("OPERASIONAL"))
+  const hasATK = accounts.some(a => a.nama.toUpperCase().includes("ATK") || a.nama.toUpperCase().includes("ALAT TULIS"))
+  const hasUtilitas = accounts.some(a => a.nama.toUpperCase().includes("LISTRIK") || a.nama.toUpperCase().includes("AIR") || a.nama.toUpperCase().includes("INTERNET") || a.nama.toUpperCase().includes("TELEPON"))
+
+  const options: { label: string, value: string }[] = [
+    { label: "Semua Jenis Pengeluaran", value: "ALL" }
+  ]
+
+  if (hasGaji) options.push({ label: "Semua Gaji & Honor", value: "CAT:GAJI" })
+  if (hasOperasional) options.push({ label: "Semua Operasional", value: "CAT:OPERASIONAL" })
+  if (hasATK) options.push({ label: "Semua ATK & Alat Tulis", value: "CAT:ATK" })
+  if (hasUtilitas) options.push({ label: "Semua Utilitas (Listrik/Air/Net)", value: "CAT:UTILITAS" })
+
+  accounts.forEach(acc => {
+    options.push({
+      label: `${acc.kode} - ${acc.nama}${!acc.isActive ? ' (Nonaktif)' : ''}`,
+      value: `AKUN:${acc.id}`
+    })
+  })
+
+  return options
+}
+
 export async function getDivisiList() {
   return prisma.divisi.findMany({
     orderBy: { name: 'asc' }

@@ -48,7 +48,10 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
     let start = new Date()
     let end = new Date()
 
-    if (range === "Hari Ini") {
+    if (range === "Semua Waktu") {
+      start = new Date(2020, 0, 1)
+      end = new Date(now.getFullYear() + 1, 11, 31)
+    } else if (range === "Hari Ini") {
       start = new Date(now)
       end = new Date(now)
     } else if (range === "Minggu Ini") {
@@ -59,6 +62,9 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
     } else if (range === "Bulan Ini") {
       start = new Date(now.getFullYear(), now.getMonth(), 1)
       end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    } else if (range === "Bulan Lalu") {
+      start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      end = new Date(now.getFullYear(), now.getMonth(), 0)
     } else if (range === "Tahun Ini") {
       start = new Date(now.getFullYear(), 0, 1)
       end = new Date(now.getFullYear(), 11, 31)
@@ -216,10 +222,12 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
             onChange={(val) => setDateRange(val)}
             className="w-full md:w-auto sm:max-w-none md:max-w-[200px]"
             options={[
-              { label: "Hari ini", value: "Hari Ini" },
-              { label: "Minggu ini", value: "Minggu Ini" },
-              { label: "Bulan ini", value: "Bulan Ini" },
-              { label: "Tahun ini", value: "Tahun Ini" },
+              { label: "Semua Waktu", value: "Semua Waktu" },
+              { label: "Hari Ini", value: "Hari Ini" },
+              { label: "Minggu Ini", value: "Minggu Ini" },
+              { label: "Bulan Ini", value: "Bulan Ini" },
+              { label: "Bulan Lalu", value: "Bulan Lalu" },
+              { label: "Tahun Ini", value: "Tahun Ini" },
               { label: "Kustom", value: "Kustom" }
             ]}
           />

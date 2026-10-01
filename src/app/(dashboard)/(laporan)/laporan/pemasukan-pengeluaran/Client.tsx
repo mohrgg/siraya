@@ -225,12 +225,12 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
             onChange={(val) => setDateRange(val)}
             className="w-full md:w-auto sm:max-w-none md:max-w-[200px]"
             options={[
-              { label: "Hari ini", value: "Hari Ini" },
-              { label: "Minggu ini", value: "Minggu Ini" },
-              { label: "Bulan ini", value: "Bulan Ini" },
-              { label: "Bulan Lalu", value: "Bulan Lalu" },
-              { label: "Tahun ini", value: "Tahun Ini" },
               { label: "Semua Waktu", value: "Semua Waktu" },
+              { label: "Hari Ini", value: "Hari Ini" },
+              { label: "Minggu Ini", value: "Minggu Ini" },
+              { label: "Bulan Ini", value: "Bulan Ini" },
+              { label: "Bulan Lalu", value: "Bulan Lalu" },
+              { label: "Tahun Ini", value: "Tahun Ini" },
               { label: "Kustom", value: "Kustom" }
             ]}
           />
