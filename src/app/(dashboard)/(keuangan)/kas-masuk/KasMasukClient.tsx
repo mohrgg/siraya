@@ -120,7 +120,7 @@ export default function KasMasukClient({
   const isReadOnly = userRole === "KEPALA_SEKOLAH" || userRole === "YAYASAN"
   
   const [filterBy, setFilterBy] = useState<'tanggal_transaksi' | 'tanggal_pembuatan'>('tanggal_transaksi')
-  const [timeRange, setTimeRange] = useState<'semua' | 'hari' | 'minggu' | 'bulan' | 'bulan_lalu' | 'custom'>('semua')
+  const [timeRange, setTimeRange] = useState<'semua' | 'hari' | 'minggu' | 'bulan' | 'bulan_lalu' | 'custom'>('hari')
   
   // Custom date state if needed
   const [startDate, setStartDate] = useState("")
