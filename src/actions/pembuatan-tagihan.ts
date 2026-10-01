@@ -194,7 +194,10 @@ export async function getMuridWithTagihan(
         },
         tagihan: {
           where: { tahunAkademikId },
-          include: { akun: true }
+          include: { 
+            akun: true,
+            _count: { select: { pembayaran: true } }
+          }
         },
         _count: {
           select: {
@@ -247,7 +250,8 @@ export async function getMuridWithTagihan(
               tahunAkademikId
             },
             include: {
-              akun: true
+              akun: true,
+              _count: { select: { pembayaran: true } }
             }
           },
           _count: {
@@ -542,8 +546,11 @@ export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: st
   
   const muridIds = riwayatKelas.map(rk => rk.muridId)
 
-  if (muridIds.length > 0) {
-    const paidCount = await prisma.tagihan.count({
+  if (muridIds.length === 0) {
+    throw new Error("Tidak ada siswa aktif ditemukan di subkelas ini.")
+  }
+
+  const paidCount = await prisma.tagihan.count({
       where: {
         tahunAkademikId,
         akunId,
@@ -561,7 +568,7 @@ export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: st
       throw new Error(`Tidak dapat menghapus tagihan '${namaTagihan}' karena terdapat ${paidCount} siswa yang sudah melakukan pembayaran. Tagihan dengan riwayat pembayaran tidak boleh dihapus.`)
     }
 
-    await prisma.tagihan.deleteMany({
+    const deleteResult = await prisma.tagihan.deleteMany({
       where: {
         tahunAkademikId,
         akunId,
@@ -569,6 +576,10 @@ export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: st
         muridId: { in: muridIds }
       }
     })
+
+    if (deleteResult.count === 0) {
+      throw new Error(`Tidak ditemukan tagihan '${namaTagihan}' pada siswa di subkelas ini untuk dihapus.`)
+    }
 
     await prisma.logAktivitas.create({
       data: {
@@ -578,11 +589,9 @@ export async function hapusTagihanMassal(subKelasId: string, tahunAkademikId: st
         keterangan: `Menghapus massal tagihan (Akun ID: ${akunId}) untuk Subkelas ${subKelasId}`
       }
     })
-  }
 
-  revalidatePath("/pembuatan-tagihan")
-  return { success: true, message: "Tagihan massal berhasil dihapus" }
-}
+    return { success: true, message: "Tagihan massal berhasil dihapus" }
+  }
 
 /**
  * Mengubah nominal tagihan secara massal untuk komponen tertentu di satu subkelas
@@ -626,7 +635,6 @@ export async function editTagihanMassal(subKelasId: string, tahunAkademikId: str
     })
   }
 
-  revalidatePath("/pembuatan-tagihan")
   return { success: true, message: "Nominal tagihan massal berhasil diubah" }
 }
 

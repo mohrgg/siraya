@@ -196,7 +196,12 @@ export default function PembuatanTagihanClient({
       murid.tagihan?.forEach((t: any) => {
         const compId = `${t.akunId}::${t.namaTagihan}`
         tMap[compId] = t.jumlah
-        lMap[compId] = t.sisaTagihan < t.jumlah 
+        const hasPayment = 
+          t.sisaTagihan < t.jumlah || 
+          t.status === "LUNAS" || 
+          t.status === "SEBAGIAN" || 
+          (t._count?.pembayaran || 0) > 0
+        lMap[compId] = hasPayment
       })
 
       const hasOldDebts = (murid._count?.tagihan || 0) > 0
@@ -431,9 +436,9 @@ export default function PembuatanTagihanClient({
       toast.success("Berhasil menghapus komponen tagihan")
       setIsDeleteModalOpen(false)
       if (activeTab === "search" && lastSearchedQuery) {
-        handleCariSiswa(lastSearchedQuery)
+        await handleCariSiswa(lastSearchedQuery)
       } else if (subKelasId) {
-        handleTampilkanKelas()
+        await handleTampilkanKelas()
       }
     } catch (error: any) {
       toast.error(error.message || "Gagal menghapus tagihan")

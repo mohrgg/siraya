@@ -21,15 +21,13 @@ declare const globalThis: {
   prismaGlobal: ReturnType<typeof prismaClientSingleton> | undefined
 } & typeof global
 
-// Selalu buat instance baru saat file ini direload atau jika ada model baru yang belum terdeteksi
+// Selalu gunakan singleton dari globalThis (baik dev maupun prod) agar instance connection pool di-reuse di serverless
 const prisma = isEdge
   ? prismaClientSingleton()
-  : (globalThis.prismaGlobal && (globalThis.prismaGlobal as any).statusKepegawaian && (globalThis.prismaGlobal as any).errorLog)
-    ? globalThis.prismaGlobal
-    : prismaClientSingleton()
+  : (globalThis.prismaGlobal ?? prismaClientSingleton())
 
 export default prisma
 
-if (process.env.NODE_ENV !== "production" && !isEdge) {
+if (!isEdge) {
   globalThis.prismaGlobal = prisma
 }

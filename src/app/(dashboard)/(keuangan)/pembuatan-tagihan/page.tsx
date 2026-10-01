@@ -2,9 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import PembuatanTagihanClient from "./PembuatanTagihanClient"
 import { 
-  getTahunAkademikAktif, 
   getTahunAkademikList, 
-  getUnitSekolah, 
   getAkunPendapatan 
 } from "@/actions/pembuatan-tagihan"
 
@@ -29,30 +27,19 @@ export default async function PembuatanTagihanPage() {
   const activeUnitId = tenant.unitId || "all"
   
   const [
-    tahunAkademikAktif,
-    unitSekolahList,
+    tahunAkademikList,
     akunPendapatanList
   ] = await Promise.all([
-    getTahunAkademikAktif(),
-    getUnitSekolah(),
+    getTahunAkademikList(),
     getAkunPendapatan(activeUnitId)
   ])
 
-  // Resolve active year
-  const activeTahunAkademikId = activeYearIdCookie || (tahunAkademikAktif ? tahunAkademikAktif.id : "")
+  // Resolve active year from list
+  const activeTahunAkademik = tahunAkademikList.find(y => y.isActive)
+  const activeTahunAkademikId = activeYearIdCookie || (activeTahunAkademik ? activeTahunAkademik.id : "")
   
-  // Find name for the title
-  let activeTahunAkademikName = "Tidak Ada Tahun Aktif"
-  if (tahunAkademikAktif && tahunAkademikAktif.id === activeTahunAkademikId) {
-    activeTahunAkademikName = tahunAkademikAktif.name
-  } else if (activeYearIdCookie) {
-    // If we had a full list we could look it up, but since we don't fetch the full list here anymore unless needed,
-    // let's fetch the specific year if it differs. Actually, we can just fetch getTahunAkademikList to find the name.
-  }
-  // Let's just fetch the list to get the name reliably
-  const tahunAkademikList = await getTahunAkademikList()
   const foundYear = tahunAkademikList.find(y => y.id === activeTahunAkademikId)
-  if (foundYear) activeTahunAkademikName = foundYear.name
+  const activeTahunAkademikName = foundYear ? foundYear.name : (activeTahunAkademik ? activeTahunAkademik.name : "Tidak Ada Tahun Aktif")
 
   return (
     <PembuatanTagihanClient 
