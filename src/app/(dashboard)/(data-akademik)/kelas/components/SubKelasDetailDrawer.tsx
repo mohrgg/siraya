@@ -360,15 +360,15 @@ export default function SubKelasDetailDrawer({
             </p>
           </div>
         ) : (
-          <div className="border border-gray-200 rounded-xl overflow-x-auto custom-scrollbar bg-white shadow-xs">
-            <table className="w-full text-left border-collapse text-sm">
+          <div className="border border-border rounded-xl overflow-x-auto custom-scrollbar bg-surface shadow-xs">
+            <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-xs font-extrabold text-gray-500 uppercase tracking-wider">
-                  <th className="py-3 px-4 w-12 text-center">No</th>
-                  <th className="py-3 px-4">Nama Siswa</th>
-                  <th className="py-3 px-4">NIS / NISN</th>
-                  <th className="py-3 px-4">L/P</th>
-                  <th className="py-3 px-4 text-right">Aksi</th>
+                <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
+                  <th className="p-4 w-12 text-center font-semibold">No</th>
+                  <th className="p-4 font-semibold">Nama Siswa</th>
+                  <th className="p-4 font-semibold">NIS / NISN</th>
+                  <th className="p-4 font-semibold text-center">L/P</th>
+                  <th className="p-4 text-right font-semibold">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">

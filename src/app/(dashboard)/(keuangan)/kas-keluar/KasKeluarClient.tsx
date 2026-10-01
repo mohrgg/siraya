@@ -28,6 +28,36 @@ import { PageHeader } from "@/components/ui/PageHeader"
 
 type TransaksiWithRelations = any // Type will be inferred properly in real project
 
+export interface KasKeluarItem {
+  keterangan: string
+  nominal: number
+  akunId?: string
+  akunKode?: string
+  akunNama?: string
+}
+
+export function extractKasKeluarItems(item: any): KasKeluarItem[] {
+  // Transaksi pembukuan umum kas keluar (berdasarkan baris DEBIT / beban)
+  const debitDetails = item.detail ? item.detail.filter((d: any) => d.posisi === "DEBIT") : []
+  if (debitDetails.length > 0) {
+    return debitDetails.map((d: any) => ({
+      keterangan: `${d.akun?.nama || ''} ${d.deskripsi ? `(${d.deskripsi})` : ''}`.trim() || item.deskripsi || "Pengeluaran",
+      nominal: Number(d.nilai) || 0,
+      akunId: d.akun?.id,
+      akunKode: d.akun?.kode,
+      akunNama: d.akun?.nama
+    }))
+  }
+
+  // Fallback jika tidak memiliki detail
+  return [
+    {
+      keterangan: item.deskripsi || "Pengeluaran Kas Keluar",
+      nominal: Number(item.totalNilai) || 0
+    }
+  ]
+}
+
 export default function KasKeluarClient({ initialData, userRole, pengaturan, schoolUnits = [], userUnitId, userName }: { initialData: TransaksiWithRelations[], userRole: string, pengaturan?: any, schoolUnits?: any[], userUnitId?: string, userName?: string }) {
   const router = useRouter()
   const [data, setData] = useState(initialData)
@@ -122,19 +152,27 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
     setIsExportingExcel(true)
     try {
       const { exportToExcel } = await import("@/lib/excel")
-      const exportData = filteredData.map((item: any, index: number) => ({
-        No: index + 1,
-        "Tgl Transaksi": format(new Date(item.tanggal), "dd/MM/yyyy"),
-        "Tgl Pembuatan": format(new Date(item.createdAt), "dd/MM/yyyy HH:mm"),
-        "No Referensi": item.noReferensi,
-        "No Formulir": item.noFormulir || "-",
-        "Penerima": item.penerima?.name || item.namaPihakKetiga || "-",
-        "Deskripsi": item.deskripsi || "-",
-        "Total Nilai": item.totalNilai,
-        "Pembuat": item.pembuat?.name || "-",
-        "Status": item.status,
-        "Revisi": item.isEdited ? "Ya" : "-"
-      }))
+      const exportData: any[] = []
+      let rowNum = 1
+      filteredData.forEach((item: any) => {
+        const items = extractKasKeluarItems(item)
+        items.forEach((it, i) => {
+          exportData.push({
+            No: i === 0 ? rowNum : "",
+            "Tgl Transaksi": i === 0 ? format(new Date(item.tanggal), "dd/MM/yyyy") : "",
+            "Tgl Pembuatan": i === 0 ? format(new Date(item.createdAt), "dd/MM/yyyy HH:mm") : "",
+            "No Referensi": i === 0 ? item.noReferensi : "",
+            "No Formulir": i === 0 ? (item.noFormulir || "-") : "",
+            "Penerima": i === 0 ? (item.penerima?.name || item.namaPihakKetiga || "-") : "",
+            "Deskripsi": it.keterangan,
+            "Total Nilai": it.nominal,
+            "Pembuat": i === 0 ? (item.pembuat?.name || "-") : "",
+            "Status": i === 0 ? item.status : "",
+            "Revisi": i === 0 ? (item.isEdited ? "Ya" : "-") : ""
+          })
+        })
+        rowNum++
+      })
       
       const unitObj = userUnitId ? schoolUnits.find(u => u.id === userUnitId) : undefined
 
@@ -158,16 +196,24 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
       const { buildInstitutionInfo, getSignatoryKiri } = await import("@/lib/pdf-helpers")
       
       const tableColumn = ["No", "Tgl Transaksi", "No Referensi", "Penerima", "Deskripsi", "Total Nilai", "Pembuat", "Status"]
-      const tableRows: any[][] = filteredData.map((item: any, index: number) => [
-        index + 1,
-        format(new Date(item.tanggal), "dd/MM/yyyy"),
-        item.noReferensi,
-        item.penerima?.name || item.namaPihakKetiga || "-",
-        item.deskripsi || "-",
-        `Rp ${item.totalNilai.toLocaleString('id-ID')}`,
-        item.pembuat?.name || "-",
-        item.status
-      ])
+      const tableRows: any[][] = []
+      let rowNum = 1
+      filteredData.forEach((item: any) => {
+        const items = extractKasKeluarItems(item)
+        items.forEach((it, i) => {
+          tableRows.push([
+            i === 0 ? rowNum : "",
+            i === 0 ? format(new Date(item.tanggal), "dd/MM/yyyy") : "",
+            i === 0 ? item.noReferensi : "",
+            i === 0 ? (item.penerima?.name || item.namaPihakKetiga || "-") : "",
+            it.keterangan,
+            `Rp ${it.nominal.toLocaleString('id-ID')}`,
+            i === 0 ? (item.pembuat?.name || "-") : "",
+            i === 0 ? item.status : ""
+          ])
+        })
+        rowNum++
+      })
 
       if (filteredData.length > 0) {
         const totalNilaiAll = filteredData.reduce((acc: number, curr: any) => acc + (Number(curr.totalNilai) || 0), 0)
@@ -358,7 +404,7 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
                     <th className="p-4 font-semibold">NO FORMULIR</th>
                     <th className="p-4 font-semibold">PENERIMA</th>
                     <th className="p-4 font-semibold">DESKRIPSI</th>
-                    <th className="p-4 font-semibold text-right">TOTAL NILAI</th>
+                    <th className="p-4 font-semibold text-left">TOTAL NILAI</th>
                     <th className="p-4 font-semibold">PEMBUAT</th>
                     <th className="p-4 font-semibold text-center">STATUS</th>
                     <th className="p-4 font-semibold text-center">REVISI</th>
@@ -366,8 +412,11 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedData.map((item: any, idx: number) => (
-                    <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
+                  {paginatedData.map((item: any, idx: number) => {
+                    const items = extractKasKeluarItems(item)
+                    const rowTotal = items.reduce((s, it) => s + it.nominal, 0)
+                    return (
+                    <tr key={item.id} className="align-top border-b border-border hover:bg-gray-50/50 transition-colors group">
                       <td className="p-4 text-center text-text-muted">{(currentPage - 1) * pageSize + idx + 1}</td>
                       <td className="p-4 font-medium text-text-main">{format(new Date(item.tanggal), 'dd MMM yyyy', { locale: idLocale })}</td>
                       <td className="p-4 text-text-muted">{format(new Date(item.createdAt), 'dd MMM yyyy HH:mm', { locale: idLocale })}</td>
@@ -375,19 +424,56 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
                       <td className="p-4 text-text-muted">{item.noFormulir || "-"}</td>
                       <td className="p-4 font-medium">{item.penerima?.name || item.namaPihakKetiga || "-"}</td>
                       <td className="p-4">
-                        <span className="truncate max-w-[200px] block" title={item.deskripsi}>{item.deskripsi}</span>
+                        <div className="flex flex-col gap-0.5 py-0.5">
+                          {items.map((it, i) => (
+                            <span 
+                              key={i} 
+                              className="text-xs leading-5 text-text-main font-medium truncate max-w-[240px] xl:max-w-[320px] block" 
+                              title={it.keterangan}
+                            >
+                              {it.keterangan}
+                            </span>
+                          ))}
+                          {items.length > 1 && (
+                            <div className="flex items-center h-5 border-t border-dashed border-border/80 pt-0.5 mt-0.5">
+                              <span className="text-xs leading-5 font-bold text-text-main uppercase tracking-wider">
+                                Total
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </td>
-                      <td className="p-4 text-right font-bold text-albas-green">
-                        Rp {item.totalNilai.toLocaleString('id-ID')}
-                        {isReadOnly && item.totalNilai >= 1000000 && (
-                          <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-semibold">
-                            &ge; 1 Jt
-                          </span>
-                        )}
+                      <td className="p-4 text-left">
+                        <div className="flex flex-col gap-0.5 py-0.5 text-left items-start">
+                          {items.map((it, i) => (
+                            <div key={i} className="flex items-center justify-start h-5">
+                              <span className="text-xs leading-5 tabular-nums font-normal text-text-main whitespace-nowrap">
+                                Rp {it.nominal.toLocaleString('id-ID')}
+                              </span>
+                              {isReadOnly && it.nominal >= 1000000 && items.length === 1 && (
+                                <span className="ml-1.5 text-[9px] px-1 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium leading-tight">
+                                  &ge; 1 Jt
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                          {items.length > 1 && (
+                            <div className="flex items-center justify-start h-5 border-t border-dashed border-border/80 pt-0.5 mt-0.5 w-full">
+                              <span className="text-xs leading-5 tabular-nums font-bold text-text-main whitespace-nowrap">
+                                Rp {rowTotal.toLocaleString('id-ID')}
+                              </span>
+                              {isReadOnly && rowTotal >= 1000000 && (
+                                <span className="ml-1.5 text-[9px] px-1 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium leading-tight">
+                                  &ge; 1 Jt
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </td>
-                      <td className="p-4 text-text-muted">{item.pembuat?.name}</td>
+                      <td className="p-4 text-text-muted">{item.pembuat?.name || "-"}</td>
                       <td className="p-4 text-center">
-                        <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${item.status === 'POSTED' ? 'bg-albas-green/10 text-albas-green' : 'bg-red-500/10 text-red-500'}`}>
+                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           {item.status}
                         </span>
                       </td>
@@ -450,7 +536,8 @@ export default function KasKeluarClient({ initialData, userRole, pengaturan, sch
                       )}
                     </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

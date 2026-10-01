@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation"
-import { Info, Edit2, Trash2, User, X, UserPlus } from "lucide-react"
+import { Info, Edit2, Trash2, User, X, UserPlus, Users } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 
@@ -30,7 +30,7 @@ export default function TabMurid({
   const router = useRouter()
   return (
     <>
-      <thead className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
+      <thead className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
         <tr>
           {!isReadOnly && (
             <th className="p-4 font-semibold text-center w-12">
@@ -61,8 +61,12 @@ export default function TabMurid({
       <tbody>
         {(!isLoadingStudents && students.length === 0) && (
           <tr>
-            <td colSpan={isReadOnly ? 7 : 8} className="p-8 text-center text-text-muted">
-              Belum ada data siswa
+            <td colSpan={isReadOnly ? 7 : 8} className="p-8 sm:p-12 text-center">
+              <div className="flex flex-col items-center justify-center text-text-muted">
+                <Users size={40} className="text-gray-300 mb-3 stroke-[1.5]" />
+                <p className="font-bold text-text-main text-base mb-1">Belum Ada Data Siswa</p>
+                <p className="text-xs text-text-muted max-w-sm">Data siswa akan muncul di sini setelah ditambahkan.</p>
+              </div>
             </td>
           </tr>
         )}

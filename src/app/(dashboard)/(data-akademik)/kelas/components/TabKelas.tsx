@@ -1,4 +1,4 @@
-import { Trash2, Edit2 } from "lucide-react"
+import { Trash2, Edit2, Layers } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 
@@ -14,9 +14,9 @@ export default function TabKelas({
 }: any) {
   return (
     <>
-      <thead className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
+      <thead className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
         <tr>
-          <th className="p-4 font-semibold">No</th>
+          <th className="p-4 font-semibold text-center w-12">No</th>
           <SortableHeader label="Nama Sekolah" sortKey="unitSekolah.name" currentSortKey={sortGrades?.key as string} currentDirection={sortGrades?.direction} onSort={requestSortGrades as any} />
           <SortableHeader label="Tingkat" sortKey="name" currentSortKey={sortGrades?.key as string} currentDirection={sortGrades?.direction} onSort={requestSortGrades as any} />
           {!isReadOnly && <th className="p-4 font-semibold text-right">Aksi</th>}
@@ -24,7 +24,15 @@ export default function TabKelas({
       </thead>
       <tbody>
         {paginatedGrades.length === 0 && (
-          <tr><td colSpan={isReadOnly ? 3 : 4} className="px-4 py-8 text-center text-text-muted">Belum ada data tingkat kelas.</td></tr>
+          <tr>
+            <td colSpan={isReadOnly ? 3 : 4} className="p-8 sm:p-12 text-center">
+              <div className="flex flex-col items-center justify-center text-text-muted">
+                <Layers size={40} className="text-gray-300 mb-3 stroke-[1.5]" />
+                <p className="font-bold text-text-main text-base mb-1">Belum Ada Data Tingkat Kelas</p>
+                <p className="text-xs text-text-muted max-w-sm">Data tingkatan kelas akan muncul di sini setelah ditambahkan.</p>
+              </div>
+            </td>
+          </tr>
         )}
         {paginatedGrades.map((g: any, i: number) => (
           <tr key={g.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">

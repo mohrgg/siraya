@@ -78,7 +78,7 @@ export default function UserList({
 
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
-          <thead className="border-b-2 border-border text-text-muted text-xs uppercase tracking-wider bg-surface">
+          <thead className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
             <tr>
               <th className="p-4 font-semibold text-center w-12">NO</th>
               <SortableHeader label="PENGGUNA" sortKey="name" currentSortKey={sortConfig?.key as string} currentDirection={sortConfig?.direction} onSort={requestSort as any} className="text-left" />
@@ -94,7 +94,7 @@ export default function UserList({
                 const lockMinutesRemaining = isLocked ? Math.max(1, Math.ceil((new Date(u.lockedUntil).getTime() - Date.now()) / (1000 * 60))) : 0
 
                 return (
-                  <tr key={u.id} className="hover:bg-gray-50/50 transition-colors group">
+                  <tr key={u.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
                     <td className="p-4 text-center text-text-main font-medium">{idx + 1}</td>
                     <td className="p-4">
                       <div className="flex items-center gap-3">

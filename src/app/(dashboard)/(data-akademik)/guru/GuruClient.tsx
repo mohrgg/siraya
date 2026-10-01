@@ -636,8 +636,8 @@ export default function GuruClient({
 
         {/* Data Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="border-b-2 border-border text-text-muted text-sm uppercase tracking-wider bg-surface">
+          <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
+            <thead className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
               <tr>
                 {!isReadOnly && (
                   <th className="p-4 font-semibold text-center w-12">

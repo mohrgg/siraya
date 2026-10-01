@@ -399,31 +399,37 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
             <div className="hidden md:block print:block overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse whitespace-nowrap">
                 <thead>
-                  <tr className="border-b-2 border-gray-200 text-gray-500 text-xs uppercase tracking-wider bg-bg/50">
-                    <th className="p-3 font-semibold text-center w-12 border-r border-border/50" rowSpan={2}>NO</th>
-                    <th className="p-3 font-semibold border-r border-border/50" rowSpan={2}>NIS</th>
-                    <th className="p-3 font-semibold border-r border-border/50 min-w-[200px]" rowSpan={2}>NAMA SISWA</th>
-                    <th className="p-3 font-semibold border-r border-border/50" rowSpan={2}>ROMBEL</th>
-                    <th className="p-3 font-semibold text-center border-r border-border/50 bg-primary/5 text-primary" colSpan={3}>SPP</th>
+                  <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
+                    <th className="p-4 font-semibold text-center w-12 border-r border-border/50" rowSpan={2}>NO</th>
+                    <th className="p-4 font-semibold border-r border-border/50" rowSpan={2}>NIS</th>
+                    <th className="p-4 font-semibold border-r border-border/50 min-w-[200px]" rowSpan={2}>NAMA SISWA</th>
+                    <th className="p-4 font-semibold border-r border-border/50" rowSpan={2}>ROMBEL</th>
+                    <th className="p-4 font-semibold text-center border-r border-border/50 bg-primary/5 text-primary" colSpan={3}>SPP</th>
                     {dynamicCategories.length > 0 && (
-                      <th className="p-3 font-semibold text-center border-r border-border/50" colSpan={dynamicCategories.length}>TAGIHAN LAINNYA</th>
+                      <th className="p-4 font-semibold text-center border-r border-border/50" colSpan={dynamicCategories.length}>TAGIHAN LAINNYA</th>
                     )}
-                    <th className="p-3 font-semibold text-right text-rose-600" rowSpan={2}>TOTAL TUNGGAKAN</th>
+                    <th className="p-4 font-semibold text-right text-rose-600" rowSpan={2}>TOTAL TUNGGAKAN</th>
                   </tr>
-                  <tr className="border-b border-gray-200 text-gray-500 text-xs uppercase tracking-wider bg-bg/30">
-                    <th className="p-2 text-center font-medium border-r border-border/50 text-primary/80">Bulan</th>
-                    <th className="p-2 text-center font-medium border-r border-border/50 text-primary/80">Jml Bln</th>
-                    <th className="p-2 text-right font-medium border-r border-border/50 text-primary/80">Nilai SPP</th>
+                  <tr className="border-b border-border bg-bg/30 text-text-muted text-xs uppercase tracking-wider">
+                    <th className="p-3 text-center font-medium border-r border-border/50 text-primary/80">Bulan</th>
+                    <th className="p-3 text-center font-medium border-r border-border/50 text-primary/80">Jml Bln</th>
+                    <th className="p-3 text-right font-medium border-r border-border/50 text-primary/80">Nilai SPP</th>
                     {dynamicCategories.map(cat => (
-                      <th key={cat} className="p-2 text-right font-medium border-r border-border/50">{cat}</th>
+                      <th key={cat} className="p-3 text-right font-medium border-r border-border/50">{cat}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border">
                   {paginatedData.length === 0 ? (
                     <tr>
-                      <td colSpan={8 + dynamicCategories.length} className="py-12 text-center text-gray-500 italic">
-                        Tidak ada data tunggakan.
+                      <td colSpan={8 + dynamicCategories.length} className="p-8">
+                        <div className="flex flex-col items-center justify-center text-center">
+                          <BarChart3 size={40} className="text-gray-300 mb-3 stroke-[1.5]" />
+                          <p className="font-bold text-text-main text-base mb-1">Belum ada data tunggakan</p>
+                          <p className="text-xs text-text-muted max-w-sm">
+                            Tidak ditemukan siswa dengan tagihan yang menunggak untuk kriteria filter ini.
+                          </p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -431,12 +437,12 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
                     {paginatedData.map((item, idx) => {
                       const absoluteIdx = (currentPage - 1) * pageSize + idx + 1
                       return (
-                        <tr key={item.muridId} className="hover:bg-gray-50/50 transition-colors group">
-                          <td className="p-3 text-center border-r border-border/50">{absoluteIdx}</td>
-                          <td className="p-3 font-mono font-medium border-r border-border/50">{item.nis}</td>
-                          <td className="p-3 font-bold text-gray-700 border-r border-border/50">{item.namaSiswa}</td>
-                          <td className="p-3 text-gray-600 border-r border-border/50">{item.rombel}</td>
-                          <td className="p-3 text-center border-r border-border/50 relative group/tooltip">
+                        <tr key={item.muridId} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
+                          <td className="p-4 text-center text-sm font-medium text-text-muted border-r border-border/50">{absoluteIdx}</td>
+                          <td className="p-4 font-mono text-xs text-text-muted border-r border-border/50">{item.nis}</td>
+                          <td className="p-4 text-sm font-bold text-text-main border-r border-border/50">{item.namaSiswa}</td>
+                          <td className="p-4 text-xs font-medium text-text-muted border-r border-border/50">{item.rombel}</td>
+                          <td className="p-4 text-center border-r border-border/50 relative group/tooltip">
                             {item.sppCount > 0 ? (
                               <div 
                                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/80 hover:bg-rose-100 transition-colors cursor-help"
@@ -447,7 +453,6 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
                             ) : (
                               <span className="text-gray-400 text-xs">-</span>
                             )}
-
                             {item.sppCount > 0 && item.sppSpan && (
                               <div className={`absolute left-1/2 -translate-x-1/2 ${
                                 idx < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
@@ -526,8 +531,8 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
                               </div>
                             )}
                           </td>
-                          <td className="p-3 text-center font-mono border-r border-border/50">{item.sppCount || "-"}</td>
-                          <td className="p-3 text-right font-mono font-medium border-r border-border/50">
+                          <td className="p-4 text-center font-mono text-xs tabular-nums border-r border-border/50">{item.sppCount || "-"}</td>
+                          <td className="p-4 text-right font-mono text-xs tabular-nums font-medium border-r border-border/50">
                             {item.sppAmount > 0 
                               ? <span className="text-primary">{new Intl.NumberFormat("id-ID").format(item.sppAmount)}</span>
                               : (item.sppDibayar > 0 ? <span className="text-emerald-600 font-bold text-xs uppercase tracking-wider">Lunas</span> : "-")
@@ -537,7 +542,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
                           {dynamicCategories.map(cat => {
                             const detail = item.categories[cat] || { sisa: 0, dibayar: 0 }
                             return (
-                              <td key={cat} className="p-3 text-right font-mono text-gray-600 border-r border-border/50">
+                              <td key={cat} className="p-4 text-right font-mono text-xs tabular-nums text-text-muted border-r border-border/50">
                                 {detail.sisa > 0 
                                   ? new Intl.NumberFormat("id-ID").format(detail.sisa)
                                   : (detail.dibayar > 0 ? <span className="text-emerald-600 font-bold text-xs uppercase tracking-wider">Lunas</span> : "-")
@@ -546,25 +551,25 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
                             )
                           })}
                           
-                          <td className="p-3 text-right font-mono font-bold text-rose-600 bg-rose-50/30 group-hover:bg-rose-50/50">
+                          <td className="p-4 text-right font-mono text-xs leading-5 tabular-nums font-bold text-rose-600 bg-rose-50/30 group-hover:bg-rose-50/50">
                             {new Intl.NumberFormat("id-ID").format(item.totalTunggakan)}
                           </td>
                         </tr>
                       )
                     })}
                     {/* Totals Row */}
-                    <tr className="bg-gray-100 font-bold text-gray-800">
-                      <td colSpan={4} className="p-3 text-right border-r border-border/50">TOTAL KESELURUHAN</td>
+                    <tr className="bg-bg/50 border-t-2 border-border font-bold text-text-main">
+                      <td colSpan={4} className="p-4 text-right border-r border-border/50 text-xs uppercase tracking-wider">TOTAL KESELURUHAN</td>
                       <td colSpan={2} className="border-r border-border/50"></td>
-                      <td className="p-3 text-right text-primary border-r border-border/50">
+                      <td className="p-4 text-right text-primary tabular-nums text-xs border-r border-border/50">
                         {new Intl.NumberFormat("id-ID").format(matrixRows.reduce((acc, curr) => acc + curr.sppAmount, 0))}
                       </td>
                       {dynamicCategories.map(cat => (
-                        <td key={`total-${cat}`} className="p-3 text-right border-r border-border/50">
+                        <td key={`total-${cat}`} className="p-4 text-right tabular-nums text-xs border-r border-border/50">
                           {new Intl.NumberFormat("id-ID").format(matrixRows.reduce((acc, curr) => acc + (curr.categories[cat]?.sisa || 0), 0))}
                         </td>
                       ))}
-                      <td className="p-3 text-right text-rose-700">
+                      <td className="p-4 text-right text-rose-700 tabular-nums text-xs">
                         Rp {new Intl.NumberFormat("id-ID").format(matrixRows.reduce((acc, curr) => acc + curr.totalTunggakan, 0))}
                       </td>
                     </tr>

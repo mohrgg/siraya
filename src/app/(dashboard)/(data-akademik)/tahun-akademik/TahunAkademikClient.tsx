@@ -393,29 +393,29 @@ export default function TahunAkademikClient({
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${item.isActive ? "bg-emerald-600 text-white shadow-xs" : "bg-bg text-text-muted border border-border"}`}>
                         <Calendar size={14} />
                       </div>
-                      <span className="font-bold text-text-main text-base">{item.name}</span>
+                      <span className="font-bold text-text-main text-sm">{item.name}</span>
                     </div>
                   </td>
                   <td className="p-4 text-center">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200">
                       <Layers size={12} />
                       {item._count?.subKelas || 0} Kelas
                     </span>
                   </td>
                   <td className="p-4 text-center">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                       <Receipt size={12} />
                       {item._count?.tagihan || 0} Data
                     </span>
                   </td>
                   <td className="p-4">
                     {item.isActive ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-full text-xs font-extrabold">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold">
                         <CheckCircle2 size={13} />
                         <span>Tahun Berjalan (Aktif)</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-bg text-text-muted rounded-full text-xs font-medium border border-border">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-bg text-text-muted rounded-full text-xs font-medium border border-border">
                         Tidak Aktif
                       </span>
                     )}

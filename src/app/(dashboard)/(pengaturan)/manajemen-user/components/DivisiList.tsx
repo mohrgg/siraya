@@ -20,17 +20,17 @@ export default function DivisiList({ divisis, setFormDiv, setShowDivModal, setDe
       </div>
       <TableScrollHint totalRows={divisis.length} />
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm border-collapse bg-white whitespace-nowrap">
+        <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
           <thead>
-            <tr className="bg-bg border-b border-border text-text-muted">
+            <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
               <th className="p-4 font-semibold">Nama Divisi</th>
               <th className="p-4 font-semibold">Keterangan</th>
-              <th className="p-4 font-semibold text-center w-24">Aksi</th>
+              <th className="p-4 font-semibold text-right w-24">Aksi</th>
             </tr>
           </thead>
           <tbody>
             {divisis.map((d: any) => (
-              <tr key={d.id} className="border-b border-border">
+              <tr key={d.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
                 <td className="p-4 font-bold text-text-main">{d.name}</td>
                 <td className="p-4 text-text-muted">{d.description || "-"}</td>
                 <td className="p-4 text-center flex gap-1 justify-center">

@@ -499,25 +499,25 @@ export default function JurusanClient({
                   <TableScrollHint totalRows={unitMajors.length} />
                   <div className="overflow-x-auto">
                   <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
-                    <thead className="border-b border-border bg-bg/30 text-text-muted text-xs uppercase tracking-wider">
+                    <thead className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
                       <tr>
-                        <th className="p-3.5 text-center w-12 font-semibold">NO</th>
-                        <th className="p-3.5 font-semibold">KODE PROGRAM</th>
-                        <th className="p-3.5 font-semibold">NAMA KOMPETENSI KEAHLIAN / JURUSAN</th>
-                        <th className="p-3.5 text-center font-semibold">ROMBEL TERHUBUNG</th>
-                        {!isReadOnly && <th className="p-3.5 font-semibold text-right">AKSI</th>}
+                        <th className="p-4 text-center w-12 font-semibold">NO</th>
+                        <th className="p-4 font-semibold">KODE PROGRAM</th>
+                        <th className="p-4 font-semibold">NAMA KOMPETENSI KEAHLIAN / JURUSAN</th>
+                        <th className="p-4 text-center font-semibold">ROMBEL TERHUBUNG</th>
+                        {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border text-sm">
                       {unitMajors.map((item, index) => (
                         <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
-                          <td className="p-3.5 text-center font-medium text-text-muted">{index + 1}</td>
-                          <td className="p-3.5">
+                          <td className="p-4 text-center font-medium text-text-muted">{index + 1}</td>
+                          <td className="p-4">
                             <span className="font-mono text-xs font-extrabold px-2.5 py-1 rounded-lg bg-bg border border-border text-text-main">
                               {item.code}
                             </span>
                           </td>
-                          <td className="p-3.5">
+                          <td className="p-4">
                             <span className="font-bold text-text-main block">{item.name}</span>
                             {item.code === "UMUM" && (
                               <span className="text-[11px] text-text-muted font-normal">
@@ -525,14 +525,14 @@ export default function JurusanClient({
                               </span>
                             )}
                           </td>
-                          <td className="p-3.5 text-center">
+                          <td className="p-4 text-center">
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200">
                               <Layers size={12} />
                               {item._count?.subKelas || 0} Kelas
                             </span>
                           </td>
                           {!isReadOnly && (
-                            <td className="p-3.5 text-right">
+                            <td className="p-4 text-right">
                               <div className="flex items-center justify-end gap-1.5">
                                 <button 
                                   onClick={() => handleOpenEditModal(item)} 
@@ -556,7 +556,7 @@ export default function JurusanClient({
 
                       {unitMajors.length === 0 && (
                         <tr>
-                          <td colSpan={isReadOnly ? 4 : 5} className="p-6 text-center text-text-muted text-xs">
+                          <td colSpan={isReadOnly ? 4 : 5} className="p-8 text-center text-text-muted text-xs">
                             Belum ada program/jurusan yang ditambahkan pada unit ini.
                           </td>
                         </tr>

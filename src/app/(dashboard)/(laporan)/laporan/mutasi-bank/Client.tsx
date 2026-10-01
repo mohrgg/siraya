@@ -315,42 +315,49 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-sm whitespace-nowrap print:text-xs">
               <thead>
-                <tr className="border-b-2 border-gray-800 bg-gray-50 text-gray-700 uppercase tracking-wider">
-                  <th className="p-3 font-bold print:p-2">TANGGAL</th>
-                  <th className="p-3 font-bold print:p-2">NO. REF</th>
-                  <th className="p-3 font-bold print:p-2 min-w-[200px]">KETERANGAN</th>
-                  <th className="p-3 font-bold text-right print:p-2">DEBIT (MASUK)</th>
-                  <th className="p-3 font-bold text-right print:p-2">KREDIT (KELUAR)</th>
-                  <th className="p-3 font-bold text-right print:p-2">SALDO</th>
+                <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider print:border-b-2 print:border-gray-800 print:bg-gray-50 print:text-gray-700">
+                  <th className="p-4 font-semibold print:p-2 print:font-bold">TANGGAL</th>
+                  <th className="p-4 font-semibold print:p-2 print:font-bold">NO. REF</th>
+                  <th className="p-4 font-semibold print:p-2 print:font-bold min-w-[200px]">KETERANGAN</th>
+                  <th className="p-4 font-semibold text-right print:p-2 print:font-bold">DEBIT (MASUK)</th>
+                  <th className="p-4 font-semibold text-right print:p-2 print:font-bold">KREDIT (KELUAR)</th>
+                  <th className="p-4 font-semibold text-right print:p-2 print:font-bold">SALDO</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr><td colSpan={6} className="text-center p-8 text-gray-500">Memuat mutasi bank...</td></tr>
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-text-muted text-sm">
+                      <div className="flex flex-col items-center justify-center">
+                        <RefreshCw className="animate-spin text-primary mb-2" size={24} />
+                        <span>Memuat mutasi bank...</span>
+                      </div>
+                    </td>
+                  </tr>
                 ) : (
                   <>
-                    <tr className="border-b border-gray-200 bg-gray-50/50 font-semibold">
-                      <td colSpan={5} className="p-3 text-right text-gray-600 print:p-2">Saldo Awal:</td>
-                      <td className="p-3 text-right text-gray-800 print:p-2">
+                    <tr className="border-b border-border bg-bg/30 font-semibold print:bg-gray-50/50">
+                      <td colSpan={5} className="p-4 text-right text-text-muted text-xs uppercase tracking-wider print:p-2 print:text-gray-600">Saldo Awal:</td>
+                      <td className="p-4 text-right text-text-main font-bold tabular-nums text-xs print:p-2 print:text-gray-800">
                         {data ? `Rp ${data.saldoAwal.toLocaleString('id-ID')}` : "-"}
                       </td>
                     </tr>
                     
                     {data?.mutasi.map((m: any, idx: number) => (
-                      <tr key={m.id || idx} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-                        <td className="p-3 print:p-2">{new Date(m.tanggal).toLocaleDateString('id-ID')}</td>
-                        <td className="p-3 font-mono text-xs text-gray-500 print:p-2">{m.noReferensi}</td>
-                        <td className="p-3 print:p-2 whitespace-normal min-w-[200px]">
-                          <div>{m.keterangan}</div>
+                      <tr key={m.id || idx} className="border-b border-border hover:bg-gray-50/50 transition-colors group print:border-gray-100">
+                        <td className="p-4 text-sm font-medium text-text-main print:p-2 print:text-xs">{new Date(m.tanggal).toLocaleDateString('id-ID')}</td>
+                        <td className="p-4 font-mono text-xs text-text-muted print:p-2 print:text-gray-500">{m.noReferensi}</td>
+                        <td className="p-4 print:p-2 whitespace-normal min-w-[200px]">
+                          <div className="text-sm font-medium text-text-main">{m.keterangan}</div>
                           {m.pihakKetiga !== "-" && <div className="text-xs text-emerald-600 mt-0.5 font-medium">Mitra/Siswa: {m.pihakKetiga}</div>}
                         </td>
-                        <td className="p-3 text-right text-emerald-600 font-medium print:p-2">
+                        <td className="p-4 text-right text-emerald-600 font-medium tabular-nums text-xs leading-5 print:p-2">
                           {m.debit > 0 ? `Rp ${m.debit.toLocaleString('id-ID')}` : "-"}
                         </td>
-                        <td className="p-3 text-right text-rose-600 font-medium print:p-2">
+                        <td className="p-4 text-right text-rose-600 font-medium tabular-nums text-xs leading-5 print:p-2">
                           {m.kredit > 0 ? `Rp ${m.kredit.toLocaleString('id-ID')}` : "-"}
                         </td>
-                        <td className="p-3 text-right font-semibold text-gray-800 print:p-2">
+                        <td className="p-4 text-right font-semibold text-text-main tabular-nums text-xs leading-5 print:p-2 print:text-gray-800">
                           Rp {m.saldo.toLocaleString('id-ID')}
                         </td>
                       </tr>
@@ -358,8 +365,14 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
                     
                     {data?.mutasi.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="p-8 text-center text-gray-500 print:p-4">
-                          Tidak ada mutasi kas pada periode ini.
+                        <td colSpan={6} className="p-8">
+                          <div className="flex flex-col items-center justify-center text-center">
+                            <Wallet size={40} className="text-gray-300 mb-3 stroke-[1.5]" />
+                            <p className="font-bold text-text-main text-base mb-1">Belum ada mutasi</p>
+                            <p className="text-xs text-text-muted max-w-sm">
+                              Tidak ada mutasi kas atau bank pada periode yang dipilih.
+                            </p>
+                          </div>
                         </td>
                       </tr>
                     )}
@@ -368,11 +381,11 @@ export default function LaporanMutasiBankClient({ pengaturan, schoolUnits = [], 
               </tbody>
               {!isLoading && data && data.mutasi.length > 0 && (
                 <tfoot>
-                  <tr className="border-t-2 border-gray-800 font-bold bg-gray-50 text-gray-800">
-                    <td colSpan={3} className="p-3 text-right print:p-2">Total Mutasi & Saldo Akhir:</td>
-                    <td className="p-3 text-right text-emerald-700 print:p-2">Rp {totalDebit.toLocaleString('id-ID')}</td>
-                    <td className="p-3 text-right text-rose-700 print:p-2">Rp {totalKredit.toLocaleString('id-ID')}</td>
-                    <td className="p-3 text-right text-blue-700 print:p-2">Rp {data.saldoAkhir.toLocaleString('id-ID')}</td>
+                  <tr className="border-t-2 border-border font-bold bg-bg/50 text-text-main print:border-gray-800 print:bg-gray-50 print:text-gray-800">
+                    <td colSpan={3} className="p-4 text-right text-xs uppercase tracking-wider print:p-2">Total Mutasi & Saldo Akhir:</td>
+                    <td className="p-4 text-right text-emerald-700 tabular-nums text-xs leading-5 print:p-2">Rp {totalDebit.toLocaleString('id-ID')}</td>
+                    <td className="p-4 text-right text-rose-700 tabular-nums text-xs leading-5 print:p-2">Rp {totalKredit.toLocaleString('id-ID')}</td>
+                    <td className="p-4 text-right text-blue-700 tabular-nums text-xs leading-5 print:p-2">Rp {data.saldoAkhir.toLocaleString('id-ID')}</td>
                   </tr>
                 </tfoot>
               )}

@@ -806,7 +806,7 @@ export default function AkunKeuanganClient({
           <div>
             <TableScrollHint totalRows={filteredAkun.length} />
             <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
+            <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
                   <SortableHeader label="KODE" sortKey="kode" currentSortKey={akunSort?.key as string} currentDirection={akunSort?.direction} onSort={handleAkunSort} />
@@ -843,10 +843,12 @@ export default function AkunKeuanganClient({
                       )}
                     </td>
                     <td className="p-4 text-center">
-                      {item.isKasBank && <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg">LIQUID</span>}
+                      {item.isKasBank && <span className="inline-block px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold rounded-full">LIQUID</span>}
                     </td>
                     <td className="p-4 text-center">
-                      <span className={`w-2.5 h-2.5 rounded-full inline-block ${item.isActive ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${item.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
+                        {item.isActive ? "Aktif" : "Nonaktif"}
+                      </span>
                     </td>
                     {!isReadOnly && (
                       <td className="p-4">
@@ -864,10 +866,11 @@ export default function AkunKeuanganClient({
                 ))}
                 {filteredAkun.length === 0 && (
                   <tr>
-                    <td colSpan={isReadOnly ? 6 : 7} className="p-8">
-                      <div className="flex flex-col items-center justify-center text-center text-text-muted">
-                        <Book size={40} className="text-gray-300 mb-3" />
-                        <p>Belum ada data Akun Transaksi.</p>
+                    <td colSpan={isReadOnly ? 6 : 7} className="p-8 sm:p-12 text-center">
+                      <div className="flex flex-col items-center justify-center text-text-muted">
+                        <Book size={40} className="text-gray-300 mb-3 stroke-[1.5]" />
+                        <p className="font-bold text-text-main text-base mb-1">Belum Ada Data Akun Transaksi</p>
+                        <p className="text-xs text-text-muted max-w-sm">Data akun keuangan akan muncul di sini setelah dibuat.</p>
                       </div>
                     </td>
                   </tr>
@@ -883,7 +886,7 @@ export default function AkunKeuanganClient({
           <div>
             <TableScrollHint totalRows={filteredSubKlas.length} />
             <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
+            <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
                   <SortableHeader label="KODE" sortKey="kode" currentSortKey={subKlasSort?.key as string} currentDirection={subKlasSort?.direction} onSort={handleSubKlasSort} />
@@ -922,10 +925,11 @@ export default function AkunKeuanganClient({
                 ))}
                 {filteredSubKlas.length === 0 && (
                   <tr>
-                    <td colSpan={!canEditKategori ? 4 : 5} className="p-8">
-                      <div className="flex flex-col items-center justify-center text-center text-text-muted">
-                        <Layers size={40} className="text-gray-300 mb-3" />
-                        <p>Belum ada data Subklasifikasi.</p>
+                    <td colSpan={!canEditKategori ? 4 : 5} className="p-8 sm:p-12 text-center">
+                      <div className="flex flex-col items-center justify-center text-text-muted">
+                        <Layers size={40} className="text-gray-300 mb-3 stroke-[1.5]" />
+                        <p className="font-bold text-text-main text-base mb-1">Belum Ada Data Subklasifikasi</p>
+                        <p className="text-xs text-text-muted max-w-sm">Data subklasifikasi akun akan muncul di sini setelah dibuat.</p>
                       </div>
                     </td>
                   </tr>
