@@ -55,15 +55,39 @@ export function exportToExcel(data: any[], fileName: string, options?: ExcelExpo
 
     worksheet = XLSX.utils.aoa_to_sheet(wsData);
 
-    // Styling & Column Width (estimasi lebar kolom berdasarkan panjang string)
-    const colWidths = headers.map(h => ({ wch: Math.max(h.length, 15) }));
+    // Styling & Column Width (estimasi lebar kolom berdasarkan panjang baris terpanjang)
+    const colWidths = headers.map(h => {
+      let maxLen = h.length;
+      data.forEach(row => {
+        const val = row[h];
+        if (val !== undefined && val !== null) {
+          const lines = String(val).split(/\r?\n/);
+          lines.forEach(l => {
+            if (l.length > maxLen) maxLen = l.length;
+          });
+        }
+      });
+      return { wch: Math.min(Math.max(maxLen + 3, 15), 45) };
+    });
     worksheet['!cols'] = colWidths;
     
   } else {
     // Mode Grid Biasa
     worksheet = XLSX.utils.json_to_sheet(data);
     const headers = Object.keys(data[0]);
-    const colWidths = headers.map(h => ({ wch: Math.max(h.length, 15) }));
+    const colWidths = headers.map(h => {
+      let maxLen = h.length;
+      data.forEach(row => {
+        const val = row[h];
+        if (val !== undefined && val !== null) {
+          const lines = String(val).split(/\r?\n/);
+          lines.forEach(l => {
+            if (l.length > maxLen) maxLen = l.length;
+          });
+        }
+      });
+      return { wch: Math.min(Math.max(maxLen + 3, 15), 45) };
+    });
     worksheet['!cols'] = colWidths;
   }
 

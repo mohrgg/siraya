@@ -48,6 +48,21 @@ export async function getKasMasuk(params?: {
         include: {
           akun: { select: { kode: true, nama: true } }
         }
+      },
+      pembayaranTagihan: {
+        include: {
+          tagihan: {
+            select: {
+              namaTagihan: true,
+              akun: {
+                select: {
+                  kode: true,
+                  nama: true
+                }
+              }
+            }
+          }
+        }
       }
     },
     orderBy: [

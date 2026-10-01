@@ -159,33 +159,94 @@ export function TableReportHtml({
         {subtitle && <p className="text-sm text-slate-600 mt-1">{subtitle}</p>}
       </div>
 
-      <table className="w-full text-sm border-collapse" style={{ pageBreakInside: 'auto' }}>
+      <table className="w-full text-[10.5px] border-collapse" style={{ pageBreakInside: 'auto' }}>
         <thead className="bg-slate-800 text-white" style={{ display: 'table-header-group' }}>
           <tr>
-            {headers.map((h, i) => (
-              <th key={i} className="py-2 px-3 border border-slate-700 text-center font-bold">
-                {h}
-              </th>
-            ))}
+            {headers.map((h, i) => {
+              const hUpper = (h || "").toUpperCase()
+              let widthClass = ""
+              let alignClass = "text-center"
+
+              if (hUpper === "NO") {
+                widthClass = "w-[4%]"
+                alignClass = "text-center"
+              } else if (hUpper.includes("TGL") || hUpper.includes("TANGGAL")) {
+                widthClass = "w-[10%]"
+                alignClass = "text-center"
+              } else if (hUpper.includes("REFERENSI") || hUpper.includes("NO.")) {
+                widthClass = "w-[14%]"
+                alignClass = "text-left"
+              } else if (hUpper.includes("PENYETOR") || hUpper.includes("NAMA")) {
+                widthClass = "w-[17%]"
+                alignClass = "text-left"
+              } else if (hUpper.includes("DESKRIPSI") || hUpper.includes("KETERANGAN")) {
+                widthClass = "w-[36%]"
+                alignClass = "text-left"
+              } else if (hUpper.includes("NILAI") || hUpper.includes("TOTAL") || hUpper.includes("NOMINAL") || hUpper.includes("JUMLAH") || hUpper.includes("SALDO")) {
+                widthClass = "w-[14%]"
+                alignClass = "text-left"
+              } else if (hUpper.includes("PEMBUAT") || hUpper.includes("PETUGAS")) {
+                widthClass = "w-[5%]"
+                alignClass = "text-left"
+              } else if (hUpper.includes("STATUS")) {
+                widthClass = "w-[6%]"
+                alignClass = "text-center"
+              }
+
+              return (
+                <th key={i} className={`py-1.5 px-2.5 border border-slate-700 font-bold uppercase tracking-wider text-[10px] ${alignClass} ${widthClass}`}>
+                  {h}
+                </th>
+              )
+            })}
           </tr>
         </thead>
         <tbody style={{ display: 'table-row-group' }}>
           {data.map((row, rIdx) => {
-            const isTotalRow = row.some(cell => typeof cell === 'string' && cell.trim().toUpperCase().includes('TOTAL'))
+            const isTotalRow = (!row[0] || row[0] === "" || row[0] === "-") && row.some(cell => typeof cell === 'string' && cell.trim().toUpperCase().includes('TOTAL'))
             return (
               <tr 
                 key={rIdx} 
-                className={isTotalRow ? "bg-slate-100 font-bold border-t-2 border-slate-400" : (rIdx % 2 === 0 ? "bg-white" : "bg-slate-50")} 
+                className={isTotalRow ? "bg-slate-100 font-semibold border-t-2 border-slate-400" : (rIdx % 2 === 0 ? "bg-white" : "bg-slate-50")} 
                 style={{ pageBreakInside: 'avoid' }}
               >
-                {row.map((cell, cIdx) => (
-                  <td 
-                    key={cIdx} 
-                    className={`py-2 px-3 border border-slate-200 ${isTotalRow ? "text-slate-900 font-bold" : "text-slate-700"}`}
-                  >
-                    {cell !== null && cell !== undefined ? String(cell) : "-"}
-                  </td>
-                ))}
+                {row.map((cell, cIdx) => {
+                  const cellStr = cell !== null && cell !== undefined ? String(cell) : "-"
+                  const isCurrency = typeof cellStr === 'string' && (cellStr.trim().startsWith('Rp') || cellStr.trim().startsWith('Rp.'))
+                  const hUpper = (headers[cIdx] || "").toUpperCase()
+                  let alignClass = "text-left"
+                  if (hUpper === "NO" || hUpper.includes("TGL") || hUpper.includes("STATUS")) {
+                    alignClass = "text-center"
+                  } else if (isCurrency || hUpper.includes("NILAI") || hUpper.includes("TOTAL") || hUpper.includes("NOMINAL") || hUpper.includes("JUMLAH") || hUpper.includes("SALDO")) {
+                    alignClass = "text-left whitespace-nowrap"
+                  }
+
+                  const lines = typeof cellStr === 'string' ? cellStr.split("\n") : [String(cellStr)]
+                  const hasMultipleLines = lines.length > 1
+
+                  return (
+                    <td 
+                      key={cIdx} 
+                      className={`py-1.5 px-2.5 border border-slate-200 align-top leading-snug ${alignClass} ${isTotalRow ? "text-slate-900 font-bold" : "text-slate-700 font-normal"}`}
+                    >
+                      {hasMultipleLines ? (
+                        lines.map((line, lIdx) => {
+                          const isLast = lIdx === lines.length - 1
+                          return (
+                            <div 
+                              key={lIdx} 
+                              className={isLast ? "font-bold text-slate-900 border-t border-dashed border-slate-300 pt-0.5 mt-0.5" : "font-normal text-slate-700"}
+                            >
+                              {line}
+                            </div>
+                          )
+                        })
+                      ) : (
+                        cellStr
+                      )}
+                    </td>
+                  )
+                })}
               </tr>
             )
           })}
