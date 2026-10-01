@@ -46,7 +46,7 @@ export async function getKasMasuk(params?: {
       pembuat: { select: { name: true } },
       detail: {
         include: {
-          akun: { select: { kode: true, nama: true } }
+          akun: { select: { id: true, kode: true, nama: true } }
         }
       },
       pembayaranTagihan: {
@@ -54,10 +54,13 @@ export async function getKasMasuk(params?: {
           tagihan: {
             select: {
               namaTagihan: true,
+              akunId: true,
               akun: {
                 select: {
+                  id: true,
                   kode: true,
-                  nama: true
+                  nama: true,
+                  isSPP: true
                 }
               }
             }
@@ -72,6 +75,60 @@ export async function getKasMasuk(params?: {
   })
 
   return transaksiList
+}
+
+export async function getOpsiJenisPembayaran(unitSekolahId?: string) {
+  const tenant = await getTenantContext()
+
+  const whereClause: any = {
+    subKlasifikasi: {
+      klasifikasi: {
+        kode: "4" // Klasifikasi Pendapatan
+      }
+    }
+  }
+
+  const targetUnitId = unitSekolahId !== undefined ? unitSekolahId : (!tenant.isGlobal ? tenant.unitId : undefined)
+  if (targetUnitId) {
+    whereClause.unitSekolahId = targetUnitId
+  }
+
+  const accounts = await prisma.akunDetail.findMany({
+    where: whereClause,
+    orderBy: { kode: "asc" },
+    select: {
+      id: true,
+      kode: true,
+      nama: true,
+      isSPP: true,
+      isActive: true
+    }
+  })
+
+  // Deteksi kategori grup utama
+  const hasSPP = accounts.some(a => a.isSPP || a.nama.toUpperCase().includes("SPP"))
+  const hasBAT = accounts.some(a => a.nama.toUpperCase().includes("BAT"))
+  const hasPSB = accounts.some(a => a.nama.toUpperCase().includes("PSB"))
+  const hasDaftarUlang = accounts.some(a => a.nama.toUpperCase().includes("DAFTAR ULANG") || a.nama.toUpperCase().includes("DAFTAR_ULANG"))
+
+  const options: { label: string, value: string }[] = [
+    { label: "Semua Jenis Bayar", value: "ALL" }
+  ]
+
+  if (hasSPP) options.push({ label: "Semua SPP", value: "CAT:SPP" })
+  if (hasBAT) options.push({ label: "Semua BAT", value: "CAT:BAT" })
+  if (hasPSB) options.push({ label: "Semua PSB", value: "CAT:PSB" })
+  if (hasDaftarUlang) options.push({ label: "Semua Daftar Ulang", value: "CAT:DAFTAR_ULANG" })
+
+  // Tambahkan seluruh akun spesifik (termasuk akun baru masa depan)
+  accounts.forEach(acc => {
+    options.push({
+      label: `${acc.kode} - ${acc.nama}${!acc.isActive ? ' (Nonaktif)' : ''}`,
+      value: `AKUN:${acc.id}`
+    })
+  })
+
+  return options
 }
 
 export async function getKasBankAccounts(unitSekolahId?: string) {

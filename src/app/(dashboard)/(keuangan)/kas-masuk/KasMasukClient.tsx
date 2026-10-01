@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { Search, Plus, Printer, Download, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown, FileSpreadsheet, FileText, ArrowDownLeft } from "lucide-react"
+import { Search, Plus, Printer, Download, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown, FileSpreadsheet, FileText, ArrowDownLeft, Layers } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
-import { format, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay } from "date-fns"
+import { format, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay, subMonths } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -31,6 +31,9 @@ type TransaksiWithRelations = any // Type will be inferred properly in real proj
 export interface KasMasukItem {
   keterangan: string
   nominal: number
+  akunId?: string
+  akunKode?: string
+  akunNama?: string
 }
 
 export function extractKasMasukItems(item: any): KasMasukItem[] {
@@ -38,7 +41,10 @@ export function extractKasMasukItems(item: any): KasMasukItem[] {
   if (item.pembayaranTagihan && Array.isArray(item.pembayaranTagihan) && item.pembayaranTagihan.length > 0) {
     return item.pembayaranTagihan.map((pt: any) => ({
       keterangan: pt.tagihan?.namaTagihan || pt.tagihan?.akun?.nama || item.deskripsi || "Tagihan",
-      nominal: Number(pt.jumlahDibayar) || 0
+      nominal: Number(pt.jumlahDibayar) || 0,
+      akunId: pt.tagihan?.akun?.id || pt.tagihan?.akunId,
+      akunKode: pt.tagihan?.akun?.kode,
+      akunNama: pt.tagihan?.akun?.nama
     }))
   }
 
@@ -47,7 +53,10 @@ export function extractKasMasukItems(item: any): KasMasukItem[] {
   if (kreditDetails.length > 0) {
     return kreditDetails.map((d: any) => ({
       keterangan: `${d.akun?.nama || ''} ${d.deskripsi ? `(${d.deskripsi})` : ''}`.trim() || item.deskripsi || "Penerimaan",
-      nominal: Number(d.nilai) || 0
+      nominal: Number(d.nilai) || 0,
+      akunId: d.akun?.id,
+      akunKode: d.akun?.kode,
+      akunNama: d.akun?.nama
     }))
   }
 
@@ -60,10 +69,50 @@ export function extractKasMasukItems(item: any): KasMasukItem[] {
   ]
 }
 
-export default function KasMasukClient({ initialData, userRole, pengaturan, schoolUnits = [], userUnitId, userName }: { initialData: TransaksiWithRelations[], userRole: string, pengaturan?: any, schoolUnits?: any[], userUnitId?: string, userName?: string }) {
+export function filterItemMatches(it: KasMasukItem, filterVal: string): boolean {
+  if (!filterVal || filterVal === "ALL") return true
+  if (filterVal.startsWith("CAT:")) {
+    const cat = filterVal.replace("CAT:", "").toUpperCase()
+    const targetText = `${it.keterangan} ${it.akunNama || ''}`.toUpperCase()
+    if (cat === "DAFTAR_ULANG") {
+      return targetText.includes("DAFTAR ULANG") || targetText.includes("DAFTAR_ULANG")
+    }
+    return targetText.includes(cat)
+  }
+  if (filterVal.startsWith("AKUN:")) {
+    const targetAkunId = filterVal.replace("AKUN:", "")
+    return it.akunId === targetAkunId
+  }
+  return true
+}
+
+export function getVisibleItemsForTransaksi(item: any, filterVal: string): KasMasukItem[] {
+  const allItems = extractKasMasukItems(item)
+  if (!filterVal || filterVal === "ALL") return allItems
+  return allItems.filter(it => filterItemMatches(it, filterVal))
+}
+
+export default function KasMasukClient({ 
+  initialData, 
+  userRole, 
+  pengaturan, 
+  schoolUnits = [], 
+  userUnitId, 
+  userName,
+  opsiJenisBayar = []
+}: { 
+  initialData: TransaksiWithRelations[], 
+  userRole: string, 
+  pengaturan?: any, 
+  schoolUnits?: any[], 
+  userUnitId?: string, 
+  userName?: string,
+  opsiJenisBayar?: { label: string, value: string }[]
+}) {
   const router = useRouter()
   const [data, setData] = useState(initialData)
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedJenisBayar, setSelectedJenisBayar] = useState<string>("ALL")
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isExportingExcel, setIsExportingExcel] = useState(false)
@@ -71,7 +120,7 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
   const isReadOnly = userRole === "KEPALA_SEKOLAH" || userRole === "YAYASAN"
   
   const [filterBy, setFilterBy] = useState<'tanggal_transaksi' | 'tanggal_pembuatan'>('tanggal_transaksi')
-  const [timeRange, setTimeRange] = useState<'hari' | 'minggu' | 'bulan' | 'custom'>('hari')
+  const [timeRange, setTimeRange] = useState<'semua' | 'hari' | 'minggu' | 'bulan' | 'bulan_lalu' | 'custom'>('semua')
   
   // Custom date state if needed
   const [startDate, setStartDate] = useState("")
@@ -102,14 +151,22 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
 
   const filteredData = useMemo(() => {
     return data.filter((item: any) => {
-      // 1. Search Filter
+      // 1. Filter Jenis Bayar
+      const visibleItems = getVisibleItemsForTransaksi(item, selectedJenisBayar)
+      if (visibleItems.length === 0) return false
+
+      // 2. Search Filter
       const matchesSearch = item.noReferensi.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.namaPihakKetiga || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.deskripsi || "").toLowerCase().includes(searchTerm.toLowerCase())
+        (item.deskripsi || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        visibleItems.some(it => it.keterangan.toLowerCase().includes(searchTerm.toLowerCase()))
       
       if (!matchesSearch) return false
 
-      // 2. Date Filter
+      // 3. Date Filter
+      if (timeRange === 'semua') {
+        return true
+      }
       const dateToFilter = filterBy === 'tanggal_pembuatan' ? new Date(item.createdAt) : new Date(item.tanggal)
       
       if (timeRange === 'hari') {
@@ -118,6 +175,9 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
         return isThisWeek(dateToFilter, { weekStartsOn: 1 }) // Senin sebagai awal minggu
       } else if (timeRange === 'bulan') {
         return isThisMonth(dateToFilter)
+      } else if (timeRange === 'bulan_lalu') {
+        const lastMonth = subMonths(new Date(), 1)
+        return dateToFilter.getMonth() === lastMonth.getMonth() && dateToFilter.getFullYear() === lastMonth.getFullYear()
       } else if (timeRange === 'custom' && startDate && endDate) {
         const start = startOfDay(new Date(startDate))
         const end = endOfDay(new Date(endDate))
@@ -126,14 +186,14 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
 
       return true
     })
-  }, [data, searchTerm, filterBy, timeRange, startDate, endDate])
+  }, [data, searchTerm, filterBy, timeRange, startDate, endDate, selectedJenisBayar])
 
   const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, filterBy, timeRange, startDate, endDate])
+  }, [searchTerm, filterBy, timeRange, startDate, endDate, selectedJenisBayar])
 
   const paginatedData = useMemo(() => {
     return filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
@@ -142,9 +202,16 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
   const computedTotalPages = Math.ceil(filteredData.length / pageSize)
 
   const executiveMetrics = useMemo(() => {
-    const totalMasuk = filteredData.reduce((sum: number, item: any) => sum + (item.totalNilai || 0), 0)
+    const totalMasuk = filteredData.reduce((sum: number, item: any) => {
+      const items = getVisibleItemsForTransaksi(item, selectedJenisBayar)
+      return sum + items.reduce((s, it) => s + it.nominal, 0)
+    }, 0)
     const countTrans = filteredData.length
-    const largeTrans = filteredData.filter((item: any) => (item.totalNilai || 0) >= 1000000).length
+    const largeTrans = filteredData.filter((item: any) => {
+      const items = getVisibleItemsForTransaksi(item, selectedJenisBayar)
+      const transTotal = items.reduce((s, it) => s + it.nominal, 0)
+      return transTotal >= 1000000
+    }).length
     const avgTrans = countTrans > 0 ? Math.round(totalMasuk / countTrans) : 0
     return {
       totalMasuk,
@@ -152,20 +219,21 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
       largeTrans,
       avgTrans
     }
-  }, [filteredData])
+  }, [filteredData, selectedJenisBayar])
 
   const handleExportExcel = async () => {
     setIsExportingExcel(true)
     try {
       const { exportToExcel } = await import("@/lib/excel")
       const exportData = filteredData.map((item: any, index: number) => {
-        const items = extractKasMasukItems(item)
+        const items = getVisibleItemsForTransaksi(item, selectedJenisBayar)
+        const rowTotal = items.reduce((s, it) => s + it.nominal, 0)
         const deskripsiStr = items.length > 1
           ? `${items.map(it => it.keterangan).join("\n")}\nTotal`
           : (items[0]?.keterangan || item.deskripsi || "-")
         const nominalStr = items.length > 1
-          ? `${items.map(it => `Rp ${it.nominal.toLocaleString('id-ID')}`).join("\n")}\nRp ${item.totalNilai.toLocaleString('id-ID')}`
-          : `Rp ${item.totalNilai.toLocaleString('id-ID')}`
+          ? `${items.map(it => `Rp ${it.nominal.toLocaleString('id-ID')}`).join("\n")}\nRp ${rowTotal.toLocaleString('id-ID')}`
+          : `Rp ${rowTotal.toLocaleString('id-ID')}`
 
         return {
           No: index + 1,
@@ -183,9 +251,15 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
       })
       
       const unitObj = userUnitId ? schoolUnits.find(u => u.id === userUnitId) : undefined
+      const rawLabel = selectedJenisBayar !== "ALL" ? (opsiJenisBayar.find(o => o.value === selectedJenisBayar)?.label || selectedJenisBayar) : ""
+      const jenisText = rawLabel ? rawLabel.replace(/^Semua\s+/i, "") : ""
+      const excelTitle = jenisText ? `Laporan Kas Masuk - ${jenisText}` : "Laporan Kas Masuk (Penerimaan)"
+      const excelFilename = jenisText 
+        ? `Kas_Masuk_${jenisText.replace(/[^a-zA-Z0-9_-]/g, '_')}_${format(new Date(), "yyyyMMdd")}`
+        : `Kas_Masuk_${format(new Date(), "yyyyMMdd")}`
       
-      exportToExcel(exportData, `Kas_Masuk_${format(new Date(), "yyyyMMdd")}`, {
-        title: "Laporan Kas Masuk (Penerimaan)",
+      exportToExcel(exportData, excelFilename, {
+        title: excelTitle,
         unitInfo: unitObj || pengaturan || { name: "Yayasan Siraya" }
       })
       toast.success("Berhasil mengekspor Excel")
@@ -205,13 +279,14 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
       
       const tableColumn = ["No", "Tgl Transaksi", "No Referensi", "Penyetor", "Deskripsi", "Total Nilai", "Pembuat"]
       const tableRows: any[][] = filteredData.map((item: any, index: number) => {
-        const items = extractKasMasukItems(item)
+        const items = getVisibleItemsForTransaksi(item, selectedJenisBayar)
+        const rowTotal = items.reduce((s, it) => s + it.nominal, 0)
         const deskripsiStr = items.length > 1
           ? `${items.map(it => it.keterangan).join("\n")}\nTotal`
           : (items[0]?.keterangan || item.deskripsi || "-")
         const nominalStr = items.length > 1
-          ? `${items.map(it => `Rp\u00A0${it.nominal.toLocaleString('id-ID')}`).join("\n")}\nRp\u00A0${item.totalNilai.toLocaleString('id-ID')}`
-          : `Rp\u00A0${item.totalNilai.toLocaleString('id-ID')}`
+          ? `${items.map(it => `Rp\u00A0${it.nominal.toLocaleString('id-ID')}`).join("\n")}\nRp\u00A0${rowTotal.toLocaleString('id-ID')}`
+          : `Rp\u00A0${rowTotal.toLocaleString('id-ID')}`
 
         return [
           index + 1,
@@ -225,7 +300,10 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
       })
 
       if (filteredData.length > 0) {
-        const totalNilaiAll = filteredData.reduce((acc: number, curr: any) => acc + (Number(curr.totalNilai) || 0), 0)
+        const totalNilaiAll = filteredData.reduce((acc: number, curr: any) => {
+          const items = getVisibleItemsForTransaksi(curr, selectedJenisBayar)
+          return acc + items.reduce((s, it) => s + it.nominal, 0)
+        }, 0)
         tableRows.push([
           "",
           "TOTAL PENERIMAAN",
@@ -238,14 +316,21 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
       }
 
       const unitObj = userUnitId ? schoolUnits.find((u: any) => u.id === userUnitId) : undefined
+      const rawLabel = selectedJenisBayar !== "ALL" ? (opsiJenisBayar.find(o => o.value === selectedJenisBayar)?.label || selectedJenisBayar) : ""
+      const jenisText = rawLabel ? rawLabel.replace(/^Semua\s+/i, "") : ""
+      const pdfTitle = jenisText ? `Laporan Kas Masuk - ${jenisText}` : "Laporan Kas Masuk (Penerimaan)"
+      const pdfFilename = jenisText
+        ? `Kas_Masuk_${jenisText.replace(/[^a-zA-Z0-9_-]/g, '_')}_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_')
+        : `Kas_Masuk_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_')
+      const filterLabel = rawLabel ? ` • Jenis: ${rawLabel}` : ""
 
       await exportTablePdf({
         institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
-        title: "Laporan Kas Masuk (Penerimaan)",
-        subtitle: `Unit: ${unitObj?.name || "Semua Unit"} • Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
+        title: pdfTitle,
+        subtitle: `Unit: ${unitObj?.name || "Semua Unit"}${filterLabel} • Dicetak pada: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
         headers: tableColumn,
         data: tableRows,
-        filename: `Kas_Masuk_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_'),
+        filename: pdfFilename,
         config: { orientation: 'landscape' },
         penandatanganKiri: getSignatoryKiri(pengaturan, unitObj),
         penandatanganKanan: { jabatan: "Bendahara Penerima,", nama: unitObj?.namaBendaharaUnit || pengaturan?.namaBendaharaYayasan || userName || "____________________" }
@@ -332,6 +417,16 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
           />
 
           <div className="grid grid-cols-2 sm:flex gap-2.5 w-full sm:w-auto">
+            {opsiJenisBayar && opsiJenisBayar.length > 0 && (
+              <ToolbarFilter
+                icon={<Layers size={14} />}
+                value={selectedJenisBayar}
+                onChange={(val) => setSelectedJenisBayar(val)}
+                options={opsiJenisBayar}
+                className="col-span-2 sm:col-span-1 sm:max-w-[200px] xl:max-w-[220px]"
+              />
+            )}
+
             <ToolbarFilter
               icon={<Filter size={14} />}
               value={filterBy}
@@ -347,9 +442,11 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
               value={timeRange}
               onChange={(val) => setTimeRange(val as any)}
               options={[
+                { label: "Semua Waktu", value: "semua" },
                 { label: "Hari Ini", value: "hari" },
                 { label: "Minggu Ini", value: "minggu" },
                 { label: "Bulan Ini", value: "bulan" },
+                { label: "Bulan Lalu", value: "bulan_lalu" },
                 { label: "Custom Tanggal", value: "custom" }
               ]}
             />
@@ -396,8 +493,12 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
         {filteredData.length === 0 ? (
           <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center text-text-muted w-full">
             <Receipt size={40} className="text-gray-300 mb-3 stroke-[1.5]" />
-            <p className="font-bold text-text-main text-base mb-1">Belum Ada Transaksi Kas Masuk</p>
-            <p className="text-xs text-text-muted max-w-sm">Data transaksi kas masuk akan muncul di sini setelah dibuat.</p>
+            <p className="font-bold text-text-main text-base mb-1">
+              {selectedJenisBayar !== "ALL" || searchTerm ? "Tidak Ada Data yang Cocok" : "Belum Ada Transaksi Kas Masuk"}
+            </p>
+            <p className="text-xs text-text-muted max-w-sm">
+              {selectedJenisBayar !== "ALL" || searchTerm ? "Coba sesuaikan filter jenis bayar atau kata kunci pencarian." : "Data transaksi kas masuk akan muncul di sini setelah dibuat."}
+            </p>
           </div>
         ) : (
           <>
@@ -422,7 +523,8 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
                 </thead>
                 <tbody>
                   {paginatedData.map((item: any, idx: number) => {
-                    const items = extractKasMasukItems(item)
+                    const items = getVisibleItemsForTransaksi(item, selectedJenisBayar)
+                    const rowTotal = items.reduce((s, it) => s + it.nominal, 0)
                     return (
                     <tr key={item.id} className="align-top border-b border-border hover:bg-gray-50/50 transition-colors group">
                       <td className="p-4 text-center text-text-muted">{(currentPage - 1) * pageSize + idx + 1}</td>
@@ -468,9 +570,9 @@ export default function KasMasukClient({ initialData, userRole, pengaturan, scho
                           {items.length > 1 && (
                             <div className="flex items-center justify-start h-5 border-t border-dashed border-border/80 pt-0.5 mt-0.5 w-full">
                               <span className="text-xs leading-5 tabular-nums font-bold text-text-main whitespace-nowrap">
-                                Rp {item.totalNilai.toLocaleString('id-ID')}
+                                Rp {rowTotal.toLocaleString('id-ID')}
                               </span>
-                              {isReadOnly && item.totalNilai >= 1000000 && (
+                              {isReadOnly && rowTotal >= 1000000 && (
                                 <span className="ml-1.5 text-[9px] px-1 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-medium leading-tight">
                                   &ge; 1 Jt
                                 </span>

@@ -66,14 +66,20 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
       const d = new Date(today)
       const day = d.getDay()
       const diff = d.getDate() - day + (day === 0 ? -6 : 1) // adjust when day is sunday
-      start = new Date(d.setDate(diff))
-      end = new Date(d.setDate(start.getDate() + 6))
+      start = new Date(today.getFullYear(), today.getMonth(), diff)
+      end = new Date(today.getFullYear(), today.getMonth(), diff + 6)
     } else if (range === "Bulan Ini") {
       start = new Date(today.getFullYear(), today.getMonth(), 1)
       end = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    } else if (range === "Bulan Lalu") {
+      start = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+      end = new Date(today.getFullYear(), today.getMonth(), 0)
     } else if (range === "Tahun Ini") {
       start = new Date(today.getFullYear(), 0, 1)
       end = new Date(today.getFullYear(), 11, 31)
+    } else if (range === "Semua Waktu") {
+      start = new Date(2020, 0, 1)
+      end = new Date(today.getFullYear() + 1, 11, 31)
     } else if (range === "Kustom") {
       start = customStart ? new Date(customStart) : new Date()
       end = customEnd ? new Date(customEnd) : new Date()
@@ -222,7 +228,9 @@ export default function LaporanPemasukanClient({ pengaturan, schoolUnits = [], u
               { label: "Hari ini", value: "Hari Ini" },
               { label: "Minggu ini", value: "Minggu Ini" },
               { label: "Bulan ini", value: "Bulan Ini" },
+              { label: "Bulan Lalu", value: "Bulan Lalu" },
               { label: "Tahun ini", value: "Tahun Ini" },
+              { label: "Semua Waktu", value: "Semua Waktu" },
               { label: "Kustom", value: "Kustom" }
             ]}
           />
