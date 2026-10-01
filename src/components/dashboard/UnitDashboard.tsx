@@ -15,6 +15,7 @@ import Link from 'next/link'
 import PendapatanInteractiveChart from './PendapatanInteractiveChart'
 import toast from "react-hot-toast"
 import { AdaptiveValue } from "@/components/ui/AdaptiveValue"
+import { sortSchoolClasses } from "@/lib/school-class-helpers"
 
 // Brand disciplined palette: Al-Basyariah Forest Green (#065f32), Emerald, Slate, Amber
 const BRAND_COLORS = ['#065f32', '#10b981', '#475569', '#d97706', '#0284c7', '#64748b']
@@ -28,6 +29,8 @@ interface UnitDashboardProps {
   rombelData?: Array<{ 
     id?: string;
     name: string; 
+    tingkatName?: string | null;
+    tingkatId?: string | null;
     total: number;
     genderDist?: Array<{ name: string; value: number; color?: string }>;
     topStudents?: Array<any>;
@@ -77,18 +80,38 @@ export default function UnitDashboard(props: UnitDashboardProps) {
   const [selectedTingkatDrilldown, setSelectedTingkatDrilldown] = useState<string | null>(null)
   const [isOverCapacityFilterActive, setIsOverCapacityFilterActive] = useState<boolean>(false)
 
-  // Helper untuk ekstraksi tingkat dari nama rombel (misal "X AK 1" -> "Kelas X")
+  // Helper untuk ekstraksi tingkat dari nama rombel (misal "X AK 1" -> "Kelas X", "71" -> "Kelas 7")
   const extractTingkat = React.useCallback((name: string): string => {
     if (!name) return 'Lainnya'
     const trimmed = name.trim()
-    const match = trimmed.match(/^(XII|XI|X|VII|VIII|IX|VI|IV|V|I{1,3}|\d+)/i)
-    if (match) {
-      return `Kelas ${match[1].toUpperCase()}`
+
+    // 1. Cek format angka 2 digit SMP (71-79 -> Kelas 7, 81-89 -> Kelas 8, 91-99 -> Kelas 9)
+    const matchSmp = trimmed.match(/^([7-9])\d\b/)
+    if (matchSmp) {
+      return `Kelas ${matchSmp[1]}`
     }
+
+    // 2. Cek Angka Romawi (XII turun ke I)
+    const matchRoman = trimmed.match(/^(XII|XI|X|VII|VIII|IX|VI|IV|V|I{1,3})\b/i)
+    if (matchRoman) {
+      return `Kelas ${matchRoman[1].toUpperCase()}`
+    }
+
+    // 3. Cek Angka Arab 1-12
+    const matchNum = trimmed.match(/^([1-9]|1[0-2])\b/)
+    if (matchNum) {
+      return `Kelas ${matchNum[1]}`
+    }
+
     return 'Lainnya'
   }, [])
 
-  // Agregasi per tingkat untuk Level 1 Bar Chart
+  // Helper resolusi nama tingkat: utamakan relasi database resmi
+  const getTingkatName = React.useCallback((r: { name: string; tingkatName?: string | null }): string => {
+    return r.tingkatName || extractTingkat(r.name)
+  }, [extractTingkat])
+
+  // Agregasi per tingkat untuk Level 1 Bar Chart (Prioritaskan data resmi relasi tingkat dari DB)
   const tingkatAggregatedData = React.useMemo(() => {
     if (!rombelData || rombelData.length === 0) return []
     const map = new Map<string, {
@@ -101,9 +124,10 @@ export default function UnitDashboard(props: UnitDashboardProps) {
     }>()
 
     rombelData.forEach(r => {
-      const t = extractTingkat(r.name)
+      const t = getTingkatName(r)
+      const tId = r.tingkatName || t
       if (!map.has(t)) {
-        map.set(t, { name: t, tingkatId: t, totalSiswa: 0, totalRombel: 0, overCapacityCount: 0, rombelList: [] })
+        map.set(t, { name: t, tingkatId: tId, totalSiswa: 0, totalRombel: 0, overCapacityCount: 0, rombelList: [] })
       }
       const entry = map.get(t)!
       entry.totalSiswa += r.total
@@ -117,8 +141,8 @@ export default function UnitDashboard(props: UnitDashboardProps) {
         ...entry,
         rataRata: Math.round(entry.totalSiswa / (entry.totalRombel || 1))
       }))
-      .sort((a, b) => a.name.localeCompare(b.name, 'id', { numeric: true }))
-  }, [rombelData, extractTingkat])
+      .sort((a, b) => sortSchoolClasses(a.name, b.name))
+  }, [rombelData, getTingkatName])
 
   // Opsi Tingkat dinamis dari data riil rombel untuk selector cepat
   const tingkatOptions = React.useMemo(() => {
@@ -130,13 +154,13 @@ export default function UnitDashboard(props: UnitDashboardProps) {
     if (!rombelData) return []
     let list = rombelData
     if (selectedTingkatDrilldown) {
-      list = list.filter(r => extractTingkat(r.name) === selectedTingkatDrilldown)
+      list = list.filter(r => getTingkatName(r) === selectedTingkatDrilldown || r.tingkatId === selectedTingkatDrilldown)
     }
     if (isOverCapacityFilterActive) {
       list = list.filter(r => r.total > 35)
     }
     return list
-  }, [rombelData, selectedTingkatDrilldown, isOverCapacityFilterActive, extractTingkat])
+  }, [rombelData, selectedTingkatDrilldown, isOverCapacityFilterActive, getTingkatName])
 
   const overCapacityCount = React.useMemo(() => {
     return rombelData.filter(r => r.total > 35).length
@@ -507,10 +531,14 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                   <ChevronRight size={12} className="text-text-muted" />
                   <button 
                     type="button" 
-                    onClick={() => setSelectedRombelDrilldown(null)}
+                    onClick={() => {
+                      const tName = selectedRombelDrilldown.tingkatName || extractTingkat(selectedRombelDrilldown.name);
+                      setSelectedTingkatDrilldown(tName);
+                      setSelectedRombelDrilldown(null);
+                    }}
                     className="hover:text-primary transition-colors cursor-pointer"
                   >
-                    {extractTingkat(selectedRombelDrilldown.name)}
+                    {selectedRombelDrilldown.tingkatName || extractTingkat(selectedRombelDrilldown.name)}
                   </button>
                   <ChevronRight size={12} className="text-text-muted" />
                   <span className="font-bold text-text-main">{selectedRombelDrilldown.name}</span>

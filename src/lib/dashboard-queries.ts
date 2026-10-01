@@ -2,37 +2,8 @@ import { unstable_cache } from "next/cache"
 import prisma from "@/lib/prisma"
 import { normalizeStatusKepegawaian } from "@/lib/constants/kepegawaian"
 
-// Helper pengurutan alami jenjang & kelas (1-12 atau I-XII)
-function getLevelOrder(str: string): { level: number; suffix: string } {
-  const clean = (str || "").trim().toUpperCase()
-  // 1. Cek Angka Romawi (XII turun ke I)
-  const romanMap: Record<string, number> = {
-    'XII': 12, 'XI': 11, 'X': 10, 'IX': 9, 'VIII': 8, 'VII': 7,
-    'VI': 6, 'V': 5, 'IV': 4, 'III': 3, 'II': 2, 'I': 1
-  }
-  for (const [roman, num] of Object.entries(romanMap)) {
-    const regex = new RegExp(`\\b${roman}\\b`)
-    if (regex.test(clean)) {
-      return { level: num, suffix: clean.replace(regex, '').trim() }
-    }
-  }
-  // 2. Cek Angka Arab (1-12)
-  const matchNum = clean.match(/\b([1-9]|1[0-2])\b/)
-  if (matchNum) {
-    return { level: parseInt(matchNum[1], 10), suffix: clean.replace(matchNum[0], '').trim() }
-  }
-  // 3. Fallback jika tidak ada angka
-  return { level: 999, suffix: clean }
-}
-
-export function sortSchoolClasses(a: string, b: string): number {
-  const parsedA = getLevelOrder(a)
-  const parsedB = getLevelOrder(b)
-  if (parsedA.level !== parsedB.level) {
-    return parsedA.level - parsedB.level
-  }
-  return parsedA.suffix.localeCompare(parsedB.suffix, 'id', { numeric: true, sensitivity: 'base' })
-}
+import { getLevelOrder, sortSchoolClasses } from "@/lib/school-class-helpers"
+export { getLevelOrder, sortSchoolClasses }
 
 // Helper konversi waktu ke WIB (UTC+7)
 function getWIBHour(d: Date | string | null | undefined): number {
@@ -462,6 +433,12 @@ async function fetchUnitDashboardData(unitId: string, yearId?: string) {
     select: { 
       id: true,
       name: true, 
+      tingkat: {
+        select: {
+          id: true,
+          name: true
+        }
+      },
       _count: { select: { riwayatKelas: { where: { isCurrent: true, murid: { isActive: true } } } } },
       riwayatKelas: {
         where: { isCurrent: true, murid: { isActive: true } },
@@ -484,6 +461,8 @@ async function fetchUnitDashboardData(unitId: string, yearId?: string) {
       return { 
         id: sk.id,
         name: sk.name, 
+        tingkatName: sk.tingkat?.name || null,
+        tingkatId: sk.tingkat?.id || null,
         total: sk._count.riwayatKelas,
         genderDist: [
           { name: "Laki-laki", value: maleCount, color: "#3b82f6" },
