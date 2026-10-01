@@ -7,6 +7,7 @@ interface AkunLaporanItem {
   kode: string
   nama: string
   total: number
+  isSPP?: boolean
 }
 
 function parseAkunPendapatan(item: AkunLaporanItem) {
@@ -21,7 +22,7 @@ function parseAkunPendapatan(item: AkunLaporanItem) {
   // Hapus pola tahun dari string sementara agar tidak mengganggu deteksi angka kelas
   const cleanNamaForLevel = upperNama.replace(/\b20\d{2}\b/g, " ")
 
-  // 2. Ekstrak tingkatan kelas (Romawi / Arab)
+  // 2. Ekstrak tingkatan kelas (Romawi / Arab / SMP 2 digit)
   let level = 999
   const romanMap: Record<string, number> = {
     "XII": 12, "XI": 11, "X": 10, "IX": 9, "VIII": 8, "VII": 7,
@@ -37,14 +38,20 @@ function parseAkunPendapatan(item: AkunLaporanItem) {
     const matchArab = cleanNamaForLevel.match(/\b([1-9]|1[0-2])\b/)
     if (matchArab) {
       level = parseInt(matchArab[1], 10)
+    } else {
+      const matchSmp = cleanNamaForLevel.match(/\b([7-9])\d\b/)
+      if (matchSmp) {
+        level = parseInt(matchSmp[1], 10)
+      }
     }
   }
 
-  // 3. Tentukan kategori / rank prioritas
+  // 3. Tentukan kategori / rank prioritas (Prioritaskan flag isSPP resmi database)
   let rank = 100
-  if (upperNama.includes("SPP") && level !== 999) {
-    rank = 10 // SPP per tingkat (X, XI, XII / 1-12)
-  } else if (upperNama.includes("SPP")) {
+  const isSpp = Boolean(item.isSPP || upperNama.includes("SPP"))
+  if (isSpp && level !== 999) {
+    rank = 10 // SPP per tingkat (X, XI, XII / 1-12 / 7-9)
+  } else if (isSpp) {
     rank = 20 // SPP tahunan / umum
   } else if (upperNama.includes("PSB") || upperNama.includes("PPDB") || upperNama.includes("PENDAFTARAN") || upperNama.includes("PANGKAL")) {
     rank = 30 // Penerimaan Siswa Baru
@@ -52,7 +59,7 @@ function parseAkunPendapatan(item: AkunLaporanItem) {
     rank = 40 // Daftar Ulang
   } else if (upperNama.includes("BAT") || upperNama.includes("AWAL TAHUN") || upperNama.includes("GEDUNG") || upperNama.includes("SARANA")) {
     rank = 50 // Biaya Awal Tahun / Sarana
-  } else if (upperNama.includes("SERAGAM") || upperNama.includes("BUKU") || upperNama.includes("LKS") || upperNama.includes("KEGIATAN") || upperNama.includes("UJIAN") || upperNama.includes("ASESMEN") || upperNama.includes("PRAKERIN") || upperNama.includes("PKL")) {
+  } else if (upperNama.includes("SERAGAM") || upperNama.includes("BUKU") || upperNama.includes("LKS") || upperNama.includes("KEGIATAN") || upperNama.includes("UJIAN") || upperNama.includes("ASESMEN") || upperNama.includes("PRAKERIN") || upperNama.includes("PKL") || upperNama.includes("DSP") || upperNama.includes("INFAQ")) {
     rank = 60 // Biaya kesiswaan/akademik
   }
 
@@ -149,7 +156,7 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
   })
 
   // Group by akun
-  const pendapatan: Record<string, { kode: string, nama: string, total: number }> = {}
+  const pendapatan: Record<string, { kode: string, nama: string, total: number, isSPP?: boolean }> = {}
   const pengeluaran: Record<string, { kode: string, nama: string, total: number }> = {}
 
   let totalPendapatan = 0
@@ -159,7 +166,13 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
     if (!akun) return false
     const kode = akun.kode || ""
     const nama = (akun.nama || "").toLowerCase()
-    return kode === "5199" || kode === "5198" || nama.includes("potongan") || nama.includes("beasiswa")
+    return kode === "5199" || kode === "5198" || 
+      nama.includes("potongan") || 
+      nama.includes("beasiswa") || 
+      nama.includes("diskon") || 
+      nama.includes("keringanan") || 
+      nama.includes("subsidi") || 
+      nama.includes("korting")
   }
 
   // Group details by transaksiId to properly handle net cash inflow for transactions with discounts/scholarships
@@ -184,7 +197,7 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
         if (nilaiNet <= 0) continue
 
         if (!pendapatan[akunId]) {
-          pendapatan[akunId] = { kode: akunTagihan.kode, nama: akunTagihan.nama, total: 0 }
+          pendapatan[akunId] = { kode: akunTagihan.kode, nama: akunTagihan.nama, total: 0, isSPP: akunTagihan.isSPP }
         }
         pendapatan[akunId].total += nilaiNet
         totalPendapatan += nilaiNet
@@ -221,7 +234,7 @@ export async function getLaporanPemasukanPengeluaran(startDate: string, endDate:
         if (nilaiNet <= 0) return
 
         if (!pendapatan[akunId]) {
-          pendapatan[akunId] = { kode: d.akun.kode, nama: d.akun.nama, total: 0 }
+          pendapatan[akunId] = { kode: d.akun.kode, nama: d.akun.nama, total: 0, isSPP: d.akun.isSPP }
         }
         pendapatan[akunId].total += nilaiNet
         totalPendapatan += nilaiNet

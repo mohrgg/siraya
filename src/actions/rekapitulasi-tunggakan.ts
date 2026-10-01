@@ -2,6 +2,8 @@
 
 import prisma from "@/lib/prisma"
 import { unstable_noStore } from "next/cache"
+import { sortSchoolClasses } from "@/lib/school-class-helpers"
+import { getUnitLevelRank } from "@/lib/constants/units"
 
 export async function getRekapitulasiTunggakan(unitSekolahId: string, tahunAkademikId: string) {
   unstable_noStore();
@@ -16,8 +18,11 @@ export async function getRekapitulasiTunggakan(unitSekolahId: string, tahunAkade
       select: {
         id: true,
         name: true,
-        unitSekolah: {
+        tingkat: {
           select: { id: true, name: true }
+        },
+        unitSekolah: {
+          select: { id: true, name: true, level: true }
         },
         riwayatKelas: {
           where: { tahunAkademikId, isCurrent: true },
@@ -25,8 +30,7 @@ export async function getRekapitulasiTunggakan(unitSekolahId: string, tahunAkade
             muridId: true
           }
         }
-      },
-      orderBy: { name: 'asc' }
+      }
     });
 
     // 2. Get all tagihan for those students in the active academic year
@@ -67,8 +71,18 @@ export async function getRekapitulasiTunggakan(unitSekolahId: string, tahunAkade
       });
     });
 
-    // Grouping
-    const rekap = subKelasList.map(sk => ({
+    // Grouping: Urutkan subkelas secara alami (SD -> SMP -> SMA -> SMK, lalu kelas 1..12 / 71..99)
+    const sortedSubKelasList = [...subKelasList].sort((a, b) => {
+      if (isGlobal && a.unitSekolah?.id !== b.unitSekolah?.id) {
+        const rankA = getUnitLevelRank(a.unitSekolah?.level || a.unitSekolah?.name)
+        const rankB = getUnitLevelRank(b.unitSekolah?.level || b.unitSekolah?.name)
+        if (rankA !== rankB) return rankA - rankB
+        return (a.unitSekolah?.name || '').localeCompare(b.unitSekolah?.name || '')
+      }
+      return sortSchoolClasses(a.name, b.name)
+    })
+
+    const rekap = sortedSubKelasList.map(sk => ({
       subKelasId: sk.id,
       subKelasName: isGlobal && sk.unitSekolah?.name ? `[${sk.unitSekolah.name}] ${sk.name}` : sk.name,
       unitName: sk.unitSekolah?.name || "",

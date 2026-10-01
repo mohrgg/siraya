@@ -229,7 +229,7 @@ export default function DashboardNavTabs({ role, units = [], activeUnitId = "" }
                 <div className="grid grid-cols-1 short:grid-cols-2 gap-2 overflow-y-auto py-1 pb-4 short:pb-2">
                   {sortedUnits.map((u) => {
                     const isSelected = effectiveUnitId === u.id && isUnitActive
-                    const levelBadge = u.name.match(/\b(SD|SMP|SMA|SMK|MI|MTS|MA)\b/i)?.[0]?.toUpperCase() || 'UNIT'
+                    const levelBadge = u.level?.toUpperCase() || u.name.match(/\b(SD|SMP|SMA|SMK|MI|MTS|MA)\b/i)?.[0]?.toUpperCase() || 'UNIT'
                     return (
                       <button
                         key={u.id}

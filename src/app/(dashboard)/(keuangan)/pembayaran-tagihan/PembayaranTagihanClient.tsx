@@ -76,20 +76,62 @@ export function getNormalizedTagihanInfo(akunId: string, rawNamaTagihan: string)
   const upper = cleaned.toUpperCase()
   const foundMonth = months.find(m => upper.includes(m.toUpperCase()))
   
+  // Hapus tahun 4-digit (misal: 2025, 2026, 2025/2026) agar tidak mengaburkan deteksi tingkatan
+  const textWithoutYears = cleaned.replace(/\b20\d{2}(\/20\d{2})?\b/g, ' ')
+  
   let level = ""
-  if (/\bKELAS\s+XII\b/i.test(cleaned) || /\bXII\b/i.test(cleaned)) {
-    level = "XII"
-  } else if (/\bKELAS\s+XI\b/i.test(cleaned) || /\bXI\b/i.test(cleaned)) {
-    level = "XI"
-  } else if (/\bKELAS\s+X\b/i.test(cleaned) || /\bX\b/i.test(cleaned)) {
-    level = "X"
+  
+  // 1. Cek pola eksplisit "KELAS X", "KELAS 7", "KELAS 71", "KELAS 1", dll
+  const matchKelas = textWithoutYears.match(/\bKELAS\s+([A-Z0-9]+)\b/i)
+  if (matchKelas) {
+    const rawLvl = matchKelas[1].toUpperCase()
+    // Cek apakah rawLvl 2 digit SMP (71-79 -> 7, 81-89 -> 8, 91-99 -> 9)
+    if (/^[7-9]\d$/.test(rawLvl)) {
+      level = rawLvl[0]
+    } else {
+      level = rawLvl
+    }
+  } else {
+    // 2. Cek Romawi mandiri (XII turun ke I)
+    const romanMap = ["XII", "XI", "X", "IX", "VIII", "VII", "VI", "IV", "V", "III", "II", "I"]
+    for (const r of romanMap) {
+      if (new RegExp(`\\b${r}\\b`, 'i').test(textWithoutYears)) {
+        level = r
+        break
+      }
+    }
+    
+    // 3. Cek format 2 digit SMP mandiri (71-79, 81-89, 91-99)
+    if (!level) {
+      const smpMatch = textWithoutYears.match(/\b([7-9])\d\b/)
+      if (smpMatch) {
+        level = smpMatch[1]
+      }
+    }
+    
+    // 4. Cek angka Arab 1-12 mandiri
+    if (!level) {
+      const arabMatch = textWithoutYears.match(/\b([1-9]|1[0-2])\b/)
+      if (arabMatch) {
+        level = arabMatch[1]
+      }
+    }
   }
 
-  if (foundMonth && level) {
+  // Jika terdeteksi bulan kalender
+  if (foundMonth) {
     const monthUpper = foundMonth.toUpperCase()
-    const key = `${akunId}::SPP_KELAS_${level}_${monthUpper}`
-    const displayName = `SPP KELAS ${level} ${monthUpper}`
-    return { key, displayName, monthOrder: ACADEMIC_MONTH_ORDER[monthUpper] || 99 }
+    const monthOrder = ACADEMIC_MONTH_ORDER[monthUpper] || 99
+
+    if (level) {
+      const key = `${akunId}::SPP_KELAS_${level}_${monthUpper}`
+      const displayName = `SPP KELAS ${level} ${monthUpper}`
+      return { key, displayName, monthOrder }
+    } else if (upper.includes("SPP")) {
+      const key = `${akunId}::SPP_${monthUpper}`
+      const displayName = `SPP ${monthUpper}`
+      return { key, displayName, monthOrder }
+    }
   }
 
   return { key: `${akunId}::${cleaned}`, displayName: cleaned, monthOrder: 99 }
