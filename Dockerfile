@@ -58,8 +58,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Pastikan static dan public juga ada di subfolder jika Next.js standalone membuat folder /app/siraya
-RUN if [ -d "./siraya" ]; then \
+# Pastikan static, public, dan prisma juga ada di subfolder app atau siraya
+RUN if [ -d "./app" ]; then \
+      cp -r ./public ./app/ 2>/dev/null || true; \
+      mkdir -p ./app/.next && cp -r ./.next/static ./app/.next/ 2>/dev/null || true; \
+      cp -r ./prisma ./app/ 2>/dev/null || true; \
+    fi && \
+    if [ -d "./siraya" ]; then \
       cp -r ./public ./siraya/ 2>/dev/null || true; \
       mkdir -p ./siraya/.next && cp -r ./.next/static ./siraya/.next/ 2>/dev/null || true; \
       cp -r ./prisma ./siraya/ 2>/dev/null || true; \
@@ -69,4 +74,4 @@ USER nextjs
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "if [ -f server.js ]; then node server.js; elif [ -f siraya/server.js ]; then cd siraya && node server.js; else node $(find . -name server.js | head -n 1); fi"]
+CMD ["sh", "-c", "if [ -f server.js ]; then node server.js; elif [ -f app/server.js ]; then cd app && node server.js; elif [ -f siraya/server.js ]; then cd siraya && node server.js; else node $(find . -name server.js | head -n 1); fi"]
