@@ -1,11 +1,12 @@
 # 1. Base Image
 FROM node:20-alpine AS base
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 # 2. Dependencies Stage
 FROM base AS deps
 COPY package.json package-lock.json* ./
+COPY prisma ./prisma/
 RUN npm install
 
 # 3. Builder Stage
@@ -31,7 +32,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Pasang Chromium & Font untuk rendering PDF
+# Pasang Chromium, Font, dan OpenSSL untuk rendering PDF & Prisma runtime
 RUN apk add --no-cache \
     chromium \
     nss \
@@ -39,7 +40,8 @@ RUN apk add --no-cache \
     harfbuzz \
     ca-certificates \
     ttf-freefont \
-    font-noto-cjk
+    font-noto-cjk \
+    openssl
 
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
