@@ -1,0 +1,19 @@
+# Konfigurasi Caddy
+# Jika sudah memiliki domain, ubah :80 menjadi nama domain (contoh: siraya.albasyariah.sch.id)
+# Caddy akan otomatis mengaktifkan HTTPS gratis dengan sertifikat SSL!
+
+:80 {
+    reverse_proxy siraya-app:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+    }
+
+    # Kompresi aset (gzip & zstd)
+    encode gzip zstd
+
+    # Logging akses
+    log {
+        output stdout
+        format console
+    }
+}

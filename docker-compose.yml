@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # 1. Database PostgreSQL
+  siraya-db:
+    image: postgres:16-alpine
+    container_name: siraya-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-siraya_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-siraya_albasyariah}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - siraya-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-siraya_user} -d ${POSTGRES_DB:-siraya_albasyariah}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Aplikasi Siraya Next.js
+  siraya-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: siraya-app
+    restart: always
+    depends_on:
+      siraya-db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-siraya_user}:${POSTGRES_PASSWORD}@siraya-db:5432/${POSTGRES_DB:-siraya_albasyariah}?schema=public
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      AUTH_TRUST_HOST: "true"
+      NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost}
+    networks:
+      - siraya-network
+
+  # 3. Caddy Reverse Proxy & Auto HTTPS
+  siraya-proxy:
+    image: caddy:2-alpine
+    container_name: siraya-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - siraya-app
+    networks:
+      - siraya-network
+
+networks:
+  siraya-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
