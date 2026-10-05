@@ -606,6 +606,7 @@ export const getTuUnitData = getUnitDashboardData;
 // ==================== SUPERADMIN OPERASIONAL ====================
 import { getAuditCockpitSummary } from "@/actions/audit-log"
 import { getErrorCockpitSummary } from "@/actions/error-log"
+import { getSystemHealthMetrics } from "@/actions/system-health"
 
 export async function getAdminOperasionalData() {
   const thirtyDaysAgo = new Date()
@@ -734,9 +735,18 @@ export async function getAdminOperasionalData() {
     // Graceful fallback jika belum terotentikasi saat build
   }
 
+  // NEW: System & Server Health Metrics
+  let systemHealthMetrics = null
+  try {
+    systemHealthMetrics = await getSystemHealthMetrics()
+  } catch {
+    // Graceful fallback jika belum terotentikasi saat build
+  }
+
   return { 
     cockpitSummary,
     errorCockpitSummary,
+    systemHealthMetrics,
     trendData, modulData, roleData, heatmapData, leaderboard, recentLogs, 
     dauCount, monthlyLogsCount, totalMasterRecords, avgDailyLogs, pengaturan 
   }

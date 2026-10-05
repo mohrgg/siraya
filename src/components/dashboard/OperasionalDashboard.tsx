@@ -20,10 +20,12 @@ import {
 } from "@/actions/audit-log"
 import { AUDIT_DOMAINS, AuditCockpitSummary } from "@/lib/constants/audit"
 import SystemErrorTelemetriView from "./SystemErrorTelemetriView"
+import SystemMonitoringView from "./SystemMonitoringView"
 
 interface OperasionalDashboardProps {
   cockpitSummary?: AuditCockpitSummary
   errorCockpitSummary?: any
+  systemHealthMetrics?: any
   trendData?: Array<{ date: string; total: number }>
   modulData?: Array<{ name: string; value: number }>
   roleData?: Array<{ name: string; value: number }>
@@ -75,8 +77,8 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
     userName = "Superadmin"
   } = props
 
-  // Sub-Tab Navigation: Jejak Audit vs Telemetri Error
-  const [activeSubTab, setActiveSubTab] = useState<"audit" | "error">("audit")
+  // Sub-Tab Navigation: Monitoring Sistem vs Jejak Audit vs Telemetri Error
+  const [activeSubTab, setActiveSubTab] = useState<"monitoring" | "audit" | "error">("monitoring")
 
   // State Cockpit Data
   const [cockpit, setCockpit] = useState<AuditCockpitSummary | null>(initialCockpit || null)
@@ -358,9 +360,29 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
   return (
     <div className="flex flex-col gap-6 sm:gap-8 pb-20 min-w-0 w-full animate-in fade-in duration-200">
       {/* ======================================================== */}
-      {/* SUB-TAB NAVIGATOR: Jejak Audit vs Telemetri Error */}
+      {/* SUB-TAB NAVIGATOR: Monitoring vs Jejak Audit vs Telemetri Error */}
       {/* ======================================================== */}
       <div className="flex items-center gap-2 p-1.5 bg-surface rounded-2xl border border-border shadow-2xs overflow-x-auto no-scrollbar">
+        {/* SUB-TAB 1: MONITORING SISTEM & OPERASIONAL */}
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("monitoring")}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[44px] cursor-pointer touch-manipulation ${
+            activeSubTab === "monitoring"
+              ? "bg-primary text-white shadow-xs"
+              : "text-text-muted hover:text-text-main hover:bg-slate-50"
+          }`}
+        >
+          <Activity size={16} />
+          <span>Dashboard Monitoring Sistem & Operasional</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+            activeSubTab === "monitoring" ? "bg-primary-hover text-white" : "bg-emerald-50 text-emerald-700"
+          }`}>
+            Live
+          </span>
+        </button>
+
+        {/* SUB-TAB 2: JEJAK AUDIT AKTIVITAS */}
         <button
           type="button"
           onClick={() => setActiveSubTab("audit")}
@@ -379,6 +401,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
           </span>
         </button>
 
+        {/* SUB-TAB 3: TELEMETRI & ERROR SISTEM */}
         <button
           type="button"
           onClick={() => setActiveSubTab("error")}
@@ -406,7 +429,12 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
         </button>
       </div>
 
-      {activeSubTab === "error" ? (
+      {activeSubTab === "monitoring" ? (
+        <SystemMonitoringView 
+          initialMetrics={props.systemHealthMetrics} 
+          onNavigateToTab={(tab) => setActiveSubTab(tab)}
+        />
+      ) : activeSubTab === "error" ? (
         <SystemErrorTelemetriView initialSummary={errorCockpitSummary} />
       ) : (
         <>
