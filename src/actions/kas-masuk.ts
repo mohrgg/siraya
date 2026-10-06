@@ -328,12 +328,19 @@ export async function createKasMasuk(data: KasMasukPayload) {
 
 export async function hapusKasMasuk(id: string) {
   const tenant = await getTenantContext()
-  if (tenant.role !== "ADMIN") {
-    throw new Error("Hanya admin yang dapat menghapus transaksi yang sudah diposting")
+  const userRole = tenant.role?.toUpperCase()?.trim()
+
+  if (userRole !== "ADMIN" && userRole !== "TATA_USAHA") {
+    throw new Error("Hanya Administrator atau Tata Usaha yang dapat menghapus transaksi kas masuk")
   }
 
   const tx = await prisma.transaksi.findUnique({ where: { id } })
   if (!tx) throw new Error("Transaksi tidak ditemukan")
+
+  // Isolasi Multi-Tenant: Tata Usaha hanya boleh menghapus transaksi dari unit sekolahnya sendiri
+  if (userRole !== "ADMIN" && tenant.unitId && tx.unitSekolahId && tx.unitSekolahId !== tenant.unitId) {
+    throw new Error("Akses ditolak: Anda hanya dapat menghapus transaksi dari unit sekolah Anda sendiri")
+  }
 
   await prisma.transaksi.delete({ where: { id } })
 
