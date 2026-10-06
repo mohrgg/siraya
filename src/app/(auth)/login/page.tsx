@@ -1,3 +1,4 @@
+// SIRAYA - Sistem Informasi Yayasan Al Basyariah (Tampilan Login Resmi)
 "use client"
 
 import { useActionState, useEffect, useState } from "react"
