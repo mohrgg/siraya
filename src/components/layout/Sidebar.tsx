@@ -178,7 +178,10 @@ export default function Sidebar({
       <ConfirmModal
         isOpen={showLogoutModal}
         onCancel={() => setShowLogoutModal(false)}
-        onConfirm={() => signOut()}
+        onConfirm={async () => {
+          await signOut({ redirect: false })
+          window.location.href = "/login"
+        }}
         title="Konfirmasi Keluar"
         message="Apakah Anda yakin ingin keluar dari sistem?"
         confirmText="Keluar"

@@ -338,7 +338,10 @@ export default function MobileBottomNav({ user, logoUrl }: MobileBottomNavProps)
       <ConfirmModal
         isOpen={showLogoutModal}
         onCancel={() => setShowLogoutModal(false)}
-        onConfirm={() => signOut()}
+        onConfirm={async () => {
+          await signOut({ redirect: false })
+          window.location.href = "/login"
+        }}
         title="Konfirmasi Keluar"
         message="Apakah Anda yakin ingin keluar dari sistem Siraya?"
         confirmText="Keluar"

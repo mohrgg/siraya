@@ -32,7 +32,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-siraya_user}:${POSTGRES_PASSWORD}@siraya-db:5432/${POSTGRES_DB:-siraya_albasyariah}?schema=public
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       AUTH_TRUST_HOST: "true"
-      NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost}
+      NEXTAUTH_URL: ${APP_URL:-http://localhost:3000}
+      AUTH_URL: ${APP_URL:-http://localhost:3000}
+      NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
     networks:
       - siraya-network
 

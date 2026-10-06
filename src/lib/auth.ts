@@ -155,6 +155,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.mustChangePassword = token.mustChangePassword as boolean | undefined
       }
       return session
+    },
+    async redirect({ url, baseUrl }) {
+      const appBase = process.env.NEXTAUTH_URL || process.env.AUTH_URL || process.env.APP_URL || baseUrl
+      if (url.startsWith("/")) {
+        return `${appBase}${url}`
+      }
+      try {
+        const parsed = new URL(url)
+        if (parsed.hostname === "0.0.0.0") {
+          return `${appBase}/login`
+        }
+        if (parsed.origin === baseUrl || (appBase && parsed.origin === new URL(appBase).origin)) {
+          return url
+        }
+      } catch {
+        // ignore invalid URL
+      }
+      return `${appBase}/login`
     }
   },
   pages: {

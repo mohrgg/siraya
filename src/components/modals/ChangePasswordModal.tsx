@@ -82,8 +82,9 @@ export default function ChangePasswordModal({
       toast.success("Kata sandi berhasil diperbarui! Mengalihkan ke halaman login...")
       
       // Auto logout setelah berhasil
-      setTimeout(() => {
-        signOut({ callbackUrl: "/login" })
+      setTimeout(async () => {
+        await signOut({ redirect: false })
+        window.location.href = "/login"
       }, 1500)
     } catch (err: any) {
       toast.error(err.message || "Gagal mengubah password")
