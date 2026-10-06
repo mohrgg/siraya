@@ -10,7 +10,11 @@ import {
 import toast from "react-hot-toast"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
-import { SystemHealthMetrics, getSystemHealthMetrics } from "@/actions/system-health"
+import { 
+  SystemHealthMetrics, 
+  getSystemHealthMetrics, 
+  getLivePulseMetrics 
+} from "@/actions/system-health"
 
 interface SystemMonitoringViewProps {
   initialMetrics?: SystemHealthMetrics | null
@@ -27,12 +31,69 @@ export default function SystemMonitoringView({
   const [isTestingPing, setIsTestingPing] = useState(false)
   const [currentTime, setCurrentTime] = useState<Date | null>(null)
 
+  // Smart Live Polling State (Opsi 1: Heartbeat Pulse)
+  const [pollingInterval, setPollingInterval] = useState<number>(5000) // Default 5s
+  const [isPollingActive, setIsPollingActive] = useState<boolean>(true)
+  const [isTabVisible, setIsTabVisible] = useState<boolean>(true)
+  const [isPulsing, setIsPulsing] = useState<boolean>(false)
+  const [pulseCount, setPulseCount] = useState<number>(0)
+
   // Real-time live clock WIB
   useEffect(() => {
     setCurrentTime(new Date())
     const interval = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(interval)
   }, [])
+
+  // Page Visibility API Guard: Auto-pause polling saat tab di-minimize / background
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const visible = document.visibilityState === "visible"
+      setIsTabVisible(visible)
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
+  }, [])
+
+  // Smart Polling Loop (Ringan <2ms, hanya RAM, CPU, Ping DB)
+  useEffect(() => {
+    if (!isPollingActive || !isTabVisible || pollingInterval <= 0) return
+
+    const timer = setInterval(async () => {
+      try {
+        setIsPulsing(true)
+        const pulse = await getLivePulseMetrics()
+        setMetrics((prev) => {
+          if (!prev) return prev
+          return {
+            ...prev,
+            server: {
+              ...prev.server,
+              ...pulse.server
+            },
+            database: {
+              ...prev.database,
+              pingLatencyMs: pulse.database.pingLatencyMs,
+              activeConnections: pulse.database.activeConnections,
+              status: pulse.database.status
+            },
+            storage: {
+              ...prev.storage,
+              ...pulse.storage
+            },
+            timestamp: pulse.timestamp
+          }
+        })
+        setPulseCount((c) => c + 1)
+      } catch (err) {
+        // Silently skip on transient connection drop
+      } finally {
+        setTimeout(() => setIsPulsing(false), 500)
+      }
+    }, pollingInterval)
+
+    return () => clearInterval(timer)
+  }, [isPollingActive, isTabVisible, pollingInterval])
 
   const fetchMetrics = useCallback(async (showToast = false) => {
     try {
@@ -143,6 +204,70 @@ export default function SystemMonitoringView({
                 {formattedLiveDate}
               </span>
             </div>
+          </div>
+
+          {/* Smart Live Pulse Toggle & Interval Selector */}
+          <div className="flex items-center gap-1.5 p-1 bg-surface rounded-xl border border-border shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setIsPollingActive(!isPollingActive)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all min-h-[38px] cursor-pointer touch-manipulation ${
+                isPollingActive && isTabVisible
+                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                  : !isTabVisible
+                    ? "bg-amber-50 text-amber-800 border border-amber-200"
+                    : "bg-slate-100 text-slate-600 border border-slate-200"
+              }`}
+              title={
+                !isTabVisible
+                  ? "Auto-pause aktif: Tab browser sedang di latar belakang"
+                  : isPollingActive
+                    ? "Klik untuk menjeda auto-refresh"
+                    : "Klik untuk menyalakan auto-refresh"
+              }
+            >
+              <span className="relative flex h-2 w-2 shrink-0">
+                {isPollingActive && isTabVisible && (
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 ${isPulsing ? "scale-150" : ""}`}></span>
+                )}
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                  isPollingActive && isTabVisible
+                    ? "bg-emerald-500"
+                    : !isTabVisible
+                      ? "bg-amber-500"
+                      : "bg-slate-400"
+                }`}></span>
+              </span>
+              <span>
+                {isPollingActive && isTabVisible
+                  ? `Live (${pollingInterval / 1000}s)`
+                  : !isTabVisible
+                    ? "Paused (Idle)"
+                    : "Manual"}
+              </span>
+            </button>
+
+            <select
+              value={pollingInterval}
+              onChange={(e) => {
+                const val = Number(e.target.value)
+                setPollingInterval(val)
+                if (val === 0) {
+                  setIsPollingActive(false)
+                } else {
+                  setIsPollingActive(true)
+                }
+              }}
+              disabled={!isTabVisible}
+              className="text-xs font-bold bg-bg border border-border rounded-lg px-2.5 py-1.5 text-text-main focus:outline-none focus:ring-1 focus:ring-primary min-h-[38px] cursor-pointer"
+              title="Frekuensi pembaruan data real-time"
+            >
+              <option value={3000}>3 detik (Cepat)</option>
+              <option value={5000}>5 detik (Optimal)</option>
+              <option value={10000}>10 detik (Santai)</option>
+              <option value={30000}>30 detik (Hemat)</option>
+              <option value={0}>Mati (Manual)</option>
+            </select>
           </div>
 
           {/* Test Ping Database */}
@@ -317,7 +442,7 @@ export default function SystemMonitoringView({
               {/* Progress Bar */}
               <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
                 <div 
-                  className={`h-full rounded-full transition-all duration-500 ${
+                  className={`h-full rounded-full transition-all duration-700 ease-out ${
                     (metrics?.server.ramUsagePercentage || 0) > 85 
                       ? "bg-rose-600" 
                       : (metrics?.server.ramUsagePercentage || 0) > 65 
