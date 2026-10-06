@@ -134,13 +134,13 @@ export default function LoginPage() {
     }
   }, [state, router])
 
-  // Rotasi otomatis halus setiap 6 detik (jeda hening saat kursor hover)
+  // Rotasi otomatis halus setiap 9 detik (jeda hening saat kursor hover)
   useEffect(() => {
     if (isPaused) return
 
     timerRef.current = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % MODULE_SHOWCASE.length)
-    }, 6000)
+    }, 9000)
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
@@ -208,10 +208,10 @@ export default function LoginPage() {
             })}
           </div>
 
-          {/* Area Slider Horizontal dengan Easing Deceleration Halus */}
+          {/* Area Slider Horizontal dengan Easing Deceleration Halus (1.0 Detik) */}
           <div className="w-full overflow-hidden">
             <div 
-              className="flex w-full transition-transform duration-600 ease-[cubic-bezier(0.16,1,0.3,1)]"
+              className="flex w-full transition-transform duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)]"
               style={{ transform: `translateX(-${activeIndex * 100}%)` }}
             >
               {MODULE_SHOWCASE.map((mod) => (
