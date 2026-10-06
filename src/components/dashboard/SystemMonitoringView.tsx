@@ -295,9 +295,9 @@ export default function SystemMonitoringView({
       </div>
 
       {/* ======================================================== */}
-      {/* 2. CORE INFRASTRUCTURE TELEMETRY (2-COLUMN GRID) */}
+      {/* 2. CORE INFRASTRUCTURE TELEMETRY (3-COLUMN GRID) */}
       {/* ======================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
         
         {/* CARD A: DATABASE POSTGRESQL */}
         <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-xs flex flex-col justify-between">
@@ -496,104 +496,7 @@ export default function SystemMonitoringView({
           </div>
         </div>
 
-      </div>
-
-      {/* ======================================================== */}
-      {/* 3. CADANGAN DATA (BACKUP) & DOCKER CONTAINERS (2-COL) */}
-      {/* ======================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
-        
-        {/* CARD C: STATUS CADANGAN DATA OTOMATIS */}
-        <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center shrink-0">
-                  <ShieldCheck size={20} />
-                </div>
-                <div>
-                  <h2 className="text-base sm:text-lg font-extrabold text-text-main tracking-tight">
-                    Pencadangan Otomatis (Backup)
-                  </h2>
-                  <p className="text-xs text-text-muted">
-                    Perlindungan data berkala database Siraya
-                  </p>
-                </div>
-              </div>
-
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 text-teal-800 border border-teal-200">
-                <ShieldCheck size={13} className="text-teal-600" />
-                Aktif & Terjadwal
-              </span>
-            </div>
-
-            <div className="space-y-3 mb-4">
-              <div className="bg-bg rounded-xl p-3.5 border border-border/80 flex items-start gap-3">
-                <Clock size={16} className="text-teal-700 mt-0.5 shrink-0" />
-                <div className="text-xs">
-                  <strong className="text-text-main block mb-0.5">Jadwal Pencadangan:</strong>
-                  <span className="text-text-muted">{metrics?.backup.scheduleInfo}</span>
-                </div>
-              </div>
-
-              <div className="bg-bg rounded-xl p-3.5 border border-border/80 flex items-start gap-3">
-                <HardDrive size={16} className="text-slate-600 mt-0.5 shrink-0" />
-                <div className="text-xs">
-                  <strong className="text-text-main block mb-0.5">Kebijakan Retensi:</strong>
-                  <span className="text-text-muted">{metrics?.backup.retentionInfo}</span>
-                </div>
-              </div>
-
-              {metrics?.backup.latestBackupFile ? (
-                <div className="bg-[#0f172a] text-white rounded-xl p-3.5 border border-slate-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                      Cadangan Terakhir Terverifikasi
-                    </span>
-                    <span className="font-mono text-xs font-bold text-emerald-400 mt-0.5 block truncate max-w-[200px] sm:max-w-xs">
-                      {metrics.backup.latestBackupFile}
-                    </span>
-                    {metrics.backup.latestBackupDate && (
-                      <span className="text-[10px] text-slate-400 block mt-0.5">
-                        {format(new Date(metrics.backup.latestBackupDate), "dd MMM yyyy, HH:mm", { locale: idLocale })} WIB
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="text-xs font-extrabold text-white">
-                      {metrics.backup.latestBackupSizeFormatted}
-                    </span>
-                    <span className="text-[10px] text-slate-400 block">Kompresi GZIP</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-slate-100 rounded-xl p-3.5 border border-slate-200 text-xs text-slate-600">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-text-main flex items-center gap-1.5">
-                      <ShieldCheck size={14} className="text-teal-700" />
-                      Cron Host VPS Terpasang
-                    </span>
-                    <span className="text-[10px] bg-teal-50 text-teal-800 border border-teal-200 font-bold px-2 py-0.5 rounded-md">
-                      Pukul 02:00 WIB
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-text-muted mt-1 leading-relaxed">
-                    Cron berjalan otomatis di host VPS. File tersimpan di: <code className="font-mono text-[10px] bg-white px-1 py-0.5 rounded border border-slate-200">{metrics?.backup.backupLocation}</code>.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-border text-xs text-text-muted flex items-center justify-between">
-            <span>Direktori Server:</span>
-            <span className="font-mono text-[11px] text-slate-600 truncate max-w-[240px]">
-              {metrics?.backup.backupLocation}
-            </span>
-          </div>
-        </div>
-
-        {/* CARD D: KAPASITAS PENYIMPANAN DISK SSD (100% RIIL) */}
+        {/* CARD 3: KAPASITAS PENYIMPANAN DISK SSD (100% RIIL) */}
         <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between gap-3 mb-4">
@@ -637,7 +540,7 @@ export default function SystemMonitoringView({
               {/* Progress Bar */}
               <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
                 <div 
-                  className={`h-full rounded-full transition-all duration-500 ${
+                  className={`h-full rounded-full transition-all duration-700 ease-out ${
                     (metrics?.storage?.usedPercentage || 0) > 85 
                       ? "bg-rose-600" 
                       : (metrics?.storage?.usedPercentage || 0) > 70 
