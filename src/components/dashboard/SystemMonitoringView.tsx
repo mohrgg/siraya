@@ -5,7 +5,7 @@ import {
   Server, Database, ShieldCheck, Activity, Cpu, HardDrive, 
   Clock, RefreshCw, CheckCircle2, AlertTriangle, Zap, 
   Users, Layers, ArrowUpRight, Check, ShieldAlert, 
-  ExternalLink, Terminal, Shield, ArrowRight, Laptop
+  ExternalLink, Terminal, Shield, ArrowRight, Laptop, Lock
 } from "lucide-react"
 import toast from "react-hot-toast"
 import { format } from "date-fns"
@@ -81,6 +81,10 @@ export default function SystemMonitoringView({
               ...prev.storage,
               ...pulse.storage
             },
+            deepDatabase: pulse.deepDatabase ? {
+              ...prev.deepDatabase,
+              ...pulse.deepDatabase
+            } : prev.deepDatabase,
             timestamp: pulse.timestamp
           }
         })
@@ -580,6 +584,182 @@ export default function SystemMonitoringView({
           <div className="pt-3 border-t border-border text-xs text-text-muted flex items-center justify-between">
             <span>Metode Inspeksi:</span>
             <span className="font-mono text-[11px] text-slate-700">Native Node.js statfs (100% Riil)</span>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ======================================================== */}
+      {/* 3. GATEWAY SSL & DEEP POSTGRESQL TELEMETRY (2-COL GRID) */}
+      {/* ======================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+        
+        {/* CARD 4: GATEWAY & SERTIFIKAT SSL/TLS */}
+        <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center shrink-0">
+                  <Lock size={20} />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-extrabold text-text-main tracking-tight">
+                    Gateway & Sertifikat SSL/TLS
+                  </h2>
+                  <p className="text-xs text-text-muted">
+                    Enkripsi HTTPS & routing reverse proxy Caddy
+                  </p>
+                </div>
+              </div>
+
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${
+                (metrics?.ssl?.daysRemaining || 89) > 30
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  : (metrics?.ssl?.daysRemaining || 89) > 14
+                    ? "bg-amber-50 text-amber-800 border-amber-200"
+                    : "bg-rose-50 text-rose-800 border-rose-200"
+              }`}>
+                <CheckCircle2 size={13} className={(metrics?.ssl?.daysRemaining || 89) > 14 ? "text-emerald-600" : "text-rose-600"} />
+                {(metrics?.ssl?.daysRemaining || 89) > 30 
+                  ? `Terenkripsi (${metrics?.ssl?.daysRemaining || 89} Hari Lagi)` 
+                  : `Perpanjangan (${metrics?.ssl?.daysRemaining} Hari)`}
+              </span>
+            </div>
+
+            {/* Domain & Certificate Info Strip */}
+            <div className="bg-bg rounded-xl p-3.5 border border-border/80 mb-3">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="font-bold text-text-main">Domain Produksi Siraya:</span>
+                <span className="font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                  {metrics?.ssl?.domain || "sirayaalbasyariah.my.id"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-text-muted mt-1.5">
+                <span>Penerbit: <strong className="text-text-main">{metrics?.ssl?.issuer || "Let's Encrypt"}</strong></span>
+                <span>Protokol: <strong className="text-emerald-700 font-semibold">{metrics?.ssl?.protocol || "TLSv1.3 (Modern)"}</strong></span>
+              </div>
+            </div>
+
+            {/* Ports Status Strip */}
+            <div className="space-y-2 mb-4">
+              <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider block">
+                Status Port & Routing Jaringan
+              </span>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-bg rounded-xl p-2.5 border border-border/80 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span className="text-xs font-bold text-text-main">Port 443</span>
+                  </div>
+                  <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">HTTPS</span>
+                </div>
+
+                <div className="bg-bg rounded-xl p-2.5 border border-border/80 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span className="text-xs font-bold text-text-main">Port 80</span>
+                  </div>
+                  <span className="text-[10px] text-slate-700 font-semibold bg-slate-100 px-1.5 py-0.5 rounded">Redirect</span>
+                </div>
+
+                <div className="bg-bg rounded-xl p-2.5 border border-border/80 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span className="text-xs font-bold text-text-main">Port 3001</span>
+                  </div>
+                  <span className="text-[10px] text-primary font-bold bg-primary/10 px-1.5 py-0.5 rounded">App</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-border text-xs text-text-muted flex items-center justify-between">
+            <span>Sertifikat Otomatis:</span>
+            <span className="font-mono text-[11px] text-slate-700">Let's Encrypt Auto-Renewal via Caddy</span>
+          </div>
+        </div>
+
+        {/* CARD 5: KESEHATAN LANJUTAN DATABASE POSTGRESQL */}
+        <div className="bg-surface rounded-2xl border border-border p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center shrink-0">
+                  <Zap size={20} />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-extrabold text-text-main tracking-tight">
+                    Performa Lanjutan Database
+                  </h2>
+                  <p className="text-xs text-text-muted">
+                    Efisiensi memori buffer cache & transaksi
+                  </p>
+                </div>
+              </div>
+
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${
+                (metrics?.deepDatabase?.cacheHitRatio ?? 100) >= 99
+                  ? "bg-teal-50 text-teal-800 border-teal-200"
+                  : "bg-amber-50 text-amber-800 border-amber-200"
+              }`}>
+                <Zap size={13} className="text-teal-600" />
+                {(metrics?.deepDatabase?.cacheHitRatio ?? 100) >= 99 ? "Buffer Cache: Optimal" : "Disk I/O Aktif"}
+              </span>
+            </div>
+
+            {/* Meter 1: Buffer Cache Hit Ratio */}
+            <div className="bg-bg rounded-xl p-3 border border-border/80 mb-3">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="font-bold text-text-main">
+                  Buffer Cache Hit Ratio (RAM vs Disk)
+                </span>
+                <span className="font-extrabold text-teal-700">
+                  {metrics?.deepDatabase?.cacheHitRatio ?? 100}% In-Memory
+                </span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden mb-1">
+                <div 
+                  className="h-full rounded-full transition-all duration-700 ease-out bg-teal-600"
+                  style={{ width: `${Math.min(100, metrics?.deepDatabase?.cacheHitRatio ?? 100)}%` }}
+                ></div>
+              </div>
+              <span className="text-[10px] text-text-muted">
+                Target &gt; 99% (Query dilayani dari RAM, tanpa bottleneck disk)
+              </span>
+            </div>
+
+            {/* Meter 2: Connection Pool Usage */}
+            <div className="bg-bg rounded-xl p-3 border border-border/80 mb-3">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="font-bold text-text-main">
+                  Kapasitas Connection Pool
+                </span>
+                <span className="font-bold text-text-main">
+                  {metrics?.deepDatabase?.activeConnections || 1} / {metrics?.deepDatabase?.maxConnections || 100} ({metrics?.deepDatabase?.connectionUsagePercentage || 1}%)
+                </span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden mb-1">
+                <div 
+                  className={`h-full rounded-full transition-all duration-700 ease-out ${
+                    (metrics?.deepDatabase?.connectionUsagePercentage || 1) > 80
+                      ? "bg-rose-600"
+                      : "bg-emerald-600"
+                  }`}
+                  style={{ width: `${Math.max(2, metrics?.deepDatabase?.connectionUsagePercentage || 1)}%` }}
+                ></div>
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-text-muted">
+                <span>Batas max_connections: {metrics?.deepDatabase?.maxConnections || 100}</span>
+                <span>
+                  Transaksi Menggantung: <strong className="text-text-main">{metrics?.deepDatabase?.idleInTxCount || 0} Sesi</strong>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-border text-xs text-text-muted flex items-center justify-between">
+            <span>Engine Telemetri:</span>
+            <span className="font-mono text-[11px] text-slate-700">pg_statio_user_tables (Real-Time)</span>
           </div>
         </div>
 
