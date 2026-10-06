@@ -63,3 +63,6 @@ public/uploads/murid
 
 #
 scratch/
+backups/
+*.sql
+*.sql.gz
