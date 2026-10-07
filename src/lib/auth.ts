@@ -132,6 +132,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id
+        token.name = user.name
         token.role = user.role
         token.unitSekolahId = user.unitSekolahId
         token.divisiId = user.divisiId
@@ -139,6 +140,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.mustChangePassword = user.mustChangePassword
       }
       if (trigger === "update" && session) {
+        if (session.user?.name !== undefined) {
+          token.name = session.user.name
+        }
+        if (session.user?.avatar !== undefined) {
+          token.avatar = session.user.avatar
+        }
         if (session.user?.mustChangePassword !== undefined) {
           token.mustChangePassword = session.user.mustChangePassword
         }
@@ -148,6 +155,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string
+        session.user.name = token.name as string
         session.user.role = token.role as string
         session.user.unitSekolahId = token.unitSekolahId as string | null
         session.user.divisiId = token.divisiId as string | null

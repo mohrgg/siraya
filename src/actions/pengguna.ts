@@ -219,6 +219,72 @@ export async function gantiPasswordMandiri(oldPassword: string, newPassword: str
   await logAktivitas("GANTI_PASSWORD_MANDIRI", "PROFIL", `Pengguna memperbarui kata sandi secara mandiri.`)
 }
 
+export async function getProfilMandiri() {
+  const session = await auth()
+  if (!session || !session.user?.id) {
+    throw new Error("Sesi tidak valid, harap login kembali.")
+  }
+
+  const user = await prisma.pengguna.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      avatar: true,
+      unitSekolahId: true,
+      lastPasswordChangeAt: true,
+      createdAt: true,
+      unitSekolah: {
+        select: { id: true, name: true, level: true }
+      },
+      divisi: {
+        select: { id: true, name: true }
+      }
+    }
+  })
+
+  if (!user) throw new Error("Pengguna tidak ditemukan.")
+  return user
+}
+
+export async function updateProfilMandiri(data: { name: string, avatar?: string }) {
+  const session = await auth()
+  if (!session || !session.user?.id) {
+    throw new Error("Sesi tidak valid, harap login kembali.")
+  }
+
+  const cleanName = data.name.trim()
+  if (!cleanName || cleanName.length < 2) {
+    throw new Error("Nama lengkap minimal terdiri dari 2 karakter.")
+  }
+
+  const updatedUser = await prisma.pengguna.update({
+    where: { id: session.user.id },
+    data: {
+      name: cleanName,
+      ...(data.avatar !== undefined ? { avatar: data.avatar } : {})
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      avatar: true
+    }
+  })
+
+  await logAktivitas(
+    "UPDATE_PROFIL_MANDIRI",
+    "PROFIL",
+    `Pengguna mengubah nama profil menjadi: ${cleanName}`
+  )
+
+  revalidatePath("/")
+  return updatedUser
+}
+
 export async function nonaktifkanPengguna(id: string) {
   await requireAdmin()
   

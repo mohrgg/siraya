@@ -11,7 +11,8 @@ import {
 } from 'lucide-react'
 import { getFilteredMenuGroups } from '@/lib/constants/navigation'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
-import ChangePasswordModal from '@/components/modals/ChangePasswordModal'
+import { ManageAccountModal } from '@/components/modals/ManageAccountModal'
+import { formatDisplayName, formatRoleLabel } from '@/lib/helpers/user'
 
 interface MobileBottomNavProps {
   user?: {
@@ -30,7 +31,7 @@ export default function MobileBottomNav({ user, logoUrl }: MobileBottomNavProps)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showLogoutModal, setShowLogoutModal] = useState(false)
-  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
+  const [showManageAccountModal, setShowManageAccountModal] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -233,9 +234,9 @@ export default function MobileBottomNav({ user, logoUrl }: MobileBottomNavProps)
                     {getInitials(user?.name || "")}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-text-main truncate">{user?.name || "Pengguna"}</p>
+                    <p className="text-xs font-bold text-text-main truncate">{formatDisplayName(user?.name)}</p>
                     <span className="text-[10px] short:text-[9px] font-semibold text-text-muted">
-                      {userRole === "YAYASAN" ? "PENGURUS YAYASAN" : userRole}
+                      {formatRoleLabel(userRole)}
                     </span>
                   </div>
                 </div>
@@ -315,11 +316,11 @@ export default function MobileBottomNav({ user, logoUrl }: MobileBottomNavProps)
             {/* Footer Modal Actions */}
             <div className="p-3 short:py-1.5 short:px-3 border-t border-border flex items-center justify-between gap-2 bg-bg/50 shrink-0">
               <button 
-                onClick={() => { setIsModalOpen(false); setShowChangePasswordModal(true); }}
+                onClick={() => { setIsModalOpen(false); setShowManageAccountModal(true); }}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 short:py-1 px-2.5 rounded-xl text-xs font-semibold text-text-muted hover:text-text-main bg-surface border border-border transition-colors min-h-[40px] short:min-h-[32px] cursor-pointer" 
               >
                 <Key size={14} />
-                <span>Ganti Sandi</span>
+                <span>Kelola Akun</span>
               </button>
               <button 
                 onClick={() => { setIsModalOpen(false); setShowLogoutModal(true); }}
@@ -349,10 +350,10 @@ export default function MobileBottomNav({ user, logoUrl }: MobileBottomNavProps)
         confirmVariant="primary"
       />
 
-      <ChangePasswordModal 
-        isOpen={showChangePasswordModal}
-        onClose={() => setShowChangePasswordModal(false)}
-        isMandatory={!!user?.mustChangePassword}
+      <ManageAccountModal 
+        isOpen={showManageAccountModal}
+        onClose={() => setShowManageAccountModal(false)}
+        initialTab={user?.mustChangePassword ? "password" : "profile"}
       />
     </>
   )

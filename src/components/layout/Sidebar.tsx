@@ -12,8 +12,10 @@ import {
   FilePlus, PieChart
 } from "lucide-react"
 import { ConfirmModal } from "@/components/ui/ConfirmModal"
-import ChangePasswordModal from "@/components/modals/ChangePasswordModal"
+import { ManageAccountModal } from "@/components/modals/ManageAccountModal"
+import { formatDisplayName, formatRoleLabel, getRoleBadgeStyle } from "@/lib/helpers/user"
 import { getFilteredMenuGroups } from "@/lib/constants/navigation"
+import { useSession } from "next-auth/react"
 
 export default function Sidebar({ 
   user, 
@@ -25,6 +27,7 @@ export default function Sidebar({
   initialCollapsed?: boolean;
 }) {
   const pathname = usePathname()
+  const { data: session } = useSession()
   const [isCollapsed, setIsCollapsed] = useState(initialCollapsed)
 
   // Sinkronisasi dengan localStorage saat mount
@@ -45,20 +48,33 @@ export default function Sidebar({
   }
 
   const [showLogoutModal, setShowLogoutModal] = useState(false)
-  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
+  const [showManageAccountModal, setShowManageAccountModal] = useState(false)
+  const [manageAccountTab, setManageAccountTab] = useState<"profile" | "password">("profile")
 
   // Otomatis buka modal ganti password jika pengguna memiliki status wajib ganti password
   useEffect(() => {
     if (user?.mustChangePassword) {
-      setShowChangePasswordModal(true)
+      setManageAccountTab("password")
+      setShowManageAccountModal(true)
     }
   }, [user?.mustChangePassword])
 
   const filteredGroups = getFilteredMenuGroups(user?.role)
 
+  // Mengambil nama terbaru dari session client (jika baru diupdate) atau fallback ke prop user
+  const currentRawName = session?.user?.name || user?.name || "User"
+  const displayName = formatDisplayName(currentRawName)
+  const roleLabel = formatRoleLabel(user?.role)
+  const roleBadgeStyle = getRoleBadgeStyle(user?.role)
+
   const getInitials = (name: string) => {
     if (!name) return "U"
-    return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
+    return name
+      .split(" ")
+      .map(n => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2)
   }
 
   return (
@@ -136,42 +152,84 @@ export default function Sidebar({
         </nav>
 
         {/* Footer User Info */}
-        <div className="p-4 border-t border-white/10 dark:border-border shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 dark:bg-bg text-white dark:text-text-main font-bold flex items-center justify-center shrink-0 overflow-hidden border border-white/20 dark:border-border">
-              {user?.avatar ? (
-                <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <span>{getInitials(user?.name || "")}</span>
-              )}
+        <div className="p-3 border-t border-white/10 dark:border-border shrink-0">
+          {!isCollapsed ? (
+            <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 dark:bg-bg/60 border border-white/10 dark:border-border hover:bg-white/10 dark:hover:bg-bg transition-all group">
+              {/* Profile Card trigger modal */}
+              <button
+                type="button"
+                onClick={() => {
+                  setManageAccountTab("profile")
+                  setShowManageAccountModal(true)
+                }}
+                className="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer"
+                title={`${displayName} (${roleLabel}) - Klik untuk kelola akun`}
+              >
+                <div className="relative shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 dark:bg-primary/15 text-white dark:text-primary font-bold flex items-center justify-center shrink-0 overflow-hidden border border-white/20 dark:border-primary/20 shadow-xs">
+                    {user?.avatar ? (
+                      <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{getInitials(displayName)}</span>
+                    )}
+                  </div>
+                  {/* Status Indicator */}
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-[#065f32] dark:border-surface rounded-full" />
+                </div>
+
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="text-sm font-bold text-white dark:text-text-main truncate leading-tight group-hover:text-emerald-300 dark:group-hover:text-primary transition-colors">
+                    {displayName}
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate max-w-[125px] ${roleBadgeStyle}`}>
+                      {roleLabel}
+                    </span>
+                  </div>
+                </div>
+              </button>
+
+              {/* Logout Button */}
+              <button 
+                type="button"
+                onClick={() => setShowLogoutModal(true)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-red-300 dark:text-rose-400 hover:bg-red-500/20 dark:hover:bg-rose-950/40 hover:text-red-200 dark:hover:text-rose-300 transition-colors cursor-pointer shrink-0" 
+                title="Keluar dari Sistem" 
+              >
+                <LogOut size={16} />
+              </button>
             </div>
-            {!isCollapsed && (
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <span className="text-sm font-semibold text-white dark:text-text-main truncate">{user?.name || "User"}</span>
-                <span className="text-xs text-white/60 dark:text-text-muted truncate">
-                  {user?.role === "YAYASAN" ? "PENGURUS YAYASAN" : user?.role}
-                </span>
-              </div>
-            )}
-            {!isCollapsed && (
-              <div className="flex items-center gap-1 shrink-0">
-                <button 
-                  onClick={() => setShowChangePasswordModal(true)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-white/70 dark:text-text-muted hover:bg-white/10 dark:hover:bg-surface-hover hover:text-white dark:hover:text-text-main transition-colors cursor-pointer" 
-                  title="Ganti Password" 
-                >
-                  <Key size={16} />
-                </button>
-                <button 
-                  onClick={() => setShowLogoutModal(true)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-red-300 dark:text-rose-400 hover:bg-red-500/20 dark:hover:bg-rose-950/40 hover:text-red-200 dark:hover:text-rose-300 transition-colors cursor-pointer" 
-                  title="Keluar" 
-                >
-                  <LogOut size={18} />
-                </button>
-              </div>
-            )}
-          </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setManageAccountTab("profile")
+                  setShowManageAccountModal(true)
+                }}
+                className="relative group cursor-pointer"
+                title={`${displayName} - Kelola Akun`}
+              >
+                <div className="w-10 h-10 rounded-xl bg-white/20 dark:bg-primary/15 text-white dark:text-primary font-bold flex items-center justify-center shrink-0 overflow-hidden border border-white/20 dark:border-primary/20 hover:scale-105 transition-transform">
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{getInitials(displayName)}</span>
+                  )}
+                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-[#065f32] dark:border-surface rounded-full" />
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => setShowLogoutModal(true)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-red-300 dark:text-rose-400 hover:bg-red-500/20 dark:hover:bg-rose-950/40 transition-colors cursor-pointer" 
+                title="Keluar" 
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -183,16 +241,16 @@ export default function Sidebar({
           window.location.href = "/login"
         }}
         title="Konfirmasi Keluar"
-        message="Apakah Anda yakin ingin keluar dari sistem?"
+        message="Apakah Anda yakin ingin keluar dari sistem Siraya?"
         confirmText="Keluar"
         cancelText="Batal"
         confirmVariant="primary"
       />
 
-      <ChangePasswordModal 
-        isOpen={showChangePasswordModal}
-        onClose={() => setShowChangePasswordModal(false)}
-        isMandatory={!!user?.mustChangePassword}
+      <ManageAccountModal 
+        isOpen={showManageAccountModal}
+        onClose={() => setShowManageAccountModal(false)}
+        initialTab={manageAccountTab}
       />
     </>
   )

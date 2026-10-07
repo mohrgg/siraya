@@ -157,30 +157,42 @@ export default function AkunKeuanganClient({
   const generateAkunKode = (subKlasId: string, currentAkunList: AkunDetail[]) => {
     const sub = subKlasifikasi.find(s => s.id === subKlasId)
     if (!sub) return ""
-    const prefix = sub.kode
+    const prefix = sub.kode.trim()
     
-    // Cek semua akun yang ada di subklasifikasi ini
-    const existingInSub = currentAkunList.filter(a => a.subKlasifikasiAkunId === subKlasId)
-    const nums = existingInSub
-      .map(a => parseInt(a.kode))
-      .filter(n => !isNaN(n))
-    
-    // Jika ada nomor akun numerik di subklasifikasi ini, cari dari max + 1
-    if (nums.length > 0) {
-      let candidateNum = Math.max(...nums) + 1
-      while (currentAkunList.some(a => a.kode === candidateNum.toString())) {
-        candidateNum++
+    // Ambil seluruh kode akun yang diawali dengan prefix subklasifikasi ini
+    const existingCodes = currentAkunList
+      .filter(a => a.subKlasifikasiAkunId === subKlasId || a.kode.trim().startsWith(prefix))
+      .map(a => a.kode.trim())
+
+    // Ekstrak suffix numerik murni setelah prefix
+    const suffixes: number[] = []
+    for (const code of existingCodes) {
+      if (code.startsWith(prefix)) {
+        const rest = code.slice(prefix.length)
+        if (/^\d+$/.test(rest)) {
+          const num = parseInt(rest, 10)
+          // Kecualikan angka 99 (cadangan penutup/beasiswa) agar tidak lompat grup prefix
+          if (!isNaN(num) && num < 99) {
+            suffixes.push(num)
+          }
+        }
       }
-      return candidateNum.toString()
     }
 
-    // Jika belum ada akun di subklasifikasi ini, coba sekuensial prefix + 01, 02, ...
-    for (let i = 1; i <= 999; i++) {
-      const suffix = i < 10 ? `0${i}` : `${i}`
-      const candidate = `${prefix}${suffix}`
-      if (!currentAkunList.some(a => a.kode === candidate)) {
+    // Tentukan sequence berikutnya
+    let nextSeq = 1
+    if (suffixes.length > 0) {
+      nextSeq = Math.max(...suffixes) + 1
+    }
+
+    // Cari nomor urut terdekat yang belum pernah terpakai
+    while (nextSeq < 100) {
+      const formattedSuffix = nextSeq < 10 ? `0${nextSeq}` : `${nextSeq}`
+      const candidate = `${prefix}${formattedSuffix}`
+      if (!currentAkunList.some(a => a.kode.trim() === candidate)) {
         return candidate
       }
+      nextSeq++
     }
 
     return `${prefix}01`
@@ -498,10 +510,23 @@ export default function AkunKeuanganClient({
                 // isSPP hanya relevan untuk pos pendapatan/tagihan, bukan Kas/Bank atau Beban
                 const nextIsSPP = (!targetIsAset && !targetIsBeban && !nextIsKasBank) ? akunForm.isSPP : false
 
+                // Hitung kode rekomendasi sekuensial berikutnya untuk subklasifikasi baru
+                const nextRecommendedCode = generateAkunKode(newSubId, akunDetail)
+                
+                // Jika akun baru, ATAU jika kode saat ini tidak diawali dengan prefix subklasifikasi baru (misal ganti dari Beban ke Pendapatan):
+                // OTOMATIS GANTI KODE SESUAI REKOMENDASI SEKUENSIAL SISTEM!
+                const currentPrefix = targetSub?.kode || ""
+                const shouldAutoChangeKode = !akunForm.id || !akunForm.kode.startsWith(currentPrefix)
+                const nextKode = shouldAutoChangeKode ? nextRecommendedCode : akunForm.kode
+
+                if (shouldAutoChangeKode && akunForm.kode && akunForm.kode !== nextRecommendedCode) {
+                  toast(`Kode akun otomatis disesuaikan ke: ${nextRecommendedCode}`, { icon: '✨' })
+                }
+
                 setAkunForm({ 
                   ...akunForm, 
                   subKlasifikasiAkunId: newSubId, 
-                  kode: akunForm.id ? akunForm.kode : generateAkunKode(newSubId, akunDetail),
+                  kode: nextKode,
                   isKasBank: nextIsKasBank,
                   isSPP: nextIsSPP
                 })
@@ -512,24 +537,43 @@ export default function AkunKeuanganClient({
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-text-main">Kode Akun</label>
-              {isKodeDuplicate && (
-                <span className="text-xs font-semibold text-rose-600 flex items-center gap-1">
-                  <ShieldAlert size={12} /> Kode sudah terpakai
-                </span>
-              )}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-semibold text-text-main">Kode Akun</label>
+                {isKodeDuplicate && (
+                  <span className="text-xs font-semibold text-rose-600 flex items-center gap-1">
+                    <ShieldAlert size={12} /> Kode sudah terpakai
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const recommended = generateAkunKode(akunForm.subKlasifikasiAkunId, akunDetail)
+                  setAkunForm(prev => ({ ...prev, kode: recommended }))
+                  toast.success(`Kode diset ke nomor urut berikutnya: ${recommended}`)
+                }}
+                className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-primary hover:text-primary-dark bg-primary/10 hover:bg-primary/15 rounded-md transition-colors cursor-pointer"
+                title="Gunakan rekomendasi nomor urut berikutnya yang tersedia"
+              >
+                <Sparkles size={12} />
+                <span>Saran Selanjutnya ({generateAkunKode(akunForm.subKlasifikasiAkunId, akunDetail)})</span>
+              </button>
             </div>
             <Input 
               placeholder="Contoh: 1101" 
               value={akunForm.kode} 
               onChange={e => setAkunForm({ ...akunForm, kode: e.target.value })} 
-              className={isKodeDuplicate ? "border-rose-500 focus:ring-rose-500/30" : ""}
+              className={isKodeDuplicate ? "border-rose-500 focus:ring-rose-500/30 font-mono font-bold" : "font-mono font-bold"}
               required 
             />
-            {isKodeDuplicate && (
+            {isKodeDuplicate ? (
               <p className="text-xs text-rose-600 font-medium">
-                Nomor akun &quot;{akunForm.kode}&quot; sudah digunakan oleh akun lain di unit ini. Silakan ganti dengan kode unik lainnya.
+                Nomor akun &quot;{akunForm.kode}&quot; sudah digunakan oleh akun lain di unit ini. Silakan gunakan tombol &quot;Saran Selanjutnya&quot; atau ganti dengan kode unik lainnya.
+              </p>
+            ) : (
+              <p className="text-[11px] text-text-muted">
+                Kode 4 digit sekuensial. Terisi otomatis sesuai kelompok akun terpilih.
               </p>
             )}
           </div>
