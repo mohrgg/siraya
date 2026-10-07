@@ -558,8 +558,8 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
             }}
             className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-xl border transition-all text-xs sm:text-sm font-bold cursor-pointer ${
               isLiveStreaming
-                ? "bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs"
-                : "bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200"
+                ? "bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/60 shadow-2xs"
+                : "bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700/60 hover:bg-slate-200"
             }`}
             title={isLiveStreaming ? "Klik untuk menjeda live stream" : "Klik untuk mengaktifkan live stream"}
           >
@@ -578,10 +578,10 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
           <button
             onClick={handleSimulateError}
             disabled={isSimulating}
-            className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 rounded-xl border border-amber-200 transition-colors shadow-2xs text-xs sm:text-sm font-semibold cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 dark:text-amber-400 dark:border-amber-800/60 rounded-xl border border-amber-200 transition-colors shadow-2xs text-xs sm:text-sm font-semibold cursor-pointer disabled:opacity-50"
             title="Kirim insiden simulasi untuk menguji deteksi Vercel/VPS"
           >
-            <FlaskConical size={14} className={isSimulating ? "animate-spin text-amber-700" : "text-amber-700"} />
+            <FlaskConical size={14} className={isSimulating ? "animate-spin text-amber-700 dark:text-amber-400" : "text-amber-700 dark:text-amber-400"} />
             <span className="hidden sm:inline">{isSimulating ? "Mengirim..." : "Uji Coba Telemetri"}</span>
           </button>
 
@@ -589,7 +589,7 @@ export default function SystemErrorTelemetriView({ initialSummary }: SystemError
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2 bg-surface hover:bg-slate-50 active:bg-slate-100 text-text-main rounded-xl border border-border transition-colors shadow-2xs text-xs sm:text-sm font-semibold disabled:opacity-50 cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2 bg-surface hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-surface-hover text-text-main rounded-xl border border-border transition-colors shadow-2xs text-xs sm:text-sm font-semibold disabled:opacity-50 cursor-pointer"
             title="Segarkan Data Error"
           >
             <RefreshCw size={14} className={isRefreshing ? "animate-spin text-primary" : "text-text-muted"} />

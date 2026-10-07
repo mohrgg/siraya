@@ -6,6 +6,7 @@
 import { useActionState, useEffect, useState, useRef } from "react"
 import { loginAction } from "@/actions/auth"
 import { useRouter } from "next/navigation"
+import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { 
   Eye, 
   EyeOff, 
@@ -301,13 +302,16 @@ export default function LoginPage() {
           RIGHT FORM CONTAINER (DESKTOP & MOBILE)
           ========================================================================= */}
       <div className="flex-1 flex flex-col justify-between bg-surface relative z-10 px-6 sm:px-12 w-full overflow-y-auto">
-        {/* Bilah Atas Form: Branding Mobile (Bersih dari tombol bantuan atas) */}
-        <div className="w-full max-w-md mx-auto pt-6 flex items-center justify-between lg:justify-end">
+        {/* Bilah Atas Form: Branding Mobile & Opsi Dark Mode */}
+        <div className="w-full max-w-md mx-auto pt-6 flex items-center justify-between">
           <div className="flex items-center gap-2.5 lg:hidden">
-            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center p-1 shadow border border-border">
+            <div className="w-8 h-8 bg-surface rounded-lg flex items-center justify-center p-1 shadow-2xs border border-border">
               <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <span className="font-extrabold text-base text-text-main tracking-tight">SIRAYA</span>
+          </div>
+          <div className="ml-auto">
+            <ThemeToggle variant="pill" />
           </div>
         </div>
 
@@ -320,19 +324,19 @@ export default function LoginPage() {
 
           {/* ALERT AKUN TERKUNCI / GAGAL */}
           {state?.isLocked ? (
-            <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-sm flex items-start gap-3 text-rose-800">
-              <div className="p-2 bg-rose-100 rounded-xl text-rose-600 shrink-0">
+            <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl text-sm flex items-start gap-3 text-rose-800 dark:text-rose-200">
+              <div className="p-2 bg-rose-100 dark:bg-rose-900/50 rounded-xl text-rose-600 dark:text-rose-300 shrink-0">
                 <Lock size={20} />
               </div>
               <div className="space-y-1">
-                <strong className="font-bold block text-rose-900">Akun Terkunci Sementara</strong>
-                <p className="text-xs text-rose-700 leading-relaxed">
+                <strong className="font-bold block text-rose-900 dark:text-rose-100">Akun Terkunci Sementara</strong>
+                <p className="text-xs text-rose-700 dark:text-rose-300 leading-relaxed">
                   {state.error}
                 </p>
                 <button
                   type="button"
                   onClick={() => setShowHelpModal(true)}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-rose-800 underline hover:text-rose-950 mt-1"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-rose-800 dark:text-rose-300 underline hover:text-rose-950 dark:hover:text-rose-100 mt-1"
                 >
                   <HelpCircle size={13} />
                   Hubungi Bantuan Administrator
@@ -340,14 +344,14 @@ export default function LoginPage() {
               </div>
             </div>
           ) : state?.error ? (
-            <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-sm flex items-start gap-3 text-rose-700">
-              <div className="p-1.5 bg-rose-100 rounded-lg text-rose-600 shrink-0 mt-0.5">
+            <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/60 rounded-2xl text-sm flex items-start gap-3 text-rose-700 dark:text-rose-200">
+              <div className="p-1.5 bg-rose-100 dark:bg-rose-900/50 rounded-lg text-rose-600 dark:text-rose-300 shrink-0 mt-0.5">
                 <AlertTriangle size={16} />
               </div>
               <div>
                 <p className="font-medium text-xs sm:text-sm">{state.error}</p>
                 {state.sisaPercobaan !== undefined && (
-                  <p className="text-xs text-rose-600 mt-1 font-semibold">
+                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-1 font-semibold">
                     Percobaan gagal berturut-turut akan mengunci akun secara otomatis.
                   </p>
                 )}
@@ -392,7 +396,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main focus:outline-none focus:ring-1 focus:ring-primary rounded p-1 transition-colors"
                   title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -401,8 +405,8 @@ export default function LoginPage() {
 
               {/* DETEKSI CAPS LOCK AKTIF */}
               {isCapsLockOn && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs font-semibold animate-in fade-in">
-                  <AlertTriangle size={14} className="text-amber-600 shrink-0" />
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-lg text-amber-800 dark:text-amber-200 text-xs font-semibold animate-in fade-in">
+                  <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400 shrink-0" />
                   <span>Perhatian: <strong>Caps Lock</strong> keyboard Anda aktif</span>
                 </div>
               )}
@@ -469,7 +473,7 @@ export default function LoginPage() {
                 className="flex items-center justify-between p-3 bg-bg border border-border rounded-xl hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-green-50 text-green-700 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 flex items-center justify-center">
                     <MessageSquare size={16} />
                   </div>
                   <div>
@@ -489,7 +493,7 @@ export default function LoginPage() {
                 className="flex items-center justify-between p-3 bg-bg border border-border rounded-xl hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 flex items-center justify-center">
                     <Lock size={16} />
                   </div>
                   <div>
@@ -507,7 +511,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowHelpModal(false)}
-                className="w-full py-2.5 bg-bg border border-border rounded-xl text-xs font-semibold text-text-main hover:bg-gray-100 transition-colors"
+                className="w-full py-2.5 bg-bg border border-border rounded-xl text-xs font-semibold text-text-main hover:bg-surface-hover transition-colors"
               >
                 Kembali ke Halaman Login
               </button>

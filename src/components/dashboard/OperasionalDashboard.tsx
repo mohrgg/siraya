@@ -370,13 +370,15 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
           className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[44px] cursor-pointer touch-manipulation ${
             activeSubTab === "monitoring"
               ? "bg-primary text-white shadow-xs"
-              : "text-text-muted hover:text-text-main hover:bg-slate-50"
+              : "text-text-muted hover:text-text-main hover:bg-slate-50 dark:hover:bg-surface-hover"
           }`}
         >
           <Activity size={16} />
           <span>Dashboard Monitoring Sistem & Operasional</span>
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-            activeSubTab === "monitoring" ? "bg-primary-hover text-white" : "bg-emerald-50 text-emerald-700"
+            activeSubTab === "monitoring" 
+              ? "bg-primary-hover text-white" 
+              : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
           }`}>
             Live
           </span>
@@ -388,14 +390,16 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
           onClick={() => setActiveSubTab("audit")}
           className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[44px] cursor-pointer touch-manipulation ${
             activeSubTab === "audit"
-              ? "bg-slate-900 text-white shadow-xs"
-              : "text-text-muted hover:text-text-main hover:bg-slate-50"
+              ? "bg-slate-900 text-white shadow-xs dark:bg-primary dark:text-white"
+              : "text-text-muted hover:text-text-main hover:bg-slate-50 dark:hover:bg-surface-hover"
           }`}
         >
           <ShieldCheck size={16} />
           <span>Jejak Audit Aktivitas</span>
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-            activeSubTab === "audit" ? "bg-slate-800 text-slate-200" : "bg-slate-100 text-slate-600"
+            activeSubTab === "audit" 
+              ? "bg-slate-800 text-slate-200 dark:bg-primary-hover dark:text-white" 
+              : "bg-slate-100 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300"
           }`}>
             {formatNumber(kpi.totalMutasi)}
           </span>
@@ -407,21 +411,25 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
           onClick={() => setActiveSubTab("error")}
           className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all min-h-[44px] cursor-pointer touch-manipulation ${
             activeSubTab === "error"
-              ? "bg-rose-700 text-white shadow-xs"
-              : "text-text-muted hover:text-text-main hover:bg-slate-50"
+              ? "bg-rose-700 text-white shadow-xs dark:bg-rose-600 dark:text-white"
+              : "text-text-muted hover:text-text-main hover:bg-slate-50 dark:hover:bg-surface-hover"
           }`}
         >
           <AlertTriangle size={16} />
           <span>Telemetri & Error Sistem</span>
           {(errorCockpitSummary?.totalUnresolved > 0) ? (
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-              activeSubTab === "error" ? "bg-rose-900 text-white" : "bg-rose-100 text-rose-700"
+              activeSubTab === "error" 
+                ? "bg-rose-900 text-white dark:bg-rose-700" 
+                : "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400"
             }`}>
               {errorCockpitSummary.totalUnresolved}
             </span>
           ) : (
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-              activeSubTab === "error" ? "bg-rose-800 text-rose-200" : "bg-slate-100 text-slate-600"
+              activeSubTab === "error" 
+                ? "bg-rose-800 text-rose-200 dark:bg-rose-700" 
+                : "bg-slate-100 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300"
             }`}>
               {errorCockpitSummary?.totalAll || 0}
             </span>
@@ -445,12 +453,12 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
       <div className="hidden md:flex bg-surface rounded-2xl border border-border p-5 lg:p-6 shadow-xs flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-              <ShieldCheck size={14} className="text-emerald-700" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/60">
+              <ShieldCheck size={14} className="text-emerald-700 dark:text-emerald-400" />
               Live Audit Trail Cockpit
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-              <Server size={13} className="text-slate-500" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700/60">
+              <Server size={13} className="text-slate-500 dark:text-slate-400" />
               PostgreSQL Immutable Logs
             </span>
           </div>
@@ -491,7 +499,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
           <button 
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 bg-surface hover:bg-slate-50 active:bg-slate-100 text-text-main rounded-xl border border-border transition-colors shadow-2xs text-xs sm:text-sm font-semibold disabled:opacity-50 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 bg-surface hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-surface-hover text-text-main rounded-xl border border-border transition-colors shadow-2xs text-xs sm:text-sm font-semibold disabled:opacity-50 cursor-pointer"
             title="Segarkan Data Audit"
           >
             <RefreshCw size={15} className={isRefreshing ? "animate-spin text-primary" : "text-text-muted"} />
@@ -503,8 +511,8 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
       {/* 1B. MOBILE COMPACT HEADER (<md) */}
       <div className="md:hidden bg-surface rounded-2xl border border-border p-4 shadow-xs flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-            <ShieldCheck size={12} className="text-emerald-700" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/60">
+            <ShieldCheck size={12} className="text-emerald-700 dark:text-emerald-400" />
             Live Audit Trail
           </span>
           
@@ -536,7 +544,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
           <button 
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-bg hover:bg-slate-100 text-text-main border border-border text-xs font-bold transition-all min-h-[38px] cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-bg hover:bg-slate-100 dark:hover:bg-slate-800/60 text-text-main border border-border text-xs font-bold transition-all min-h-[38px] cursor-pointer"
           >
             <RefreshCw size={13} className={isRefreshing ? "animate-spin text-primary" : "text-text-muted"} />
             <span>Segarkan Data</span>
@@ -829,7 +837,7 @@ export default function OperasionalDashboard(props: OperasionalDashboardProps) {
                     <span className="text-[11px] font-semibold text-text-muted">Volume & Proporsi</span>
                     <span className="font-extrabold text-text-main font-mono">{percent}% beban</span>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                     <div 
                       className="bg-primary h-full rounded-full transition-all duration-500"
                       style={{ width: `${Math.max(percent, 2)}%` }}

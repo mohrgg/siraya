@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { RefreshCw } from "lucide-react"
 import { setGlobalContext } from "@/actions/app-context"
+import { ThemeToggle } from "@/components/ui/ThemeToggle"
 
 type SchoolUnit = { id: string; name: string }
 type AcademicYear = { id: string; name: string }
@@ -136,8 +137,9 @@ export default function Header({ user, schoolUnits, academicYears, activeUnitId,
           </div>
         </div>
 
-        {/* 3. Tombol Refresh Ringkas */}
-        <div className="flex items-end shrink-0 pt-3 md:pt-0 short:pt-0">
+        {/* 3. Aksi Header: Theme Toggle & Refresh Ringkas */}
+        <div className="flex items-end shrink-0 pt-3 md:pt-0 short:pt-0 gap-2">
+          <ThemeToggle variant="icon" />
           <button 
             onClick={handleManualRefresh}
             disabled={isPending}

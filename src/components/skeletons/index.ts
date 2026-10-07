@@ -1,0 +1,8 @@
+export { Skeleton } from "@/components/ui/Skeleton"
+export { TablePageSkeleton } from "./TablePageSkeleton"
+export { ProfilePageSkeleton } from "./ProfilePageSkeleton"
+export { DashboardSkeleton } from "./DashboardSkeleton"
+export { FormPageSkeleton } from "./FormPageSkeleton"
+export { SettingsSkeleton } from "./SettingsSkeleton"
+export { LaporanHubSkeleton } from "./LaporanHubSkeleton"
+export { TransactionDetailSkeleton } from "./TransactionDetailSkeleton"

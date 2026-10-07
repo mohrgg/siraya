@@ -159,18 +159,18 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
     <div className="flex flex-col gap-8 pb-20 md:pb-12 animate-in fade-in duration-300 max-w-[1600px] mx-auto w-full">
       
       {/* SECTION 1: Header Yayasan */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-surface p-4 sm:p-6 rounded-2xl border border-border shadow-xs">
         <div className="flex-1 min-w-0 pr-0 lg:pr-4">
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
-            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wider uppercase bg-emerald-50 text-[#065f32] border border-emerald-200/80">
+            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wider uppercase bg-emerald-50 dark:bg-emerald-950/40 text-[#065f32] dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60">
               {role === 'ADMIN' ? 'Superadmin • Yayasan Al-Basyariah' : 'Yayasan Al-Basyariah'}
             </span>
-            <span className="text-slate-300">•</span>
-            <span className="text-xs font-medium text-slate-500">TA {academicYear?.name || 'Aktif'}</span>
-            <span className="text-slate-300">•</span>
-            <span className="text-xs font-bold text-slate-800">Semua Unit</span>
+            <span className="text-text-muted">•</span>
+            <span className="text-xs font-medium text-text-muted">TA {academicYear?.name || 'Aktif'}</span>
+            <span className="text-text-muted">•</span>
+            <span className="text-xs font-bold text-text-main">Semua Unit</span>
           </div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Yayasan</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text-main tracking-tight">Dashboard Yayasan</h1>
         </div>
 
         {/* Action Buttons */}
@@ -184,9 +184,9 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
           </Link>
           <Link
             href="/rekapitulasi-tunggakan"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-colors whitespace-nowrap min-h-[44px]"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-surface border border-border hover:bg-surface-hover text-text-main text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-colors whitespace-nowrap min-h-[44px]"
           >
-            <Wallet size={16} className="text-slate-500" />
+            <Wallet size={16} className="text-text-muted" />
             <span>Piutang SPP</span>
           </Link>
         </div>
@@ -194,17 +194,17 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
 
       {/* SECTION 2: Ringkasan Eksekutif */}
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight px-0.5">Ringkasan Eksekutif</h2>
+        <h2 className="text-lg sm:text-xl font-extrabold text-text-main tracking-tight px-0.5">Ringkasan Eksekutif</h2>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Tile 1: Kas Riil */}
           <Link 
             href="/kas-masuk"
-            className="group bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-[#065f32] hover:shadow-md transition-all cursor-pointer"
+            className="group bg-surface rounded-2xl border border-border p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-primary hover:shadow-md transition-all cursor-pointer"
           >
             <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-[#065f32] transition-colors">Total Kas Riil</span>
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#065f32] flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+              <span className="text-[11px] sm:text-xs font-bold text-text-muted uppercase tracking-wider group-hover:text-primary transition-colors">Total Kas Riil</span>
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-[#065f32] dark:text-emerald-300 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <Wallet size={16} />
               </div>
             </div>
@@ -212,69 +212,69 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
               <div className="flex items-baseline my-0.5">
                 <AdaptiveValue 
                   value={formatCurrency(totalKasGlobal)}
-                  className="text-[#065f32]"
+                  className="text-primary font-black"
                   maxFontSize={28}
                   minFontSize={15}
                 />
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">Akumulasi seluruh unit</p>
+              <p className="text-[11px] text-text-muted mt-1">Akumulasi seluruh unit</p>
             </div>
           </Link>
 
           {/* Tile 2: Total Siswa */}
           <Link 
             href="/kelas"
-            className="group bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-slate-400 hover:shadow-md transition-all cursor-pointer"
+            className="group bg-surface rounded-2xl border border-border p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-primary hover:shadow-md transition-all cursor-pointer"
           >
             <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition-colors">Total Siswa</span>
-              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+              <span className="text-[11px] sm:text-xs font-bold text-text-muted uppercase tracking-wider group-hover:text-text-main transition-colors">Total Siswa</span>
+              <div className="w-8 h-8 rounded-lg bg-bg text-text-muted flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <GraduationCap size={16} />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">{formatNumber(muridCount)}</span>
-                <span className="text-xs font-medium text-slate-500">Siswa</span>
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight">{formatNumber(muridCount)}</span>
+                <span className="text-xs font-medium text-text-muted">Siswa</span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">{formatNumber(rombelCount)} Rombel • {unitCount} Unit</p>
+              <p className="text-[11px] text-text-muted mt-1">{formatNumber(rombelCount)} Rombel • {unitCount} Unit</p>
             </div>
           </Link>
 
           {/* Tile 3: Tenaga Pendidik */}
           <Link 
             href="/guru"
-            className="group bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-slate-400 hover:shadow-md transition-all cursor-pointer"
+            className="group bg-surface rounded-2xl border border-border p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-primary hover:shadow-md transition-all cursor-pointer"
           >
             <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition-colors">Tenaga Pendidik</span>
-              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+              <span className="text-[11px] sm:text-xs font-bold text-text-muted uppercase tracking-wider group-hover:text-text-main transition-colors">Tenaga Pendidik</span>
+              <div className="w-8 h-8 rounded-lg bg-bg text-text-muted flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                 <Users size={16} />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">{formatNumber(guruCount)}</span>
-                <span className="text-xs font-medium text-slate-500">Guru</span>
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight">{formatNumber(guruCount)}</span>
+                <span className="text-xs font-medium text-text-muted">Guru</span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">Rasio 1 : {guruCount > 0 ? Math.round(muridCount / guruCount) : 0} Murid</p>
+              <p className="text-[11px] text-text-muted mt-1">Rasio 1 : {guruCount > 0 ? Math.round(muridCount / guruCount) : 0} Murid</p>
             </div>
           </Link>
 
           {/* Tile 4: Kolektibilitas */}
           <Link 
             href="/rekapitulasi-tunggakan"
-            className="group bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-slate-400 hover:shadow-md transition-all cursor-pointer"
+            className="group bg-surface rounded-2xl border border-border p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-primary hover:shadow-md transition-all cursor-pointer"
           >
             <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition-colors">Kolektibilitas SPP</span>
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 ${isKolektibilitasSehat ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+              <span className="text-[11px] sm:text-xs font-bold text-text-muted uppercase tracking-wider group-hover:text-text-main transition-colors">Kolektibilitas SPP</span>
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 ${isKolektibilitasSehat ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300'}`}>
                 <CheckCircle2 size={16} />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-1.5">
-                <span className={`text-xl sm:text-2xl lg:text-3xl font-black tracking-tight ${isKolektibilitasSehat ? 'text-slate-900' : 'text-amber-700'}`}>
+                <span className={`text-xl sm:text-2xl lg:text-3xl font-black tracking-tight ${isKolektibilitasSehat ? 'text-text-main' : 'text-amber-600 dark:text-amber-400'}`}>
                   {kolektibilitas}%
                 </span>
               </div>
@@ -294,13 +294,13 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Kolom Kiri: 7 Cols Interactive Cashflow Chart */}
           <div className="lg:col-span-7 flex flex-col">
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs h-full flex flex-col">
+            <div className="bg-surface rounded-2xl border border-border p-6 shadow-xs h-full flex flex-col">
               <div className="mb-4">
-                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-[#065f32] border border-emerald-200/80 inline-block mb-1">
+                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/40 text-[#065f32] dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 inline-block mb-1">
                   Arus Kas Masuk (Riil)
                 </span>
-                <h3 className="text-lg font-bold text-slate-900">Penerimaan Kas Riil Konsolidasi</h3>
-                <p className="text-xs text-slate-500">Pantau transaksi penerimaan kas riil (tunai & bank) yang telah diverifikasi per hari, minggu, bulan, atau distribusi per unit.</p>
+                <h3 className="text-lg font-bold text-text-main">Penerimaan Kas Riil Konsolidasi</h3>
+                <p className="text-xs text-text-muted">Pantau transaksi penerimaan kas riil (tunai & bank) yang telah diverifikasi per hari, minggu, bulan, atau distribusi per unit.</p>
               </div>
 
               <div className="flex-1 min-h-[380px] w-full">
@@ -319,14 +319,14 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
           {/* Kolom Kanan: 5 Cols Trend Arus Kas & Peringkat Tunggakan */}
           <div className="lg:col-span-5 flex flex-col gap-6">
             {/* Card 1: Trend 6 Bulan */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between">
+            <div className="bg-surface rounded-2xl border border-border p-6 shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                    <TrendingUp size={18} className="text-[#065f32]" />
+                  <h3 className="font-bold text-text-main text-base flex items-center gap-2">
+                    <TrendingUp size={18} className="text-primary" />
                     Trend Arus Kas (6 Bulan)
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Perbandingan arus kas masuk riil vs pengeluaran operasional.</p>
+                  <p className="text-xs text-text-muted mt-0.5">Perbandingan arus kas masuk riil vs pengeluaran operasional.</p>
                 </div>
               </div>
 
@@ -336,56 +336,57 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                     <AreaChart data={arusKasTrend} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorPemasukanYayasan" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#065f32" stopOpacity={0.25}/>
-                          <stop offset="95%" stopColor="#065f32" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.35}/>
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                         </linearGradient>
                         <linearGradient id="colorPengeluaranYayasan" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#e11d48" stopOpacity={0.25}/>
-                          <stop offset="95%" stopColor="#e11d48" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.35}/>
+                          <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
+                      <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'currentColor' }} className="text-text-muted" />
                       <YAxis 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{ fill: '#64748b', fontSize: 11 }}
+                        tick={{ fontSize: 11, fill: 'currentColor' }}
+                        className="text-text-muted"
                         tickFormatter={(value) => `Rp${(value/1000000).toFixed(0)}Jt`}
                       />
                       <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }}
+                        contentStyle={{ borderRadius: '12px', border: '1px solid var(--border-color)', backgroundColor: 'var(--surface)', color: 'var(--text-main)', boxShadow: 'var(--shadow-md)' }}
                         formatter={(value: any) => formatCurrency(Number(value))}
                       />
-                      <Area type="monotone" name="Kas Masuk (Riil)" dataKey="pemasukan" stroke="#065f32" strokeWidth={2.5} fillOpacity={1} fill="url(#colorPemasukanYayasan)" />
-                      <Area type="monotone" name="Kas Keluar (Operasional)" dataKey="pengeluaran" stroke="#e11d48" strokeWidth={2.5} fillOpacity={1} fill="url(#colorPengeluaranYayasan)" />
+                      <Area type="monotone" name="Kas Masuk (Riil)" dataKey="pemasukan" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorPemasukanYayasan)" />
+                      <Area type="monotone" name="Kas Keluar (Operasional)" dataKey="pengeluaran" stroke="#f43f5e" strokeWidth={2.5} fillOpacity={1} fill="url(#colorPengeluaranYayasan)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-xs text-slate-400 py-10">
+                  <div className="flex items-center justify-center h-full text-xs text-text-muted py-10">
                     Belum ada data transaksi keuangan tercatat
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-100 mt-2 text-slate-500">
+              <div className="flex items-center justify-between text-xs pt-3 border-t border-border mt-2 text-text-muted">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#065f32]"></span> Kas Masuk (Riil)
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Kas Masuk (Riil)
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#e11d48]"></span> Kas Keluar
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Kas Keluar
                 </span>
               </div>
             </div>
 
             {/* Card 2: Piutang Tertinggi Antar Unit */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between">
+            <div className="bg-surface rounded-2xl border border-border p-6 shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                  <h3 className="font-bold text-text-main text-base flex items-center gap-2">
                     <AlertTriangle size={18} className="text-rose-600" />
                     Unit Prioritas Piutang SPP
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Daftar unit dengan akumulasi tagihan belum tertagih.</p>
+                  <p className="text-xs text-text-muted mt-0.5">Daftar unit dengan akumulasi tagihan belum tertagih.</p>
                 </div>
                 <Link
                   href="/rekapitulasi-tunggakan"
@@ -453,21 +454,21 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
             return (
               <div 
                 key={idx} 
-                className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all"
+                className="bg-surface rounded-2xl border border-border p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-primary/50 transition-all"
               >
                 <div>
-                  <div className="flex items-center justify-between gap-2.5 pb-3 border-b border-slate-100 mb-3.5">
+                  <div className="flex items-center justify-between gap-2.5 pb-3 border-b border-border mb-3.5">
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
+                      <h3 className="text-base sm:text-lg font-extrabold text-text-main tracking-tight">
                         {item.unit}
                       </h3>
                     </div>
                     <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border shrink-0 ${
                       isUnitSehat 
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
                         : isUnitKritis
-                        ? 'bg-rose-50 text-rose-700 border-rose-200'
-                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                        ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/60'
+                        : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
                     }`}>
                       {item.status === 'sehat' ? 'Kinerja Sehat' : item.status === 'kritis' ? 'Audit Kritis' : 'Perlu Atensi'}
                     </span>
@@ -475,43 +476,43 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
 
                   {/* 4 KPI Grid Per Unit */}
                   <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4">
-                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Siswa</span>
-                      <span className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.siswa)}</span>
-                      <span className="text-[10px] text-slate-500 font-medium block">{avgPerRombel} siswa/rombel</span>
+                    <div className="bg-bg p-2.5 sm:p-3 rounded-xl border border-border">
+                      <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Total Siswa</span>
+                      <span className="text-lg sm:text-xl font-black text-text-main mt-0.5 block">{formatNumber(item.siswa)}</span>
+                      <span className="text-[10px] text-text-muted font-medium block">{avgPerRombel} siswa/rombel</span>
                     </div>
 
-                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Rombel Aktif</span>
-                      <span className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.rombel)}</span>
-                      <span className="text-[10px] text-slate-500 font-medium block">Kelas Belajar</span>
+                    <div className="bg-bg p-2.5 sm:p-3 rounded-xl border border-border">
+                      <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Rombel Aktif</span>
+                      <span className="text-lg sm:text-xl font-black text-text-main mt-0.5 block">{formatNumber(item.rombel)}</span>
+                      <span className="text-[10px] text-text-muted font-medium block">Kelas Belajar</span>
                     </div>
 
-                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tenaga Guru</span>
-                      <span className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 block">{formatNumber(item.guru)}</span>
-                      <span className="text-[10px] text-slate-500 font-medium block">Pengajar Unit</span>
+                    <div className="bg-bg p-2.5 sm:p-3 rounded-xl border border-border">
+                      <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Tenaga Guru</span>
+                      <span className="text-lg sm:text-xl font-black text-text-main mt-0.5 block">{formatNumber(item.guru)}</span>
+                      <span className="text-[10px] text-text-muted font-medium block">Pengajar Unit</span>
                     </div>
 
-                    <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kolektibilitas</span>
-                      <span className={`text-lg sm:text-xl font-black mt-0.5 block ${isUnitSehat ? 'text-[#065f32]' : isUnitKritis ? 'text-rose-600' : 'text-amber-600'}`}>
+                    <div className="bg-bg p-2.5 sm:p-3 rounded-xl border border-border">
+                      <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Kolektibilitas</span>
+                      <span className={`text-lg sm:text-xl font-black mt-0.5 block ${isUnitSehat ? 'text-emerald-600 dark:text-emerald-400' : isUnitKritis ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'}`}>
                         {item.kolektibilitas === 'N/A' ? '-' : `${item.kolektibilitas}%`}
                       </span>
-                      <span className="text-[10px] text-slate-500 font-medium block">Realisasi SPP</span>
+                      <span className="text-[10px] text-text-muted font-medium block">Realisasi SPP</span>
                     </div>
                   </div>
 
                   {/* Progress Kolektibilitas Bar */}
                   <div className="mb-4">
                     <div className="flex items-center justify-between text-xs mb-1.5 font-medium">
-                      <span className="text-slate-600">Efektivitas Pelunasan</span>
-                      <span className="font-bold text-slate-900">{item.kolektibilitas === 'N/A' ? 'N/A' : `${item.kolektibilitas}%`}</span>
+                      <span className="text-text-muted">Efektivitas Pelunasan</span>
+                      <span className="font-bold text-text-main">{item.kolektibilitas === 'N/A' ? 'N/A' : `${item.kolektibilitas}%`}</span>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-bg border border-border rounded-full h-2 overflow-hidden">
                       <div 
                         className={`h-full rounded-full transition-all duration-500 ${
-                          isUnitSehat ? 'bg-[#065f32]' : isUnitKritis ? 'bg-rose-500' : 'bg-amber-500'
+                          isUnitSehat ? 'bg-emerald-600 dark:bg-emerald-500' : isUnitKritis ? 'bg-rose-500' : 'bg-amber-500'
                         }`}
                         style={{ width: `${Math.min(100, Math.max(0, kolektibilitasVal))}%` }}
                       />
@@ -519,30 +520,30 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100">
+                <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border">
                   <button
                     type="button"
                     onClick={() => {
                       setSelectedDrawerIndex(idx)
                       setIsDrawerOpen(true)
                     }}
-                    className="inline-flex items-center justify-center gap-1.5 py-2.5 px-2.5 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200 text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group whitespace-nowrap min-w-0"
+                    className="inline-flex items-center justify-center gap-1.5 py-2.5 px-2.5 bg-emerald-50/80 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800/60 text-[#065f32] dark:text-emerald-300 text-[11px] sm:text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group whitespace-nowrap min-w-0"
                     title={`Audit sebaran rombel & siswa ${item.unit}`}
                   >
-                    <Layers size={14} className="text-[#065f32] shrink-0 group-hover:scale-110 transition-transform" />
+                    <Layers size={14} className="text-[#065f32] dark:text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
                     <span className="truncate">Audit Rombel</span>
-                    <ChevronRight size={13} className="text-[#065f32]/70 shrink-0 group-hover:translate-x-0.5 transition-transform ml-auto" />
+                    <ChevronRight size={13} className="text-[#065f32]/70 dark:text-emerald-400/70 shrink-0 group-hover:translate-x-0.5 transition-transform ml-auto" />
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleDrilldownUnitDashboard(item.id || item.raw?.id)}
-                    className="inline-flex items-center justify-center gap-1.5 py-2.5 px-2.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-emerald-300 text-slate-700 hover:text-[#065f32] text-[11px] sm:text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group whitespace-nowrap min-w-0"
+                    className="inline-flex items-center justify-center gap-1.5 py-2.5 px-2.5 bg-surface hover:bg-surface-hover border border-border hover:border-primary/50 text-text-main text-[11px] sm:text-xs font-bold rounded-xl transition-all min-h-[44px] shadow-2xs group whitespace-nowrap min-w-0"
                     title={`Buka dashboard ${item.unit}`}
                   >
-                    <LayoutDashboard size={14} className="text-slate-400 group-hover:text-[#065f32] shrink-0 transition-colors" />
+                    <LayoutDashboard size={14} className="text-text-muted group-hover:text-primary shrink-0 transition-colors" />
                     <span className="truncate">Dashboard Unit</span>
-                    <ChevronRight size={13} className="text-slate-400 group-hover:text-[#065f32] shrink-0 group-hover:translate-x-0.5 transition-transform ml-auto" />
+                    <ChevronRight size={13} className="text-text-muted group-hover:text-primary shrink-0 group-hover:translate-x-0.5 transition-transform ml-auto" />
                   </button>
                 </div>
               </div>
@@ -554,20 +555,20 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
       {/* SECTION 5: Mutu Kelembagaan & Kepatuhan Administrasi */}
       <section className="flex flex-col gap-3">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Kepatuhan Administrasi & Mutu Kesiswaan</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Distribusi sebaran tingkat kelas, demografi gender, dan radar kelengkapan data identitas peserta didik.</p>
+          <h2 className="text-xl font-bold text-text-main tracking-tight">Kepatuhan Administrasi & Mutu Kesiswaan</h2>
+          <p className="text-xs text-text-muted mt-0.5">Distribusi sebaran tingkat kelas, demografi gender, dan radar kelengkapan data identitas peserta didik.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Kolom Kiri: 7 Cols Sebaran Tingkat Kelas Antar Unit */}
-          <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col">
+          <div className="lg:col-span-7 bg-surface rounded-2xl border border-border p-6 shadow-xs flex flex-col">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
-                <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                  <Building size={18} className="text-[#065f32]" />
+                <h3 className="font-bold text-text-main text-base flex items-center gap-2">
+                  <Building size={18} className="text-primary" />
                   {selectedUnitDrillDown ? `Sebaran Tingkat Kelas: ${selectedUnitDrillDown.name}` : 'Distribusi Siswa per Unit Sekolah'}
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-text-muted mt-0.5">
                   {selectedUnitDrillDown 
                     ? 'Populasi murid berdasarkan tingkat pada unit terpilih.' 
                     : 'Pilih unit untuk melihat rincian per tingkat atau klik tombol buka panel audit.'}
@@ -592,7 +593,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                 )}
                 <Link
                   href="/kelas"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all shadow-xs min-h-[44px] sm:min-h-[36px]"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-bg border border-border hover:bg-surface-hover text-text-main text-xs font-bold rounded-xl transition-all shadow-xs min-h-[44px] sm:min-h-[36px]"
                 >
                   Modul Kelas <ArrowRight size={13} />
                 </Link>
@@ -600,14 +601,14 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
             </div>
 
             {/* Unit Selector Pills */}
-            <div className="flex flex-wrap gap-1.5 mb-4 pb-3 border-b border-slate-100">
+            <div className="flex flex-wrap gap-1.5 mb-4 pb-3 border-b border-border">
               <button
                 type="button"
                 onClick={() => setSelectedUnitDrillDown(null)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   !selectedUnitDrillDown
-                    ? 'bg-[#065f32] text-white shadow-2xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-[#065f32] dark:bg-emerald-600 text-white shadow-2xs'
+                    : 'bg-bg border border-border text-text-muted hover:text-text-main'
                 }`}
               >
                 Semua Unit (Konsolidasi)
@@ -619,8 +620,8 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                   onClick={() => setSelectedUnitDrillDown(u)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     selectedUnitDrillDown?.name === u.name
-                      ? 'bg-[#065f32] text-white shadow-2xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-[#065f32] dark:bg-emerald-600 text-white shadow-2xs'
+                      : 'bg-bg border border-border text-text-muted hover:text-text-main'
                   }`}
                 >
                   {u.name}
@@ -633,41 +634,55 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                 selectedUnitDrillDown.classes && selectedUnitDrillDown.classes.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={selectedUnitDrillDown.classes} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'currentColor', fontSize: 12 }} className="text-text-muted font-medium" />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: 'currentColor', fontSize: 12 }} className="text-text-muted font-medium" />
                       <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} 
+                        cursor={{ fill: 'currentColor', opacity: 0.06 }}
+                        contentStyle={{ 
+                          borderRadius: '12px', 
+                          border: '1px solid var(--border-color)', 
+                          backgroundColor: 'var(--surface)', 
+                          color: 'var(--text-main)', 
+                          boxShadow: 'var(--shadow-md)' 
+                        }} 
                         formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Total']}
                       />
-                      <Bar dataKey="total" fill="#065f32" radius={[6, 6, 0, 0]} barSize={36} />
+                      <Bar dataKey="total" fill="#10b981" radius={[6, 6, 0, 0]} barSize={36} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                    <GraduationCap size={32} className="text-slate-300 mb-2" />
-                    <p className="text-sm font-semibold text-slate-600">Belum Ada Data Tingkat Kelas</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Tidak ditemukan sebaran kelas aktif pada unit ini.</p>
+                  <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-bg rounded-xl border border-dashed border-border">
+                    <GraduationCap size={32} className="text-text-muted mb-2" />
+                    <p className="text-sm font-semibold text-text-main">Belum Ada Data Tingkat Kelas</p>
+                    <p className="text-xs text-text-muted mt-0.5">Tidak ditemukan sebaran kelas aktif pada unit ini.</p>
                   </div>
                 )
               ) : sortedUnitData && sortedUnitData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={sortedUnitData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'currentColor', fontSize: 12 }} className="text-text-muted font-medium" />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'currentColor', fontSize: 12 }} className="text-text-muted font-medium" />
                     <Tooltip 
-                      contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} 
+                      cursor={{ fill: 'currentColor', opacity: 0.06 }}
+                      contentStyle={{ 
+                        borderRadius: '12px', 
+                        border: '1px solid var(--border-color)', 
+                        backgroundColor: 'var(--surface)', 
+                        color: 'var(--text-main)', 
+                        boxShadow: 'var(--shadow-md)' 
+                      }} 
                       formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Total']}
                     />
-                    <Bar dataKey="total" fill="#065f32" radius={[6, 6, 0, 0]} barSize={44} />
+                    <Bar dataKey="total" fill="#10b981" radius={[6, 6, 0, 0]} barSize={44} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                  <Users size={32} className="text-slate-300 mb-2" />
-                  <p className="text-sm font-semibold text-slate-600">Belum Ada Data Siswa</p>
-                  <p className="text-xs text-slate-400 mt-0.5">Tambahkan data murid pada unit sekolah terlebih dahulu.</p>
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-bg rounded-xl border border-dashed border-border">
+                  <Users size={32} className="text-text-muted mb-2" />
+                  <p className="text-sm font-semibold text-text-main">Belum Ada Data Siswa</p>
+                  <p className="text-xs text-text-muted mt-0.5">Tambahkan data murid pada unit sekolah terlebih dahulu.</p>
                 </div>
               )}
             </div>
@@ -676,49 +691,49 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
           {/* Kolom Kanan: 5 Cols Demografi Gender & Kepatuhan Data */}
           <div className="lg:col-span-5 flex flex-col gap-6">
             {/* Demografi Gender */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between">
+            <div className="bg-surface rounded-2xl border border-border p-6 shadow-xs flex flex-col justify-between">
               <div>
-                <h3 className="font-bold text-slate-900 text-base mb-1 flex items-center gap-2">
-                  <Users size={18} className="text-[#065f32]" />
+                <h3 className="font-bold text-text-main text-base mb-1 flex items-center gap-2">
+                  <Users size={18} className="text-primary" />
                   Demografi Gender Siswa Yayasan
                 </h3>
-                <p className="text-xs text-slate-500">Komposisi murid laki-laki dan perempuan seluruh unit.</p>
+                <p className="text-xs text-text-muted">Komposisi murid laki-laki dan perempuan seluruh unit.</p>
               </div>
 
               <div className="my-5">
                 <div className="flex items-center justify-between text-xs font-semibold mb-2">
-                  <span className="text-slate-700">Laki-laki: <strong>{formatNumber(maleCount)}</strong> ({malePercent}%)</span>
-                  <span className="text-slate-700">Perempuan: <strong>{formatNumber(femaleCount)}</strong> ({femalePercent}%)</span>
+                  <span className="text-text-muted">Laki-laki: <strong className="text-text-main">{formatNumber(maleCount)}</strong> ({malePercent}%)</span>
+                  <span className="text-text-muted">Perempuan: <strong className="text-text-main">{formatNumber(femaleCount)}</strong> ({femalePercent}%)</span>
                 </div>
-                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex">
-                  <div className="bg-[#065f32] h-full" style={{ width: `${malePercent}%` }} title={`Laki-laki: ${malePercent}%`} />
-                  <div className="bg-slate-400 h-full" style={{ width: `${femalePercent}%` }} title={`Perempuan: ${femalePercent}%`} />
+                <div className="w-full h-3 bg-bg border border-border rounded-full overflow-hidden flex">
+                  <div className="bg-[#065f32] dark:bg-emerald-500 h-full" style={{ width: `${malePercent}%` }} title={`Laki-laki: ${malePercent}%`} />
+                  <div className="bg-slate-400 dark:bg-slate-600 h-full" style={{ width: `${femalePercent}%` }} title={`Perempuan: ${femalePercent}%`} />
                 </div>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
+              <div className="p-3 bg-bg rounded-xl border border-border flex items-center justify-between text-xs text-text-muted font-medium">
                 <span>Rasio Keseimbangan L : P</span>
-                <span className="font-bold text-slate-900">{malePercent}% : {femalePercent}%</span>
+                <span className="font-bold text-text-main">{malePercent}% : {femalePercent}%</span>
               </div>
             </div>
 
             {/* Kepatuhan Identitas Siswa (NISN / NIK) */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between">
+            <div className="bg-surface rounded-2xl border border-border p-6 shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                    <ShieldCheck size={18} className="text-[#065f32]" />
+                  <h3 className="font-bold text-text-main text-base flex items-center gap-2">
+                    <ShieldCheck size={18} className="text-primary" />
                     Integritas Data Siswa
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Audit kelengkapan nomor induk resmi (NISN / NIK / NIS).</p>
+                  <p className="text-xs text-text-muted mt-0.5">Audit kelengkapan nomor induk resmi (NISN / NIK / NIS).</p>
                 </div>
               </div>
 
               {activeIncompleteData.length > 0 ? (
                 <div className="space-y-2 mt-1">
-                  <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl">
-                    <p className="text-xs text-amber-800 font-semibold mb-1">Ditemukan Data Belum Lengkap:</p>
-                    <p className="text-[11px] text-amber-700 leading-relaxed mb-2.5">
+                  <div className="p-3 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-xl">
+                    <p className="text-xs text-amber-800 dark:text-amber-300 font-semibold mb-1">Ditemukan Data Belum Lengkap:</p>
+                    <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed mb-2.5">
                       Beberapa siswa belum memiliki NISN/NIK valid. Koordinasikan dengan pihak Tata Usaha unit sekolah untuk pembaruan data Dapodik/EMIS.
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -726,7 +741,7 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                         <Link 
                           key={idx}
                           href="/kelas"
-                          className="bg-white border border-amber-200 text-amber-800 text-[11px] px-2.5 py-1 rounded-md font-bold shadow-2xs hover:bg-amber-100/50 transition-colors"
+                          className="bg-surface border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-[11px] px-2.5 py-1 rounded-md font-bold shadow-2xs hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors"
                         >
                           {d.unitName}: {formatNumber(d.incompleteCount)} siswa →
                         </Link>
@@ -735,11 +750,11 @@ export default function YayasanDashboard(props: YayasanDashboardProps) {
                   </div>
                 </div>
               ) : (
-                <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center gap-3">
-                  <CheckCircle2 size={24} className="text-[#065f32] shrink-0" />
+                <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl flex items-center gap-3">
+                  <CheckCircle2 size={24} className="text-[#065f32] dark:text-emerald-400 shrink-0" />
                   <div>
-                    <p className="text-xs font-bold text-[#065f32]">Data Administrasi Lengkap</p>
-                    <p className="text-[11px] text-slate-600 mt-0.5">Seluruh peserta didik pada semua unit memiliki NISN & NIK yang tercatat rapi.</p>
+                    <p className="text-xs font-bold text-[#065f32] dark:text-emerald-400">Data Administrasi Lengkap</p>
+                    <p className="text-[11px] text-text-muted mt-0.5">Seluruh peserta didik pada semua unit memiliki NISN & NIK yang tercatat rapi.</p>
                   </div>
                 </div>
               )}

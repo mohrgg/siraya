@@ -270,7 +270,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
           <div className="bg-surface rounded-2xl border border-border p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-border-hover transition-colors">
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-text-muted">Total Siswa</span>
-              <div className="w-8 h-8 bg-emerald-50 text-[#065f32] border border-emerald-100/80 rounded-lg flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 bg-emerald-50 dark:bg-emerald-950/40 text-[#065f32] dark:text-emerald-400 border border-emerald-100/80 dark:border-emerald-800/60 rounded-lg flex items-center justify-center shrink-0">
                 <GraduationCap size={16} />
               </div>
             </div>
@@ -279,7 +279,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                 <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight truncate max-w-full" title={formatNumber(totalMurid)}>{formatNumber(totalMurid)}</span>
                 <span className="text-xs font-medium text-text-muted shrink-0">Siswa</span>
               </div>
-              <p className="text-[11px] text-emerald-700 font-medium mt-1">Status Aktif</p>
+              <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium mt-1">Status Aktif</p>
             </div>
           </div>
 
@@ -287,7 +287,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
           <div className="bg-surface rounded-2xl border border-border p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-border-hover transition-colors">
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-text-muted">Rombel</span>
-              <div className="w-8 h-8 bg-slate-100 text-slate-700 border border-slate-200/80 rounded-lg flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 bg-slate-100 dark:bg-bg text-slate-700 dark:text-text-muted border border-slate-200/80 dark:border-border rounded-lg flex items-center justify-center shrink-0">
                 <LayoutDashboard size={16} />
               </div>
             </div>
@@ -296,7 +296,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                 <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight truncate max-w-full" title={formatNumber(totalRombel)}>{formatNumber(totalRombel)}</span>
                 <span className="text-xs font-medium text-text-muted shrink-0">Kelas</span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">Rombel Aktif</p>
+              <p className="text-[11px] text-text-muted mt-1">Rombel Aktif</p>
             </div>
           </div>
 
@@ -304,7 +304,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
           <div className="bg-surface rounded-2xl border border-border p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-border-hover transition-colors">
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-text-muted">Tenaga Pendidik</span>
-              <div className="w-8 h-8 bg-amber-50 text-amber-700 border border-amber-200/80 rounded-lg flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/60 rounded-lg flex items-center justify-center shrink-0">
                 <Users size={16} />
               </div>
             </div>
@@ -313,15 +313,15 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                 <span className="text-xl sm:text-2xl lg:text-3xl font-black text-text-main tracking-tight truncate max-w-full" title={formatNumber(totalGuru)}>{formatNumber(totalGuru)}</span>
                 <span className="text-xs font-medium text-text-muted shrink-0">Guru</span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">Guru Bertugas</p>
+              <p className="text-[11px] text-text-muted mt-1">Guru Bertugas</p>
             </div>
           </div>
 
           {/* Card 4: Total Piutang Unit */}
-          <div className="bg-surface rounded-2xl border border-rose-200/90 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-rose-300 transition-colors">
+          <div className="bg-surface rounded-2xl border border-rose-200/90 dark:border-rose-900/60 p-3.5 sm:p-5 shadow-2xs flex flex-col justify-between hover:border-rose-300 dark:hover:border-rose-800 transition-colors">
             <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-rose-700">Total Piutang Unit</span>
-              <div className="w-8 h-8 bg-rose-50 text-rose-700 border border-rose-200/70 rounded-lg flex items-center justify-center shrink-0">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">Total Piutang Unit</span>
+              <div className="w-8 h-8 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/70 dark:border-rose-800/60 rounded-lg flex items-center justify-center shrink-0">
                 <AlertTriangle size={16} />
               </div>
             </div>
@@ -329,12 +329,12 @@ export default function UnitDashboard(props: UnitDashboardProps) {
               <div className="flex items-baseline my-0.5">
                 <AdaptiveValue 
                   value={formatCurrency(totalTunggakanUnit)}
-                  className="text-rose-700"
+                  className="text-rose-700 dark:text-rose-400"
                   maxFontSize={28}
                   minFontSize={15}
                 />
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">Tagihan Belum Lunas</p>
+              <p className="text-[11px] text-text-muted mt-1">Tagihan Belum Lunas</p>
             </div>
           </div>
         </div>
@@ -350,73 +350,73 @@ export default function UnitDashboard(props: UnitDashboardProps) {
         {/* 3 KPI Cards: Arus Kas Riil vs Proyeksi Tagihan vs Sisa Piutang */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Card 1: Realisasi Kas Masuk (Riil) */}
-          <div className="bg-surface rounded-2xl border border-emerald-200/90 p-5 shadow-2xs flex flex-col justify-between">
+          <div className="bg-surface rounded-2xl border border-emerald-200/90 dark:border-emerald-900/60 p-5 shadow-2xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">Arus Kas Masuk (Bulan Ini)</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">Arus Kas Masuk (Bulan Ini)</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
                   Uang Kas Riil
                 </span>
               </div>
               <div className="my-1">
                 <AdaptiveValue 
                   value={formatCurrency(penerimaanBulanIni)}
-                  className="text-emerald-800 font-black"
+                  className="text-emerald-800 dark:text-emerald-400 font-black"
                   maxFontSize={30}
                   minFontSize={16}
                 />
               </div>
             </div>
-            <p className="text-xs text-emerald-700/80 mt-2 font-medium">Realisasi pembayaran tunai & bank yang telah diverifikasi</p>
+            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/80 mt-2 font-medium">Realisasi pembayaran tunai & bank yang telah diverifikasi</p>
           </div>
           
           {/* Card 2: Proyeksi Target Tagihan (Billing) */}
-          <div className="bg-surface rounded-2xl border border-blue-200/90 p-5 shadow-2xs flex flex-col justify-between">
+          <div className="bg-surface rounded-2xl border border-blue-200/90 dark:border-blue-900/60 p-5 shadow-2xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-blue-800">Target Tagihan (Tahun Ini)</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-800 dark:text-blue-400">Target Tagihan (Tahun Ini)</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60">
                   Proyeksi Invoice
                 </span>
               </div>
               <div className="my-1">
                 <AdaptiveValue 
                   value={formatCurrency(totalTagihanUnit)}
-                  className="text-blue-900 font-black"
+                  className="text-blue-900 dark:text-blue-400 font-black"
                   maxFontSize={30}
                   minFontSize={16}
                 />
               </div>
             </div>
-            <p className="text-xs text-blue-700/80 mt-2 font-medium">Total kewajiban biaya pendidikan yang diterbitkan</p>
+            <p className="text-xs text-blue-700/80 dark:text-blue-300/80 mt-2 font-medium">Total kewajiban biaya pendidikan yang diterbitkan</p>
           </div>
 
           {/* Card 3: Sisa Piutang / Tunggakan */}
-          <div className="bg-surface rounded-2xl border border-rose-200/90 p-5 shadow-2xs flex flex-col justify-between">
+          <div className="bg-surface rounded-2xl border border-rose-200/90 dark:border-rose-900/60 p-5 shadow-2xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-rose-700">Sisa Piutang (Tunggakan)</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                <span className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">Sisa Piutang (Tunggakan)</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60">
                   Belum Tertagih
                 </span>
               </div>
               <div className="my-1">
                 <AdaptiveValue 
                   value={formatCurrency(totalTunggakanUnit)}
-                  className="text-rose-700 font-black"
+                  className="text-rose-700 dark:text-rose-400 font-black"
                   maxFontSize={30}
                   minFontSize={16}
                 />
               </div>
             </div>
-            <p className="text-xs text-rose-600/80 mt-2 font-medium">Akumulasi tunggakan siswa yang belum lunas</p>
+            <p className="text-xs text-rose-600/80 dark:text-rose-300/80 mt-2 font-medium">Akumulasi tunggakan siswa yang belum lunas</p>
           </div>
         </div>
 
         {/* Visual Reconciliation Bar: Rasio Realisasi Kas Masuk vs Proyeksi Tagihan */}
         <div className="bg-surface rounded-2xl border border-border p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3.5 w-full sm:w-auto">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center shrink-0 font-black text-sm">
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-400 flex items-center justify-center shrink-0 font-black text-sm">
               {kolektibilitasUnit === null ? 'N/A' : `${kolektibilitasUnit}%`}
             </div>
             <div>
@@ -424,8 +424,8 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                 <span>Efektivitas Penagihan Tagihan (Kolektibilitas)</span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                   kolektibilitasUnit && kolektibilitasUnit >= 80 
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60' 
+                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60'
                 }`}>
                   {kolektibilitasUnit && kolektibilitasUnit >= 80 ? 'Kolektibilitas Sehat' : 'Perlu Atensi'}
                 </span>
@@ -437,16 +437,16 @@ export default function UnitDashboard(props: UnitDashboardProps) {
           </div>
 
           <div className="w-full sm:w-72 shrink-0 flex flex-col gap-1.5">
-            <div className="h-3 w-full bg-rose-100 rounded-full overflow-hidden flex">
+            <div className="h-3 w-full bg-rose-100 dark:bg-rose-950/50 rounded-full overflow-hidden flex border border-transparent dark:border-rose-900/40">
               <div 
-                className="bg-emerald-600 h-full transition-all duration-500 rounded-full"
+                className="bg-emerald-600 dark:bg-emerald-500 h-full transition-all duration-500 rounded-full"
                 style={{ width: `${Math.min(100, Math.max(0, kolektibilitasUnit || 0))}%` }}
                 title={`Terbayar: ${kolektibilitasUnit || 0}%`}
               />
             </div>
             <div className="flex justify-between text-[10px] text-text-muted font-medium">
-              <span className="text-emerald-700 font-bold">● Kas Masuk {kolektibilitasUnit || 0}%</span>
-              <span className="text-rose-600 font-bold">● Piutang {100 - (kolektibilitasUnit || 0)}%</span>
+              <span className="text-emerald-700 dark:text-emerald-400 font-bold">● Kas Masuk {kolektibilitasUnit || 0}%</span>
+              <span className="text-rose-600 dark:text-rose-400 font-bold">● Piutang {100 - (kolektibilitasUnit || 0)}%</span>
             </div>
           </div>
         </div>
@@ -468,25 +468,25 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                   <AlertTriangle size={18} className="text-rose-600" />
                   <span>Tunggakan Kritis</span>
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60">
                   Prioritas
                 </span>
               </div>
               <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 min-h-0">
                 {tunggakanKritisList && tunggakanKritisList.length > 0 ? (
                   tunggakanKritisList.map((item, idx) => (
-                    <div key={idx} className="p-3.5 bg-rose-50/40 border border-rose-100 rounded-xl flex items-center justify-between gap-3 text-xs">
+                    <div key={idx} className="p-3.5 bg-rose-50/40 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40 rounded-xl flex items-center justify-between gap-3 text-xs">
                       <div className="min-w-0">
                         <p className="font-bold text-text-main truncate">{item.murid?.name}</p>
                         <p className="text-[11px] text-text-muted font-mono mt-0.5">NIS: {item.murid?.nis}</p>
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          <span className="bg-surface border border-rose-200 text-rose-700 px-1.5 py-0.5 rounded text-[10px] font-bold">{item.akun?.nama}</span>
-                          <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded text-[10px] font-extrabold">{formatCurrency(item.sisaTagihan)}</span>
+                          <span className="bg-surface border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 px-1.5 py-0.5 rounded text-[10px] font-bold">{item.akun?.nama}</span>
+                          <span className="bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-300 px-1.5 py-0.5 rounded text-[10px] font-extrabold">{formatCurrency(item.sisaTagihan)}</span>
                         </div>
                       </div>
                       <Link
                         href={`/laporan/tunggakan-siswa`}
-                        className="min-w-[44px] min-h-[44px] flex items-center justify-center text-rose-700 hover:bg-rose-100/80 rounded-xl transition-colors shrink-0 cursor-pointer"
+                        className="min-w-[44px] min-h-[44px] flex items-center justify-center text-rose-700 dark:text-rose-400 hover:bg-rose-100/80 dark:hover:bg-rose-950/50 rounded-xl transition-colors shrink-0 cursor-pointer"
                         title="Tindak Lanjut"
                       >
                         <ArrowRight size={16} />
@@ -701,7 +701,16 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                           )
                         })}
                       </Pie>
-                      <Tooltip formatter={(value: any) => [`${value} Siswa`, 'Jumlah']} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          borderRadius: '12px', 
+                          border: '1px solid var(--border-color)', 
+                          backgroundColor: 'var(--surface)', 
+                          color: 'var(--text-main)', 
+                          boxShadow: 'var(--shadow-md)' 
+                        }}
+                        formatter={(value: any) => [`${value} Siswa`, 'Jumlah']} 
+                      />
                       <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                     </PieChart>
                   </ResponsiveContainer>
@@ -764,7 +773,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                         className="text-text-muted font-medium" 
                       />
                       <Tooltip 
-                        cursor={{ fill: '#f8fafc' }}
+                        cursor={{ fill: 'currentColor', opacity: 0.06 }}
                         content={({ active, payload }: any) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload
@@ -855,7 +864,7 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                         className="text-text-muted font-medium" 
                       />
                       <Tooltip 
-                        cursor={{ fill: '#f8fafc' }}
+                        cursor={{ fill: 'currentColor', opacity: 0.06 }}
                         content={({ active, payload }: any) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload
@@ -980,7 +989,13 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                           ))}
                         </Pie>
                         <Tooltip 
-                          contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px 0 rgb(0 0 0 / 0.05)' }} 
+                          contentStyle={{ 
+                            borderRadius: '12px', 
+                            border: '1px solid var(--border-color)', 
+                            backgroundColor: 'var(--surface)', 
+                            color: 'var(--text-main)', 
+                            boxShadow: 'var(--shadow-md)' 
+                          }} 
                           formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Total']}
                         />
                       </PieChart>
@@ -1026,11 +1041,18 @@ export default function UnitDashboard(props: UnitDashboardProps) {
               {trendData && trendData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={trendData} margin={{ top: 15, right: 15, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
+                    <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: 'currentColor', fontSize: 12 }} className="text-text-muted font-medium" />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'currentColor', fontSize: 12 }} className="text-text-muted font-medium" />
                     <Tooltip 
-                      contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} 
+                      cursor={{ stroke: 'currentColor', opacity: 0.2 }}
+                      contentStyle={{ 
+                        borderRadius: '12px', 
+                        border: '1px solid var(--border-color)', 
+                        backgroundColor: 'var(--surface)', 
+                        color: 'var(--text-main)', 
+                        boxShadow: 'var(--shadow-md)' 
+                      }} 
                       formatter={(val: any) => [`${formatNumber(val)} Siswa`, 'Siswa Baru']}
                     />
                     <Line 
@@ -1038,8 +1060,8 @@ export default function UnitDashboard(props: UnitDashboardProps) {
                       dataKey="total" 
                       stroke="#065f32" 
                       strokeWidth={3} 
-                      dot={{ r: 4, strokeWidth: 2, fill: '#ffffff', stroke: '#065f32' }} 
-                      activeDot={{ r: 6, fill: '#065f32' }} 
+                      dot={{ r: 4, strokeWidth: 2, fill: 'var(--surface)', stroke: '#10b981' }} 
+                      activeDot={{ r: 6, fill: '#10b981' }} 
                     />
                   </LineChart>
                 </ResponsiveContainer>
