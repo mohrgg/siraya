@@ -11,21 +11,24 @@ import { Input } from "@/components/ui/Input"
 import toast from "react-hot-toast"
 import { updateProfilMandiri, gantiPasswordMandiri, getProfilMandiri } from "@/actions/pengguna"
 import { formatDisplayName, formatRoleLabel, getRoleBadgeStyle } from "@/lib/helpers/user"
-import { useSession, signOut } from "next-auth/react"
+import { signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 interface ManageAccountModalProps {
   isOpen: boolean
   onClose: () => void
   initialTab?: "profile" | "password"
+  onProfileUpdated?: (updatedUser: any) => void
 }
 
 export function ManageAccountModal({
   isOpen,
   onClose,
-  initialTab = "profile"
+  initialTab = "profile",
+  onProfileUpdated
 }: ManageAccountModalProps) {
+  const router = useRouter()
   const [mounted, setMounted] = useState(false)
-  const { data: session, update } = useSession()
 
   const [activeTab, setActiveTab] = useState<"profile" | "password">(initialTab)
   const [isLoadingProfile, setIsLoadingProfile] = useState(false)
@@ -63,9 +66,6 @@ export function ManageAccountModal({
       setFullName(data.name || "")
     } catch (err: any) {
       console.error(err)
-      if (session?.user?.name) {
-        setFullName(session.user.name)
-      }
     } finally {
       setIsLoadingProfile(false)
     }
@@ -108,14 +108,13 @@ export function ManageAccountModal({
     try {
       setIsUpdatingProfile(true)
       const res = await updateProfilMandiri({ name: clean })
-      
-      // Sinkronkan ke NextAuth Session client
-      await update({ name: res.name })
 
       toast.success("Nama profil berhasil diperbarui!")
       if (userProfile) {
         setUserProfile({ ...userProfile, name: res.name })
       }
+      onProfileUpdated?.(res)
+      router.refresh()
       onClose()
     } catch (err: any) {
       toast.error(err.message || "Gagal memperbarui profil")
@@ -163,9 +162,9 @@ export function ManageAccountModal({
       .substring(0, 2) || "U"
   }
 
-  const displayName = formatDisplayName(userProfile?.name || session?.user?.name)
-  const roleName = formatRoleLabel(userProfile?.role || session?.user?.role)
-  const roleBadgeClass = getRoleBadgeStyle(userProfile?.role || session?.user?.role)
+  const displayName = formatDisplayName(userProfile?.name)
+  const roleName = formatRoleLabel(userProfile?.role)
+  const roleBadgeClass = getRoleBadgeStyle(userProfile?.role)
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4">
@@ -251,7 +250,7 @@ export function ManageAccountModal({
                   </div>
                   <p className="text-xs text-text-muted flex items-center gap-1.5 mt-1 truncate">
                     <Mail size={13} className="shrink-0" />
-                    <span className="truncate">{userProfile?.email || session?.user?.email || "-"}</span>
+                    <span className="truncate">{userProfile?.email || "-"}</span>
                   </p>
                 </div>
               </div>

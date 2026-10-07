@@ -15,7 +15,6 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal"
 import { ManageAccountModal } from "@/components/modals/ManageAccountModal"
 import { formatDisplayName, formatRoleLabel, getRoleBadgeStyle } from "@/lib/helpers/user"
 import { getFilteredMenuGroups } from "@/lib/constants/navigation"
-import { useSession } from "next-auth/react"
 
 export default function Sidebar({ 
   user, 
@@ -27,8 +26,14 @@ export default function Sidebar({
   initialCollapsed?: boolean;
 }) {
   const pathname = usePathname()
-  const { data: session } = useSession()
+  const [currentUserName, setCurrentUserName] = useState(user?.name || "User")
   const [isCollapsed, setIsCollapsed] = useState(initialCollapsed)
+
+  useEffect(() => {
+    if (user?.name) {
+      setCurrentUserName(user.name)
+    }
+  }, [user?.name])
 
   // Sinkronisasi dengan localStorage saat mount
   useEffect(() => {
@@ -61,9 +66,7 @@ export default function Sidebar({
 
   const filteredGroups = getFilteredMenuGroups(user?.role)
 
-  // Mengambil nama terbaru dari session client (jika baru diupdate) atau fallback ke prop user
-  const currentRawName = session?.user?.name || user?.name || "User"
-  const displayName = formatDisplayName(currentRawName)
+  const displayName = formatDisplayName(currentUserName)
   const roleLabel = formatRoleLabel(user?.role)
   const roleBadgeStyle = getRoleBadgeStyle(user?.role)
 
@@ -85,7 +88,7 @@ export default function Sidebar({
       {/* ======================================================== */}
       <aside className={`
         hidden md:flex short:hidden hide-on-mobile-landscape bg-[#065f32] dark:bg-surface text-white dark:text-text-main h-full border-r border-[#0a753d] dark:border-border flex-col transition-all duration-300 z-30 relative shrink-0
-        ${isCollapsed ? "w-20" : "w-[265px]"}
+        ${isCollapsed ? "w-20" : "w-[270px]"}
       `}>
         {/* Floating Toggle Button (Right Edge) - Desktop Only */}
         <button 
@@ -96,8 +99,8 @@ export default function Sidebar({
           {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
 
-        <div className="flex items-center p-5 gap-3 border-b border-white/10 dark:border-border shrink-0">
-          <div className="w-10 h-10 shrink-0 bg-white dark:bg-bg rounded-lg flex items-center justify-center shadow-sm overflow-hidden border border-transparent dark:border-border">
+        <div className="flex items-center px-4 py-3.5 gap-3 border-b border-white/10 dark:border-border shrink-0">
+          <div className="w-10 h-10 shrink-0 bg-white dark:bg-bg rounded-xl flex items-center justify-center shadow-xs overflow-hidden border border-white/20 dark:border-border p-0.5">
             <img src={logoUrl || "/logo.png"} alt="Logo Al Basyariah" className="w-full h-full object-contain" onError={(e) => {
               e.currentTarget.style.display = 'none';
               e.currentTarget.nextElementSibling?.classList.remove('hidden');
@@ -106,9 +109,13 @@ export default function Sidebar({
           </div>
           
           {!isCollapsed && (
-            <div className="flex flex-col whitespace-nowrap overflow-hidden">
-              <span className="font-bold text-lg leading-tight tracking-tight text-white dark:text-text-main">SIRAYA</span>
-              <span className="text-[10px] text-white/70 dark:text-text-muted truncate">Sistem Informasi Yayasan Al Basyariah</span>
+            <div className="flex flex-col min-w-0" title="Sistem Informasi Yayasan Al Basyariah">
+              <span className="font-extrabold text-lg leading-tight tracking-tight text-white dark:text-text-main">
+                SIRAYA
+              </span>
+              <span className="text-[10px] leading-snug text-white/80 dark:text-text-muted font-medium mt-0.5">
+                Sistem Informasi Yayasan<br />Al Basyariah
+              </span>
             </div>
           )}
         </div>
@@ -251,6 +258,9 @@ export default function Sidebar({
         isOpen={showManageAccountModal}
         onClose={() => setShowManageAccountModal(false)}
         initialTab={manageAccountTab}
+        onProfileUpdated={(updated) => {
+          if (updated?.name) setCurrentUserName(updated.name)
+        }}
       />
     </>
   )
