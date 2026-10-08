@@ -23,6 +23,7 @@ import {
   ToolbarFilter,
   ToolbarSearch
 } from "@/components/ui/DataTableToolbar"
+import { PaginationControls } from "@/components/ui/PaginationControls"
 import { formatAcademicMonthSpans, MonthSpanResult } from "@/lib/academic-months"
 
 export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], grades = [], classrooms = [], userRole, userUnitId, userName }: { pengaturan?: any, schoolUnits?: any[], grades?: any[], classrooms?: any[], userRole?: string, userUnitId?: string, userName?: string }) {
@@ -593,50 +594,15 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
               </>
 
             {/* Pagination Controls */}
-            {totalPages > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-gray-100 print:hidden">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>Show</span>
-                  <select 
-                    className="border border-gray-200 rounded p-1 bg-gray-50"
-                    value={pageSize}
-                    onChange={(e) => {
-                      setPageSize(Number(e.target.value))
-                      setCurrentPage(1)
-                    }}
-                  >
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                  </select>
-                  <span>Entries</span>
-                </div>
-
-                <div className="flex gap-1">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(p => p - 1)}
-                    className="w-10 p-0"
-                  >
-                    &lt;
-                  </Button>
-                  <div className="px-4 py-1.5 text-sm font-medium border border-gray-200 rounded-md bg-gray-50">
-                    Page {currentPage} of {totalPages}
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage(p => p + 1)}
-                    className="w-10 p-0"
-                  >
-                    &gt;
-                  </Button>
-                </div>
-              </div>
-            )}
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={filteredData.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              className="print:hidden"
+            />
           </>
         )}
       </div>

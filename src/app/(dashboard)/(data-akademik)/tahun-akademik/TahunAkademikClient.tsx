@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { 
   Plus, Edit2, Trash2, CheckCircle2, Search, Calendar, 
@@ -13,6 +13,7 @@ import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 import { useSortableData } from "@/hooks/useSortableData"
+import { PaginationControls } from "@/components/ui/PaginationControls"
 import { 
   tambahTahunAkademik, 
   editTahunAkademik, 
@@ -55,6 +56,20 @@ export default function TahunAkademikClient({
   )
 
   const { items: sortedData, requestSort, sortConfig } = useSortableData(filteredData)
+
+  // ===================== PAGINATION STATES =====================
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm])
+
+  const totalPages = Math.ceil(sortedData.length / pageSize) || 1
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return sortedData.slice(start, start + pageSize)
+  }, [sortedData, currentPage, pageSize])
 
   // Active Year Cockpit Item
   const activeYear = data.find(d => d.isActive)
@@ -385,9 +400,9 @@ export default function TahunAkademikClient({
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-sm">
-              {sortedData.map((item, index) => (
+              {paginatedData.map((item, index) => (
                 <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
-                  <td className="p-4 text-center font-medium text-text-muted">{index + 1}</td>
+                  <td className="p-4 text-center font-medium text-text-muted">{(currentPage - 1) * pageSize + index + 1}</td>
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${item.isActive ? "bg-emerald-600 text-white shadow-xs" : "bg-bg text-text-muted border border-border"}`}>
@@ -470,6 +485,17 @@ export default function TahunAkademikClient({
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={sortedData.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          itemName="tahun akademik"
+        />
       </div>
     </div>
   )

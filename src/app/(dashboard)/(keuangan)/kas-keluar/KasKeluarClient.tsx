@@ -25,6 +25,7 @@ import {
   ToolbarRefreshButton
 } from "@/components/ui/DataTableToolbar"
 import { PageHeader } from "@/components/ui/PageHeader"
+import { PaginationControls } from "@/components/ui/PaginationControls"
 import { Layers } from "lucide-react"
 
 type TransaksiWithRelations = any // Type will be inferred properly in real project
@@ -640,47 +641,15 @@ export default function KasKeluarClient({
           </>
         )}
 
-        {filteredData.length > 0 && (
-          <div className="p-4 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface text-sm rounded-b-2xl">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value))
-                  setCurrentPage(1)
-                }}
-                className="px-3 py-1.5 bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main font-medium"
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              >
-                Sebelumnya
-              </Button>
-              <span className="font-medium text-text-muted">
-                Hal {currentPage} dari {computedTotalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === computedTotalPages || computedTotalPages === 0}
-                onClick={() => setCurrentPage(p => Math.min(computedTotalPages, p + 1))}
-              >
-                Berikutnya
-              </Button>
-            </div>
-          </div>
-        )}
+        {/* Pagination Controls */}
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={computedTotalPages}
+          pageSize={pageSize}
+          totalItems={filteredData.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
       
       <ConfirmModal 

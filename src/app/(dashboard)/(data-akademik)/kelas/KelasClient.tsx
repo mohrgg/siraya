@@ -19,6 +19,7 @@ import TingkatFormModal from "./components/TingkatFormModal"
 import SubKelasFormModal from "./components/SubKelasFormModal"
 import SubKelasDetailDrawer from "./components/SubKelasDetailDrawer"
 import ReactivateSiswaModal from "./components/ReactivateSiswaModal"
+import { PaginationControls } from "@/components/ui/PaginationControls"
 import { tambahKelas, editKelas, hapusKelas, hapusTingkatan, tambahTingkatan, editTingkatan } from "@/actions/kelas"
 import { hapusSiswa, tambahSiswa, editSiswa } from "@/actions/siswa"
 
@@ -686,45 +687,13 @@ export default function KelasClient({
         })()}
 
         {/* Pagination Controls */}
-        {data.computedTotalPages > 0 && (
-          <div className="p-4 mt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-surface rounded-b-2xl">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
-              <select
-                value={data.pageSize}
-                onChange={(e) => {
-                  data.setPageSize(Number(e.target.value))
-                  data.setCurrentPage(1)
-                }}
-                className="px-3 py-1.5 bg-bg border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/50"
-              >
-                {[5, 10, 20, 50, 100].map(size => (
-                  <option key={size} value={size}>{size}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => data.setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={data.currentPage === 1}
-                className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50"
-              >
-                Sebelumnya
-              </button>
-              <span className="px-4 py-1.5 text-sm font-medium text-text-main">
-                Hal {data.currentPage} dari {data.computedTotalPages}
-              </span>
-              <button
-                onClick={() => data.setCurrentPage(p => Math.min(data.computedTotalPages, p + 1))}
-                disabled={data.currentPage === data.computedTotalPages}
-                className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50"
-              >
-                Selanjutnya
-              </button>
-            </div>
-          </div>
-        )}
+        <PaginationControls
+          currentPage={data.currentPage}
+          totalPages={data.computedTotalPages}
+          pageSize={data.pageSize}
+          onPageChange={data.setCurrentPage}
+          onPageSizeChange={data.setPageSize}
+        />
       </div>
 
       {/* Floating Action Bar (Bulk Promote, Grad & Alumni Actions) */}

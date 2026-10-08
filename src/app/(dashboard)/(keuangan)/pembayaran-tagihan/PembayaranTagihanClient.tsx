@@ -28,6 +28,7 @@ import {
   ToolbarRefreshButton
 } from "@/components/ui/DataTableToolbar"
 import { PageHeader } from "@/components/ui/PageHeader"
+import { PaginationControls } from "@/components/ui/PaginationControls"
 
 type TagihanData = {
   id: string
@@ -1011,46 +1012,14 @@ export default function PembayaranTagihanClient({
           </div>
 
           {/* Pagination Controls */}
-          {computedTotalPages > 0 && (
-            <div className="pt-4 mt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value))
-                  }}
-                  className="px-3 py-1.5 bg-bg border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/50"
-                >
-                  {[5, 10, 20, 50, 100].map(size => (
-                    <option key={size} value={size}>{size}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Sebelumnya
-                </Button>
-                <span className="font-medium text-text-muted">
-                  Hal {currentPage} dari {computedTotalPages}
-                </span>
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.min(computedTotalPages, p + 1))}
-                  disabled={currentPage === computedTotalPages || computedTotalPages === 0}
-                >
-                  Berikutnya
-                </Button>
-              </div>
-            </div>
-          )}
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={computedTotalPages}
+            pageSize={pageSize}
+            totalItems={filteredData.length}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+          />
           </>
         ) : (
           !isLoading && (

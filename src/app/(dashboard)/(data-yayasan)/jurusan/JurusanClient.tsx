@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { 
   Plus, Edit2, Trash2, BookOpen, Search, 
@@ -19,6 +19,7 @@ import { useSortableData } from "@/hooks/useSortableData"
 import { tambahJurusan, editJurusan, hapusJurusan } from "@/actions/kelas"
 import toast from "react-hot-toast"
 import { Toolbar, ToolbarSearch, ToolbarActions, ToolbarRefreshButton, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
+import { PaginationControls } from "@/components/ui/PaginationControls"
 
 export type Major = {
   id: string
@@ -459,113 +460,16 @@ export default function JurusanClient({
             const badgeStyle = getLevelBadge(unit.level)
 
             return (
-              <div 
+              <UnitMajorTableSection
                 key={unit.id}
-                className="bg-surface rounded-2xl border border-border overflow-hidden shadow-2xs"
-              >
-                {/* Unit Header Bar */}
-                <div className="px-5 py-4 bg-bg/50 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                      <School size={20} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-base text-text-main">{unit.name}</h3>
-                        <span className={`px-2 py-0.5 text-xs font-bold rounded-md border ${badgeStyle}`}>
-                          {unit.level}
-                        </span>
-                      </div>
-                      <p className="text-xs text-text-muted mt-0.5">
-                        {unitMajors.length} Program / Jurusan terdaftar pada unit ini
-                      </p>
-                    </div>
-                  </div>
-
-                  {!isReadOnly && (
-                    <button
-                      type="button"
-                      onClick={() => handleOpenAddModal(unit.id)}
-                      className="text-xs font-bold text-primary hover:text-primary/80 inline-flex items-center gap-1.5 py-1 px-3 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer self-start sm:self-auto border border-primary/20"
-                    >
-                      <Plus size={14} />
-                      <span>Tambah Jurusan di Unit Ini</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Table for this Unit */}
-                <div className="p-3 sm:p-0">
-                  <TableScrollHint totalRows={unitMajors.length} />
-                  <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
-                    <thead className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
-                      <tr>
-                        <th className="p-4 text-center w-12 font-semibold">NO</th>
-                        <th className="p-4 font-semibold">KODE PROGRAM</th>
-                        <th className="p-4 font-semibold">NAMA KOMPETENSI KEAHLIAN / JURUSAN</th>
-                        <th className="p-4 text-center font-semibold">ROMBEL TERHUBUNG</th>
-                        {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border text-sm">
-                      {unitMajors.map((item, index) => (
-                        <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
-                          <td className="p-4 text-center font-medium text-text-muted">{index + 1}</td>
-                          <td className="p-4">
-                            <span className="font-mono text-xs font-extrabold px-2.5 py-1 rounded-lg bg-bg border border-border text-text-main">
-                              {item.code}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <span className="font-bold text-text-main block">{item.name}</span>
-                            {item.code === "UMUM" && (
-                              <span className="text-[11px] text-text-muted font-normal">
-                                Jurusan kurikulum umum / standar kelas
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-4 text-center">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200">
-                              <Layers size={12} />
-                              {item._count?.subKelas || 0} Kelas
-                            </span>
-                          </td>
-                          {!isReadOnly && (
-                            <td className="p-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button 
-                                  onClick={() => handleOpenEditModal(item)} 
-                                  className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-emerald-200 hover:border-emerald-600 transition-colors" 
-                                  title="Edit Jurusan"
-                                >
-                                  <Edit2 size={15} />
-                                </button>
-                                <button 
-                                  onClick={() => setDeleteId(item.id)} 
-                                  className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" 
-                                  title="Hapus Jurusan"
-                                >
-                                  <Trash2 size={15} />
-                                </button>
-                              </div>
-                            </td>
-                          )}
-                        </tr>
-                      ))}
-
-                      {unitMajors.length === 0 && (
-                        <tr>
-                          <td colSpan={isReadOnly ? 4 : 5} className="p-8 text-center text-text-muted text-xs">
-                            Belum ada program/jurusan yang ditambahkan pada unit ini.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                  </div>
-                </div>
-              </div>
+                unit={unit}
+                unitMajors={unitMajors}
+                badgeStyle={badgeStyle}
+                isReadOnly={isReadOnly}
+                handleOpenAddModal={handleOpenAddModal}
+                handleOpenEditModal={handleOpenEditModal}
+                setDeleteId={setDeleteId}
+              />
             )
           })}
 
@@ -577,6 +481,154 @@ export default function JurusanClient({
             </div>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function UnitMajorTableSection({
+  unit,
+  unitMajors,
+  badgeStyle,
+  isReadOnly,
+  handleOpenAddModal,
+  handleOpenEditModal,
+  setDeleteId
+}: {
+  unit: any
+  unitMajors: Major[]
+  badgeStyle: string
+  isReadOnly: boolean
+  handleOpenAddModal: (unitId: string) => void
+  handleOpenEditModal: (major: Major) => void
+  setDeleteId: (id: string) => void
+}) {
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(5)
+
+  const totalPages = Math.ceil(unitMajors.length / pageSize) || 1
+  const paginatedMajors = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return unitMajors.slice(start, start + pageSize)
+  }, [unitMajors, currentPage, pageSize])
+
+  return (
+    <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-2xs">
+      {/* Unit Header Bar */}
+      <div className="px-5 py-4 bg-bg/50 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <School size={20} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-base text-text-main">{unit.name}</h3>
+              <span className={`px-2 py-0.5 text-xs font-bold rounded-md border ${badgeStyle}`}>
+                {unit.level}
+              </span>
+            </div>
+            <p className="text-xs text-text-muted mt-0.5">
+              {unitMajors.length} Program / Jurusan terdaftar pada unit ini
+            </p>
+          </div>
+        </div>
+
+        {!isReadOnly && (
+          <button
+            type="button"
+            onClick={() => handleOpenAddModal(unit.id)}
+            className="text-xs font-bold text-primary hover:text-primary/80 inline-flex items-center gap-1.5 py-1 px-3 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer self-start sm:self-auto border border-primary/20"
+          >
+            <Plus size={14} />
+            <span>Tambah Jurusan di Unit Ini</span>
+          </button>
+        )}
+      </div>
+
+      {/* Table for this Unit */}
+      <div className="p-3 sm:p-0">
+        <TableScrollHint totalRows={unitMajors.length} />
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
+            <thead className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
+              <tr>
+                <th className="p-4 text-center w-12 font-semibold">NO</th>
+                <th className="p-4 font-semibold">KODE PROGRAM</th>
+                <th className="p-4 font-semibold">NAMA KOMPETENSI KEAHLIAN / JURUSAN</th>
+                <th className="p-4 text-center font-semibold">ROMBEL TERHUBUNG</th>
+                {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border text-sm">
+              {paginatedMajors.map((item, index) => (
+                <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
+                  <td className="p-4 text-center font-medium text-text-muted">{(currentPage - 1) * pageSize + index + 1}</td>
+                  <td className="p-4">
+                    <span className="font-mono text-xs font-extrabold px-2.5 py-1 rounded-lg bg-bg border border-border text-text-main">
+                      {item.code}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <span className="font-bold text-text-main block">{item.name}</span>
+                    {item.code === "UMUM" && (
+                      <span className="text-[11px] text-text-muted font-normal">
+                        Jurusan kurikulum umum / standar kelas
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-4 text-center">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200">
+                      <Layers size={12} />
+                      {item._count?.subKelas || 0} Kelas
+                    </span>
+                  </td>
+                  {!isReadOnly && (
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button 
+                          onClick={() => handleOpenEditModal(item)} 
+                          className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-emerald-200 hover:border-emerald-600 transition-colors" 
+                          title="Edit Jurusan"
+                        >
+                          <Edit2 size={15} />
+                        </button>
+                        <button 
+                          onClick={() => setDeleteId(item.id)} 
+                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors" 
+                          title="Hapus Jurusan"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+
+              {unitMajors.length === 0 && (
+                <tr>
+                  <td colSpan={isReadOnly ? 4 : 5} className="p-8 text-center text-text-muted text-xs">
+                    Belum ada program/jurusan yang ditambahkan pada unit ini.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Controls per unit if majors count exceeds page size */}
+        {unitMajors.length > pageSize && (
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={unitMajors.length}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[5, 10, 20]}
+            itemName="jurusan"
+          />
+        )}
       </div>
     </div>
   )

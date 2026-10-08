@@ -1,10 +1,23 @@
+import { useState, useMemo } from "react"
 import { Edit2, XCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Toolbar, ToolbarActions, ToolbarRefreshButton, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
+import { PaginationControls } from "@/components/ui/PaginationControls"
 
-export default function DivisiList({ divisis, setFormDiv, setShowDivModal, setDeleteDivId }: any) {
+export default function DivisiList({ divisis = [], setFormDiv, setShowDivModal, setDeleteDivId }: any) {
   const router = useRouter()
+
+  // ===================== PAGINATION STATES =====================
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
+  const totalPages = Math.ceil(divisis.length / pageSize) || 1
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return divisis.slice(start, start + pageSize)
+  }, [divisis, currentPage, pageSize])
+
   return (
     <div className="flex flex-col">
       <div className="mb-6">
@@ -29,7 +42,7 @@ export default function DivisiList({ divisis, setFormDiv, setShowDivModal, setDe
             </tr>
           </thead>
           <tbody>
-            {divisis.map((d: any) => (
+            {paginatedData.map((d: any) => (
               <tr key={d.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
                 <td className="p-4 font-bold text-text-main">{d.name}</td>
                 <td className="p-4 text-text-muted">{d.description || "-"}</td>
@@ -39,9 +52,28 @@ export default function DivisiList({ divisis, setFormDiv, setShowDivModal, setDe
                 </td>
               </tr>
             ))}
+            {divisis.length === 0 && (
+              <tr>
+                <td colSpan={3} className="p-8 text-center text-text-muted">
+                  Belum ada data divisi...
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={divisis.length}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemName="divisi"
+      />
     </div>
   )
 }
+

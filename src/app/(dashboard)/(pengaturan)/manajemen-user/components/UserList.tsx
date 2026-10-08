@@ -1,9 +1,11 @@
+import { useState, useMemo, useEffect } from "react"
 import { Users, UserX, Edit2, Key, XCircle, CheckCircle2, Trash2, ShieldCheck, Filter, Lock, Unlock, KeyRound } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Toolbar, ToolbarSearch, ToolbarFilter, ToolbarActions, ToolbarRefreshButton, ToolbarAddButton } from "@/components/ui/DataTableToolbar"
 import { useSortableData } from "@/hooks/useSortableData"
 import { SortableHeader } from "@/components/ui/SortableHeader"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
+import { PaginationControls } from "@/components/ui/PaginationControls"
 
 export default function UserList({ 
   filteredUsers, 
@@ -19,6 +21,21 @@ export default function UserList({
 }: any) {
   const router = useRouter()
   const { items: sortedData, requestSort, sortConfig } = useSortableData(filteredUsers, { key: "role", direction: "asc" })
+
+  // ===================== PAGINATION STATES =====================
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
+  // Reset page saat filter/search berubah
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, filterRole, filterUnit, isInactiveTab])
+
+  const totalPages = Math.ceil(sortedData.length / pageSize) || 1
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return sortedData.slice(start, start + pageSize)
+  }, [sortedData, currentPage, pageSize])
 
   const roleBadge = (role: string) => {
     switch(role) {
@@ -88,14 +105,14 @@ export default function UserList({
             </tr>
           </thead>
           <tbody className="divide-y divide-border text-sm">
-            {sortedData.length > 0 ? (
-              sortedData.map((u: any, idx: number) => {
+            {paginatedData.length > 0 ? (
+              paginatedData.map((u: any, idx: number) => {
                 const isLocked = u.lockedUntil && new Date(u.lockedUntil) > new Date()
                 const lockMinutesRemaining = isLocked ? Math.max(1, Math.ceil((new Date(u.lockedUntil).getTime() - Date.now()) / (1000 * 60))) : 0
 
                 return (
                   <tr key={u.id} className="border-b border-border hover:bg-gray-50/50 transition-colors group">
-                    <td className="p-4 text-center text-text-main font-medium">{idx + 1}</td>
+                    <td className="p-4 text-center text-text-main font-medium">{(currentPage - 1) * pageSize + idx + 1}</td>
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border shadow-sm shrink-0 ${
@@ -228,6 +245,17 @@ export default function UserList({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={sortedData.length}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemName="pengguna"
+      />
     </div>
   )
 }

@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/DataTableToolbar"
 import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
+import { PaginationControls } from "@/components/ui/PaginationControls"
 
 
 type Guru = {
@@ -909,45 +910,14 @@ export default function GuruClient({
         </div>
 
         {/* Pagination Controls */}
-        {computedTotalPages > 0 && (
-          <div className="pt-4 mt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value))
-                  setCurrentPage(1)
-                }}
-                className="px-3 py-1.5 bg-bg border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/50"
-              >
-                {[5, 10, 20, 50, 100].map(size => (
-                  <option key={size} value={size}>{size}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="flex items-center gap-1">
-              <button 
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50"
-              >
-                Sebelumnya
-              </button>
-              <span className="px-4 py-1.5 text-sm font-medium text-text-main">
-                Hal {currentPage} dari {computedTotalPages}
-              </span>
-              <button 
-                onClick={() => setCurrentPage(p => Math.min(computedTotalPages, p + 1))}
-                disabled={currentPage === computedTotalPages}
-                className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-50"
-              >
-                Berikutnya
-              </button>
-            </div>
-          </div>
-        )}
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={computedTotalPages}
+          pageSize={pageSize}
+          totalItems={sortedData.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
       {/* Modular 4-Tab Guru Form Modal */}

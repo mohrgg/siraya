@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/Button"
 import { Plus, Edit2, Trash2, Layers, Book, BookOpen, Wallet, Receipt, Search, X, PowerOff, Building2, Lock, ShieldAlert } from "lucide-react"
@@ -18,6 +18,7 @@ import { Toolbar, ToolbarSearch, ToolbarFilter, ToolbarActions, ToolbarRefreshBu
 import { PageHeader } from "@/components/ui/PageHeader"
 import { AkunKeuanganGuideModal } from "./AkunKeuanganGuideModal"
 import { Sparkles, HelpCircle } from "lucide-react"
+import { PaginationControls } from "@/components/ui/PaginationControls"
 
 type Klasifikasi = { id: string, kode: string, nama: string }
 type SubKlasifikasi = { id: string, kode: string, nama: string, klasifikasiAkunId: string, klasifikasi?: Klasifikasi, _count?: { akunDetail: number } }
@@ -141,6 +142,32 @@ export default function AkunKeuanganClient({
     filteredAkunBase,
     { key: "kode", direction: "asc" }
   )
+
+  // ===================== PAGINATION STATES =====================
+  const [akunCurrentPage, setAkunCurrentPage] = useState(1)
+  const [akunPageSize, setAkunPageSize] = useState(10)
+
+  const [subKlasCurrentPage, setSubKlasCurrentPage] = useState(1)
+  const [subKlasPageSize, setSubKlasPageSize] = useState(10)
+
+  // Reset pagination saat search term, active unit, atau tab berganti
+  useEffect(() => {
+    setAkunCurrentPage(1)
+    setSubKlasCurrentPage(1)
+  }, [searchTerm, activeUnitId, activeTab])
+
+  // Data Terpaginasi
+  const totalAkunPages = Math.ceil(filteredAkun.length / akunPageSize) || 1
+  const paginatedAkun = useMemo(() => {
+    const start = (akunCurrentPage - 1) * akunPageSize
+    return filteredAkun.slice(start, start + akunPageSize)
+  }, [filteredAkun, akunCurrentPage, akunPageSize])
+
+  const totalSubKlasPages = Math.ceil(filteredSubKlas.length / subKlasPageSize) || 1
+  const paginatedSubKlas = useMemo(() => {
+    const start = (subKlasCurrentPage - 1) * subKlasPageSize
+    return filteredSubKlas.slice(start, start + subKlasPageSize)
+  }, [filteredSubKlas, subKlasCurrentPage, subKlasPageSize])
 
   // ===================== GENERATOR KODE OTOMATIS =====================
   const generateSubKlasKode = (klasId: string, currentSubKlasList: SubKlasifikasi[]) => {
@@ -863,7 +890,7 @@ export default function AkunKeuanganClient({
                 </tr>
               </thead>
               <tbody>
-                {filteredAkun.map((item) => (
+                {paginatedAkun.map((item) => (
                   <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
                     <td className="p-4 font-mono font-semibold text-primary">{item.kode}</td>
                     <td className="p-4 text-text-main font-semibold">{item.nama}</td>
@@ -922,6 +949,17 @@ export default function AkunKeuanganClient({
               </tbody>
             </table>
             </div>
+
+            {/* Pagination Controls untuk Tab Akun */}
+            <PaginationControls
+              currentPage={akunCurrentPage}
+              totalPages={totalAkunPages}
+              pageSize={akunPageSize}
+              totalItems={filteredAkun.length}
+              onPageChange={setAkunCurrentPage}
+              onPageSizeChange={setAkunPageSize}
+              itemName="akun"
+            />
           </div>
         )}
 
@@ -941,7 +979,7 @@ export default function AkunKeuanganClient({
                 </tr>
               </thead>
               <tbody>
-                {filteredSubKlas.map((item) => (
+                {paginatedSubKlas.map((item) => (
                   <tr key={item.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
                     <td className="p-4 font-mono font-semibold text-primary">{item.kode}</td>
                     <td className="p-4 text-text-main font-semibold">{item.nama}</td>
@@ -981,6 +1019,17 @@ export default function AkunKeuanganClient({
               </tbody>
             </table>
             </div>
+
+            {/* Pagination Controls untuk Tab Subklasifikasi */}
+            <PaginationControls
+              currentPage={subKlasCurrentPage}
+              totalPages={totalSubKlasPages}
+              pageSize={subKlasPageSize}
+              totalItems={filteredSubKlas.length}
+              onPageChange={setSubKlasCurrentPage}
+              onPageSizeChange={setSubKlasPageSize}
+              itemName="subklasifikasi"
+            />
           </div>
         )}
       </div>

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/DataTableToolbar"
 import { AdaptiveValue } from "@/components/ui/AdaptiveValue"
 import { PageHeader } from "@/components/ui/PageHeader"
+import { PaginationControls } from "@/components/ui/PaginationControls"
 
 interface Akun {
   id: string
@@ -591,50 +592,14 @@ export default function RekapitulasiTunggakanClient({
                 </div>
 
                 {/* Pagination Controls Tabel 1 */}
-                {filteredData1.length > 0 && (
-                  <div className="pt-4 mt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
-                      <select
-                        value={summaryPageSize1}
-                        onChange={(e) => {
-                          setSummaryPageSize1(Number(e.target.value))
-                          setSummaryCurrentPage1(1)
-                        }}
-                        className="px-3 py-1.5 bg-bg border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/50 text-text-main"
-                      >
-                        {[10, 25, 50, 100].map(size => (
-                          <option key={size} value={size}>{size}</option>
-                        ))}
-                      </select>
-                      <span className="text-xs text-text-muted">
-                        Total {filteredData1.length} kelas
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSummaryCurrentPage1(p => Math.max(1, p - 1))}
-                        disabled={summaryCurrentPage1 === 1}
-                      >
-                        Sebelumnya
-                      </Button>
-                      <span className="font-medium text-text-muted text-sm">
-                        Hal {summaryCurrentPage1} dari {totalPages1}
-                      </span>
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSummaryCurrentPage1(p => Math.min(totalPages1, p + 1))}
-                        disabled={summaryCurrentPage1 === totalPages1 || totalPages1 === 0}
-                      >
-                        Berikutnya
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <PaginationControls
+                  currentPage={summaryCurrentPage1}
+                  totalPages={totalPages1}
+                  pageSize={summaryPageSize1}
+                  totalItems={filteredData1.length}
+                  onPageChange={setSummaryCurrentPage1}
+                  onPageSizeChange={setSummaryPageSize1}
+                />
               </div>
             )}
 
@@ -781,50 +746,14 @@ export default function RekapitulasiTunggakanClient({
                 </div>
 
                 {/* Pagination Controls */}
-                {filteredStudents.length > 0 && (
-                  <div className="pt-4 mt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
-                      <select
-                        value={detailPageSize}
-                        onChange={(e) => {
-                          setDetailPageSize(Number(e.target.value))
-                          setDetailCurrentPage(1)
-                        }}
-                        className="px-3 py-1.5 bg-bg border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/50 text-text-main"
-                      >
-                        {[10, 25, 50, 100].map(size => (
-                          <option key={size} value={size}>{size}</option>
-                        ))}
-                      </select>
-                      <span className="text-xs text-text-muted">
-                        Total {filteredStudents.length} siswa
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDetailCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={detailCurrentPage === 1}
-                      >
-                        Sebelumnya
-                      </Button>
-                      <span className="font-medium text-text-muted text-sm">
-                        Hal {detailCurrentPage} dari {totalDetailPages}
-                      </span>
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDetailCurrentPage(p => Math.min(totalDetailPages, p + 1))}
-                        disabled={detailCurrentPage === totalDetailPages || totalDetailPages === 0}
-                      >
-                        Berikutnya
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <PaginationControls
+                  currentPage={detailCurrentPage}
+                  totalPages={totalDetailPages}
+                  pageSize={detailPageSize}
+                  totalItems={filteredStudents.length}
+                  onPageChange={setDetailCurrentPage}
+                  onPageSizeChange={setDetailPageSize}
+                />
               </div>
             )}
           </div>
@@ -939,50 +868,14 @@ export default function RekapitulasiTunggakanClient({
               </div>
 
               {/* Pagination Controls Tabel 2 */}
-              {filteredData2.length > 0 && (
-                <div className="pt-4 mt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-text-muted">Tampilkan:</span>
-                    <select
-                      value={summaryPageSize2}
-                      onChange={(e) => {
-                        setSummaryPageSize2(Number(e.target.value))
-                        setSummaryCurrentPage2(1)
-                      }}
-                      className="px-3 py-1.5 bg-bg border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/50 text-text-main"
-                    >
-                      {[10, 25, 50, 100].map(size => (
-                        <option key={size} value={size}>{size}</option>
-                      ))}
-                    </select>
-                    <span className="text-xs text-text-muted">
-                      Total {filteredData2.length} kelas
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSummaryCurrentPage2(p => Math.max(1, p - 1))}
-                      disabled={summaryCurrentPage2 === 1}
-                    >
-                      Sebelumnya
-                    </Button>
-                    <span className="font-medium text-text-muted text-sm">
-                      Hal {summaryCurrentPage2} dari {totalPages2}
-                    </span>
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSummaryCurrentPage2(p => Math.min(totalPages2, p + 1))}
-                      disabled={summaryCurrentPage2 === totalPages2 || totalPages2 === 0}
-                    >
-                      Berikutnya
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <PaginationControls
+                currentPage={summaryCurrentPage2}
+                totalPages={totalPages2}
+                pageSize={summaryPageSize2}
+                totalItems={filteredData2.length}
+                onPageChange={setSummaryCurrentPage2}
+                onPageSizeChange={setSummaryPageSize2}
+              />
             </div>
           )}
         </>
