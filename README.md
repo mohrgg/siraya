@@ -210,12 +210,12 @@ nano .env
 Isi dengan kredensial produksi dan domain Anda:
 ```env
 POSTGRES_USER=siraya_admin
-POSTGRES_PASSWORD=BasyariahSecurePass2026!
+POSTGRES_PASSWORD=password_produksi_yang_kuat
 POSTGRES_DB=siraya_albasyariah
-DATABASE_URL="postgresql://siraya_admin:BasyariahSecurePass2026!@siraya-db:5432/siraya_albasyariah?schema=public"
-NEXTAUTH_SECRET=openssl_rand_base64_32_string
+DATABASE_URL="postgresql://siraya_admin:password_produksi_yang_kuat@siraya-db:5432/siraya_albasyariah?schema=public"
+NEXTAUTH_SECRET=rahasia_acak_minimal_32_karakter
 AUTH_TRUST_HOST=true
-APP_URL=https://siraya.my.id
+APP_URL=https://domain-anda.com
 ```
 
 ### 3. Build & Jalankan Container
