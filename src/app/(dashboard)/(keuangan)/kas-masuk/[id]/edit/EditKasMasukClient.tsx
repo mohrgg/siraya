@@ -138,8 +138,7 @@ export default function EditKasMasukClient({ transaksi, kasBankAccounts, pendapa
               <input 
                 type="date"
                 required
-                disabled={isTagihan}
-                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
                 value={header.tanggal}
                 onChange={e => setHeader({ ...header, tanggal: e.target.value })}
               />
@@ -160,9 +159,8 @@ export default function EditKasMasukClient({ transaksi, kasBankAccounts, pendapa
               <label className="text-sm font-semibold text-text-main">Nama Penyetor (Opsional)</label>
               <input 
                 type="text"
-                disabled={isTagihan}
                 placeholder="Contoh: Bpk. Budi Santoso"
-                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
                 value={header.namaPihakKetiga}
                 onChange={e => setHeader({ ...header, namaPihakKetiga: e.target.value })}
               />
@@ -172,9 +170,8 @@ export default function EditKasMasukClient({ transaksi, kasBankAccounts, pendapa
               <label className="text-sm font-semibold text-text-main">No. Formulir / Kertas (Opsional)</label>
               <input 
                 type="text"
-                disabled={isTagihan}
                 placeholder="Contoh: KWT-001"
-                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
                 value={header.noFormulir}
                 onChange={e => setHeader({ ...header, noFormulir: e.target.value })}
               />
@@ -185,9 +182,8 @@ export default function EditKasMasukClient({ transaksi, kasBankAccounts, pendapa
               <input 
                 type="text"
                 required
-                disabled={isTagihan}
                 placeholder="Contoh: Penerimaan Donasi Pembangunan Masjid"
-                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
                 value={header.deskripsi}
                 onChange={e => setHeader({ ...header, deskripsi: e.target.value })}
               />
@@ -196,28 +192,20 @@ export default function EditKasMasukClient({ transaksi, kasBankAccounts, pendapa
           </div>
         </div>
 
-        {/* PLACEHOLDER TAGIHAN INFO */}
+        {/* INFO TRANSAKSI TAGIHAN */}
         {isTagihan && (
-          <div className="bg-blue-50/50 rounded-2xl shadow-sm border border-blue-100 p-6 mb-6">
-            <h3 className="text-lg font-bold text-blue-800 mb-4 flex items-center">
-              <Receipt size={20} className="mr-2" />
-              Rincian Tagihan Siswa
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm">
-                <p className="text-sm text-text-muted mb-1 font-medium">Total Tagihan</p>
-                <p className="text-xl font-bold text-text-main">Rp 0</p>
-              </div>
-              <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm">
-                <p className="text-sm text-text-muted mb-1 font-medium">Sudah Dibayar</p>
-                <p className="text-xl font-bold text-albas-green">Rp 0</p>
-              </div>
-              <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm">
-                <p className="text-sm text-text-muted mb-1 font-medium">Sisa Belum Dibayar</p>
-                <p className="text-xl font-bold text-red-500">Rp 0</p>
-              </div>
+          <div className="bg-emerald-50/70 rounded-2xl shadow-sm border border-emerald-200/80 p-5 mb-6 flex items-start gap-3.5">
+            <div className="p-2 bg-emerald-100 rounded-xl text-emerald-800 shrink-0">
+              <Receipt size={20} />
             </div>
-            <p className="text-xs text-blue-600 mt-4 italic">* Fitur Rincian Tagihan Siswa dalam tahap pengembangan.</p>
+            <div>
+              <h3 className="text-sm font-bold text-emerald-900">
+                Transaksi Pembayaran Tagihan Siswa
+              </h3>
+              <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
+                Anda dapat mengubah tanggal transaksi, keterangan, nama penyetor, atau dompet kas/bank. Rincian akun pendapatan di bawah dikunci otomatis agar alokasi pos tagihan siswa tetap konsisten.
+              </p>
+            </div>
           </div>
         )}
 

@@ -334,7 +334,12 @@ export async function hapusKasMasuk(id: string) {
     throw new Error("Hanya Administrator atau Tata Usaha yang dapat menghapus transaksi kas masuk")
   }
 
-  const tx = await prisma.transaksi.findUnique({ where: { id } })
+  const tx = await prisma.transaksi.findUnique({ 
+    where: { id },
+    include: {
+      pembayaranTagihan: true
+    }
+  })
   if (!tx) throw new Error("Transaksi tidak ditemukan")
 
   // Isolasi Multi-Tenant: Tata Usaha hanya boleh menghapus transaksi dari unit sekolahnya sendiri
@@ -342,7 +347,38 @@ export async function hapusKasMasuk(id: string) {
     throw new Error("Akses ditolak: Anda hanya dapat menghapus transaksi dari unit sekolah Anda sendiri")
   }
 
-  await prisma.transaksi.delete({ where: { id } })
+  await prisma.$transaction(async (prismaTx) => {
+    // 1. REVERSAL ATOMIK: Jika transaksi ini berasal dari pembayaran tagihan siswa,
+    // kembalikan saldo sisaTagihan dan status Tagihan agar tidak menjadi yatim/terkunci
+    if (tx.pembayaranTagihan && tx.pembayaranTagihan.length > 0) {
+      for (const p of tx.pembayaranTagihan) {
+        const tagihan = await prismaTx.tagihan.findUnique({
+          where: { id: p.tagihanId }
+        })
+
+        if (tagihan) {
+          const totalDipulihkan = p.jumlahDibayar + (p.potongan || 0)
+          const newSisa = Math.min(tagihan.jumlah, tagihan.sisaTagihan + totalDipulihkan)
+          const newStatus = newSisa >= tagihan.jumlah 
+            ? "BELUM_LUNAS" 
+            : newSisa > 0 
+              ? "SEBAGIAN" 
+              : "LUNAS"
+
+          await prismaTx.tagihan.update({
+            where: { id: p.tagihanId },
+            data: {
+              sisaTagihan: newSisa,
+              status: newStatus
+            }
+          })
+        }
+      }
+    }
+
+    // 2. Hapus Transaksi (otomatis cascade delete ke PembayaranTagihanDetail & TransaksiDetail)
+    await prismaTx.transaksi.delete({ where: { id } })
+  })
 
   await prisma.logAktivitas.create({
     data: {
@@ -354,6 +390,7 @@ export async function hapusKasMasuk(id: string) {
   })
 
   revalidatePath("/kas-masuk")
+  revalidatePath("/pembayaran-tagihan")
   return true
 }
 
@@ -368,7 +405,7 @@ export async function getKasMasukById(id: string) {
       detail: {
         include: {
           akun: {
-            select: { kode: true, nama: true }
+            select: { id: true, kode: true, nama: true }
           }
         }
       },
@@ -405,6 +442,55 @@ export async function updateKasMasuk(id: string, data: KasMasukPayload) {
 
   if (tenant.role === "TATA_USAHA" && existingTx.unitSekolahId !== tenant.unitId) {
     throw new Error("Anda tidak berhak mengubah transaksi unit lain.")
+  }
+
+  // KHUSUS TRANSAKSI SUMBER TAGIHAN:
+  // Jangan rombak struktur detail pembukuan (KREDIT Pendapatan & DEBIT Beban Potongan) agar pembukuan tagihan siswa tetap utuh.
+  // Hanya perbarui header tanggal transaksi, nama penyetor, keterangan, nomor formulir, dan dompet kas/bank jika diganti.
+  if (existingTx.sumber === "TAGIHAN") {
+    const result = await prisma.$transaction(async (tx) => {
+      if (data.akunPenerimaId) {
+        const existingKasDetail = await tx.transaksiDetail.findFirst({
+          where: {
+            transaksiId: id,
+            posisi: "DEBIT",
+            akun: { isKasBank: true }
+          }
+        })
+        if (existingKasDetail && existingKasDetail.akunId !== data.akunPenerimaId) {
+          await tx.transaksiDetail.update({
+            where: { id: existingKasDetail.id },
+            data: { akunId: data.akunPenerimaId }
+          })
+        }
+      }
+
+      return await tx.transaksi.update({
+        where: { id },
+        data: {
+          tanggal: data.tanggal,
+          deskripsi: data.deskripsi,
+          namaPihakKetiga: data.namaPihakKetiga || null,
+          noFormulir: data.noFormulir || null,
+          isEdited: true,
+          editReason: "Diedit melalui halaman Ubah Kas Masuk"
+        }
+      })
+    })
+
+    await prisma.logAktivitas.create({
+      data: {
+        penggunaId: tenant.user.id,
+        aksi: "UPDATE",
+        modul: "KAS_MASUK",
+        keterangan: `Mengubah tanggal/keterangan transaksi tagihan (No Ref: ${existingTx.noReferensi})`
+      }
+    })
+
+    revalidatePath("/kas-masuk")
+    revalidatePath(`/kas-masuk/${id}`)
+    revalidatePath("/pembayaran-tagihan")
+    return result
   }
 
   const totalNilai = data.details.reduce((sum, item) => sum + item.nilai, 0)
