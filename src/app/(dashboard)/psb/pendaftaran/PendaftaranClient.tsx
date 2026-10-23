@@ -55,8 +55,6 @@ export default function PendaftaranClient({
   const [gelombangId, setGelombangId] = useState(availableGelombang[0]?.id || "")
 
   const selectedGelombangObj = gelombangList.find(g => g.id === gelombangId) || availableGelombang[0]
-  const defaultBiaya = selectedGelombangObj?.biayaFormulir || 250000
-
   const [nomorFormulir, setNomorFormulir] = useState("")
   const [namaCalon, setNamaCalon] = useState("")
   const [jenisKelamin, setJenisKelamin] = useState("LAKI_LAKI")
@@ -67,7 +65,7 @@ export default function PendaftaranClient({
   const [alamat, setAlamat] = useState("")
   const [akunKasId, setAkunKasId] = useState(initialAkunKasList[0]?.id || "")
   const [tanggalBeli, setTanggalBeli] = useState(new Date().toISOString().split("T")[0])
-  const [biayaFormulirInput, setBiayaFormulirInput] = useState<number>(defaultBiaya)
+  const [biayaFormulirInput, setBiayaFormulirInput] = useState<number | "">("")
 
   // Modal Cetak Kuitansi
   const [receiptData, setReceiptData] = useState<any | null>(null)
@@ -86,7 +84,7 @@ export default function PendaftaranClient({
   })
 
   const handleOpenDrawer = () => {
-    // Reset form
+    // Reset form tanpa data default
     setNomorFormulir("")
     setNamaCalon("")
     setJenisKelamin("LAKI_LAKI")
@@ -96,10 +94,8 @@ export default function PendaftaranClient({
     setNoWhatsapp("")
     setAlamat("")
     setTanggalBeli(new Date().toISOString().split("T")[0])
-    if (availableGelombang[0]) {
-      setGelombangId(availableGelombang[0].id)
-      setBiayaFormulirInput(availableGelombang[0].biayaFormulir)
-    }
+    setGelombangId("")
+    setBiayaFormulirInput("")
     setShowDrawer(true)
   }
 
@@ -427,19 +423,17 @@ export default function PendaftaranClient({
                         setGelombangId(e.target.value)
                         const g = gelombangList.find(item => item.id === e.target.value)
                         if (g) setBiayaFormulirInput(g.biayaFormulir)
+                        else setBiayaFormulirInput("")
                       }}
                       required
                       className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
                     >
-                      {availableGelombang.length === 0 ? (
-                        <option value="">Tidak ada gelombang aktif</option>
-                      ) : (
-                        availableGelombang.map(g => (
-                          <option key={g.id} value={g.id}>
-                            {g.namaGelombang} (Rp {g.biayaFormulir.toLocaleString("id-ID")})
-                          </option>
-                        ))
-                      )}
+                      <option value="">Pilih Gelombang</option>
+                      {availableGelombang.map(g => (
+                        <option key={g.id} value={g.id}>
+                          {g.namaGelombang}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -450,14 +444,11 @@ export default function PendaftaranClient({
                     <input
                       type="text"
                       required
-                      placeholder="Contoh: SD-26-001"
+                      placeholder="Nomor formulir fisik"
                       value={nomorFormulir}
                       onChange={(e) => setNomorFormulir(e.target.value.toUpperCase())}
-                      className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-sm font-mono font-bold text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 uppercase"
+                      className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm font-mono font-bold text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 uppercase"
                     />
-                    <span className="text-[11px] text-text-muted mt-1 block">
-                      Pastikan nomor sesuai dengan berkas fisik formulir yang diserahkan ke wali murid.
-                    </span>
                   </div>
                 </div>
               </div>
@@ -476,7 +467,7 @@ export default function PendaftaranClient({
                     <input
                       type="text"
                       required
-                      placeholder="Nama lengkap sesuai KK/Akta"
+                      placeholder="Nama calon murid"
                       value={namaCalon}
                       onChange={(e) => setNamaCalon(e.target.value)}
                       className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -496,10 +487,10 @@ export default function PendaftaranClient({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-text-muted uppercase mb-1">NISN (Opsional)</label>
+                    <label className="block text-xs font-semibold text-text-muted uppercase mb-1">NISN</label>
                     <input
                       type="text"
-                      placeholder="Nomor NISN jika ada"
+                      placeholder="NISN"
                       value={nisn}
                       onChange={(e) => setNisn(e.target.value)}
                       className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -507,10 +498,10 @@ export default function PendaftaranClient({
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold text-text-muted uppercase mb-1">Asal Sekolah Sebelumnya</label>
+                    <label className="block text-xs font-semibold text-text-muted uppercase mb-1">Asal Sekolah</label>
                     <input
                       type="text"
-                      placeholder="Contoh: TK Al-Basyariah / SDN 01 Pabuaran"
+                      placeholder="Asal sekolah"
                       value={asalSekolah}
                       onChange={(e) => setAsalSekolah(e.target.value)}
                       className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -533,7 +524,7 @@ export default function PendaftaranClient({
                     <input
                       type="text"
                       required
-                      placeholder="Nama ayah / ibu / wali"
+                      placeholder="Nama orang tua / wali"
                       value={namaOrangTua}
                       onChange={(e) => setNamaOrangTua(e.target.value)}
                       className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -542,12 +533,12 @@ export default function PendaftaranClient({
 
                   <div>
                     <label className="block text-xs font-semibold text-text-muted uppercase mb-1">
-                      Nomor WhatsApp Aktif <span className="text-rose-500">*</span>
+                      Nomor WhatsApp <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="08xxxxxxxxxx"
+                      placeholder="Nomor WhatsApp"
                       value={noWhatsapp}
                       onChange={(e) => setNoWhatsapp(e.target.value)}
                       className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -555,10 +546,10 @@ export default function PendaftaranClient({
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold text-text-muted uppercase mb-1">Alamat Singkat</label>
+                    <label className="block text-xs font-semibold text-text-muted uppercase mb-1">Alamat Domisili</label>
                     <input
                       type="text"
-                      placeholder="Alamat domisili calon siswa"
+                      placeholder="Alamat domisili"
                       value={alamat}
                       onChange={(e) => setAlamat(e.target.value)}
                       className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -607,7 +598,7 @@ export default function PendaftaranClient({
                       step="10000"
                       required
                       value={biayaFormulirInput}
-                      onChange={(e) => setBiayaFormulirInput(Number(e.target.value))}
+                      onChange={(e) => setBiayaFormulirInput(e.target.value === "" ? "" : Number(e.target.value))}
                       className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm font-bold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
                   </div>

@@ -65,10 +65,10 @@ export default function GelombangClient({
   const [namaGelombang, setNamaGelombang] = useState("")
   const [tanggalMulai, setTanggalMulai] = useState("")
   const [tanggalSelesai, setTanggalSelesai] = useState("")
-  const [biayaFormulir, setBiayaFormulir] = useState<number>(250000)
-  const [biayaUangPangkal, setBiayaUangPangkal] = useState<number>(0)
-  const [diskonUangPangkal, setDiskonUangPangkal] = useState<number>(0)
-  const [kuota, setKuota] = useState<number>(0)
+  const [biayaFormulir, setBiayaFormulir] = useState<number | "">("")
+  const [biayaUangPangkal, setBiayaUangPangkal] = useState<number | "">("")
+  const [diskonUangPangkal, setDiskonUangPangkal] = useState<number | "">("")
+  const [kuota, setKuota] = useState<number | "">("")
 
   // Filter Data
   const filteredList = gelombangList.filter(g => {
@@ -83,14 +83,12 @@ export default function GelombangClient({
     setFormUnitId(userUnitId || (units[0]?.id || ""))
     setFormTahunId(tahunAktif?.id || (tahunList[0]?.id || ""))
     setNamaGelombang("")
-    setTanggalMulai(new Date().toISOString().split("T")[0])
-    const nextMonth = new Date()
-    nextMonth.setMonth(nextMonth.getMonth() + 2)
-    setTanggalSelesai(nextMonth.toISOString().split("T")[0])
-    setBiayaFormulir(250000)
-    setBiayaUangPangkal(5000000)
-    setDiskonUangPangkal(0)
-    setKuota(100)
+    setTanggalMulai("")
+    setTanggalSelesai("")
+    setBiayaFormulir("")
+    setBiayaUangPangkal("")
+    setDiskonUangPangkal("")
+    setKuota("")
     setShowModal(true)
   }
 
@@ -391,7 +389,7 @@ export default function GelombangClient({
                 <input
                   type="text"
                   required
-                  placeholder="Contoh: Gelombang 1 (Early Bird)"
+                  placeholder="Nama gelombang"
                   value={namaGelombang}
                   onChange={(e) => setNamaGelombang(e.target.value)}
                   className="w-full px-3 py-2 bg-bg border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -427,10 +425,10 @@ export default function GelombangClient({
                   <input
                     type="number"
                     min="0"
-                    step="50000"
+                    step="10000"
                     required
                     value={biayaFormulir}
-                    onChange={(e) => setBiayaFormulir(Number(e.target.value))}
+                    onChange={(e) => setBiayaFormulir(e.target.value === "" ? "" : Number(e.target.value))}
                     className="w-full px-3 py-2 bg-bg border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
                   />
                 </div>
@@ -442,7 +440,7 @@ export default function GelombangClient({
                     step="100000"
                     required
                     value={biayaUangPangkal}
-                    onChange={(e) => setBiayaUangPangkal(Number(e.target.value))}
+                    onChange={(e) => setBiayaUangPangkal(e.target.value === "" ? "" : Number(e.target.value))}
                     className="w-full px-3 py-2 bg-bg border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
                   />
                 </div>
@@ -453,19 +451,19 @@ export default function GelombangClient({
                     min="0"
                     step="50000"
                     value={diskonUangPangkal}
-                    onChange={(e) => setDiskonUangPangkal(Number(e.target.value))}
+                    onChange={(e) => setDiskonUangPangkal(e.target.value === "" ? "" : Number(e.target.value))}
                     className="w-full px-3 py-2 bg-bg border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-text-muted uppercase mb-1">Kuota Calon Siswa (0 = Tak Terbatas)</label>
+                <label className="block text-xs font-semibold text-text-muted uppercase mb-1">Kuota Calon Siswa</label>
                 <input
                   type="number"
                   min="0"
                   value={kuota}
-                  onChange={(e) => setKuota(Number(e.target.value))}
+                  onChange={(e) => setKuota(e.target.value === "" ? "" : Number(e.target.value))}
                   className="w-full px-3 py-2 bg-bg border border-border rounded-xl text-sm font-medium text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>

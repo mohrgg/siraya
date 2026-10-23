@@ -53,17 +53,17 @@ export default function DaftarUlangClient({
   const [isProcessing, setIsProcessing] = useState(false)
 
   // Drawer Form State
-  const [diskonKustom, setDiskonKustom] = useState<number>(0)
+  const [diskonKustom, setDiskonKustom] = useState<number | "">("")
   const [keteranganDiskon, setKeteranganDiskon] = useState("")
-  const [jumlahBayar, setJumlahBayar] = useState<number>(0)
+  const [jumlahBayar, setJumlahBayar] = useState<number | "">("")
   const [akunKasId, setAkunKasId] = useState(initialAkunKasList[0]?.id || "")
   const [tanggalBayar, setTanggalBayar] = useState(new Date().toISOString().split("T")[0])
 
   // Checklist Berkas Fisik
-  const [berkasKK, setBerkasKK] = useState(true)
-  const [berkasAkta, setBerkasAkta] = useState(true)
-  const [berkasIjazah, setBerkasIjazah] = useState(true)
-  const [berkasFoto, setBerkasFoto] = useState(true)
+  const [berkasKK, setBerkasKK] = useState(false)
+  const [berkasAkta, setBerkasAkta] = useState(false)
+  const [berkasIjazah, setBerkasIjazah] = useState(false)
+  const [berkasFoto, setBerkasFoto] = useState(false)
 
   // Filter List
   const filteredItems = items.filter(item => {
@@ -79,14 +79,13 @@ export default function DaftarUlangClient({
   // Open Drawer Detail
   const handleOpenDrawer = (item: any) => {
     setSelectedPendaftar(item)
-    setDiskonKustom(item.diskonKustom || 0)
+    setDiskonKustom(item.diskonKustom || "")
     setKeteranganDiskon(item.keteranganDiskon || "")
-    
-    // Hitung default pembayaran: bisa lunas atau cicilan 1
-    const biayaKotor = item.gelombang?.biayaUangPangkal || 0
-    const diskonGel = item.gelombang?.diskonUangPangkal || 0
-    const tagihanBersih = Math.max(0, biayaKotor - diskonGel - (item.diskonKustom || 0))
-    setJumlahBayar(tagihanBersih) // Default set ke lunas
+    setJumlahBayar("")
+    setBerkasKK(false)
+    setBerkasAkta(false)
+    setBerkasIjazah(false)
+    setBerkasFoto(false)
     setShowDrawer(true)
   }
 
@@ -138,7 +137,7 @@ export default function DaftarUlangClient({
     e.preventDefault()
     if (!selectedPendaftar) return
 
-    if (jumlahBayar > 0 && !akunKasId) {
+    if (Number(jumlahBayar) > 0 && !akunKasId) {
       toast.error("Pilih akun Kas/Bank penerima pembayaran!")
       return
     }
@@ -147,10 +146,10 @@ export default function DaftarUlangClient({
       setIsProcessing(true)
       const res = await prosesAktivasiMuridDanBayarPSB({
         pendaftarId: selectedPendaftar.id,
-        jumlahBayar: Number(jumlahBayar),
+        jumlahBayar: Number(jumlahBayar) || 0,
         akunKasId,
         tanggalBayar,
-        diskonKustom: Number(diskonKustom),
+        diskonKustom: Number(diskonKustom) || 0,
         keteranganDiskon: keteranganDiskon.trim() || undefined
       })
 
@@ -474,7 +473,7 @@ export default function DaftarUlangClient({
                         min="0"
                         step="50000"
                         value={diskonKustom}
-                        onChange={(e) => setDiskonKustom(Number(e.target.value))}
+                        onChange={(e) => setDiskonKustom(e.target.value === "" ? "" : Number(e.target.value))}
                         className="w-full px-2.5 py-1.5 bg-surface border border-border rounded-lg text-xs font-semibold text-emerald-700 focus:outline-none focus:ring-1 focus:ring-primary"
                       />
                     </div>
@@ -482,7 +481,7 @@ export default function DaftarUlangClient({
                       <label className="block text-text-muted mb-1">Keterangan Diskon</label>
                       <input
                         type="text"
-                        placeholder="Contoh: Anak Guru / Saudara Kandung"
+                        placeholder="Keterangan diskon"
                         value={keteranganDiskon}
                         onChange={(e) => setKeteranganDiskon(e.target.value)}
                         className="w-full px-2.5 py-1.5 bg-surface border border-border rounded-lg text-xs font-medium text-text-main focus:outline-none focus:ring-1 focus:ring-primary"
@@ -512,9 +511,8 @@ export default function DaftarUlangClient({
                         min="0"
                         max={tagihanBersih}
                         step="100000"
-                        required
                         value={jumlahBayar}
-                        onChange={(e) => setJumlahBayar(Number(e.target.value))}
+                        onChange={(e) => setJumlahBayar(e.target.value === "" ? "" : Number(e.target.value))}
                         className="w-full px-3 py-2 bg-surface border border-emerald-300 rounded-xl text-sm font-bold text-emerald-800 focus:outline-none focus:ring-2 focus:ring-primary/50"
                       />
                       <div className="mt-1 text-[11px] text-text-muted flex justify-between">
