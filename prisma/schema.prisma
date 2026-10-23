@@ -79,6 +79,8 @@ model UnitSekolah {
   transaksi          Transaksi[]
   KlasifikasiAkun    KlasifikasiAkun[]
   SubKlasifikasiAkun SubKlasifikasiAkun[]
+  gelombangPSB       GelombangPSB[]
+  pendaftarPSB       PendaftarPSB[]
 }
 
 // ========== TAHUN AKADEMIK ==========
@@ -92,6 +94,8 @@ model TahunAkademik {
   subKelas     SubKelas[]
   riwayatKelas RiwayatKelas[]
   tagihan      Tagihan[]
+  gelombangPSB GelombangPSB[]
+  pendaftarPSB PendaftarPSB[]
 }
 
 // ========== KELAS & MURID ==========
@@ -281,6 +285,7 @@ model Murid {
   unitSekolah  UnitSekolah    @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
   riwayatKelas RiwayatKelas[]
   tagihan      Tagihan[]
+  pendaftarPSB PendaftarPSB?
 }
 
 model RiwayatKelas {
@@ -387,6 +392,7 @@ model Transaksi {
   divisi            Divisi?                   @relation(fields: [divisiId], references: [id])
   detail            TransaksiDetail[]
   pembayaranTagihan PembayaranTagihanDetail[]
+  pendaftarPSB      PendaftarPSB?
 }
 
 model TransaksiDetail {
@@ -521,4 +527,77 @@ model ErrorLog {
   @@index([createdAt])
   @@index([lastSeenAt])
   @@index([penggunaId])
+}
+
+// ========== PSB (PENERIMAAN SISWA BARU) ==========
+model GelombangPSB {
+  id                String   @id @default(cuid())
+  unitSekolahId     String
+  tahunAkademikId   String
+  namaGelombang     String   @db.VarChar(100)
+  tanggalMulai      DateTime
+  tanggalSelesai    DateTime
+  biayaFormulir     Float    @default(250000)
+  biayaUangPangkal  Float    @default(0)
+  diskonUangPangkal Float    @default(0)
+  kuota             Int      @default(0)
+  isActive          Boolean  @default(true)
+  isDeleted         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  unitSekolah   UnitSekolah    @relation(fields: [unitSekolahId], references: [id], onDelete: Cascade)
+  tahunAkademik TahunAkademik  @relation(fields: [tahunAkademikId], references: [id], onDelete: Cascade)
+  pendaftar     PendaftarPSB[]
+
+  @@index([unitSekolahId, tahunAkademikId])
+  @@index([isActive])
+}
+
+model PendaftarPSB {
+  id                  String    @id @default(cuid())
+  nomorFormulir       String    @db.VarChar(50)
+  gelombangId         String
+  unitSekolahId       String
+  tahunAkademikId     String
+
+  // Identitas Calon Siswa
+  namaCalon           String    @db.VarChar(150)
+  jenisKelamin        String?   @db.VarChar(20)
+  nisn                String?   @db.VarChar(50)
+  nik                 String?   @db.VarChar(16)
+  tempatLahir         String?   @db.VarChar(100)
+  tanggalLahir        DateTime?
+  asalSekolah         String?   @db.VarChar(150)
+
+  // Data Kontak & Orang Tua
+  namaOrangTua        String    @db.VarChar(150)
+  noWhatsapp          String    @db.VarChar(30)
+  alamat              String?   @db.Text
+
+  // Jejak Finansial Kas Masuk Formulir
+  transaksiFormulirId String?   @unique
+  transaksiFormulir   Transaksi? @relation(fields: [transaksiFormulirId], references: [id])
+
+  // Status Siklus: FORMULIR_DIBELI -> BERKAS_KEMBALI -> MENUNGGU_BAYAR -> SISWA_AKTIF -> BATAL
+  status              String    @default("FORMULIR_DIBELI") @db.VarChar(50)
+
+  // Diskon Tambahan Khusus
+  diskonKustom        Float     @default(0)
+  keteranganDiskon    String?   @db.VarChar(255)
+
+  // Link ke Database Murid Akademik Resmi (Terisi setelah bayar sebagian/lunas)
+  muridId             String?   @unique
+  murid               Murid?    @relation(fields: [muridId], references: [id])
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  gelombang     GelombangPSB  @relation(fields: [gelombangId], references: [id])
+  unitSekolah   UnitSekolah   @relation(fields: [unitSekolahId], references: [id])
+  tahunAkademik TahunAkademik @relation(fields: [tahunAkademikId], references: [id])
+
+  @@unique([nomorFormulir, unitSekolahId, tahunAkademikId])
+  @@index([unitSekolahId, status])
+  @@index([namaCalon])
 }

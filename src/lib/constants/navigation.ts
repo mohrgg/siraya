@@ -3,7 +3,8 @@ import {
   Users2, Landmark, GraduationCap,
   Settings, Key,
   ArrowDownToLine, ArrowUpFromLine, Calendar, Users,
-  FilePlus, PieChart, LucideIcon
+  FilePlus, PieChart, LucideIcon,
+  UserPlus, ClipboardCheck, Layers
 } from "lucide-react"
 
 export interface MenuItem {
@@ -39,6 +40,14 @@ export const MENU_GROUPS: MenuGroup[] = [
       { href: "/tahun-akademik", label: "Tahun Akademik", icon: Calendar, allowedRoles: ["ADMIN", "YAYASAN"], isGlobal: true },
       { href: "/guru", label: "Guru & Staf", icon: GraduationCap, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
       { href: "/kelas", label: "Kelas & Murid", icon: Users2, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH", "YAYASAN"] },
+    ]
+  },
+  {
+    title: "PSB (SISWA BARU)",
+    items: [
+      { href: "/psb/pendaftaran", label: "Loket & Formulir", icon: UserPlus, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/psb/daftar-ulang", label: "Daftar Ulang & Tagihan", icon: ClipboardCheck, allowedRoles: ["ADMIN", "TATA_USAHA", "KEPALA_SEKOLAH"] },
+      { href: "/psb/gelombang", label: "Pengaturan Gelombang", icon: Layers, allowedRoles: ["ADMIN", "TATA_USAHA"] },
     ]
   },
   {
