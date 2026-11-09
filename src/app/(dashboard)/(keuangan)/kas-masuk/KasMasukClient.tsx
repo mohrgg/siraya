@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { Search, Plus, Printer, Download, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown, FileSpreadsheet, FileText, ArrowDownLeft, Layers } from "lucide-react"
+import { Search, Plus, Printer, Download, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown, FileSpreadsheet, FileText, ArrowDownLeft, Layers, ArrowUpDown } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
@@ -134,6 +134,7 @@ export default function KasMasukClient({
   
   const [filterBy, setFilterBy] = useState<'tanggal_transaksi' | 'tanggal_pembuatan'>('tanggal_transaksi')
   const [timeRange, setTimeRange] = useState<'semua' | 'hari' | 'minggu' | 'bulan' | 'bulan_lalu' | 'custom'>('hari')
+  const [sortBy, setSortBy] = useState<'tanggal' | 'kelas'>('tanggal')
   
   // Custom date state if needed
   const [startDate, setStartDate] = useState("")
@@ -208,21 +209,55 @@ export default function KasMasukClient({
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, filterBy, timeRange, startDate, endDate, selectedJenisBayar])
+  }, [searchTerm, filterBy, timeRange, startDate, endDate, selectedJenisBayar, sortBy])
+
+  const sortedData = useMemo(() => {
+    if (sortBy === 'kelas') {
+      return [...filteredData].sort((a, b) => {
+        const kelasA = extractTransaksiKelas(a)
+        const kelasB = extractTransaksiKelas(b)
+
+        // Non-kelas (-) selalu di paling bawah
+        if (kelasA === "-" && kelasB !== "-") return 1
+        if (kelasA !== "-" && kelasB === "-") return -1
+        if (kelasA !== "-" && kelasB !== "-") {
+          const comp = kelasA.localeCompare(kelasB, "id", { numeric: true, sensitivity: "base" })
+          if (comp !== 0) return comp
+        }
+
+        // Secondary sort: nama penyetor (A-Z)
+        const namaA = (a.namaPihakKetiga || "").toLowerCase()
+        const namaB = (b.namaPihakKetiga || "").toLowerCase()
+        const nameComp = namaA.localeCompare(namaB, "id")
+        if (nameComp !== 0) return nameComp
+
+        // Tertiary sort: tanggal transaksi terbaru (desc)
+        return new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+      })
+    }
+
+    // Default: Urut berdasarkan tanggal transaksi terbaru (desc)
+    return [...filteredData].sort((a, b) => {
+      const dateA = new Date(a.tanggal).getTime()
+      const dateB = new Date(b.tanggal).getTime()
+      if (dateB !== dateA) return dateB - dateA
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+  }, [filteredData, sortBy])
 
   const paginatedData = useMemo(() => {
-    return filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-  }, [filteredData, currentPage, pageSize])
+    return sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  }, [sortedData, currentPage, pageSize])
 
-  const computedTotalPages = Math.ceil(filteredData.length / pageSize)
+  const computedTotalPages = Math.ceil(sortedData.length / pageSize)
 
   const executiveMetrics = useMemo(() => {
-    const totalMasuk = filteredData.reduce((sum: number, item: any) => {
+    const totalMasuk = sortedData.reduce((sum: number, item: any) => {
       const items = getVisibleItemsForTransaksi(item, selectedJenisBayar)
       return sum + items.reduce((s, it) => s + it.nominal, 0)
     }, 0)
-    const countTrans = filteredData.length
-    const largeTrans = filteredData.filter((item: any) => {
+    const countTrans = sortedData.length
+    const largeTrans = sortedData.filter((item: any) => {
       const items = getVisibleItemsForTransaksi(item, selectedJenisBayar)
       const transTotal = items.reduce((s, it) => s + it.nominal, 0)
       return transTotal >= 1000000
@@ -234,13 +269,13 @@ export default function KasMasukClient({
       largeTrans,
       avgTrans
     }
-  }, [filteredData, selectedJenisBayar])
+  }, [sortedData, selectedJenisBayar])
 
   const handleExportExcel = async () => {
     setIsExportingExcel(true)
     try {
       const { exportToExcel } = await import("@/lib/excel")
-      const exportData = filteredData.map((item: any, index: number) => {
+      const exportData = sortedData.map((item: any, index: number) => {
         const items = getVisibleItemsForTransaksi(item, selectedJenisBayar)
         const rowTotal = items.reduce((s, it) => s + it.nominal, 0)
         const deskripsiStr = items.length > 1
@@ -294,7 +329,7 @@ export default function KasMasukClient({
       const { buildInstitutionInfo, getSignatoryKiri } = await import("@/lib/pdf-helpers")
       
       const tableColumn = ["No", "Tgl Transaksi", "No Referensi", "Penyetor", "Kelas", "Deskripsi", "Total Nilai", "Pembuat"]
-      const tableRows: any[][] = filteredData.map((item: any, index: number) => {
+      const tableRows: any[][] = sortedData.map((item: any, index: number) => {
         const items = getVisibleItemsForTransaksi(item, selectedJenisBayar)
         const rowTotal = items.reduce((s, it) => s + it.nominal, 0)
         const deskripsiStr = items.length > 1
@@ -316,8 +351,8 @@ export default function KasMasukClient({
         ]
       })
 
-      if (filteredData.length > 0) {
-        const totalNilaiAll = filteredData.reduce((acc: number, curr: any) => {
+      if (sortedData.length > 0) {
+        const totalNilaiAll = sortedData.reduce((acc: number, curr: any) => {
           const items = getVisibleItemsForTransaksi(curr, selectedJenisBayar)
           return acc + items.reduce((s, it) => s + it.nominal, 0)
         }, 0)
@@ -340,7 +375,8 @@ export default function KasMasukClient({
       const pdfFilename = jenisText
         ? `Kas_Masuk_${jenisText.replace(/[^a-zA-Z0-9_-]/g, '_')}_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_')
         : `Kas_Masuk_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_')
-      const filterLabel = rawLabel ? ` • Jenis: ${rawLabel}` : ""
+      const urutLabel = sortBy === 'kelas' ? " • Urut: Sesuai Kelas" : " • Urut: Tanggal Transaksi"
+      const filterLabel = (rawLabel ? ` • Jenis: ${rawLabel}` : "") + urutLabel
 
       await exportTablePdf({
         institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
@@ -423,7 +459,7 @@ export default function KasMasukClient({
         
         {/* Tabs Navigation */}
         <TabNavigation
-          tabs={[{ id: "kas-masuk", label: isReadOnly ? "Daftar Audit Kas Masuk" : "Daftar Kas Masuk", icon: ArrowDownLeft, badge: filteredData.length }]}
+          tabs={[{ id: "kas-masuk", label: isReadOnly ? "Daftar Audit Kas Masuk" : "Daftar Kas Masuk", icon: ArrowDownLeft, badge: sortedData.length }]}
         />
 
         {/* Filters and Actions */}
@@ -468,6 +504,17 @@ export default function KasMasukClient({
                 { label: "Custom Tanggal", value: "custom" }
               ]}
             />
+
+            <ToolbarFilter
+              icon={<ArrowUpDown size={14} />}
+              value={sortBy}
+              onChange={(val) => setSortBy(val as any)}
+              options={[
+                { label: "Urut: Tgl Transaksi", value: "tanggal" },
+                { label: "Urut: Sesuai Kelas", value: "kelas" }
+              ]}
+              className="col-span-2 sm:col-span-1 sm:max-w-[190px] xl:max-w-[200px]"
+            />
           </div>
 
           {timeRange === 'custom' && (
@@ -485,12 +532,12 @@ export default function KasMasukClient({
             />
             <ToolbarExportExcel 
               onClick={handleExportExcel}
-              disabled={isExportingExcel || filteredData.length === 0}
+              disabled={isExportingExcel || sortedData.length === 0}
               isExporting={isExportingExcel}
             />
             <ToolbarExportPDF 
               onClick={handleExportPDF}
-              disabled={isExportingPDF || filteredData.length === 0}
+              disabled={isExportingPDF || sortedData.length === 0}
               isExporting={isExportingPDF}
             />
             
@@ -508,7 +555,7 @@ export default function KasMasukClient({
         </Toolbar>
 
         {/* Table & Centered Empty State */}
-        {filteredData.length === 0 ? (
+        {sortedData.length === 0 ? (
           <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center text-text-muted w-full">
             <Receipt size={40} className="text-gray-300 mb-3 stroke-[1.5]" />
             <p className="font-bold text-text-main text-base mb-1">
@@ -520,18 +567,36 @@ export default function KasMasukClient({
           </div>
         ) : (
           <>
-            <TableScrollHint totalRows={filteredData.length} />
+            <TableScrollHint totalRows={sortedData.length} />
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
                     <th className="p-4 font-semibold text-center">NO</th>
-                    <th className="p-4 font-semibold">TGL TRANSAKSI</th>
+                    <th 
+                      onClick={() => setSortBy(prev => prev === 'tanggal' ? 'kelas' : 'tanggal')}
+                      className="p-4 font-semibold cursor-pointer hover:text-text-main select-none transition-colors"
+                      title="Klik untuk mengubah urutan (Tanggal / Kelas)"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span>TGL TRANSAKSI</span>
+                        {sortBy === 'tanggal' && <ArrowUpDown size={12} className="text-primary" />}
+                      </div>
+                    </th>
                     <th className="p-4 font-semibold">TGL PEMBUATAN</th>
                     <th className="p-4 font-semibold">NO REFERENSI</th>
                     <th className="p-4 font-semibold">NO FORMULIR</th>
                     <th className="p-4 font-semibold">PENYETOR</th>
-                    <th className="p-4 font-semibold text-center">KELAS</th>
+                    <th 
+                      onClick={() => setSortBy(prev => prev === 'kelas' ? 'tanggal' : 'kelas')}
+                      className="p-4 font-semibold text-center cursor-pointer hover:text-text-main select-none transition-colors"
+                      title="Klik untuk mengurutkan sesuai kelas"
+                    >
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span>KELAS</span>
+                        {sortBy === 'kelas' && <ArrowUpDown size={12} className="text-primary" />}
+                      </div>
+                    </th>
                     <th className="p-4 font-semibold">DESKRIPSI</th>
                     <th className="p-4 font-semibold text-left">TOTAL NILAI</th>
                     <th className="p-4 font-semibold">PEMBUAT</th>
