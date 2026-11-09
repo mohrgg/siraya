@@ -70,6 +70,18 @@ export function extractKasMasukItems(item: any): KasMasukItem[] {
   ]
 }
 
+export function extractTransaksiKelas(item: any): string {
+  if (item.pembayaranTagihan && Array.isArray(item.pembayaranTagihan) && item.pembayaranTagihan.length > 0) {
+    for (const pt of item.pembayaranTagihan) {
+      const rk = pt.tagihan?.murid?.riwayatKelas
+      if (rk && Array.isArray(rk) && rk.length > 0 && rk[0]?.subKelas?.name) {
+        return rk[0].subKelas.name
+      }
+    }
+  }
+  return "-"
+}
+
 export function filterItemMatches(it: KasMasukItem, filterVal: string): boolean {
   if (!filterVal || filterVal === "ALL") return true
   if (filterVal.startsWith("CAT:")) {
@@ -157,9 +169,11 @@ export default function KasMasukClient({
       if (visibleItems.length === 0) return false
 
       // 2. Search Filter
+      const kelasStr = extractTransaksiKelas(item)
       const matchesSearch = item.noReferensi.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.namaPihakKetiga || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.deskripsi || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        kelasStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
         visibleItems.some(it => it.keterangan.toLowerCase().includes(searchTerm.toLowerCase()))
       
       if (!matchesSearch) return false
@@ -243,6 +257,7 @@ export default function KasMasukClient({
           "No Referensi": item.noReferensi,
           "No Formulir": item.noFormulir || "-",
           "Penyetor": item.namaPihakKetiga || "-",
+          "Kelas": extractTransaksiKelas(item),
           "Deskripsi": deskripsiStr,
           "Total Nilai": nominalStr,
           "Pembuat": item.creator?.name || item.pembuat?.name || "-",
@@ -278,7 +293,7 @@ export default function KasMasukClient({
       const { exportTablePdf } = await import("@/lib/pdf")
       const { buildInstitutionInfo, getSignatoryKiri } = await import("@/lib/pdf-helpers")
       
-      const tableColumn = ["No", "Tgl Transaksi", "No Referensi", "Penyetor", "Deskripsi", "Total Nilai", "Pembuat"]
+      const tableColumn = ["No", "Tgl Transaksi", "No Referensi", "Penyetor", "Kelas", "Deskripsi", "Total Nilai", "Pembuat"]
       const tableRows: any[][] = filteredData.map((item: any, index: number) => {
         const items = getVisibleItemsForTransaksi(item, selectedJenisBayar)
         const rowTotal = items.reduce((s, it) => s + it.nominal, 0)
@@ -294,6 +309,7 @@ export default function KasMasukClient({
           format(new Date(item.tanggal), "dd/MM/yyyy"),
           item.noReferensi,
           item.namaPihakKetiga || "-",
+          extractTransaksiKelas(item),
           deskripsiStr,
           nominalStr,
           item.creator?.name || item.pembuat?.name || "-"
@@ -308,6 +324,7 @@ export default function KasMasukClient({
         tableRows.push([
           "",
           "TOTAL PENERIMAAN",
+          "",
           "",
           "",
           "",
@@ -414,7 +431,7 @@ export default function KasMasukClient({
           <ToolbarSearch 
             value={searchTerm}
             onChange={(e: any) => setSearchTerm(e.target.value)}
-            placeholder="Cari No Ref atau Nama..." 
+            placeholder="Cari No Ref, Penyetor, atau Kelas..." 
           />
 
           <div className="grid grid-cols-2 sm:flex gap-2.5 w-full sm:w-auto">
@@ -514,6 +531,7 @@ export default function KasMasukClient({
                     <th className="p-4 font-semibold">NO REFERENSI</th>
                     <th className="p-4 font-semibold">NO FORMULIR</th>
                     <th className="p-4 font-semibold">PENYETOR</th>
+                    <th className="p-4 font-semibold text-center">KELAS</th>
                     <th className="p-4 font-semibold">DESKRIPSI</th>
                     <th className="p-4 font-semibold text-left">TOTAL NILAI</th>
                     <th className="p-4 font-semibold">PEMBUAT</th>
@@ -534,6 +552,15 @@ export default function KasMasukClient({
                       <td className="p-4 font-semibold text-primary">{item.noReferensi}</td>
                       <td className="p-4 text-text-muted">{item.noFormulir || "-"}</td>
                       <td className="p-4 font-medium">{item.namaPihakKetiga || "-"}</td>
+                      <td className="p-4 text-center">
+                        {extractTransaksiKelas(item) !== "-" ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {extractTransaksiKelas(item)}
+                          </span>
+                        ) : (
+                          <span className="text-text-muted text-xs">-</span>
+                        )}
+                      </td>
                       <td className="p-4">
                         <div className="flex flex-col gap-0.5 py-0.5">
                           {items.map((it, i) => (

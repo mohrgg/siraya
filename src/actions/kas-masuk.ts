@@ -62,6 +62,29 @@ export async function getKasMasuk(params?: {
                   nama: true,
                   isSPP: true
                 }
+              },
+              murid: {
+                select: {
+                  id: true,
+                  name: true,
+                  nis: true,
+                  riwayatKelas: {
+                    select: {
+                      isCurrent: true,
+                      subKelas: {
+                        select: {
+                          id: true,
+                          name: true
+                        }
+                      }
+                    },
+                    orderBy: [
+                      { isCurrent: 'desc' },
+                      { createdAt: 'desc' }
+                    ],
+                    take: 1
+                  }
+                }
               }
             }
           }
@@ -414,7 +437,20 @@ export async function getKasMasukById(id: string) {
           tagihan: {
             include: {
               akun: true,
-              murid: true
+              murid: {
+                include: {
+                  riwayatKelas: {
+                    include: {
+                      subKelas: true
+                    },
+                    orderBy: [
+                      { isCurrent: 'desc' },
+                      { createdAt: 'desc' }
+                    ],
+                    take: 1
+                  }
+                }
+              }
             }
           }
         }

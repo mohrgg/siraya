@@ -164,6 +164,7 @@ export function TableReportHtml({
           <tr>
             {headers.map((h, i) => {
               const hUpper = (h || "").toUpperCase()
+              const hasKelas = headers.some(header => (header || "").toUpperCase().includes("KELAS") || (header || "").toUpperCase().includes("ROMBEL"))
               let widthClass = ""
               let alignClass = "text-center"
 
@@ -174,13 +175,16 @@ export function TableReportHtml({
                 widthClass = "w-[10%]"
                 alignClass = "text-center"
               } else if (hUpper.includes("REFERENSI") || hUpper.includes("NO.")) {
-                widthClass = "w-[14%]"
+                widthClass = hasKelas ? "w-[13%]" : "w-[14%]"
                 alignClass = "text-left"
               } else if (hUpper.includes("PENYETOR") || hUpper.includes("NAMA")) {
-                widthClass = "w-[17%]"
+                widthClass = hasKelas ? "w-[16%]" : "w-[17%]"
                 alignClass = "text-left"
+              } else if (hUpper.includes("KELAS") || hUpper.includes("ROMBEL")) {
+                widthClass = "w-[9%]"
+                alignClass = "text-center"
               } else if (hUpper.includes("DESKRIPSI") || hUpper.includes("KETERANGAN")) {
-                widthClass = "w-[36%]"
+                widthClass = hasKelas ? "w-[29%]" : "w-[36%]"
                 alignClass = "text-left"
               } else if (hUpper.includes("NILAI") || hUpper.includes("TOTAL") || hUpper.includes("NOMINAL") || hUpper.includes("JUMLAH") || hUpper.includes("SALDO")) {
                 widthClass = "w-[14%]"
@@ -215,7 +219,7 @@ export function TableReportHtml({
                   const isCurrency = typeof cellStr === 'string' && (cellStr.trim().startsWith('Rp') || cellStr.trim().startsWith('Rp.'))
                   const hUpper = (headers[cIdx] || "").toUpperCase()
                   let alignClass = "text-left"
-                  if (hUpper === "NO" || hUpper.includes("TGL") || hUpper.includes("STATUS")) {
+                  if (hUpper === "NO" || hUpper.includes("TGL") || hUpper.includes("STATUS") || hUpper.includes("KELAS") || hUpper.includes("ROMBEL")) {
                     alignClass = "text-center"
                   } else if (isCurrency || hUpper.includes("NILAI") || hUpper.includes("TOTAL") || hUpper.includes("NOMINAL") || hUpper.includes("JUMLAH") || hUpper.includes("SALDO")) {
                     alignClass = "text-left whitespace-nowrap"
