@@ -14,13 +14,15 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
   label, sortKey, currentSortKey, currentDirection, onSort, className = '' 
 }) => {
   const isActive = currentSortKey === sortKey;
+  const isCenter = className.includes('text-center') || className.includes('justify-center');
+  const isRight = className.includes('text-right') || className.includes('justify-end');
 
   return (
     <th 
       className={`p-4 font-semibold cursor-pointer select-none hover:bg-black/5 transition-colors group ${className}`}
       onClick={() => onSort(sortKey)}
     >
-      <div className="flex items-center gap-1.5">
+      <div className={`flex items-center gap-1.5 ${isCenter ? 'justify-center' : isRight ? 'justify-end' : ''}`}>
         {label}
         <span className="text-text-muted flex-shrink-0 transition-opacity">
           {!isActive || !currentDirection ? (

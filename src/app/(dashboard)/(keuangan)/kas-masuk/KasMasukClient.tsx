@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { Search, Plus, Printer, Download, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown, FileSpreadsheet, FileText, ArrowDownLeft, Layers, ArrowUpDown } from "lucide-react"
+import { Search, Plus, Printer, Download, Eye, Edit, Trash2, Calendar as CalendarIcon, Filter, Receipt, ChevronDown, FileSpreadsheet, FileText, ArrowDownLeft, Layers } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
+import { SortableHeader } from "@/components/ui/SortableHeader"
 import { format, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay, subMonths } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import Link from "next/link"
@@ -134,7 +135,39 @@ export default function KasMasukClient({
   
   const [filterBy, setFilterBy] = useState<'tanggal_transaksi' | 'tanggal_pembuatan'>('tanggal_transaksi')
   const [timeRange, setTimeRange] = useState<'semua' | 'hari' | 'minggu' | 'bulan' | 'bulan_lalu' | 'custom'>('hari')
-  const [sortBy, setSortBy] = useState<'tanggal' | 'kelas'>('tanggal')
+  
+  // State Pengurutan Kolom (Default: Tanggal Transaksi desc)
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({
+    key: 'tanggal',
+    direction: 'desc'
+  })
+
+  const requestSort = (key: string) => {
+    let direction: 'asc' | 'desc' | null = 'asc'
+    if (key === 'tanggal' || key === 'createdAt' || key === 'totalNilai') {
+      if (sortConfig.key === key && sortConfig.direction === 'desc') {
+        direction = 'asc'
+      } else if (sortConfig.key === key && sortConfig.direction === 'asc') {
+        direction = key === 'tanggal' ? 'desc' : null
+      } else {
+        direction = 'desc'
+      }
+    } else {
+      if (sortConfig.key === key && sortConfig.direction === 'asc') {
+        direction = 'desc'
+      } else if (sortConfig.key === key && sortConfig.direction === 'desc') {
+        direction = null
+      } else {
+        direction = 'asc'
+      }
+    }
+
+    if (!direction) {
+      setSortConfig({ key: 'tanggal', direction: 'desc' })
+    } else {
+      setSortConfig({ key, direction })
+    }
+  }
   
   // Custom date state if needed
   const [startDate, setStartDate] = useState("")
@@ -209,11 +242,15 @@ export default function KasMasukClient({
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, filterBy, timeRange, startDate, endDate, selectedJenisBayar, sortBy])
+  }, [searchTerm, filterBy, timeRange, startDate, endDate, selectedJenisBayar, sortConfig])
 
   const sortedData = useMemo(() => {
-    if (sortBy === 'kelas') {
-      return [...filteredData].sort((a, b) => {
+    const list = [...filteredData]
+    const { key, direction } = sortConfig
+    const multiplier = direction === 'asc' ? 1 : -1
+
+    return list.sort((a, b) => {
+      if (key === 'kelas') {
         const kelasA = extractTransaksiKelas(a)
         const kelasB = extractTransaksiKelas(b)
 
@@ -222,28 +259,53 @@ export default function KasMasukClient({
         if (kelasA !== "-" && kelasB === "-") return -1
         if (kelasA !== "-" && kelasB !== "-") {
           const comp = kelasA.localeCompare(kelasB, "id", { numeric: true, sensitivity: "base" })
-          if (comp !== 0) return comp
+          if (comp !== 0) return comp * multiplier
         }
 
         // Secondary sort: nama penyetor (A-Z)
         const namaA = (a.namaPihakKetiga || "").toLowerCase()
         const namaB = (b.namaPihakKetiga || "").toLowerCase()
         const nameComp = namaA.localeCompare(namaB, "id")
-        if (nameComp !== 0) return nameComp
+        if (nameComp !== 0) return nameComp * multiplier
 
         // Tertiary sort: tanggal transaksi terbaru (desc)
         return new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-      })
-    }
+      }
 
-    // Default: Urut berdasarkan tanggal transaksi terbaru (desc)
-    return [...filteredData].sort((a, b) => {
-      const dateA = new Date(a.tanggal).getTime()
-      const dateB = new Date(b.tanggal).getTime()
-      if (dateB !== dateA) return dateB - dateA
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      if (key === 'tanggal') {
+        const dateA = new Date(a.tanggal).getTime()
+        const dateB = new Date(b.tanggal).getTime()
+        if (dateA !== dateB) return (dateA - dateB) * multiplier
+        return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * multiplier
+      }
+
+      if (key === 'createdAt') {
+        const dateA = new Date(a.createdAt).getTime()
+        const dateB = new Date(b.createdAt).getTime()
+        return (dateA - dateB) * multiplier
+      }
+
+      if (key === 'namaPihakKetiga') {
+        const namaA = (a.namaPihakKetiga || "").toLowerCase()
+        const namaB = (b.namaPihakKetiga || "").toLowerCase()
+        return namaA.localeCompare(namaB, "id") * multiplier
+      }
+
+      if (key === 'noReferensi') {
+        return (a.noReferensi || "").localeCompare(b.noReferensi || "", "id", { numeric: true }) * multiplier
+      }
+
+      if (key === 'totalNilai') {
+        const itemsA = getVisibleItemsForTransaksi(a, selectedJenisBayar)
+        const totalA = itemsA.reduce((s, it) => s + it.nominal, 0)
+        const itemsB = getVisibleItemsForTransaksi(b, selectedJenisBayar)
+        const totalB = itemsB.reduce((s, it) => s + it.nominal, 0)
+        return (totalA - totalB) * multiplier
+      }
+
+      return 0
     })
-  }, [filteredData, sortBy])
+  }, [filteredData, sortConfig, selectedJenisBayar])
 
   const paginatedData = useMemo(() => {
     return sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
@@ -375,7 +437,11 @@ export default function KasMasukClient({
       const pdfFilename = jenisText
         ? `Kas_Masuk_${jenisText.replace(/[^a-zA-Z0-9_-]/g, '_')}_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_')
         : `Kas_Masuk_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_')
-      const urutLabel = sortBy === 'kelas' ? " • Urut: Sesuai Kelas" : " • Urut: Tanggal Transaksi"
+      const urutLabel = sortConfig.key === 'kelas' 
+        ? ` • Urut: Kelas (${sortConfig.direction === 'asc' ? 'A-Z' : 'Z-A'})`
+        : sortConfig.key === 'tanggal'
+        ? ` • Urut: Tanggal (${sortConfig.direction === 'desc' ? 'Terbaru' : 'Terlama'})`
+        : ` • Urut: ${sortConfig.key} (${sortConfig.direction?.toUpperCase()})`
       const filterLabel = (rawLabel ? ` • Jenis: ${rawLabel}` : "") + urutLabel
 
       await exportTablePdf({
@@ -504,17 +570,6 @@ export default function KasMasukClient({
                 { label: "Custom Tanggal", value: "custom" }
               ]}
             />
-
-            <ToolbarFilter
-              icon={<ArrowUpDown size={14} />}
-              value={sortBy}
-              onChange={(val) => setSortBy(val as any)}
-              options={[
-                { label: "Urut: Tgl Transaksi", value: "tanggal" },
-                { label: "Urut: Sesuai Kelas", value: "kelas" }
-              ]}
-              className="col-span-2 sm:col-span-1 sm:max-w-[190px] xl:max-w-[200px]"
-            />
           </div>
 
           {timeRange === 'custom' && (
@@ -573,32 +628,52 @@ export default function KasMasukClient({
                 <thead>
                   <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
                     <th className="p-4 font-semibold text-center">NO</th>
-                    <th 
-                      onClick={() => setSortBy(prev => prev === 'tanggal' ? 'kelas' : 'tanggal')}
-                      className="p-4 font-semibold cursor-pointer hover:text-text-main select-none transition-colors"
-                      title="Klik untuk mengubah urutan (Tanggal / Kelas)"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <span>TGL TRANSAKSI</span>
-                        {sortBy === 'tanggal' && <ArrowUpDown size={12} className="text-primary" />}
-                      </div>
-                    </th>
-                    <th className="p-4 font-semibold">TGL PEMBUATAN</th>
-                    <th className="p-4 font-semibold">NO REFERENSI</th>
+                    <SortableHeader 
+                      label="TGL TRANSAKSI" 
+                      sortKey="tanggal" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                    />
+                    <SortableHeader 
+                      label="TGL PEMBUATAN" 
+                      sortKey="createdAt" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                    />
+                    <SortableHeader 
+                      label="NO REFERENSI" 
+                      sortKey="noReferensi" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                    />
                     <th className="p-4 font-semibold">NO FORMULIR</th>
-                    <th className="p-4 font-semibold">PENYETOR</th>
-                    <th 
-                      onClick={() => setSortBy(prev => prev === 'kelas' ? 'tanggal' : 'kelas')}
-                      className="p-4 font-semibold text-center cursor-pointer hover:text-text-main select-none transition-colors"
-                      title="Klik untuk mengurutkan sesuai kelas"
-                    >
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span>KELAS</span>
-                        {sortBy === 'kelas' && <ArrowUpDown size={12} className="text-primary" />}
-                      </div>
-                    </th>
+                    <SortableHeader 
+                      label="PENYETOR" 
+                      sortKey="namaPihakKetiga" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                    />
+                    <SortableHeader 
+                      label="KELAS" 
+                      sortKey="kelas" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                      className="text-center"
+                    />
                     <th className="p-4 font-semibold">DESKRIPSI</th>
-                    <th className="p-4 font-semibold text-left">TOTAL NILAI</th>
+                    <SortableHeader 
+                      label="TOTAL NILAI" 
+                      sortKey="totalNilai" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                      className="text-left"
+                    />
                     <th className="p-4 font-semibold">PEMBUAT</th>
                     <th className="p-4 font-semibold text-center">STATUS</th>
                     <th className="p-4 font-semibold text-center">REVISI</th>
