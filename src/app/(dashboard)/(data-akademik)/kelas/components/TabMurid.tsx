@@ -48,7 +48,7 @@ export default function TabMurid({
           <th className="p-4 font-semibold text-left w-12">No</th>
           <SortableHeader label="Nama Murid" sortKey="name" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
           <SortableHeader label="NISN / NIS" sortKey="nisn" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
-          <th className="p-4 font-semibold text-left">Jenis Kelamin</th>
+          <SortableHeader label="Jenis Kelamin" sortKey="gender" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
           <th className="p-4 font-semibold text-left">Kelas / Rombel</th>
           <SortableHeader label="Status" sortKey="status" currentSortKey={muridSort.key} currentDirection={muridSort.direction} onSort={handleMuridSort} />
           {isReadOnly ? (

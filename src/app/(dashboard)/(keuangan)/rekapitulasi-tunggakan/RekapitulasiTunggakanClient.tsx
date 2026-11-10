@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast"
 import { Button } from "@/components/ui/Button"
 import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
+import { SortableHeader } from "@/components/ui/SortableHeader"
 import { getRekapitulasiTunggakan } from "@/actions/rekapitulasi-tunggakan"
 import { exportTablePdf } from "@/lib/pdf"
 import { buildInstitutionInfo, getSignatoryKiri } from "@/lib/pdf-helpers"
@@ -138,18 +139,72 @@ export default function RekapitulasiTunggakanClient({
     return new Intl.NumberFormat('id-ID').format(val)
   }
 
+  // State Pengurutan Tabel 1 (Ringkasan Rombel) - Default: Tunggakan Terbesar
+  const [sortConfig1, setSortConfig1] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({
+    key: 'totalTunggakan',
+    direction: 'desc'
+  })
+
+  const requestSort1 = (key: string) => {
+    let direction: 'asc' | 'desc' | null = 'asc'
+    if (key === 'totalTagihan' || key === 'totalDibayar' || key === 'totalTunggakan') {
+      if (sortConfig1.key === key && sortConfig1.direction === 'desc') {
+        direction = 'asc'
+      } else if (sortConfig1.key === key && sortConfig1.direction === 'asc') {
+        direction = key === 'totalTunggakan' ? 'desc' : null
+      } else {
+        direction = 'desc'
+      }
+    } else {
+      if (sortConfig1.key === key && sortConfig1.direction === 'asc') {
+        direction = 'desc'
+      } else if (sortConfig1.key === key && sortConfig1.direction === 'desc') {
+        direction = null
+      } else {
+        direction = 'asc'
+      }
+    }
+    setSortConfig1({ key: direction ? key : 'totalTunggakan', direction: direction || 'desc' })
+  }
+
   const filteredData1 = useMemo(() => {
     return rekapData.filter(item => 
       item.subKelasName.toLowerCase().includes(searchTerm1.toLowerCase())
     )
   }, [rekapData, searchTerm1])
 
-  const totalPages1 = Math.ceil(filteredData1.length / summaryPageSize1) || 1
+  const sortedData1 = useMemo(() => {
+    const list = [...filteredData1]
+    const { key, direction } = sortConfig1
+    const multiplier = direction === 'asc' ? 1 : -1
+
+    return list.sort((a, b) => {
+      if (key === 'subKelasName') {
+        return (a.subKelasName || "").localeCompare(b.subKelasName || "", "id", { numeric: true, sensitivity: "base" }) * multiplier
+      }
+      if (key === 'totalTagihan') {
+        return (a.totalTagihan - b.totalTagihan) * multiplier
+      }
+      if (key === 'totalDibayar') {
+        return (a.totalDibayar - b.totalDibayar) * multiplier
+      }
+      if (key === 'totalTunggakan') {
+        return (a.totalTunggakan - b.totalTunggakan) * multiplier
+      }
+      return 0
+    })
+  }, [filteredData1, sortConfig1])
+
+  const totalPages1 = Math.ceil(sortedData1.length / summaryPageSize1) || 1
 
   const paginatedData1 = useMemo(() => {
     const start = (summaryCurrentPage1 - 1) * summaryPageSize1
-    return filteredData1.slice(start, start + summaryPageSize1)
-  }, [filteredData1, summaryCurrentPage1, summaryPageSize1])
+    return sortedData1.slice(start, start + summaryPageSize1)
+  }, [sortedData1, summaryCurrentPage1, summaryPageSize1])
+
+  useEffect(() => {
+    setSummaryCurrentPage1(1)
+  }, [searchTerm1, sortConfig1])
 
   const filteredData2 = useMemo(() => {
     return rekapData.filter(item => 
@@ -168,6 +223,34 @@ export default function RekapitulasiTunggakanClient({
     return rekapData.find(r => r.subKelasId === selectedSubKelasId)
   }, [rekapData, selectedSubKelasId])
 
+  // State Pengurutan Tabel Detail Siswa - Default: Tunggakan Terbesar
+  const [sortConfigDetail, setSortConfigDetail] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({
+    key: 'totalTunggakan',
+    direction: 'desc'
+  })
+
+  const requestSortDetail = (key: string) => {
+    let direction: 'asc' | 'desc' | null = 'asc'
+    if (key === 'totalTagihan' || key === 'totalDibayar' || key === 'totalTunggakan') {
+      if (sortConfigDetail.key === key && sortConfigDetail.direction === 'desc') {
+        direction = 'asc'
+      } else if (sortConfigDetail.key === key && sortConfigDetail.direction === 'asc') {
+        direction = key === 'totalTunggakan' ? 'desc' : null
+      } else {
+        direction = 'desc'
+      }
+    } else {
+      if (sortConfigDetail.key === key && sortConfigDetail.direction === 'asc') {
+        direction = 'desc'
+      } else if (sortConfigDetail.key === key && sortConfigDetail.direction === 'desc') {
+        direction = null
+      } else {
+        direction = 'asc'
+      }
+    }
+    setSortConfigDetail({ key: direction ? key : 'totalTunggakan', direction: direction || 'desc' })
+  }
+
   const filteredStudents = useMemo(() => {
     if (!selectedKelasData || !selectedKelasData.studentsList) return []
     if (!studentSearch.trim()) return selectedKelasData.studentsList
@@ -177,18 +260,44 @@ export default function RekapitulasiTunggakanClient({
     )
   }, [selectedKelasData, studentSearch])
 
-  const totalDetailPages = Math.ceil(filteredStudents.length / detailPageSize) || 1
+  const sortedStudents = useMemo(() => {
+    const list = [...filteredStudents]
+    const { key, direction } = sortConfigDetail
+    const multiplier = direction === 'asc' ? 1 : -1
+
+    return list.sort((a, b) => {
+      if (key === 'name') {
+        return (a.name || "").localeCompare(b.name || "", "id", { sensitivity: "base" }) * multiplier
+      }
+      if (key === 'totalTagihan') {
+        return (a.totalTagihan - b.totalTagihan) * multiplier
+      }
+      if (key === 'totalDibayar') {
+        return (a.totalDibayar - b.totalDibayar) * multiplier
+      }
+      if (key === 'totalTunggakan') {
+        return (a.totalTunggakan - b.totalTunggakan) * multiplier
+      }
+      return 0
+    })
+  }, [filteredStudents, sortConfigDetail])
+
+  const totalDetailPages = Math.ceil(sortedStudents.length / detailPageSize) || 1
 
   const paginatedStudents = useMemo(() => {
     const start = (detailCurrentPage - 1) * detailPageSize
-    return filteredStudents.slice(start, start + detailPageSize)
-  }, [filteredStudents, detailCurrentPage, detailPageSize])
+    return sortedStudents.slice(start, start + detailPageSize)
+  }, [sortedStudents, detailCurrentPage, detailPageSize])
+
+  useEffect(() => {
+    setDetailCurrentPage(1)
+  }, [studentSearch, selectedSubKelasId, sortConfigDetail])
 
   const handleExportPdfRingkasan = () => {
-    if (filteredData1.length === 0) return toast.error("Tidak ada data untuk diekspor")
+    if (sortedData1.length === 0) return toast.error("Tidak ada data untuk diekspor")
     
     const headers = ["NO", "KELAS", "TOTAL TAGIHAN", "TOTAL DIBAYAR", "TOTAL TUNGGAKAN BERJALAN", "TOTAL TUNGGAKAN KESELURUHAN"]
-    const data = filteredData1.map((r, i) => [
+    const data = sortedData1.map((r, i) => [
       (i + 1).toString(),
       r.subKelasName.toUpperCase(),
       `Rp ${formatRupiah(r.totalTagihan)}`,
@@ -201,16 +310,22 @@ export default function RekapitulasiTunggakanClient({
     data.push([
       "",
       "TOTAL KESELURUHAN",
-      `Rp ${formatRupiah(filteredData1.reduce((acc, r) => acc + r.totalTagihan, 0))}`,
-      `Rp ${formatRupiah(filteredData1.reduce((acc, r) => acc + r.totalDibayar, 0))}`,
-      `Rp ${formatRupiah(filteredData1.reduce((acc, r) => acc + r.totalTunggakan, 0))}`,
-      `Rp ${formatRupiah(filteredData1.reduce((acc, r) => acc + r.totalTunggakan, 0))}`
+      `Rp ${formatRupiah(sortedData1.reduce((acc, r) => acc + r.totalTagihan, 0))}`,
+      `Rp ${formatRupiah(sortedData1.reduce((acc, r) => acc + r.totalDibayar, 0))}`,
+      `Rp ${formatRupiah(sortedData1.reduce((acc, r) => acc + r.totalTunggakan, 0))}`,
+      `Rp ${formatRupiah(sortedData1.reduce((acc, r) => acc + r.totalTunggakan, 0))}`
     ])
+
+    const urutLabel = sortConfig1.key === 'totalTunggakan'
+      ? ` • Urut: Tunggakan (${sortConfig1.direction === 'desc' ? 'Terbesar' : 'Terkecil'})`
+      : sortConfig1.key === 'subKelasName'
+      ? ` • Urut: Kelas (${sortConfig1.direction === 'asc' ? 'A-Z' : 'Z-A'})`
+      : ` • Urut: ${sortConfig1.key}`
 
     exportTablePdf({
       institutionInfo: buildInstitutionInfo(pengaturan, unitInfo),
       title: "RINGKASAN TAGIHAN & TUNGGAKAN",
-      subtitle: `Unit: ${activeUnitName} • Tahun Akademik: ${activeTahunAkademikName}`,
+      subtitle: `Unit: ${activeUnitName} • Tahun Akademik: ${activeTahunAkademikName}${urutLabel}`,
       headers,
       data,
       filename: `Ringkasan_Tunggakan_${activeUnitName}`,
@@ -221,9 +336,9 @@ export default function RekapitulasiTunggakanClient({
   }
 
   const handleExportExcelRingkasan = () => {
-    if (filteredData1.length === 0) return toast.error("Tidak ada data untuk diekspor")
+    if (sortedData1.length === 0) return toast.error("Tidak ada data untuk diekspor")
     
-    const data = filteredData1.map((r, i) => ({
+    const data = sortedData1.map((r, i) => ({
       "NO": i + 1,
       "UNIT": activeUnitName,
       "KELAS": r.subKelasName.toUpperCase(),
@@ -298,10 +413,10 @@ export default function RekapitulasiTunggakanClient({
   }
 
   const handleExportPdfKelas = () => {
-    if (!selectedKelasData || filteredStudents.length === 0) return toast.error("Tidak ada data untuk diekspor")
+    if (!selectedKelasData || sortedStudents.length === 0) return toast.error("Tidak ada data untuk diekspor")
     
     const headers = ["NO", "NAMA SISWA", "NISN", "TOTAL TAGIHAN", "TOTAL DIBAYAR", "SISA TUNGGAKAN"]
-    const data = filteredStudents.map((r, i) => [
+    const data = sortedStudents.map((r, i) => [
       (i + 1).toString(),
       r.name.toUpperCase(),
       r.nisn,
@@ -315,15 +430,21 @@ export default function RekapitulasiTunggakanClient({
       "",
       "TOTAL KESELURUHAN",
       "",
-      `Rp ${formatRupiah(filteredStudents.reduce((acc, r) => acc + r.totalTagihan, 0))}`,
-      `Rp ${formatRupiah(filteredStudents.reduce((acc, r) => acc + r.totalDibayar, 0))}`,
-      `Rp ${formatRupiah(filteredStudents.reduce((acc, r) => acc + r.totalTunggakan, 0))}`
+      `Rp ${formatRupiah(sortedStudents.reduce((acc, r) => acc + r.totalTagihan, 0))}`,
+      `Rp ${formatRupiah(sortedStudents.reduce((acc, r) => acc + r.totalDibayar, 0))}`,
+      `Rp ${formatRupiah(sortedStudents.reduce((acc, r) => acc + r.totalTunggakan, 0))}`
     ])
+
+    const urutLabel = sortConfigDetail.key === 'totalTunggakan'
+      ? ` • Urut: Tunggakan (${sortConfigDetail.direction === 'desc' ? 'Terbesar' : 'Terkecil'})`
+      : sortConfigDetail.key === 'name'
+      ? ` • Urut: Nama (${sortConfigDetail.direction === 'asc' ? 'A-Z' : 'Z-A'})`
+      : ` • Urut: ${sortConfigDetail.key}`
 
     exportTablePdf({
       institutionInfo: buildInstitutionInfo(pengaturan, unitInfo),
       title: `DETAIL TUNGGAKAN KELAS ${selectedKelasData.subKelasName.toUpperCase()}`,
-      subtitle: `Unit: ${activeUnitName} • Tahun Akademik: ${activeTahunAkademikName}`,
+      subtitle: `Unit: ${activeUnitName} • Tahun Akademik: ${activeTahunAkademikName}${urutLabel}`,
       headers,
       data,
       filename: `Tunggakan_Kelas_${selectedKelasData.subKelasName}_${activeUnitName}`,
@@ -334,9 +455,9 @@ export default function RekapitulasiTunggakanClient({
   }
 
   const handleExportExcelKelas = () => {
-    if (!selectedKelasData || filteredStudents.length === 0) return toast.error("Tidak ada data untuk diekspor")
+    if (!selectedKelasData || sortedStudents.length === 0) return toast.error("Tidak ada data untuk diekspor")
     
-    const data = filteredStudents.map((r, i) => {
+    const data = sortedStudents.map((r, i) => {
       const rowData: any = {
         "NO": i + 1,
         "NAMA SISWA": r.name.toUpperCase(),
@@ -519,11 +640,11 @@ export default function RekapitulasiTunggakanClient({
                     />
                     <ToolbarExportExcel 
                       onClick={handleExportExcelRingkasan}
-                      disabled={filteredData1.length === 0}
+                      disabled={sortedData1.length === 0}
                     />
                     <ToolbarExportPDF 
                       onClick={handleExportPdfRingkasan}
-                      disabled={filteredData1.length === 0}
+                      disabled={sortedData1.length === 0}
                     />
                   </ToolbarActions>
                 </Toolbar>
@@ -533,11 +654,46 @@ export default function RekapitulasiTunggakanClient({
                     <thead>
                       <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
                         <th className="p-4 font-semibold text-center w-16">NO</th>
-                        <th className="p-4 font-semibold min-w-[250px]">KELAS</th>
-                        <th className="p-4 font-semibold text-right">TOTAL TAGIHAN</th>
-                        <th className="p-4 font-semibold text-right">TOTAL YANG SUDAH DIBAYAR</th>
-                        <th className="p-4 font-semibold text-right">TOTAL TUNGGAKAN BERJALAN</th>
-                        <th className="p-4 font-semibold text-right">TOTAL TUNGGAKAN (KESELURUHAN)</th>
+                        <SortableHeader 
+                          label="KELAS" 
+                          sortKey="subKelasName" 
+                          currentSortKey={sortConfig1.key} 
+                          currentDirection={sortConfig1.direction} 
+                          onSort={requestSort1} 
+                          className="min-w-[250px]"
+                        />
+                        <SortableHeader 
+                          label="TOTAL TAGIHAN" 
+                          sortKey="totalTagihan" 
+                          currentSortKey={sortConfig1.key} 
+                          currentDirection={sortConfig1.direction} 
+                          onSort={requestSort1} 
+                          className="text-right"
+                        />
+                        <SortableHeader 
+                          label="TOTAL YANG SUDAH DIBAYAR" 
+                          sortKey="totalDibayar" 
+                          currentSortKey={sortConfig1.key} 
+                          currentDirection={sortConfig1.direction} 
+                          onSort={requestSort1} 
+                          className="text-right"
+                        />
+                        <SortableHeader 
+                          label="TOTAL TUNGGAKAN BERJALAN" 
+                          sortKey="totalTunggakan" 
+                          currentSortKey={sortConfig1.key} 
+                          currentDirection={sortConfig1.direction} 
+                          onSort={requestSort1} 
+                          className="text-right"
+                        />
+                        <SortableHeader 
+                          label="TOTAL TUNGGAKAN (KESELURUHAN)" 
+                          sortKey="totalTunggakan" 
+                          currentSortKey={sortConfig1.key} 
+                          currentDirection={sortConfig1.direction} 
+                          onSort={requestSort1} 
+                          className="text-right"
+                        />
                       </tr>
                     </thead>
                     <tbody>
@@ -652,11 +808,11 @@ export default function RekapitulasiTunggakanClient({
                     />
                     <ToolbarExportExcel 
                       onClick={handleExportExcelKelas}
-                      disabled={filteredStudents.length === 0}
+                      disabled={sortedStudents.length === 0}
                     />
                     <ToolbarExportPDF 
                       onClick={handleExportPdfKelas}
-                      disabled={filteredStudents.length === 0}
+                      disabled={sortedStudents.length === 0}
                     />
                   </ToolbarActions>
                 </Toolbar>
@@ -666,10 +822,38 @@ export default function RekapitulasiTunggakanClient({
                     <thead>
                       <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
                         <th className="p-4 font-semibold text-center w-16">NO</th>
-                        <th className="p-4 font-semibold min-w-[250px]">NAMA SISWA</th>
-                        <th className="p-4 font-semibold text-right">TOTAL TAGIHAN</th>
-                        <th className="p-4 font-semibold text-right">TOTAL DIBAYAR</th>
-                        <th className="p-4 font-semibold text-right text-rose-600">TUNGGAKAN</th>
+                        <SortableHeader 
+                          label="NAMA SISWA" 
+                          sortKey="name" 
+                          currentSortKey={sortConfigDetail.key} 
+                          currentDirection={sortConfigDetail.direction} 
+                          onSort={requestSortDetail} 
+                          className="min-w-[250px]"
+                        />
+                        <SortableHeader 
+                          label="TOTAL TAGIHAN" 
+                          sortKey="totalTagihan" 
+                          currentSortKey={sortConfigDetail.key} 
+                          currentDirection={sortConfigDetail.direction} 
+                          onSort={requestSortDetail} 
+                          className="text-right"
+                        />
+                        <SortableHeader 
+                          label="TOTAL DIBAYAR" 
+                          sortKey="totalDibayar" 
+                          currentSortKey={sortConfigDetail.key} 
+                          currentDirection={sortConfigDetail.direction} 
+                          onSort={requestSortDetail} 
+                          className="text-right"
+                        />
+                        <SortableHeader 
+                          label="TUNGGAKAN" 
+                          sortKey="totalTunggakan" 
+                          currentSortKey={sortConfigDetail.key} 
+                          currentDirection={sortConfigDetail.direction} 
+                          onSort={requestSortDetail} 
+                          className="text-right text-rose-600"
+                        />
                         {akunList.map(akun => (
                           <th key={akun.id} className="p-4 font-semibold text-right opacity-70">{akun.nama.toUpperCase()}</th>
                         ))}

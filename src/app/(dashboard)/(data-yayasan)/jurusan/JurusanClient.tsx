@@ -469,6 +469,8 @@ export default function JurusanClient({
                 handleOpenAddModal={handleOpenAddModal}
                 handleOpenEditModal={handleOpenEditModal}
                 setDeleteId={setDeleteId}
+                sortConfig={sortConfig}
+                requestSort={requestSort}
               />
             )
           })}
@@ -493,7 +495,9 @@ function UnitMajorTableSection({
   isReadOnly,
   handleOpenAddModal,
   handleOpenEditModal,
-  setDeleteId
+  setDeleteId,
+  sortConfig,
+  requestSort
 }: {
   unit: any
   unitMajors: Major[]
@@ -502,6 +506,8 @@ function UnitMajorTableSection({
   handleOpenAddModal: (unitId: string) => void
   handleOpenEditModal: (major: Major) => void
   setDeleteId: (id: string) => void
+  sortConfig?: any
+  requestSort?: (key: string) => void
 }) {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(5)
@@ -553,8 +559,20 @@ function UnitMajorTableSection({
             <thead className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
               <tr>
                 <th className="p-4 text-center w-12 font-semibold">NO</th>
-                <th className="p-4 font-semibold">KODE PROGRAM</th>
-                <th className="p-4 font-semibold">NAMA KOMPETENSI KEAHLIAN / JURUSAN</th>
+                <SortableHeader 
+                  label="KODE PROGRAM" 
+                  sortKey="code" 
+                  currentSortKey={sortConfig?.key} 
+                  currentDirection={sortConfig?.direction} 
+                  onSort={requestSort || (() => {})} 
+                />
+                <SortableHeader 
+                  label="NAMA KOMPETENSI KEAHLIAN / JURUSAN" 
+                  sortKey="name" 
+                  currentSortKey={sortConfig?.key} 
+                  currentDirection={sortConfig?.direction} 
+                  onSort={requestSort || (() => {})} 
+                />
                 <th className="p-4 text-center font-semibold">ROMBEL TERHUBUNG</th>
                 {!isReadOnly && <th className="p-4 font-semibold text-right">AKSI</th>}
               </tr>

@@ -5,6 +5,7 @@ import { Search, Plus, Printer, Download, RefreshCw, Eye, Edit, Trash2, Calendar
 import { Button } from "@/components/ui/Button"
 import { TabNavigation } from "@/components/ui/TabNavigation"
 import { TableScrollHint } from "@/components/ui/TableScrollHint"
+import { SortableHeader } from "@/components/ui/SortableHeader"
 import { format, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay, subMonths } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import Link from "next/link"
@@ -184,23 +185,97 @@ export default function KasKeluarClient({
   const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
 
+  // State Pengurutan Kolom (Default: Tanggal Transaksi desc)
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({
+    key: 'tanggal',
+    direction: 'desc'
+  })
+
+  const requestSort = (key: string) => {
+    let direction: 'asc' | 'desc' | null = 'asc'
+    if (key === 'tanggal' || key === 'createdAt' || key === 'totalNilai') {
+      if (sortConfig.key === key && sortConfig.direction === 'desc') {
+        direction = 'asc'
+      } else if (sortConfig.key === key && sortConfig.direction === 'asc') {
+        direction = key === 'tanggal' ? 'desc' : null
+      } else {
+        direction = 'desc'
+      }
+    } else {
+      if (sortConfig.key === key && sortConfig.direction === 'asc') {
+        direction = 'desc'
+      } else if (sortConfig.key === key && sortConfig.direction === 'desc') {
+        direction = null
+      } else {
+        direction = 'asc'
+      }
+    }
+
+    if (!direction) {
+      setSortConfig({ key: 'tanggal', direction: 'desc' })
+    } else {
+      setSortConfig({ key, direction })
+    }
+  }
+
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, filterBy, timeRange, startDate, endDate, selectedJenisPengeluaran])
+  }, [searchTerm, filterBy, timeRange, startDate, endDate, selectedJenisPengeluaran, sortConfig])
+
+  const sortedData = useMemo(() => {
+    const list = [...filteredData]
+    const { key, direction } = sortConfig
+    const multiplier = direction === 'asc' ? 1 : -1
+
+    return list.sort((a, b) => {
+      if (key === 'tanggal') {
+        const dateA = new Date(a.tanggal).getTime()
+        const dateB = new Date(b.tanggal).getTime()
+        if (dateA !== dateB) return (dateA - dateB) * multiplier
+        return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * multiplier
+      }
+
+      if (key === 'createdAt') {
+        const dateA = new Date(a.createdAt).getTime()
+        const dateB = new Date(b.createdAt).getTime()
+        return (dateA - dateB) * multiplier
+      }
+
+      if (key === 'namaPihakKetiga') {
+        const namaA = (a.penerima?.name || a.namaPihakKetiga || "").toLowerCase()
+        const namaB = (b.penerima?.name || b.namaPihakKetiga || "").toLowerCase()
+        return namaA.localeCompare(namaB, "id") * multiplier
+      }
+
+      if (key === 'noReferensi') {
+        return (a.noReferensi || "").localeCompare(b.noReferensi || "", "id", { numeric: true }) * multiplier
+      }
+
+      if (key === 'totalNilai') {
+        const itemsA = getVisibleItemsForKasKeluar(a, selectedJenisPengeluaran)
+        const totalA = itemsA.reduce((s, it) => s + it.nominal, 0)
+        const itemsB = getVisibleItemsForKasKeluar(b, selectedJenisPengeluaran)
+        const totalB = itemsB.reduce((s, it) => s + it.nominal, 0)
+        return (totalA - totalB) * multiplier
+      }
+
+      return 0
+    })
+  }, [filteredData, sortConfig, selectedJenisPengeluaran])
 
   const paginatedData = useMemo(() => {
-    return filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-  }, [filteredData, currentPage, pageSize])
+    return sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  }, [sortedData, currentPage, pageSize])
 
-  const computedTotalPages = Math.ceil(filteredData.length / pageSize)
+  const computedTotalPages = Math.ceil(sortedData.length / pageSize)
 
   const executiveMetrics = useMemo(() => {
-    const totalKeluar = filteredData.reduce((sum: number, item: any) => {
+    const totalKeluar = sortedData.reduce((sum: number, item: any) => {
       const items = getVisibleItemsForKasKeluar(item, selectedJenisPengeluaran)
       return sum + items.reduce((s, it) => s + it.nominal, 0)
     }, 0)
-    const countTrans = filteredData.length
-    const largeTrans = filteredData.filter((item: any) => {
+    const countTrans = sortedData.length
+    const largeTrans = sortedData.filter((item: any) => {
       const items = getVisibleItemsForKasKeluar(item, selectedJenisPengeluaran)
       const transTotal = items.reduce((s, it) => s + it.nominal, 0)
       return transTotal >= 1000000
@@ -212,7 +287,7 @@ export default function KasKeluarClient({
       largeTrans,
       avgTrans
     }
-  }, [filteredData, selectedJenisPengeluaran])
+  }, [sortedData, selectedJenisPengeluaran])
 
   const handleExportExcel = async () => {
     setIsExportingExcel(true)
@@ -220,7 +295,7 @@ export default function KasKeluarClient({
       const { exportToExcel } = await import("@/lib/excel")
       const exportData: any[] = []
       let rowNum = 1
-      filteredData.forEach((item: any) => {
+      sortedData.forEach((item: any) => {
         const items = getVisibleItemsForKasKeluar(item, selectedJenisPengeluaran)
         items.forEach((it, i) => {
           exportData.push({
@@ -269,7 +344,7 @@ export default function KasKeluarClient({
       const tableColumn = ["No", "Tgl Transaksi", "No Referensi", "Penerima", "Deskripsi", "Total Nilai", "Pembuat", "Status"]
       const tableRows: any[][] = []
       let rowNum = 1
-      filteredData.forEach((item: any) => {
+      sortedData.forEach((item: any) => {
         const items = getVisibleItemsForKasKeluar(item, selectedJenisPengeluaran)
         items.forEach((it, i) => {
           tableRows.push([
@@ -286,8 +361,8 @@ export default function KasKeluarClient({
         rowNum++
       })
 
-      if (filteredData.length > 0) {
-        const totalNilaiAll = filteredData.reduce((acc: number, curr: any) => {
+      if (sortedData.length > 0) {
+        const totalNilaiAll = sortedData.reduce((acc: number, curr: any) => {
           const items = getVisibleItemsForKasKeluar(curr, selectedJenisPengeluaran)
           return acc + items.reduce((s, it) => s + it.nominal, 0)
         }, 0)
@@ -310,7 +385,14 @@ export default function KasKeluarClient({
       const pdfFilename = jenisText
         ? `Kas_Keluar_${jenisText.replace(/[^a-zA-Z0-9_-]/g, '_')}_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_')
         : `Kas_Keluar_${unitObj?.name || "Semua"}_${format(new Date(), "yyyyMMdd")}`.replace(/\s+/g, '_')
-      const filterLabel = rawLabel ? ` • Jenis: ${rawLabel}` : ""
+      const urutLabel = sortConfig.key === 'tanggal'
+        ? ` • Urut: Tanggal (${sortConfig.direction === 'desc' ? 'Terbaru' : 'Terlama'})`
+        : sortConfig.key === 'totalNilai'
+        ? ` • Urut: Nominal (${sortConfig.direction === 'desc' ? 'Terbesar' : 'Terkecil'})`
+        : sortConfig.key === 'namaPihakKetiga'
+        ? ` • Urut: Penerima (${sortConfig.direction === 'asc' ? 'A-Z' : 'Z-A'})`
+        : ` • Urut: ${sortConfig.key} (${sortConfig.direction?.toUpperCase()})`
+      const filterLabel = (rawLabel ? ` • Jenis: ${rawLabel}` : "") + urutLabel
 
       await exportTablePdf({
         institutionInfo: buildInstitutionInfo(pengaturan, unitObj),
@@ -392,7 +474,7 @@ export default function KasKeluarClient({
         
         {/* Tabs Navigation */}
         <TabNavigation
-          tabs={[{ id: "kas-keluar", label: isReadOnly ? "Daftar Audit Kas Keluar" : "Daftar Kas Keluar", icon: ArrowUpRight, badge: filteredData.length }]}
+          tabs={[{ id: "kas-keluar", label: isReadOnly ? "Daftar Audit Kas Keluar" : "Daftar Kas Keluar", icon: ArrowUpRight, badge: sortedData.length }]}
         />
 
         {/* Filters and Actions */}
@@ -454,12 +536,12 @@ export default function KasKeluarClient({
             />
             <ToolbarExportExcel 
               onClick={handleExportExcel}
-              disabled={isExportingExcel || filteredData.length === 0}
+              disabled={isExportingExcel || sortedData.length === 0}
               isExporting={isExportingExcel}
             />
             <ToolbarExportPDF 
               onClick={handleExportPDF}
-              disabled={isExportingPDF || filteredData.length === 0}
+              disabled={isExportingPDF || sortedData.length === 0}
               isExporting={isExportingPDF}
             />
             
@@ -477,7 +559,7 @@ export default function KasKeluarClient({
         </Toolbar>
 
         {/* Table & Centered Empty State */}
-        {filteredData.length === 0 ? (
+        {sortedData.length === 0 ? (
           <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center text-text-muted w-full">
             <Receipt size={40} className="text-gray-300 mb-3 stroke-[1.5]" />
             <p className="font-bold text-text-main text-base mb-1">
@@ -489,19 +571,50 @@ export default function KasKeluarClient({
           </div>
         ) : (
           <>
-            <TableScrollHint totalRows={filteredData.length} />
+            <TableScrollHint totalRows={sortedData.length} />
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
                     <th className="p-4 font-semibold text-center">NO</th>
-                    <th className="p-4 font-semibold">TGL TRANSAKSI</th>
-                    <th className="p-4 font-semibold">TGL PEMBUATAN</th>
-                    <th className="p-4 font-semibold">NO REFERENSI</th>
+                    <SortableHeader 
+                      label="TGL TRANSAKSI" 
+                      sortKey="tanggal" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                    />
+                    <SortableHeader 
+                      label="TGL PEMBUATAN" 
+                      sortKey="createdAt" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                    />
+                    <SortableHeader 
+                      label="NO REFERENSI" 
+                      sortKey="noReferensi" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                    />
                     <th className="p-4 font-semibold">NO FORMULIR</th>
-                    <th className="p-4 font-semibold">PENERIMA</th>
+                    <SortableHeader 
+                      label="PENERIMA" 
+                      sortKey="namaPihakKetiga" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                    />
                     <th className="p-4 font-semibold">DESKRIPSI</th>
-                    <th className="p-4 font-semibold text-left">TOTAL NILAI</th>
+                    <SortableHeader 
+                      label="TOTAL NILAI" 
+                      sortKey="totalNilai" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                      className="text-left"
+                    />
                     <th className="p-4 font-semibold">PEMBUAT</th>
                     <th className="p-4 font-semibold text-center">STATUS</th>
                     <th className="p-4 font-semibold text-center">REVISI</th>

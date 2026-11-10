@@ -14,6 +14,7 @@ import PrintHeader from "@/components/shared/print/PrintHeader"
 import PrintSignature from "@/components/shared/print/PrintSignature"
 import PrintFooter from "@/components/shared/print/PrintFooter"
 import { PageHeader } from "@/components/ui/PageHeader"
+import { SortableHeader } from "@/components/ui/SortableHeader"
 import { 
   Toolbar,
   ToolbarRefreshButton,
@@ -73,6 +74,34 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
     )
   }, [data, searchTerm])
 
+  // State Pengurutan Kolom (Default: Nama Siswa asc)
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({
+    key: 'namaSiswa',
+    direction: 'asc'
+  })
+
+  const requestSort = (key: string) => {
+    let direction: 'asc' | 'desc' | null = 'asc'
+    if (key === 'totalTunggakan') {
+      if (sortConfig.key === key && sortConfig.direction === 'desc') {
+        direction = 'asc'
+      } else if (sortConfig.key === key && sortConfig.direction === 'asc') {
+        direction = null
+      } else {
+        direction = 'desc'
+      }
+    } else {
+      if (sortConfig.key === key && sortConfig.direction === 'asc') {
+        direction = 'desc'
+      } else if (sortConfig.key === key && sortConfig.direction === 'desc') {
+        direction = null
+      } else {
+        direction = 'asc'
+      }
+    }
+    setSortConfig({ key: direction ? key : 'namaSiswa', direction: direction || 'asc' })
+  }
+
   const { rows: matrixRows, categories: dynamicCategories } = useMemo(() => {
     const studentMap = new Map<string, any>()
     const categorySet = new Set<string>()
@@ -114,7 +143,7 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
 
     const categories = Array.from(categorySet).sort()
 
-    const rows = Array.from(studentMap.values())
+    const rawRows = Array.from(studentMap.values())
       .filter(s => s.totalTunggakan > 0)
       .map(s => {
         const sppSpan: MonthSpanResult = formatAcademicMonthSpans(s.sppMonths)
@@ -126,10 +155,28 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
           sppCount: sppSpan.count
         }
       })
-      .sort((a, b) => (a.namaSiswa || "").localeCompare(b.namaSiswa || "", "id", { sensitivity: "base" }))
+
+    const rows = rawRows.sort((a, b) => {
+      const { key, direction } = sortConfig
+      const multiplier = direction === 'asc' ? 1 : -1
+
+      if (key === 'namaSiswa') {
+        return (a.namaSiswa || "").localeCompare(b.namaSiswa || "", "id", { sensitivity: "base" }) * multiplier
+      }
+      if (key === 'rombel') {
+        return (a.rombel || "").localeCompare(b.rombel || "", "id", { numeric: true, sensitivity: "base" }) * multiplier
+      }
+      if (key === 'nis') {
+        return (a.nis || "").localeCompare(b.nis || "", "id", { numeric: true }) * multiplier
+      }
+      if (key === 'totalTunggakan') {
+        return (a.totalTunggakan - b.totalTunggakan) * multiplier
+      }
+      return 0
+    })
 
     return { rows, categories }
-  }, [filteredData])
+  }, [filteredData, sortConfig])
 
   const totalPages = Math.ceil(matrixRows.length / pageSize)
   const paginatedData = matrixRows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
@@ -173,10 +220,18 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
     
     const filename = `Laporan_Tunggakan_${unitName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`
 
+    const urutLabel = sortConfig.key === 'totalTunggakan'
+      ? ` • Urut: Tunggakan (${sortConfig.direction === 'desc' ? 'Terbesar' : 'Terkecil'})`
+      : sortConfig.key === 'rombel'
+      ? ` • Urut: Kelas (${sortConfig.direction === 'asc' ? 'A-Z' : 'Z-A'})`
+      : sortConfig.key === 'namaSiswa'
+      ? ` • Urut: Nama (${sortConfig.direction === 'asc' ? 'A-Z' : 'Z-A'})`
+      : ` • Urut: ${sortConfig.key}`
+
     exportTunggakanMatriksPdf({
       institutionInfo: buildInstitutionInfo(pengaturan, activeUnit),
       title: "LAPORAN TUNGGAKAN SISWA",
-      subtitle: `Per Tanggal: ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+      subtitle: `Per Tanggal: ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}${urutLabel}`,
       data: matrixRows,
       dynamicCategories,
       filename,
@@ -402,14 +457,46 @@ export default function LaporanTunggakanClient({ pengaturan, schoolUnits = [], g
                 <thead>
                   <tr className="border-b border-border bg-bg/50 text-text-muted text-xs uppercase tracking-wider">
                     <th className="p-4 font-semibold text-center w-12 border-r border-border/50" rowSpan={2}>NO</th>
-                    <th className="p-4 font-semibold border-r border-border/50" rowSpan={2}>NIS</th>
-                    <th className="p-4 font-semibold border-r border-border/50 min-w-[200px]" rowSpan={2}>NAMA SISWA</th>
-                    <th className="p-4 font-semibold border-r border-border/50" rowSpan={2}>ROMBEL</th>
+                    <SortableHeader 
+                      label="NIS" 
+                      sortKey="nis" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                      className="border-r border-border/50" 
+                      rowSpan={2}
+                    />
+                    <SortableHeader 
+                      label="NAMA SISWA" 
+                      sortKey="namaSiswa" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                      className="border-r border-border/50 min-w-[200px]" 
+                      rowSpan={2}
+                    />
+                    <SortableHeader 
+                      label="ROMBEL" 
+                      sortKey="rombel" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                      className="border-r border-border/50" 
+                      rowSpan={2}
+                    />
                     <th className="p-4 font-semibold text-center border-r border-border/50 bg-primary/5 text-primary" colSpan={3}>SPP</th>
                     {dynamicCategories.length > 0 && (
                       <th className="p-4 font-semibold text-center border-r border-border/50" colSpan={dynamicCategories.length}>TAGIHAN LAINNYA</th>
                     )}
-                    <th className="p-4 font-semibold text-right text-rose-600" rowSpan={2}>TOTAL TUNGGAKAN</th>
+                    <SortableHeader 
+                      label="TOTAL TUNGGAKAN" 
+                      sortKey="totalTunggakan" 
+                      currentSortKey={sortConfig.key} 
+                      currentDirection={sortConfig.direction} 
+                      onSort={requestSort} 
+                      className="text-right text-rose-600" 
+                      rowSpan={2}
+                    />
                   </tr>
                   <tr className="border-b border-border bg-bg/30 text-text-muted text-xs uppercase tracking-wider">
                     <th className="p-3 text-center font-medium border-r border-border/50 text-primary/80">Bulan</th>

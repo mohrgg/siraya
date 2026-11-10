@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 
-interface SortableHeaderProps {
+interface SortableHeaderProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
   label: string;
   sortKey: string;
   currentSortKey?: string | null;
@@ -11,7 +11,7 @@ interface SortableHeaderProps {
 }
 
 export const SortableHeader: React.FC<SortableHeaderProps> = ({ 
-  label, sortKey, currentSortKey, currentDirection, onSort, className = '' 
+  label, sortKey, currentSortKey, currentDirection, onSort, className = '', ...props 
 }) => {
   const isActive = currentSortKey === sortKey;
   const isCenter = className.includes('text-center') || className.includes('justify-center');
@@ -19,6 +19,7 @@ export const SortableHeader: React.FC<SortableHeaderProps> = ({
 
   return (
     <th 
+      {...props}
       className={`p-4 font-semibold cursor-pointer select-none hover:bg-black/5 transition-colors group ${className}`}
       onClick={() => onSort(sortKey)}
     >
